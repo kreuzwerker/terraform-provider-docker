@@ -15,7 +15,7 @@ to create virtual networks within the docker environment.
 ## Example Usage
 
 ```hcl
-# Find the latest Ubuntu precise image.
+# Create a new docker network
 resource "docker_network" "private_network" {
   name = "my_network"
 }
