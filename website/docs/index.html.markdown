@@ -37,8 +37,50 @@ resource "docker_image" "ubuntu" {
 
 ## Registry Credentials
 
-The initial (current) version of the Docker provider **doesn't** support registry authentication.
-This limits any use cases to public images for now.
+Registry credentials can be provided on a per-registry basis with the `registry_auth`
+field, passing either a config file or the username/password directly.
+
+``` hcl
+provider "docker" {
+  host = "tcp://localhost:2376"
+
+  registry_auth {
+    address = "registry.hub.docker.com"
+    config_file = "~/.docker/config.json"
+  }
+
+  registry_auth {
+    address = "quay.io:8181"
+    username = "someuser"
+    password = "somepass"
+  }
+}
+
+data "docker_registry_image" "quay" {
+  name = "myorg/privateimage"
+}
+
+data "docker_registry_image" "quay" {
+  name = "quay.io:8181/myorg/privateimage"
+}
+```
+
+**NOTES**
+- The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+- When passing in a config file make sure every repo in the `auths` object has
+an `auth` string. If not you'll get an `ErrCannotParseDockercfg` by the underlying `go-dockerclient`. On OSX the `auth` base64 string is stored in the `osxkeychain`, but reading from there is not yet supported. See [go-dockerclient#677](https://github.com/fsouza/go-dockerclient/issues/677) for details. In this case, either use `username` and `password` directly or add the string manually to the `config.json` by creating it via `echo -n "user:pass" | base64`. 
+
+`~/.docker/config.json`
+```json
+{
+	"auths": {
+		"repo.mycompany:8181": {
+			"auth": "dXNlcjpwYXNz="
+		}
+	},
+	...
+}
+```
 
 ## Argument Reference
 
@@ -53,6 +95,25 @@ The following arguments are supported:
 
 * `ca_material`, `cert_material`, `key_material`, - (Optional) Content of `ca.pem`, `cert.pem`, and `key.pem` files
   for TLS authentication. Cannot be used together with `cert_path`.
+
+* `registry_auth` - (Optional) A block specifying the credentials for a target
+  v2 Docker registry.
+   
+  * `address` - (Required) The address of the registry.
+ 
+  * `username` - (Optional) The username to use for authenticating to the registry.
+  Cannot be used with the `config_file` option. If this is blank, the `DOCKER_REGISTRY_USER`
+  will also be checked.
+ 
+  * `password` - (Optional) The password to use for authenticating to the registry.
+  Cannot be used with the `config_file` option. If this is blank, the `DOCKER_REGISTRY_PASS`
+  will also be checked.
+ 
+  * `config_file` - (Optional) The path to a config file containing credentials for
+  authenticating to the registry. Cannot be used with the `username`/`password` options.
+  If this is blank, the `DOCKER_CONFIG` will also be checked.
+ 
+ 
 
 ~> **NOTE on Certificates and `docker-machine`:**  As per [Docker Remote API
 documentation](https://docs.docker.com/engine/reference/api/docker_remote_api/),

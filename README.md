@@ -42,7 +42,7 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
 ```sh
-$ make bin
+$ make build
 ...
 $ $GOPATH/bin/terraform-provider-$PROVIDER_NAME
 ...
@@ -60,4 +60,25 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 
 ```sh
 $ make testacc
+# e.g. run a single acceptance test: e.g. 'TestAccDockerRegistryImage_private' in 'data_source_docker_registry_image_test.go'
+go test -v -timeout 30s github.com/terraform-providers/terraform-provider-docker/docker -run ^TestAccDockerRegistryImage_private$
 ```
+
+In order to extend the provider and test it with `terraform`, build the provider as mentioned above with
+```sh
+$ make build
+```
+
+Remove an explicit version of the provider you develop, because `terraform` will fetch
+the locally built one in `$GOPATH/bin`
+```hcl
+provider "$PROVIDER_NAME" {
+  # version = "~> 0.1.2"
+  ...
+}
+```
+
+
+Don't forget to run `terraform init` each time you rebuild the provider. Check [here](https://www.youtube.com/watch?v=TMmovxyo5sY&t=30m14s) for a more detailed explanation.
+
+You can check the latest released version of a provider at https://releases.hashicorp.com/terraform-provider-$PROVIDER_NAME/.
