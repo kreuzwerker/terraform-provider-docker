@@ -1,7 +1,7 @@
-## 0.1.1 (Unreleased)
+## 0.1.1 (November 21, 2017)
 
 FEATURES:
-* Support for pulling images from private registries. [GH-21](https://github.com/terraform-providers/terraform-provider-docker/pull/21)
+* Support for pulling images from private registries. [[#21](https://github.com/terraform-providers/terraform-provider-docker/issues/21)](https://github.com/terraform-providers/terraform-provider-docker/pull/21)
 
 ## 0.1.0 (June 20, 2017)
 
