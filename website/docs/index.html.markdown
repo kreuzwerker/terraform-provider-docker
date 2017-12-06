@@ -40,6 +40,9 @@ resource "docker_image" "ubuntu" {
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
 
+-> **Note**
+The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+
 ``` hcl
 provider "docker" {
   host = "tcp://localhost:2376"
@@ -65,20 +68,26 @@ data "docker_registry_image" "quay" {
 }
 ```
 
-**NOTES**
-- The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
-- When passing in a config file make sure every repo in the `auths` object has
-an `auth` string. If not you'll get an `ErrCannotParseDockercfg` by the underlying `go-dockerclient`. On OSX the `auth` base64 string is stored in the `osxkeychain`, but reading from there is not yet supported. See [go-dockerclient#677](https://github.com/fsouza/go-dockerclient/issues/677) for details. In this case, either use `username` and `password` directly or add the string manually to the `config.json` by creating it via `echo -n "user:pass" | base64`. 
+-> **Note**
+When passing in a config file make sure every repo in the `auths` object has
+an `auth` string. If not you'll get an `ErrCannotParseDockercfg` by the underlying `go-dockerclient`. On OSX the `auth` base64 string is stored in the `osxkeychain`, but reading from there is not yet supported. See [go-dockerclient#677](https://github.com/fsouza/go-dockerclient/issues/677) for details. 
 
-`~/.docker/config.json`
+In this case, either use `username` and `password` directly or set the enviroment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS` or add the string manually via
+
+```sh
+echo -n "user:pass" | base64
+# dXNlcjpwYXNz=
+``` 
+
+and paste it into `~/.docker/config.json`:
+
 ```json
 {
 	"auths": {
 		"repo.mycompany:8181": {
 			"auth": "dXNlcjpwYXNz="
 		}
-	},
-	...
+	}	
 }
 ```
 

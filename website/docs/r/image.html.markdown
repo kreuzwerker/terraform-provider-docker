@@ -8,8 +8,6 @@ description: |-
 
 # docker\_image
 
--> **Note:** The initial (current) version of this resource can only pull **public** images **from the official Docker Hub Registry**.
-
 Pulls a Docker image to a given Docker host from a Docker Registry.
 
 This resource will *not* pull new layers of the image automatically unless used in

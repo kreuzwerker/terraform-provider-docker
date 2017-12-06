@@ -8,8 +8,6 @@ description: |-
 
 # docker\_registry\_image
 
--> **Note:** The initial (current) version of this data source can reliably read only **public** images **from the official Docker Hub Registry**.
-
 Reads the image metadata from a Docker Registry. Used in conjunction with the
 [docker\_image](/docs/providers/docker/r/image.html) resource to keep an image up
 to date on the latest available version of the tag.
