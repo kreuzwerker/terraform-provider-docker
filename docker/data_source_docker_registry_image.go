@@ -41,9 +41,11 @@ func dataSourceDockerRegistryImageRead(d *schema.ResourceData, meta interface{})
 		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
 	}
 
-	// Docker prefixes 'library' to official images in the path; 'consul' becomes 'library/consul'
-	if !strings.Contains(pullOpts.Repository, "/") {
-		pullOpts.Repository = "library/" + pullOpts.Repository
+	if pullOpts.Registry == "registry.hub.docker.com" {
+		// Docker prefixes 'library' to official images in the path; 'consul' becomes 'library/consul'
+		if !strings.Contains(pullOpts.Repository, "/") {
+			pullOpts.Repository = "library/" + pullOpts.Repository
+		}
 	}
 
 	if pullOpts.Tag == "" {
