@@ -362,9 +362,9 @@ func resourceDockerContainer() *schema.Resource {
 				Default:  "json-file",
 				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
 					value := v.(string)
-					if !regexp.MustCompile(`^(json-file|syslog|journald|gelf|fluentd)$`).MatchString(value) {
+					if !regexp.MustCompile(`^(json-file|syslog|journald|gelf|fluentd|awslogs)$`).MatchString(value) {
 						es = append(es, fmt.Errorf(
-							"%q must be one of \"json-file\", \"syslog\", \"journald\", \"gelf\", or \"fluentd\"", k))
+							"%q must be one of \"json-file\", \"syslog\", \"journald\", \"gelf\", \"fluentd\", or \"awslogs\"", k))
 					}
 					return
 				},
