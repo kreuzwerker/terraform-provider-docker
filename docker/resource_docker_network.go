@@ -63,11 +63,6 @@ func resourceDockerNetwork() *schema.Resource {
 				Set:      resourceDockerIpamConfigHash,
 			},
 
-			"id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
 			"scope": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
