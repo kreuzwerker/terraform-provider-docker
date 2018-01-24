@@ -367,7 +367,6 @@ func resourceDockerContainer() *schema.Resource {
 					}
 					return
 				},
-
 			},
 
 			"log_driver": &schema.Schema{
