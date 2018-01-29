@@ -1,12 +1,10 @@
 package docker
 
 import (
-	"bytes"
 	"fmt"
 
 	"regexp"
 
-	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -118,18 +116,11 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"restart": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "no",
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(string)
-					if !regexp.MustCompile(`^(no|on-failure|always|unless-stopped)$`).MatchString(value) {
-						es = append(es, fmt.Errorf(
-							"%q must be one of \"no\", \"on-failure\", \"always\" or \"unless-stopped\"", k))
-					}
-					return
-				},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "no",
+				ValidateFunc: validateStringMatchesPattern(`^(no|on-failure|always|unless-stopped)$`),
 			},
 
 			"max_retry_count": &schema.Schema{
@@ -162,7 +153,6 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerCapabilitiesHash,
 			},
 
 			"volumes": &schema.Schema{
@@ -203,7 +193,6 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerVolumesHash,
 			},
 
 			"ports": &schema.Schema{
@@ -238,7 +227,6 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerPortsHash,
 			},
 
 			"host": &schema.Schema{
@@ -260,7 +248,6 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerHostsHash,
 			},
 
 			"env": &schema.Schema{
@@ -317,57 +304,32 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"memory": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(int)
-					if value < 0 {
-						es = append(es, fmt.Errorf("%q must be greater than or equal to 0", k))
-					}
-					return
-				},
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateIntegerGeqThan(0),
 			},
 
 			"memory_swap": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(int)
-					if value < -1 {
-						es = append(es, fmt.Errorf("%q must be greater than or equal to -1", k))
-					}
-					return
-				},
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateIntegerGeqThan(-1),
 			},
 
 			"cpu_shares": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(int)
-					if value < 0 {
-						es = append(es, fmt.Errorf("%q must be greater than or equal to 0", k))
-					}
-					return
-				},
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateIntegerGeqThan(0),
 			},
 
 			"log_driver": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "json-file",
-				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
-					value := v.(string)
-					if !regexp.MustCompile(`^(json-file|syslog|journald|gelf|fluentd|awslogs)$`).MatchString(value) {
-						es = append(es, fmt.Errorf(
-							"%q must be one of \"json-file\", \"syslog\", \"journald\", \"gelf\", \"fluentd\", or \"awslogs\"", k))
-					}
-					return
-				},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "json-file",
+				ValidateFunc: validateStringMatchesPattern(`^(json-file|syslog|journald|gelf|fluentd|awslogs)$`),
 			},
 
 			"log_opts": &schema.Schema{
@@ -418,103 +380,9 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerUploadHash,
 			},
 		},
 	}
-}
-
-func resourceDockerCapabilitiesHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	if v, ok := m["add"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v))
-	}
-
-	if v, ok := m["remove"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v))
-	}
-
-	return hashcode.String(buf.String())
-}
-
-func resourceDockerPortsHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	buf.WriteString(fmt.Sprintf("%v-", m["internal"].(int)))
-
-	if v, ok := m["external"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(int)))
-	}
-
-	if v, ok := m["ip"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["protocol"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	return hashcode.String(buf.String())
-}
-
-func resourceDockerHostsHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	if v, ok := m["ip"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["host"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	return hashcode.String(buf.String())
-}
-
-func resourceDockerVolumesHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	if v, ok := m["from_container"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["container_path"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["host_path"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["volume_name"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["read_only"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(bool)))
-	}
-
-	return hashcode.String(buf.String())
-}
-
-func resourceDockerUploadHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	if v, ok := m["content"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["file"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	return hashcode.String(buf.String())
 }
 
 func validateDockerContainerPath(v interface{}, k string) (ws []string, errors []error) {

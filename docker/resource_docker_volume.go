@@ -2,6 +2,8 @@ package docker
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	dc "github.com/fsouza/go-dockerclient"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -94,7 +96,24 @@ func resourceDockerVolumeDelete(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 
 	if err := client.RemoveVolume(d.Id()); err != nil && err != dc.ErrNoSuchVolume {
-		return fmt.Errorf("Error deleting volume %s: %s", d.Id(), err)
+		if err == dc.ErrVolumeInUse {
+			loops := 50
+			sleepTime := 1000 * time.Millisecond
+			for i := loops; i > 0; i-- {
+				if err = client.RemoveVolume(d.Id()); err != nil {
+					log.Printf("[INFO] Volume remove loop: %d of %d due to error: %s", loops-i+1, loops, err)
+					if err == dc.ErrVolumeInUse {
+						time.Sleep(sleepTime)
+						continue
+					}
+					if err == dc.ErrNoSuchVolume {
+						break // it's removed
+					}
+					// if it's not in use any more (so it's deleted successfully) and another error occurred
+					return fmt.Errorf("Error deleting volume %s: %s", d.Id(), err)
+				}
+			}
+		}
 	}
 
 	d.SetId("")
