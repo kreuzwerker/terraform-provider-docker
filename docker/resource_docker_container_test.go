@@ -195,12 +195,12 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container does not have correct number of extra host entries, got %d", len(c.HostConfig.ExtraHosts))
 		}
 
-		if c.HostConfig.ExtraHosts[0] != "testhost2:10.0.2.0" {
-			return fmt.Errorf("Container has incorrect extra host string: %q", c.HostConfig.ExtraHosts[0])
+		if c.HostConfig.ExtraHosts[0] != "testhost:10.0.1.0" {
+			return fmt.Errorf("Container has incorrect extra host string at 0: %q", c.HostConfig.ExtraHosts[0])
 		}
 
-		if c.HostConfig.ExtraHosts[1] != "testhost:10.0.1.0" {
-			return fmt.Errorf("Container has incorrect extra host string: %q", c.HostConfig.ExtraHosts[1])
+		if c.HostConfig.ExtraHosts[1] != "testhost2:10.0.2.0" {
+			return fmt.Errorf("Container has incorrect extra host string at 1: %q", c.HostConfig.ExtraHosts[1])
 		}
 
 		if _, ok := c.NetworkSettings.Networks["test"]; !ok {

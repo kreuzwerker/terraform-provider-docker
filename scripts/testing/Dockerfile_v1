@@ -1,0 +1,6 @@
+FROM node:6.12.3-slim
+EXPOSE 8080
+COPY configs.json .
+COPY secrets.json .
+COPY server.js .
+CMD node server.js
