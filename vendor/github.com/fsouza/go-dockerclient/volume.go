@@ -5,11 +5,10 @@
 package docker
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-
-	"golang.org/x/net/context"
 )
 
 var (
@@ -131,7 +130,7 @@ func (c *Client) RemoveVolume(name string) error {
 				return ErrVolumeInUse
 			}
 		}
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 	return nil

@@ -26,7 +26,7 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 		createOpts.Internal = v.(bool)
 	}
 
-	ipamOpts := dc.IPAMOptions{}
+	ipamOpts := &dc.IPAMOptions{}
 	ipamOptsSet := false
 	if v, ok := d.GetOk("ipam_driver"); ok {
 		ipamOpts.Driver = v.(string)
