@@ -154,45 +154,25 @@ func pullImage(data *Data, client *dc.Client, authConfig *dc.AuthConfigurations,
 func parseImageOptions(image string) dc.PullImageOptions {
 	pullOpts := dc.PullImageOptions{}
 
-	splitImageName := strings.Split(image, ":")
-	switch len(splitImageName) {
+	// Pre-fill with image by default, update later if tag found
+	pullOpts.Repository = image
 
-	// It's in registry:port/username/repo:tag or registry:port/repo:tag format
-	case 3:
-		splitPortRepo := strings.Split(splitImageName[1], "/")
-		pullOpts.Registry = splitImageName[0] + ":" + splitPortRepo[0]
-		pullOpts.Tag = splitImageName[2]
-		pullOpts.Repository = pullOpts.Registry + "/" + strings.Join(splitPortRepo[1:], "/")
+	firstSlash := strings.Index(image, "/")
 
-	// It's either registry:port/username/repo, registry:port/repo
-	// or repo:tag with default registry
-	case 2:
-		splitPortRepo := strings.Split(splitImageName[1], "/")
-		switch len(splitPortRepo) {
-		// repo:tag
-		case 1:
-			pullOpts.Repository = splitImageName[0]
-			pullOpts.Tag = splitImageName[1]
+	// Detect the registry name - it should either contain port, be fully qualified or be localhost
+	// If the image contains more than 2 path components, or at least one and the prefix looks like a hostname
+	if strings.Count(image, "/") > 1 || firstSlash != -1 && (strings.ContainsAny(image[:firstSlash], ".:") || image[:firstSlash] == "localhost") {
+		// registry/repo/image
+		pullOpts.Registry = image[:firstSlash]
+	}
 
-		// registry:port/username/repo or registry:port/repo
-		default:
-			pullOpts.Registry = splitImageName[0] + ":" + splitPortRepo[0]
-			pullOpts.Repository = pullOpts.Registry + "/" + strings.Join(splitPortRepo[1:], "/")
-			pullOpts.Tag = "latest"
-		}
+	prefixLength := len(pullOpts.Registry)
+	tagIndex := strings.Index(image[prefixLength:], ":")
 
-	// Registry/username/repo or plain username/repo or repo
-	default:
-		splitRegistryRepo := strings.Split(image, "/")
-		switch len(splitRegistryRepo) {
-		// registry/username/repo
-		case 3:
-			pullOpts.Registry = splitRegistryRepo[0]
-			pullOpts.Repository = pullOpts.Registry + "/" + strings.Join(splitRegistryRepo[1:], "/")
-			// plain username/repo or repo
-		default:
-			pullOpts.Repository = image
-		}
+	if tagIndex != -1 {
+		// we have the tag, strip it
+		pullOpts.Repository = image[:prefixLength+tagIndex]
+		pullOpts.Tag = image[prefixLength+tagIndex+1:]
 	}
 
 	return pullOpts
