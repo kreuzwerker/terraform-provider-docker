@@ -9,10 +9,10 @@ log() {
 }
 
 setup() {
-  export DOCKER_REGISTRY_ADDRESS="127.0.0.1:5000"
+  export DOCKER_REGISTRY_ADDRESS="127.0.0.1:15000"
   export DOCKER_REGISTRY_USER="testuser"
   export DOCKER_REGISTRY_PASS="testpwd"
-  export DOCKER_PRIVATE_IMAGE="127.0.0.1:5000/my-private-service:v1"
+  export DOCKER_PRIVATE_IMAGE="127.0.0.1:15000/my-private-service:v1"
   sh scripts/testing/setup_private_registry.sh
 }
 
@@ -35,7 +35,7 @@ cleanup() {
   echo "### removed auth and certs ###"
   docker stop private_registry
   echo "### stopped private registry ###"
-  docker rmi -f $(docker images -aq 127.0.0.1:5000/my-private-service)
+  docker rmi -f $(docker images -aq 127.0.0.1:15000/my-private-service)
   echo "### removed my-private-service images ###"
   # consider running this manually to clean up the
   # updateabe configs and secrets

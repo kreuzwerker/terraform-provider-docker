@@ -15,7 +15,7 @@ openssl req \
 mkdir -p scripts/testing/auth
 # Start registry
 docker run --entrypoint htpasswd registry:2 -Bbn testuser testpwd > scripts/testing/auth/htpasswd
-docker run -d -p 5000:5000 --rm --name private_registry \
+docker run -d -p 15000:5000 --rm --name private_registry \
   -v "$(pwd)"/scripts/testing/auth:/auth \
   -e "REGISTRY_AUTH=htpasswd" \
   -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
@@ -27,12 +27,12 @@ docker run -d -p 5000:5000 --rm --name private_registry \
 # wait a bit for travis...
 sleep 5
 # Login to private registry
-docker login -u testuser -p testpwd 127.0.0.1:5000
+docker login -u testuser -p testpwd 127.0.0.1:15000
 # Build private images
 docker build -t my-private-service ./scripts/testing -f ./scripts/testing/Dockerfile_v1
-docker tag my-private-service 127.0.0.1:5000/my-private-service:v1
+docker tag my-private-service 127.0.0.1:15000/my-private-service:v1
 docker build -t my-private-service ./scripts/testing -f ./scripts/testing/Dockerfile_v2
-docker tag my-private-service 127.0.0.1:5000/my-private-service:v2
+docker tag my-private-service 127.0.0.1:15000/my-private-service:v2
 # Push private images into private registry
-docker push 127.0.0.1:5000/my-private-service:v1
-docker push 127.0.0.1:5000/my-private-service:v2
+docker push 127.0.0.1:15000/my-private-service:v1
+docker push 127.0.0.1:15000/my-private-service:v2
