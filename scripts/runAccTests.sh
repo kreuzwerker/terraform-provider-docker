@@ -30,28 +30,24 @@ run() {
 cleanup() {
   unset DOCKER_REGISTRY_ADDRESS DOCKER_REGISTRY_USER DOCKER_REGISTRY_PASS DOCKER_PRIVATE_IMAGE
   echo "### unsetted env ###"
+  for p in $(docker container ls -f 'name=private_registry' -q); do docker stop $p; done
+  echo "### stopped private registry ###"
   rm -f "$(pwd)"/scripts/testing/auth/htpasswd
   rm -f "$(pwd)"/scripts/testing/certs/registry_auth.*
   echo "### removed auth and certs ###"
-  docker stop private_registry
-  echo "### stopped private registry ###"
-  docker rmi -f $(docker images -aq 127.0.0.1:15000/my-private-service)
-  echo "### removed my-private-service images ###"
-  # consider running this manually to clean up the
-  # updateabe configs and secrets
-  #docker config rm $(docker config ls -q)
-  #docker secret rm $(docker secret ls -q)
+  for resource in "container" "volume"; do
+    for r in $(docker $resource ls -f 'name=tftest-' -q); do docker $resource rm -f "$r"; done
+    echo "### removed $resource ###"
+  done
+  for resource in "config" "secret" "network"; do
+    for r in $(docker $resource ls -f 'name=tftest-' -q); do docker $resource rm "$r"; done
+    echo "### removed $resource ###"
+  done
+  for i in $(docker images -aq 127.0.0.1:5000/tftest-service); do docker rmi -f "$i"; done
+  echo "### removed service images ###"
 }
 
 ## main
 log "setup" && setup 
-log "run" && run && echo $?
-if [ $? -ne 0 ]; then
-  log "cleanup" && cleanup 
-  exit 1
-fi
-# we only clean on local envs. travis fails from time to time there
-# cuz it cannot remove the images
-if [ "$TRAVIS" != "true" ]; then
-  log "cleanup" && cleanup
-fi
+log "run" && run || (log "cleanup" && cleanup && exit 1)
+log "cleanup" && cleanup
