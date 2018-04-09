@@ -13,7 +13,7 @@ setup() {
   export DOCKER_REGISTRY_USER="testuser"
   export DOCKER_REGISTRY_PASS="testpwd"
   export DOCKER_PRIVATE_IMAGE="127.0.0.1:15000/my-private-service:v1"
-  sh scripts/testing/setup_private_registry.sh
+  sh "$(pwd)"/scripts/testing/setup_private_registry.sh
 }
 
 run() {
@@ -30,8 +30,8 @@ run() {
 cleanup() {
   unset DOCKER_REGISTRY_ADDRESS DOCKER_REGISTRY_USER DOCKER_REGISTRY_PASS DOCKER_PRIVATE_IMAGE
   echo "### unsetted env ###"
-  rm -f scripts/testing/auth/htpasswd
-  rm -f scripts/testing/certs/registry_auth.*
+  rm -f "$(pwd)"/scripts/testing/auth/htpasswd
+  rm -f "$(pwd)"/scripts/testing/certs/registry_auth.*
   echo "### removed auth and certs ###"
   docker stop private_registry
   echo "### stopped private registry ###"

@@ -9,12 +9,12 @@ openssl req \
   -x509 \
   -days 365 \
   -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=127.0.0.1" \
-  -keyout scripts/testing/certs/registry_auth.key \
-  -out scripts/testing/certs/registry_auth.crt
+  -keyout "$(pwd)"/scripts/testing/certs/registry_auth.key \
+  -out "$(pwd)"/scripts/testing/certs/registry_auth.crt
 ## Create auth
 mkdir -p scripts/testing/auth
 # Start registry
-docker run --entrypoint htpasswd registry:2 -Bbn testuser testpwd > scripts/testing/auth/htpasswd
+docker run --entrypoint htpasswd registry:2 -Bbn testuser testpwd > "$(pwd)"/scripts/testing/auth/htpasswd
 docker run -d -p 15000:5000 --rm --name private_registry \
   -v "$(pwd)"/scripts/testing/auth:/auth \
   -e "REGISTRY_AUTH=htpasswd" \
@@ -29,9 +29,9 @@ sleep 5
 # Login to private registry
 docker login -u testuser -p testpwd 127.0.0.1:15000
 # Build private images
-docker build -t my-private-service ./scripts/testing -f ./scripts/testing/Dockerfile_v1
+docker build -t my-private-service "$(pwd)"/scripts/testing -f "$(pwd)"/scripts/testing/Dockerfile_v1
 docker tag my-private-service 127.0.0.1:15000/my-private-service:v1
-docker build -t my-private-service ./scripts/testing -f ./scripts/testing/Dockerfile_v2
+docker build -t my-private-service "$(pwd)"/scripts/testing -f "$(pwd)"/scripts/testing/Dockerfile_v2
 docker tag my-private-service 127.0.0.1:15000/my-private-service:v2
 # Push private images into private registry
 docker push 127.0.0.1:15000/my-private-service:v1
