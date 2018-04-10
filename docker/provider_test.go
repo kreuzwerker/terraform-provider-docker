@@ -35,6 +35,14 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatalf("Docker must be available: %s", err)
 	}
 
+	cmd = exec.Command("docker", "node", "ls")
+	if err := cmd.Run(); err != nil {
+		cmd = exec.Command("docker", "swarm", "init")
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("Docker swarm could not be initialized: %s", err)
+		}
+	}
+
 	if v := os.Getenv("DOCKER_REGISTRY_ADDRESS"); v == "" {
 		t.Fatalf("DOCKER_REGISTRY_ADDRESS must be set for acceptance tests")
 	}
