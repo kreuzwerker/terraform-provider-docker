@@ -1,8 +1,28 @@
-## 0.1.2 (Unreleased)
+## 0.2.0 (Unreleased)
+
+NOTES:
+* Update `go-dockerclient` to `bf3bc17bb` [#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46)
+
+FEATURES:
+* Add `swarm` capabilities [GH-29] [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40)
+* Add ability to upload executable files [#55](https://github.com/terraform-providers/terraform-provider-docker/pull/55)
+* Add support to attach devices to containers [GH-30] [#54](https://github.com/terraform-providers/terraform-provider-docker/pull/54)
+* Add Ulimits to containers [#35](https://github.com/terraform-providers/terraform-provider-docker/pull/35)
+
+IMPROVEMENTS:
+* Fix `travis` build with a fixed docker version [#57](https://github.com/terraform-providers/terraform-provider-docker/pull/57)
+* Infrastructure for Acceptance tests [#39](https://github.com/terraform-providers/terraform-provider-docker/pull/39)
+* Internal refactorings [#38](https://github.com/terraform-providers/terraform-provider-docker/pull/38)
+* Allow the awslogs log driver [#28](https://github.com/terraform-providers/terraform-provider-docker/pull/28)
+* Add prefix `library` only to official images in the path [#27](https://github.com/terraform-providers/terraform-provider-docker/pull/27)
+
+BUG FIXES
+* Update documentation for private registries [GH-45]
+
 ## 0.1.1 (November 21, 2017)
 
 FEATURES:
-* Support for pulling images from private registries. [[#21](https://github.com/terraform-providers/terraform-provider-docker/issues/21)](https://github.com/terraform-providers/terraform-provider-docker/pull/21)
+* Support for pulling images from private registries [#21](https://github.com/terraform-providers/terraform-provider-docker/issues/21)
 
 ## 0.1.0 (June 20, 2017)
 
