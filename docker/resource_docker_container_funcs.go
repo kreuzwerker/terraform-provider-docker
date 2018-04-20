@@ -83,6 +83,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		extraHosts = extraHostsSetToDockerExtraHosts(v.(*schema.Set))
 	}
 
+	extraUlimits := []dc.ULimit{}
+	if v, ok := d.GetOk("ulimit"); ok {
+		extraUlimits = ulimitsToDockerUlimits(v.(*schema.Set))
+	}
 	volumes := map[string]struct{}{}
 	binds := []string{}
 	volumesFrom := []string{}
@@ -124,6 +128,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 	if len(volumesFrom) != 0 {
 		hostConfig.VolumesFrom = volumesFrom
+	}
+	if len(extraUlimits) != 0 {
+		hostConfig.Ulimits = extraUlimits
 	}
 
 	if v, ok := d.GetOk("capabilities"); ok {
@@ -426,6 +433,21 @@ func portSetToDockerPorts(ports *schema.Set) (map[dc.Port]struct{}, map[dc.Port]
 	return retExposedPorts, retPortBindings
 }
 
+func ulimitsToDockerUlimits(extraUlimits *schema.Set) []dc.ULimit {
+	retExtraUlimits := []dc.ULimit{}
+
+	for _, ulimitInt := range extraUlimits.List() {
+		ulimits := ulimitInt.(map[string]interface{})
+		u := dc.ULimit{
+			Name: ulimits["name"].(string),
+			Soft: int64(ulimits["soft"].(int)),
+			Hard: int64(ulimits["hard"].(int)),
+		}
+		retExtraUlimits = append(retExtraUlimits, u)
+	}
+
+	return retExtraUlimits
+}
 func extraHostsSetToDockerExtraHosts(extraHosts *schema.Set) []string {
 	retExtraHosts := []string{}
 

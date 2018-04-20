@@ -84,6 +84,8 @@ The following arguments are supported:
   container is.
 * `destroy_grace_seconds` - (Optional, int) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 * `upload` - (Optional, block) See [File Upload](#upload) below for details.
+* `ulimit` - (Optional, block) See [Ulimits](#ulimits) below for
+  details.
 
 <a id="capabilities"></a>
 ### Capabilities
@@ -179,6 +181,17 @@ the following:
 * `permissions` - (Optional, string) The cgroup permissions given to the
   container to access the device.
   Defaults to `rwm`.
+
+<a id="ulimits"></a>
+### Ulimits
+
+`ulimit` is a block within the configuration that can be repeated to specify
+the extra ulimits for the container. Each `ulimit` block supports
+the following:
+
+* `name` - (Required, string)
+* `soft` - (Required, int)
+* `hard` - (Required, int)
 
 ## Attributes Reference
 
