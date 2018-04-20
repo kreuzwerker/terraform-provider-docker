@@ -67,6 +67,7 @@ The following arguments are supported:
 * `host` - (Optional, block) See [Extra Hosts](#extra_hosts) below for
   details.
 * `privileged` - (Optional, bool) Run container in privileged mode.
+* `devices` - (Optional, bool) See [Devices](#devices) below for details.
 * `publish_all_ports` - (Optional, bool) Publish all ports of the container.
 * `volumes` - (Optional, block) See [Volumes](#volumes) below for details.
 * `memory` - (Optional, int) The memory limit for the container in MBs.
@@ -160,6 +161,21 @@ Each `upload` supports the following
 
 * `content` - (Required, string) A content of a file to upload.
 * `file` - (Required, string) path to a file in the container.
+
+<a id="devices"></a>
+### Devices
+
+`devices` is a block within the configuration that can be repeated to specify
+the devices exposed to a container. Each `devices` block supports
+the following:
+
+* `host_path` - (Required, string) The path on the host where the device
+  is located.
+* `container_path` - (Optional, string) The path in the container where the
+  device will be binded.
+* `permissions` - (Optional, string) The cgroup permissions given to the
+  container to access the device.
+  Defaults to `rwm`.
 
 ## Attributes Reference
 

@@ -292,6 +292,33 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"devices": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"host_path": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+
+						"container_path": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+
+						"permissions": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
+
 			"destroy_grace_seconds": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,

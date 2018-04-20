@@ -135,6 +135,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
+	if v, ok := d.GetOk("devices"); ok {
+		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
+	}
+
 	if v, ok := d.GetOk("dns"); ok {
 		hostConfig.DNS = stringSetToStringSlice(v.(*schema.Set))
 	}
@@ -462,4 +466,30 @@ func volumeSetToDockerVolumes(volumes *schema.Set) (map[string]struct{}, []strin
 	}
 
 	return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, nil
+}
+
+func deviceSetToDockerDevices(devices *schema.Set) []dc.Device {
+	retDevices := []dc.Device{}
+	for _, deviceInt := range devices.List() {
+		deviceMap := deviceInt.(map[string]interface{})
+		hostPath := deviceMap["host_path"].(string)
+		containerPath := deviceMap["container_path"].(string)
+		permissions := deviceMap["permissions"].(string)
+
+		switch {
+		case len(containerPath) == 0:
+			containerPath = hostPath
+			fallthrough
+		case len(permissions) == 0:
+			permissions = "rwm"
+		}
+
+		device := dc.Device{
+			PathOnHost:        hostPath,
+			PathInContainer:   containerPath,
+			CgroupPermissions: permissions,
+		}
+		retDevices = append(retDevices, device)
+	}
+	return retDevices
 }
