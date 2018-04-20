@@ -214,27 +214,27 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have 2 ulimits")
 		}
 
-		if c.HostConfig.Ulimits[0].Name != "nproc" {
+		if c.HostConfig.Ulimits[1].Name != "nproc" {
 			return fmt.Errorf("Container doesn't have a nproc ulimit")
 		}
 
-		if c.HostConfig.Ulimits[0].Hard != 1024 {
+		if c.HostConfig.Ulimits[1].Hard != 1024 {
 			return fmt.Errorf("Container doesn't have a correct nproc hard limit")
 		}
 
-		if c.HostConfig.Ulimits[0].Soft != 512 {
+		if c.HostConfig.Ulimits[1].Soft != 512 {
 			return fmt.Errorf("Container doesn't have a correct mem nproc limit")
 		}
 
-		if c.HostConfig.Ulimits[1].Name != "nofile" {
+		if c.HostConfig.Ulimits[0].Name != "nofile" {
 			return fmt.Errorf("Container doesn't have a nofile ulimit")
 		}
 
-		if c.HostConfig.Ulimits[1].Hard != 262144 {
+		if c.HostConfig.Ulimits[0].Hard != 262144 {
 			return fmt.Errorf("Container doesn't have a correct nofile hard limit")
 		}
 
-		if c.HostConfig.Ulimits[1].Soft != 200000 {
+		if c.HostConfig.Ulimits[0].Soft != 200000 {
 			return fmt.Errorf("Container doesn't have a correct nofile soft limit")
 		}
 
