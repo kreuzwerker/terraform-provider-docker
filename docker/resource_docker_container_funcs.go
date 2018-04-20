@@ -210,15 +210,23 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if v, ok := d.GetOk("upload"); ok {
+
+		var mode int64
 		for _, upload := range v.(*schema.Set).List() {
 			content := upload.(map[string]interface{})["content"].(string)
 			file := upload.(map[string]interface{})["file"].(string)
+			executable := upload.(map[string]interface{})["executable"].(bool)
 
 			buf := new(bytes.Buffer)
 			tw := tar.NewWriter(buf)
+			if executable {
+				mode = 0744
+			} else {
+				mode = 0644
+			}
 			hdr := &tar.Header{
 				Name: file,
-				Mode: 0644,
+				Mode: mode,
 				Size: int64(len(content)),
 			}
 			if err := tw.WriteHeader(hdr); err != nil {

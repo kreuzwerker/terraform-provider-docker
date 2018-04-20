@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	dc "github.com/fsouza/go-dockerclient"
@@ -245,8 +247,13 @@ func TestAccDockerContainer_upload(t *testing.T) {
 		r := bytes.NewReader(buf.Bytes())
 		tr := tar.NewReader(r)
 
-		if _, err := tr.Next(); err != nil {
+		if header, err := tr.Next(); err != nil {
 			return fmt.Errorf("Unable to read content of tar archive: %s", err)
+		} else {
+			mode := strconv.FormatInt(header.Mode, 8)
+			if !strings.HasSuffix(mode, "744") {
+				return fmt.Errorf("File permissions are incorrect: %s", mode)
+			}
 		}
 
 		fbuf := new(bytes.Buffer)
@@ -479,6 +486,7 @@ resource "docker_container" "foo" {
 	upload {
 		content = "foo"
 		file = "/terraform/test.txt"
+		executable = true
 	}
 }
 `

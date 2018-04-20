@@ -161,6 +161,9 @@ Each `upload` supports the following
 
 * `content` - (Required, string) A content of a file to upload.
 * `file` - (Required, string) path to a file in the container.
+* `executable` - (Optional, bool) If true, the file will be uploaded with user
+  executable permission.
+  Defaults to false.
 
 <a id="devices"></a>
 ### Devices

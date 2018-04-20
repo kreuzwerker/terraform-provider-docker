@@ -405,6 +405,12 @@ func resourceDockerContainer() *schema.Resource {
 							Required: true,
 							ForceNew: true,
 						},
+						"executable": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							ForceNew: true,
+							Default:  false,
+						},
 					},
 				},
 			},
