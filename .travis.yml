@@ -30,6 +30,7 @@ script:
 - make testacc
 - make vendor-status
 - make vet
+- make website-test
 
 branches:
   only:
