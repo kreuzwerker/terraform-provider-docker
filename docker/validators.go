@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -41,6 +42,34 @@ func validateFloatRatio() schema.SchemaValidateFunc {
 		if value < 0.0 || value > 1.0 {
 			errors = append(errors, fmt.Errorf(
 				"%q has to be between 0.0 and 1.0", k))
+		}
+		return
+	}
+}
+
+func validateStringIsFloatRatio() schema.SchemaValidateFunc {
+	return func(v interface{}, k string) (ws []string, errors []error) {
+		switch v.(type) {
+		case string:
+			stringValue := v.(string)
+			value, err := strconv.ParseFloat(stringValue, 64)
+			if err != nil {
+				errors = append(errors, fmt.Errorf(
+					"%q is not a float", k))
+			}
+			if value < 0.0 || value > 1.0 {
+				errors = append(errors, fmt.Errorf(
+					"%q has to be between 0.0 and 1.0", k))
+			}
+		case int:
+			value := float64(v.(int))
+			if value < 0.0 || value > 1.0 {
+				errors = append(errors, fmt.Errorf(
+					"%q has to be between 0.0 and 1.0", k))
+			}
+		default:
+			errors = append(errors, fmt.Errorf(
+				"%q is not a string", k))
 		}
 		return
 	}

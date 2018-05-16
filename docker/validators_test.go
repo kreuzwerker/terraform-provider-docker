@@ -50,6 +50,42 @@ func TestValidateFloatRatio(t *testing.T) {
 		t.Fatalf("%v should be an invalid float greater than 1.0", v)
 	}
 }
+func TestValidateStringIsFloatRatio(t *testing.T) {
+	v := "0.9"
+	if _, error := validateStringIsFloatRatio()(v, "name"); error != nil {
+		t.Fatalf("%v should be a float between 0.0 and 1.0", v)
+	}
+
+	v = "-4.5"
+	if _, error := validateStringIsFloatRatio()(v, "name"); error == nil {
+		t.Fatalf("%v should be an invalid float smaller than 0.0", v)
+	}
+
+	v = "1.1"
+	if _, error := validateStringIsFloatRatio()(v, "name"); error == nil {
+		t.Fatalf("%v should be an invalid float greater than 1.0", v)
+	}
+	v = "false"
+	if _, error := validateStringIsFloatRatio()(v, "name"); error == nil {
+		t.Fatalf("%v should be an invalid float because it is a bool in a string", v)
+	}
+	w := false
+	if _, error := validateStringIsFloatRatio()(w, "name"); error == nil {
+		t.Fatalf("%v should be an invalid float because it is a bool", v)
+	}
+	i := 0
+	if _, error := validateStringIsFloatRatio()(i, "name"); error != nil {
+		t.Fatalf("%v should be a valid float because int can be casted", v)
+	}
+	i = 1
+	if _, error := validateStringIsFloatRatio()(i, "name"); error != nil {
+		t.Fatalf("%v should be a valid float because int can be casted", v)
+	}
+	i = 4
+	if _, error := validateStringIsFloatRatio()(i, "name"); error == nil {
+		t.Fatalf("%v should be an invalid float because it is an int out of range", v)
+	}
+}
 func TestValidateDurationGeq0(t *testing.T) {
 	v := "1ms"
 	if _, error := validateDurationGeq0()(v, "name"); error != nil {

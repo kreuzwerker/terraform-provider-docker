@@ -126,9 +126,6 @@ func fetchLocalImages(data *Data, client *dc.Client) error {
 }
 
 func pullImage(data *Data, client *dc.Client, authConfig *dc.AuthConfigurations, image string) error {
-	// TODO: Test local registry handling. It should be working
-	// based on the code that was ported over
-
 	pullOpts := parseImageOptions(image)
 
 	// If a registry was specified in the image name, try to find auth for it

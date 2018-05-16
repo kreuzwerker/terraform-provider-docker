@@ -39,6 +39,22 @@
                         </li>
           </ul>
         </li>
+        <li<%= sidebar_current("docs-docker-resource-swarm") %>>
+            <a href="#">Swarm Resources</a>
+            <ul class="nav nav-visible">
+              <li<%= sidebar_current("docs-docker-resource-config") %>>
+                <a href="/docs/providers/docker/r/config.html">docker_config</a>
+              </li>
+              
+              <li<%= sidebar_current("docs-docker-resource-secret") %>>
+                <a href="/docs/providers/docker/r/secret.html">docker_secret</a>
+              </li>
+              
+              <li<%= sidebar_current("docs-docker-resource-service") %>>
+                <a href="/docs/providers/docker/r/service.html">docker_service</a>
+              </li>
+            </ul>
+        </li>
       </ul>
     </div>
   <% end %>

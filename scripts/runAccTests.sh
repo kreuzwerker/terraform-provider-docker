@@ -17,13 +17,12 @@ setup() {
 }
 
 run() {
-  # Run the acc test suite
   TF_ACC=1 go test ./docker -v -timeout 120m
   
-  # for a single test
-  # TF_LOG=INFO TF_ACC=1 go test -v github.com/terraform-providers/terraform-provider-docker/docker -run ^TestAccDockerContainer_basic$ -timeout 360s
+  # for a single test comment the previous line and uncomment the next line
+  #TF_LOG=INFO TF_ACC=1 go test -v github.com/terraform-providers/terraform-provider-docker/docker -run ^TestAccDockerService_full$ -timeout 360s
   
-  # keep the return for the scripts to fail and clean properly
+  # keep the return value for the scripts to fail and clean properly
   return $?
 }
 
@@ -43,7 +42,7 @@ cleanup() {
     for r in $(docker $resource ls -f 'name=tftest-' -q); do docker $resource rm "$r"; done
     echo "### removed $resource ###"
   done
-  for i in $(docker images -aq 127.0.0.1:5000/tftest-service); do docker rmi -f "$i"; done
+  for i in $(docker images -aq 127.0.0.1:15000/tftest-service); do docker rmi -f "$i"; done
   echo "### removed service images ###"
 }
 

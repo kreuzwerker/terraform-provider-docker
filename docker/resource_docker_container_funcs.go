@@ -280,6 +280,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 
 	var container *dc.Container
 
+	// TODO fix this with statefunc
 	loops := 1 // if it hasn't just been created, don't delay
 	if !creationTime.IsZero() {
 		loops = 30 // with 500ms spacing, 15 seconds; ought to be plenty
@@ -384,6 +385,15 @@ func mapTypeMapValsToString(typeMap map[string]interface{}) map[string]string {
 	mapped := make(map[string]string, len(typeMap))
 	for k, v := range typeMap {
 		mapped[k] = v.(string)
+	}
+	return mapped
+}
+
+// mapTypeMapValsToStringSlice maps a map to a slice with '=': e.g. foo = "bar" -> 'foo=bar'
+func mapTypeMapValsToStringSlice(typeMap map[string]interface{}) []string {
+	mapped := make([]string, len(typeMap))
+	for k, v := range typeMap {
+		mapped = append(mapped, k+"="+v.(string))
 	}
 	return mapped
 }

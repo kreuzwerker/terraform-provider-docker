@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+// Provider creates the Docker provider
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -69,6 +70,7 @@ func Provider() terraform.ResourceProvider {
 						"password": &schema.Schema{
 							Type:          schema.TypeString,
 							Optional:      true,
+							Sensitive:     true,
 							ConflictsWith: []string{"registry_auth.config_file"},
 							DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
 							Description:   "Password for the registry",
@@ -91,6 +93,9 @@ func Provider() terraform.ResourceProvider {
 			"docker_image":     resourceDockerImage(),
 			"docker_network":   resourceDockerNetwork(),
 			"docker_volume":    resourceDockerVolume(),
+			"docker_config":    resourceDockerConfig(),
+			"docker_secret":    resourceDockerSecret(),
+			"docker_service":   resourceDockerService(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
