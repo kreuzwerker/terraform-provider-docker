@@ -4,7 +4,7 @@ NOTES:
 * Update `go-dockerclient` to `bf3bc17bb` [#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46)
 
 FEATURES:
-* Add `swarm` capabilities [GH-29] [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40)
+* Add `swarm` capabilities [GH-29] [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40) with fixes [#66](https://github.com/terraform-providers/terraform-provider-docker/pull/66)
 * Add ability to upload executable files [#55](https://github.com/terraform-providers/terraform-provider-docker/pull/55)
 * Add support to attach devices to containers [GH-30] [#54](https://github.com/terraform-providers/terraform-provider-docker/pull/54)
 * Add Ulimits to containers [#35](https://github.com/terraform-providers/terraform-provider-docker/pull/35)
