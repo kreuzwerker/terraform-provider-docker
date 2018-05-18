@@ -820,7 +820,7 @@ func resourceDockerService() *schema.Resource {
 							Type:         schema.TypeString,
 							Description:  "The mode of resolution to use for internal load balancing between tasks",
 							Optional:     true,
-							Default:      "vip",
+							Computed:     true,
 							ValidateFunc: validateStringMatchesPattern(`^(vip|dnsrr)$`),
 						},
 						"ports": &schema.Schema{
@@ -848,7 +848,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"published_port": &schema.Schema{
 										Type:        schema.TypeInt,
-										Description: "The port on the swarm hosts. If not set the value of 'target_port' will be used",
+										Description: "The port on the swarm hosts.",
 										Optional:    true,
 									},
 									"publish_mode": &schema.Schema{

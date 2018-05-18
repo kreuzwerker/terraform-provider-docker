@@ -108,13 +108,12 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 		d.SetId("")
 		return nil
 	}
-
 	service, err := client.InspectService(apiService.ID)
 	if err != nil {
 		return fmt.Errorf("Error inspecting service %s: %s", apiService.ID, err)
 	}
 
-	jsonObj, _ := json.Marshal(service)
+	jsonObj, _ := json.MarshalIndent(service, "", "\t")
 	log.Printf("[DEBUG] Docker service inspect: %s", jsonObj)
 
 	d.SetId(service.ID)
@@ -133,7 +132,7 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 	if err = d.Set("rollback_config", flattenServiceUpdateOrRollbackConfig(service.Spec.RollbackConfig)); err != nil {
 		log.Printf("[WARN] failed to set rollback_config from API: %s", err)
 	}
-	if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Endpoint.Spec)); err != nil {
+	if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Spec.EndpointSpec)); err != nil {
 		log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
 	}
 
@@ -183,13 +182,11 @@ func resourceDockerServiceUpdate(d *schema.ResourceData, meta interface{}) error
 
 		// Wait, catching any errors
 		state, err := stateConf.WaitForState()
-		log.Printf("[INFO] ###### State awaited: %v with error: %v", state, err)
+		log.Printf("[INFO] State awaited: %v with error: %v", state, err)
 		if err != nil {
 			if strings.Contains(err.Error(), "timeout while waiting for state") {
-				log.Printf("######## did not converge error...")
 				return &DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout}
 			}
-			log.Printf("######## OTHER converge error...")
 			return err
 		}
 	}
@@ -397,7 +394,7 @@ func resourceDockerServiceUpdateRefreshFunc(
 		}
 
 		if service.UpdateStatus != nil {
-			log.Printf("######## update status: %v", service.UpdateStatus.State)
+			log.Printf("[DEBUG] update status: %v", service.UpdateStatus.State)
 			switch service.UpdateStatus.State {
 			case swarm.UpdateStateUpdating:
 				rollback = false
@@ -1203,9 +1200,6 @@ func portSetToServicePorts(v interface{}) []swarm.PortConfig {
 			}
 			if externalPort, ok := rawPort["published_port"]; ok {
 				portConfig.PublishedPort = uint32(externalPort.(int))
-			} else {
-				// If the external port is not specified we use the internal port for it
-				portConfig.PublishedPort = portConfig.TargetPort
 			}
 			if value, ok := rawPort["publish_mode"]; ok {
 				portConfig.PublishMode = swarm.PortConfigPublishMode(value.(string))
