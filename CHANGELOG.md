@@ -2,6 +2,7 @@
 
 NOTES:
 * Update `go-dockerclient` to `bf3bc17bb` [#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46)
+* The `links` property on `resource_docker_container` is now marked as deprecated [#47](https://github.com/terraform-providers/terraform-provider-docker/pull/47)
 
 FEATURES:
 * Add `swarm` capabilities [GH-29] [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40) with fixes [#66](https://github.com/terraform-providers/terraform-provider-docker/pull/66)
