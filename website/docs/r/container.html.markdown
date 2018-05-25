@@ -53,6 +53,12 @@ The following arguments are supported:
   container.
 * `links` - (Optional, set of strings) Set of links for link based
   connectivity between containers that are running on the same host.
+
+~> **Warning** The --link flag is a legacy feature of Docker. It may eventually
+be removed. It exposes _all_ environment variables originating from Docker to
+any linked containers. This could have serious security implications if sensitive
+data is stored in them. See [the docker documentation][linkdoc] for more details.
+
 * `hostname` - (Optional, string) Hostname of the container.
 * `domainname` - (Optional, string) Domain name of the container.
 * `restart` - (Optional, string) The restart policy for the container. Must be
@@ -205,3 +211,6 @@ The following attributes are exported:
    NetworkSettings.
  * `bridge` - The network bridge of the container as read from its
    NetworkSettings.
+
+
+[linkdoc] https://docs.docker.com/network/links/

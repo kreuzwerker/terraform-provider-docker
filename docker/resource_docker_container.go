@@ -284,11 +284,12 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"links": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:       schema.TypeSet,
+				Optional:   true,
+				ForceNew:   true,
+				Elem:       &schema.Schema{Type: schema.TypeString},
+				Set:        schema.HashString,
+				Deprecated: "The --link flag is a legacy feature of Docker. It may eventually be removed.",
 			},
 
 			"ip_address": &schema.Schema{
