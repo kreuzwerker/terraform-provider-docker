@@ -937,6 +937,9 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 				}
 				containerSpec.Configs = configs
 			}
+			if value, ok := rawContainerSpec["isolation"]; ok {
+				containerSpec.Isolation = container.Isolation(value.(string))
+			}
 		}
 	}
 

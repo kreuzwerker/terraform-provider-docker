@@ -156,6 +156,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Configs) > 0 {
 		m["configs"] = flattenServiceConfigs(in.Configs)
 	}
+	if len(in.Isolation) > 0 {
+		m["isolation"] = string(in.Isolation)
+	}
 	out = append(out, m)
 	return out
 }
