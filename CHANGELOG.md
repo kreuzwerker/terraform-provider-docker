@@ -1,4 +1,4 @@
-## 0.2.0 (Unreleased)
+## 1.0.0 (Unreleased)
 
 NOTES:
 * Update `go-dockerclient` to `bf3bc17bb` [#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46)
