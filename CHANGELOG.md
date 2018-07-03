@@ -1,13 +1,13 @@
-## 1.0.0 (Unreleased)
+## 1.0.0 (July 03, 2018)
 
 NOTES:
 * Update `go-dockerclient` to `bf3bc17bb` [#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46)
 * The `links` property on `resource_docker_container` is now marked as deprecated [#47](https://github.com/terraform-providers/terraform-provider-docker/pull/47)
 
 FEATURES:
-* Add `swarm` capabilities [GH-29] [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40) with fixes [#66](https://github.com/terraform-providers/terraform-provider-docker/pull/66) up to Docker `18.03.1` and API Version `1.37` [GH-64]
+* Add `swarm` capabilities ([#29](https://github.com/terraform-providers/terraform-provider-docker/issues/29)] [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40) with fixes [#66](https://github.com/terraform-providers/terraform-provider-docker/pull/66) up to Docker `18.03.1` and API Version `1.37` [[#64](https://github.com/terraform-providers/terraform-provider-docker/issues/64))
 * Add ability to upload executable files [#55](https://github.com/terraform-providers/terraform-provider-docker/pull/55)
-* Add support to attach devices to containers [GH-30] [#54](https://github.com/terraform-providers/terraform-provider-docker/pull/54)
+* Add support to attach devices to containers [[#30](https://github.com/terraform-providers/terraform-provider-docker/issues/30)] [#54](https://github.com/terraform-providers/terraform-provider-docker/pull/54)
 * Add Ulimits to containers [#35](https://github.com/terraform-providers/terraform-provider-docker/pull/35)
 
 IMPROVEMENTS:
@@ -18,7 +18,7 @@ IMPROVEMENTS:
 * Add prefix `library` only to official images in the path [#27](https://github.com/terraform-providers/terraform-provider-docker/pull/27)
 
 BUG FIXES
-* Update documentation for private registries [GH-45]
+* Update documentation for private registries ([#45](https://github.com/terraform-providers/terraform-provider-docker/issues/45))
 
 ## 0.1.1 (November 21, 2017)
 
