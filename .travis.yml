@@ -25,10 +25,11 @@ install:
 - sudo service docker restart
 
 script:
-- make test
-- make testacc
 - make vendor-status
 - make vet
+- make test
+- make testacc
+- make compile
 - make website-test
 
 branches:

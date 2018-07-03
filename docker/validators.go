@@ -122,3 +122,13 @@ func validateStringIsBase64Encoded() schema.SchemaValidateFunc {
 		return
 	}
 }
+
+func validateDockerContainerPath(v interface{}, k string) (ws []string, errors []error) {
+
+	value := v.(string)
+	if !regexp.MustCompile(`^[a-zA-Z]:\\|^/`).MatchString(value) {
+		errors = append(errors, fmt.Errorf("%q must be an absolute path", k))
+	}
+
+	return
+}

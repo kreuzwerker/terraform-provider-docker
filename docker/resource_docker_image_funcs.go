@@ -1,10 +1,16 @@
 package docker
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"strings"
 
-	dc "github.com/fsouza/go-dockerclient"
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -18,7 +24,7 @@ func resourceDockerImageCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(apiImage.ID + d.Get("name").(string))
 	d.Set("latest", apiImage.ID)
 
-	return nil
+	return resourceDockerImageRead(d, meta)
 }
 
 func resourceDockerImageRead(d *schema.ResourceData, meta interface{}) error {
@@ -49,7 +55,7 @@ func resourceDockerImageUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("latest", apiImage.ID)
 
-	return nil
+	return resourceDockerImageRead(d, meta)
 }
 
 func resourceDockerImageDelete(d *schema.ResourceData, meta interface{}) error {
@@ -62,7 +68,7 @@ func resourceDockerImageDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func searchLocalImages(data Data, imageName string) *dc.APIImages {
+func searchLocalImages(data Data, imageName string) *types.ImageSummary {
 	if apiImage, ok := data.DockerImages[imageName]; ok {
 		return apiImage
 	}
@@ -73,7 +79,7 @@ func searchLocalImages(data Data, imageName string) *dc.APIImages {
 	return nil
 }
 
-func removeImage(d *schema.ResourceData, client *dc.Client) error {
+func removeImage(d *schema.ResourceData, client *client.Client) error {
 	var data Data
 
 	if keepLocally := d.Get("keep_locally").(bool); keepLocally {
@@ -92,23 +98,24 @@ func removeImage(d *schema.ResourceData, client *dc.Client) error {
 	foundImage := searchLocalImages(data, imageName)
 
 	if foundImage != nil {
-		err := client.RemoveImage(foundImage.ID)
+		imageDeleteResponseItems, err := client.ImageRemove(context.Background(), foundImage.ID, types.ImageRemoveOptions{})
 		if err != nil {
 			return err
 		}
+		log.Printf("[INFO] Deleted image items: %v", imageDeleteResponseItems)
 	}
 
 	return nil
 }
 
-func fetchLocalImages(data *Data, client *dc.Client) error {
-	images, err := client.ListImages(dc.ListImagesOptions{All: false})
+func fetchLocalImages(data *Data, client *client.Client) error {
+	images, err := client.ImageList(context.Background(), types.ImageListOptions{All: false})
 	if err != nil {
 		return fmt.Errorf("Unable to list Docker images: %s", err)
 	}
 
 	if data.DockerImages == nil {
-		data.DockerImages = make(map[string]*dc.APIImages)
+		data.DockerImages = make(map[string]*types.ImageSummary)
 	}
 
 	// Docker uses different nomenclatures in different places...sometimes a short
@@ -125,11 +132,11 @@ func fetchLocalImages(data *Data, client *dc.Client) error {
 	return nil
 }
 
-func pullImage(data *Data, client *dc.Client, authConfig *dc.AuthConfigurations, image string) error {
+func pullImage(data *Data, client *client.Client, authConfig *AuthConfigs, image string) error {
 	pullOpts := parseImageOptions(image)
 
 	// If a registry was specified in the image name, try to find auth for it
-	auth := dc.AuthConfiguration{}
+	auth := types.AuthConfig{}
 	if pullOpts.Registry != "" {
 		if authConfig, ok := authConfig.Configs[normalizeRegistryAddress(pullOpts.Registry)]; ok {
 			auth = authConfig
@@ -141,16 +148,39 @@ func pullImage(data *Data, client *dc.Client, authConfig *dc.AuthConfigurations,
 		}
 	}
 
-	if err := client.PullImage(pullOpts, auth); err != nil {
-		return fmt.Errorf("Error pulling image %s: %s\n", image, err)
+	encodedJSON, err := json.Marshal(auth)
+	if err != nil {
+		return fmt.Errorf("error creating auth config: %s", err)
 	}
+
+	out, err := client.ImagePull(context.Background(), image, types.ImagePullOptions{
+		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
+	})
+	if err != nil {
+		return fmt.Errorf("error pulling image %s: %s", image, err)
+	}
+	defer out.Close()
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(out)
+	s := buf.String()
+	log.Printf("[DEBUG] pulled image %v: %v", image, s)
 
 	return fetchLocalImages(data, client)
 }
 
-func parseImageOptions(image string) dc.PullImageOptions {
-	pullOpts := dc.PullImageOptions{}
+type internalPullImageOptions struct {
+	Repository string `qs:"fromImage"`
+	Tag        string
 
+	// Only required for Docker Engine 1.9 or 1.10 w/ Remote API < 1.21
+	// and Docker Engine < 1.9
+	// This parameter was removed in Docker Engine 1.11
+	Registry string
+}
+
+func parseImageOptions(image string) internalPullImageOptions {
+	pullOpts := internalPullImageOptions{}
 	splitImageName := strings.Split(image, ":")
 	switch len(splitImageName) {
 
@@ -195,11 +225,11 @@ func parseImageOptions(image string) dc.PullImageOptions {
 	return pullOpts
 }
 
-func findImage(d *schema.ResourceData, client *dc.Client, authConfig *dc.AuthConfigurations) (*dc.APIImages, error) {
+func findImage(d *schema.ResourceData, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
 	var data Data
-	if err := fetchLocalImages(&data, client); err != nil {
-		return nil, err
-	}
+	//if err := fetchLocalImages(&data, client); err != nil {
+	//	return nil, err
+	//} Is done in pullImage
 
 	imageName := d.Get("name").(string)
 	if imageName == "" {

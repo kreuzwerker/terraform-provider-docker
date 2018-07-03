@@ -10,10 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"encoding/base64"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
-	dc "github.com/fsouza/go-dockerclient"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -53,17 +56,20 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	createOpts := dc.CreateServiceOptions{
-		ServiceSpec: serviceSpec,
-	}
-
+	serviceOptions := types.ServiceCreateOptions{}
+	auth := types.AuthConfig{}
 	if v, ok := d.GetOk("auth"); ok {
-		createOpts.Auth = authToServiceAuth(v.(map[string]interface{}))
+		auth = authToServiceAuth(v.(map[string]interface{}))
 	} else {
-		createOpts.Auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), meta.(*ProviderConfig).AuthConfigs.Configs)
+		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), meta.(*ProviderConfig).AuthConfigs.Configs)
 	}
+	encodedJSON, err := json.Marshal(auth)
+	if err != nil {
+		return fmt.Errorf("error creating auth config: %s", err)
+	}
+	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 
-	service, err := client.CreateService(createOpts)
+	service, err := client.ServiceCreate(context.Background(), serviceSpec, serviceOptions)
 	if err != nil {
 		return err
 	}
@@ -108,7 +114,7 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 		d.SetId("")
 		return nil
 	}
-	service, err := client.InspectService(apiService.ID)
+	service, _, err := client.ServiceInspectWithRaw(context.Background(), apiService.ID, types.ServiceInspectOptions{})
 	if err != nil {
 		return fmt.Errorf("Error inspecting service %s: %s", apiService.ID, err)
 	}
@@ -142,7 +148,7 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 func resourceDockerServiceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 
-	service, err := client.InspectService(d.Id())
+	service, _, err := client.ServiceInspectWithRaw(context.Background(), d.Id(), types.ServiceInspectOptions{})
 	if err != nil {
 		return err
 	}
@@ -152,19 +158,25 @@ func resourceDockerServiceUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	updateOpts := dc.UpdateServiceOptions{
-		ServiceSpec: serviceSpec,
-		Version:     service.Version.Index,
-	}
-
+	updateOptions := types.ServiceUpdateOptions{}
+	auth := types.AuthConfig{}
 	if v, ok := d.GetOk("auth"); ok {
-		updateOpts.Auth = authToServiceAuth(v.(map[string]interface{}))
+		auth = authToServiceAuth(v.(map[string]interface{}))
 	} else {
-		updateOpts.Auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), meta.(*ProviderConfig).AuthConfigs.Configs)
+		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), meta.(*ProviderConfig).AuthConfigs.Configs)
 	}
+	encodedJSON, err := json.Marshal(auth)
+	if err != nil {
+		return fmt.Errorf("error creating auth config: %s", err)
+	}
+	updateOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
 
-	if err = client.UpdateService(d.Id(), updateOpts); err != nil {
+	updateResponse, err := client.ServiceUpdate(context.Background(), d.Id(), service.Version, serviceSpec, updateOptions)
+	if err != nil {
 		return err
+	}
+	if len(updateResponse.Warnings) > 0 {
+		log.Printf("[INFO] Warninig while updating Service '%s': %v", service.ID, updateResponse.Warnings)
 	}
 
 	if v, ok := d.GetOk("converge_config"); ok {
@@ -209,8 +221,8 @@ func resourceDockerServiceDelete(d *schema.ResourceData, meta interface{}) error
 // Helpers
 /////////////////
 // fetchDockerService fetches a service by its name or id
-func fetchDockerService(ID string, name string, client *dc.Client) (*swarm.Service, error) {
-	apiServices, err := client.ListServices(dc.ListServicesOptions{})
+func fetchDockerService(ID string, name string, client *client.Client) (*swarm.Service, error) {
+	apiServices, err := client.ServiceList(context.Background(), types.ServiceListOptions{})
 
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching service information from Docker: %s", err)
@@ -226,39 +238,34 @@ func fetchDockerService(ID string, name string, client *dc.Client) (*swarm.Servi
 }
 
 // deleteService deletes the service with the given id
-func deleteService(serviceID string, d *schema.ResourceData, client *dc.Client) error {
+func deleteService(serviceID string, d *schema.ResourceData, client *client.Client) error {
 	// get containerIDs of the running service because they do not exist after the service is deleted
 	serviceContainerIds := make([]string, 0)
 	if _, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok {
-		filter := make(map[string][]string)
-		filter["service"] = []string{d.Get("name").(string)}
-		tasks, err := client.ListTasks(dc.ListTasksOptions{
-			Filters: filter,
+		filters := filters.NewArgs()
+		filters.Add("service", d.Get("name").(string))
+		tasks, err := client.TaskList(context.Background(), types.TaskListOptions{
+			Filters: filters,
 		})
 		if err != nil {
 			return err
 		}
 		for _, t := range tasks {
-			task, _ := client.InspectTask(t.ID)
-			log.Printf("[INFO] Found container ['%s'] for destroying: '%s'", task.Status.State, task.Status.ContainerStatus.ContainerID)
-			if strings.TrimSpace(task.Status.ContainerStatus.ContainerID) != "" && task.Status.State != swarm.TaskStateShutdown {
-				serviceContainerIds = append(serviceContainerIds, task.Status.ContainerStatus.ContainerID)
+			task, _, _ := client.TaskInspectWithRaw(context.Background(), t.ID)
+			containerID := ""
+			if task.Status.ContainerStatus != nil {
+				containerID = task.Status.ContainerStatus.ContainerID
+			}
+			log.Printf("[INFO] Found container ['%s'] for destroying: '%s'", task.Status.State, containerID)
+			if strings.TrimSpace(containerID) != "" && task.Status.State != swarm.TaskStateShutdown {
+				serviceContainerIds = append(serviceContainerIds, containerID)
 			}
 		}
 	}
 
 	// delete the service
 	log.Printf("[INFO] Deleting service: '%s'", serviceID)
-	removeOpts := dc.RemoveServiceOptions{
-		ID: serviceID,
-	}
-
-	if err := client.RemoveService(removeOpts); err != nil {
-		if _, ok := err.(*dc.NoSuchService); ok {
-			log.Printf("[WARN] Service (%s) not found, removing from state", serviceID)
-			d.SetId("")
-			return nil
-		}
+	if err := client.ServiceRemove(context.Background(), serviceID); err != nil {
 		return fmt.Errorf("Error deleting service %s: %s", serviceID, err)
 	}
 
@@ -269,17 +276,16 @@ func deleteService(serviceID string, d *schema.ResourceData, client *dc.Client) 
 			log.Printf("[INFO] Waiting for container: '%s' to exit: max %v", containerID, destroyGraceSeconds)
 			ctx, cancel := context.WithTimeout(context.Background(), destroyGraceSeconds)
 			defer cancel()
-			exitCode, _ := client.WaitContainerWithContext(containerID, ctx)
+			exitCode, _ := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
 			log.Printf("[INFO] Container exited with code [%v]: '%s'", exitCode, containerID)
 
-			removeOpts := dc.RemoveContainerOptions{
-				ID:            containerID,
+			removeOpts := types.ContainerRemoveOptions{
 				RemoveVolumes: true,
 				Force:         true,
 			}
 
 			log.Printf("[INFO] Removing container: '%s'", containerID)
-			if err := client.RemoveContainer(removeOpts); err != nil {
+			if err := client.ContainerRemove(context.Background(), containerID, removeOpts); err != nil {
 				if !(strings.Contains(err.Error(), "No such container") || strings.Contains(err.Error(), "is already in progress")) {
 					return fmt.Errorf("Error deleting container %s: %s", containerID, err)
 				}
@@ -321,18 +327,17 @@ func resourceDockerServiceCreateRefreshFunc(
 			updater = &replicatedConsoleLogUpdater{}
 		}
 
-		filter := make(map[string][]string)
-		filter["service"] = []string{serviceID}
-		filter["desired-state"] = []string{"running"}
+		filters := filters.NewArgs()
+		filters.Add("service", serviceID)
+		filters.Add("desired-state", "running")
 
 		getUpToDateTasks := func() ([]swarm.Task, error) {
-			return client.ListTasks(dc.ListTasksOptions{
-				Filters: filter,
-				Context: ctx,
+			return client.TaskList(ctx, types.TaskListOptions{
+				Filters: filters,
 			})
 		}
-		var service *swarm.Service
-		service, err := client.InspectService(serviceID)
+
+		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
 		if err != nil {
 			return nil, "", err
 		}
@@ -347,7 +352,7 @@ func resourceDockerServiceCreateRefreshFunc(
 			return nil, "", err
 		}
 
-		serviceCreateStatus, err := updater.update(service, tasks, activeNodes, false)
+		serviceCreateStatus, err := updater.update(&service, tasks, activeNodes, false)
 		if err != nil {
 			return nil, "", err
 		}
@@ -377,18 +382,17 @@ func resourceDockerServiceUpdateRefreshFunc(
 		}
 		rollback = false
 
-		filter := make(map[string][]string)
-		filter["service"] = []string{serviceID}
-		filter["desired-state"] = []string{"running"}
+		filters := filters.NewArgs()
+		filters.Add("service", serviceID)
+		filters.Add("desired-state", "running")
 
 		getUpToDateTasks := func() ([]swarm.Task, error) {
-			return client.ListTasks(dc.ListTasksOptions{
-				Filters: filter,
-				Context: ctx,
+			return client.TaskList(ctx, types.TaskListOptions{
+				Filters: filters,
 			})
 		}
-		var service *swarm.Service
-		service, err := client.InspectService(serviceID)
+
+		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
 		if err != nil {
 			return nil, "", err
 		}
@@ -421,7 +425,7 @@ func resourceDockerServiceUpdateRefreshFunc(
 			return nil, "", err
 		}
 
-		isUpdateCompleted, err := updater.update(service, tasks, activeNodes, rollback)
+		isUpdateCompleted, err := updater.update(&service, tasks, activeNodes, rollback)
 		if err != nil {
 			return nil, "", err
 		}
@@ -438,8 +442,8 @@ func resourceDockerServiceUpdateRefreshFunc(
 }
 
 // getActiveNodes gets the actives nodes withon a swarm
-func getActiveNodes(ctx context.Context, client *dc.Client) (map[string]struct{}, error) {
-	nodes, err := client.ListNodes(dc.ListNodesOptions{Context: ctx})
+func getActiveNodes(ctx context.Context, client *client.Client) (map[string]struct{}, error) {
+	nodes, err := client.NodeList(ctx, types.NodeListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -1265,20 +1269,20 @@ func createConvergeConfig(config []interface{}) *convergeConfig {
 }
 
 // authToServiceAuth maps the auth to AuthConfiguration
-func authToServiceAuth(auth map[string]interface{}) dc.AuthConfiguration {
+func authToServiceAuth(auth map[string]interface{}) types.AuthConfig {
 	if auth["username"] != nil && len(auth["username"].(string)) > 0 && auth["password"] != nil && len(auth["password"].(string)) > 0 {
-		return dc.AuthConfiguration{
+		return types.AuthConfig{
 			Username:      auth["username"].(string),
 			Password:      auth["password"].(string),
 			ServerAddress: auth["server_address"].(string),
 		}
 	}
 
-	return dc.AuthConfiguration{}
+	return types.AuthConfig{}
 }
 
 // fromRegistryAuth extract the desired AuthConfiguration for the given image
-func fromRegistryAuth(image string, configs map[string]dc.AuthConfiguration) dc.AuthConfiguration {
+func fromRegistryAuth(image string, configs map[string]types.AuthConfig) types.AuthConfig {
 	// Remove normalized prefixes to simlify substring
 	image = strings.Replace(strings.Replace(image, "http://", "", 1), "https://", "", 1)
 	// Get the registry with optional port
@@ -1291,7 +1295,7 @@ func fromRegistryAuth(image string, configs map[string]dc.AuthConfiguration) dc.
 		}
 	}
 
-	return dc.AuthConfiguration{}
+	return types.AuthConfig{}
 }
 
 // stringSetToPlacementPrefs maps a string set to PlacementPreference

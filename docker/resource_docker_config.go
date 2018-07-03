@@ -4,8 +4,9 @@ import (
 	"encoding/base64"
 	"log"
 
+	"context"
+
 	"github.com/docker/docker/api/types/swarm"
-	dc "github.com/fsouza/go-dockerclient"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -39,16 +40,14 @@ func resourceDockerConfigCreate(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
-	createConfigOpts := dc.CreateConfigOptions{
-		ConfigSpec: swarm.ConfigSpec{
-			Annotations: swarm.Annotations{
-				Name: d.Get("name").(string),
-			},
-			Data: data,
+	configSpec := swarm.ConfigSpec{
+		Annotations: swarm.Annotations{
+			Name: d.Get("name").(string),
 		},
+		Data: data,
 	}
 
-	config, err := client.CreateConfig(createConfigOpts)
+	config, err := client.ConfigCreate(context.Background(), configSpec)
 	if err != nil {
 		return err
 	}
@@ -59,15 +58,12 @@ func resourceDockerConfigCreate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDockerConfigRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
-	config, err := client.InspectConfig(d.Id())
+	config, _, err := client.ConfigInspectWithRaw(context.Background(), d.Id())
 
 	if err != nil {
-		if _, ok := err.(*dc.NoSuchConfig); ok {
-			log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return err
+		log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
+		d.SetId("")
+		return nil
 	}
 	d.SetId(config.ID)
 	return nil
@@ -75,9 +71,7 @@ func resourceDockerConfigRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDockerConfigDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
-	err := client.RemoveConfig(dc.RemoveConfigOptions{
-		ID: d.Id(),
-	})
+	err := client.ConfigRemove(context.Background(), d.Id())
 	if err != nil {
 		return err
 	}

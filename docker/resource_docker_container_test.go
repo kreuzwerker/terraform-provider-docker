@@ -4,18 +4,18 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
 
-	dc "github.com/fsouza/go-dockerclient"
+	"context"
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccDockerContainer_basic(t *testing.T) {
-	var c dc.Container
+	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -54,7 +54,7 @@ func TestAccDockerContainerPath_validation(t *testing.T) {
 }
 
 func TestAccDockerContainer_volume(t *testing.T) {
-	var c dc.Container
+	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
 		if len(c.Mounts) != 1 {
@@ -96,7 +96,7 @@ func TestAccDockerContainer_volume(t *testing.T) {
 }
 
 func TestAccDockerContainer_customized(t *testing.T) {
-	var c dc.Container
+	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
 		if len(c.Config.Entrypoint) < 3 ||
@@ -257,24 +257,18 @@ func TestAccDockerContainer_customized(t *testing.T) {
 }
 
 func TestAccDockerContainer_upload(t *testing.T) {
-	var c dc.Container
+	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
-		buf := new(bytes.Buffer)
-		opts := dc.DownloadFromContainerOptions{
-			OutputStream: buf,
-			Path:         "/terraform/test.txt",
-		}
-
-		if err := client.DownloadFromContainer(c.ID, opts); err != nil {
+		srcPath := "/terraform/test.txt"
+		r, _, err := client.CopyFromContainer(context.Background(), c.ID, srcPath)
+		if err != nil {
 			return fmt.Errorf("Unable to download a file from container: %s", err)
 		}
 
-		r := bytes.NewReader(buf.Bytes())
 		tr := tar.NewReader(r)
-
 		if header, err := tr.Next(); err != nil {
 			return fmt.Errorf("Unable to read content of tar archive: %s", err)
 		} else {
@@ -311,43 +305,32 @@ func TestAccDockerContainer_upload(t *testing.T) {
 }
 
 func TestAccDockerContainer_device(t *testing.T) {
-	var c dc.Container
+	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
-		createExecOpts := dc.CreateExecOptions{
-			Cmd:       []string{"dd", "if=/dev/zero_test", "of=/tmp/test.txt", "count=10", "bs=1"},
-			Container: c.ID,
+		createExecOpts := types.ExecConfig{
+			Cmd: []string{"dd", "if=/dev/zero_test", "of=/tmp/test.txt", "count=10", "bs=1"},
 		}
 
-		exec, err := client.CreateExec(createExecOpts)
+		exec, err := client.ContainerExecCreate(context.Background(), c.ID, createExecOpts)
 		if err != nil {
 			return fmt.Errorf("Unable to create a exec instance on container: %s", err)
 		}
 
-		startExecOpts := dc.StartExecOptions{
-			OutputStream: os.Stdout,
-			ErrorStream:  os.Stdout,
-		}
-
-		if err := client.StartExec(exec.ID, startExecOpts); err != nil {
+		startExecOpts := types.ExecStartCheck{}
+		if err := client.ContainerExecStart(context.Background(), exec.ID, startExecOpts); err != nil {
 			return fmt.Errorf("Unable to run exec a instance on container: %s", err)
 		}
 
-		buf := new(bytes.Buffer)
-		downloadFileOpts := dc.DownloadFromContainerOptions{
-			OutputStream: buf,
-			Path:         "/tmp/test.txt",
-		}
-
-		if err := client.DownloadFromContainer(c.ID, downloadFileOpts); err != nil {
+		srcPath := "/tmp/test.txt"
+		out, _, err := client.CopyFromContainer(context.Background(), c.ID, srcPath)
+		if err != nil {
 			return fmt.Errorf("Unable to download a file from container: %s", err)
 		}
 
-		r := bytes.NewReader(buf.Bytes())
-		tr := tar.NewReader(r)
-
+		tr := tar.NewReader(out)
 		if _, err := tr.Next(); err != nil {
 			return fmt.Errorf("Unable to read content of tar archive: %s", err)
 		}
@@ -383,7 +366,7 @@ func TestAccDockerContainer_device(t *testing.T) {
 	})
 }
 
-func testAccContainerRunning(n string, container *dc.Container) resource.TestCheckFunc {
+func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -395,18 +378,18 @@ func testAccContainerRunning(n string, container *dc.Container) resource.TestChe
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		containers, err := client.ListContainers(dc.ListContainersOptions{})
+		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, c := range containers {
 			if c.ID == rs.Primary.ID {
-				inspected, err := client.InspectContainer(c.ID)
+				inspected, err := client.ContainerInspect(context.Background(), c.ID)
 				if err != nil {
 					return fmt.Errorf("Container could not be inspected: %s", err)
 				}
-				*container = *inspected
+				*container = inspected
 				return nil
 			}
 		}

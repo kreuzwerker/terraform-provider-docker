@@ -31,3 +31,6 @@ website/vendor
 !command/test-fixtures/**/.terraform/
 scripts/testing/auth
 scripts/testing/certs
+
+# build outputs
+results

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	dc "github.com/fsouza/go-dockerclient"
+	"context"
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccDockerNetwork_basic(t *testing.T) {
-	var n dc.Network
+	var n types.NetworkResource
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -26,7 +27,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 	})
 }
 
-func testAccNetwork(n string, network *dc.Network) resource.TestCheckFunc {
+func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -38,18 +39,18 @@ func testAccNetwork(n string, network *dc.Network) resource.TestCheckFunc {
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		networks, err := client.ListNetworks()
+		networks, err := client.NetworkList(context.Background(), types.NetworkListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, n := range networks {
 			if n.ID == rs.Primary.ID {
-				inspected, err := client.NetworkInfo(n.ID)
+				inspected, err := client.NetworkInspect(context.Background(), n.ID, types.NetworkInspectOptions{})
 				if err != nil {
 					return fmt.Errorf("Network could not be obtained: %s", err)
 				}
-				*network = *inspected
+				*network = inspected
 				return nil
 			}
 		}
@@ -65,7 +66,7 @@ resource "docker_network" "foo" {
 `
 
 func TestAccDockerNetwork_internal(t *testing.T) {
-	var n dc.Network
+	var n types.NetworkResource
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -82,7 +83,7 @@ func TestAccDockerNetwork_internal(t *testing.T) {
 	})
 }
 
-func testAccNetworkInternal(network *dc.Network, internal bool) resource.TestCheckFunc {
+func testAccNetworkInternal(network *types.NetworkResource, internal bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if network.Internal != internal {
 			return fmt.Errorf("Bad value for attribute 'internal': %t", network.Internal)
