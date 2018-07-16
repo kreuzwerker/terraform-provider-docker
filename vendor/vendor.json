@@ -351,7 +351,6 @@
 			"path": "github.com/docker/docker/api/types/swarm/runtime",
 			"revision": "65bd038fc5e47ed37d2702cbdd6ce484d320380b",
 			"revisionTime": "2018-05-30T01:28:07Z"
-<<<<<<< HEAD
 		},
 		{
 			"checksumSHA1": "V8OZpLS8i1HfO4lAzUzEw2BgnfQ=",
@@ -360,21 +359,10 @@
 			"revisionTime": "2018-05-30T01:28:07Z"
 		},
 		{
-=======
-		},
-		{
-			"checksumSHA1": "V8OZpLS8i1HfO4lAzUzEw2BgnfQ=",
-			"path": "github.com/docker/docker/api/types/time",
-			"revision": "65bd038fc5e47ed37d2702cbdd6ce484d320380b",
-			"revisionTime": "2018-05-30T01:28:07Z"
-		},
-		{
->>>>>>> d96333876b7267be943761aa5586c6f65aed1533
 			"checksumSHA1": "MZsgRjJJ0D/gAsXfKiEys+op6dE=",
 			"path": "github.com/docker/docker/api/types/versions",
 			"revision": "65bd038fc5e47ed37d2702cbdd6ce484d320380b",
 			"revisionTime": "2018-05-30T01:28:07Z"
-<<<<<<< HEAD
 		},
 		{
 			"checksumSHA1": "BjgxujsDKAzTeQR97H7ojww7BjM=",
@@ -391,29 +379,6 @@
 		{
 			"checksumSHA1": "u6EOrZRfhdjr4up14b2JJ7MMMaY=",
 			"path": "github.com/docker/docker/opts",
-=======
-		},
-		{
-			"checksumSHA1": "BjgxujsDKAzTeQR97H7ojww7BjM=",
-			"path": "github.com/docker/docker/api/types/volume",
-			"revision": "65bd038fc5e47ed37d2702cbdd6ce484d320380b",
-			"revisionTime": "2018-05-30T01:28:07Z"
-		},
-		{
-			"checksumSHA1": "6CnC2OQhh5uzaYoftbN+VKDMyyE=",
-			"path": "github.com/docker/docker/client",
->>>>>>> d96333876b7267be943761aa5586c6f65aed1533
-			"revision": "65bd038fc5e47ed37d2702cbdd6ce484d320380b",
-			"revisionTime": "2018-05-30T01:28:07Z"
-		},
-		{
-<<<<<<< HEAD
-			"checksumSHA1": "XcUgUwnG9cMKIvwl8UGuUsXc0CA=",
-			"path": "github.com/docker/docker/pkg/archive",
-=======
-			"checksumSHA1": "u6EOrZRfhdjr4up14b2JJ7MMMaY=",
-			"path": "github.com/docker/docker/opts",
->>>>>>> d96333876b7267be943761aa5586c6f65aed1533
 			"revision": "65bd038fc5e47ed37d2702cbdd6ce484d320380b",
 			"revisionTime": "2018-05-30T01:28:07Z"
 		},
@@ -518,15 +483,6 @@
 			"path": "github.com/docker/libnetwork/ipamutils",
 			"revision": "a355c4bd0900178ebd6f435ee55d0ab4f712f506",
 			"revisionTime": "2018-05-29T16:43:54Z"
-<<<<<<< HEAD
-		},
-		{
-			"checksumSHA1": "LxmlsftDto7ZuwfNmJRdKPah1t8=",
-			"path": "github.com/fsouza/go-dockerclient",
-			"revision": "bf3bc17bb026cbe5e9203374f9a1ce37e521a364",
-			"revisionTime": "2018-03-03T17:22:32Z"
-=======
->>>>>>> d96333876b7267be943761aa5586c6f65aed1533
 		},
 		{
 			"checksumSHA1": "1K+xrZ1PBez190iGt5OnMtGdih4=",
