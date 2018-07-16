@@ -6,7 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	dc "github.com/fsouza/go-dockerclient"
+	"context"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -16,8 +18,8 @@ import (
 // ----------------------------------------
 
 func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
-	authConfigs := make(map[string]dc.AuthConfiguration)
-	authConfigs["https://repo.my-company.com:8787"] = dc.AuthConfiguration{
+	authConfigs := make(map[string]types.AuthConfig)
+	authConfigs["https://repo.my-company.com:8787"] = types.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
@@ -32,14 +34,14 @@ func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
 }
 
 func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
-	authConfigs := make(map[string]dc.AuthConfiguration)
-	authConfigs["https://repo.my-company.com:8787"] = dc.AuthConfiguration{
+	authConfigs := make(map[string]types.AuthConfig)
+	authConfigs["https://repo.my-company.com:8787"] = types.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
 		ServerAddress: "repo.my-company.com:8787",
 	}
-	authConfigs["https://nexus.my-fancy-company.com"] = dc.AuthConfiguration{
+	authConfigs["https://nexus.my-fancy-company.com"] = types.AuthConfig{
 		Username:      "myuser33",
 		Password:      "mypass123",
 		Email:         "test@example.com",
@@ -98,6 +100,7 @@ func TestAccDockerService_minimal(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -113,7 +116,7 @@ func TestAccDockerService_full(t *testing.T) {
 					name = "tftest-full-myconfig"
 					data = "ewogICJwcmVmaXgiOiAiMTIzIgp9"
 				}
-				
+
 				resource "docker_secret" "service_secret" {
 					name = "tftest-mysecret"
 					data = "ewogICJrZXkiOiAiUVdFUlRZIgp9"
@@ -126,27 +129,27 @@ func TestAccDockerService_full(t *testing.T) {
 
 				resource "docker_service" "foo" {
 					name = "tftest-service-basic"
-				
+
 					task_spec {
 						container_spec {
 							image = "127.0.0.1:15000/tftest-service:v1"
-				
+
 							labels {
 								foo = "bar"
 							}
-				
+
 							command  = ["ls"]
 							args     = ["-las"]
 							hostname = "my-fancy-service"
-				
+
 							env {
 								MYFOO = "BAR"
 							}
-				
+
 							dir    = "/root"
 							user   = "root"
 							groups = ["docker", "foogroup"]
-				
+
 							privileges {
 								se_linux_context {
 									disable = true
@@ -156,9 +159,9 @@ func TestAccDockerService_full(t *testing.T) {
 									level   = "level-label"
 								}
 							}
-				
+
 							read_only = true
-				
+
 							mounts = [
 								{
 									target      = "/mount/test"
@@ -178,28 +181,28 @@ func TestAccDockerService_full(t *testing.T) {
 									}
 								},
 							]
-				
+
 							stop_signal       = "SIGTERM"
 							stop_grace_period = "10s"
-				
+
 							healthcheck {
 								test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
 								interval = "5s"
 								timeout  = "2s"
 								retries  = 4
 							}
-				
+
 							hosts {
 								host = "testhost"
 								ip   = "10.0.1.0"
 							}
-				
+
 							dns_config {
 								nameservers = ["8.8.8.8"]
 								search      = ["example.org"]
 								options     = ["timeout:3"]
 							}
-				
+
 							secrets = [
 								{
 									secret_id   = "${docker_secret.service_secret.id}"
@@ -207,7 +210,7 @@ func TestAccDockerService_full(t *testing.T) {
 									file_name = "/secrets.json"
 								},
 							]
-				
+
 							configs = [
 								{
 									config_id   = "${docker_config.service_config.id}"
@@ -216,51 +219,51 @@ func TestAccDockerService_full(t *testing.T) {
 								},
 							]
 						}
-				
+
 						resources {
 							limits {
 								nano_cpus    = 1000000
 								memory_bytes = 536870912
 							}
 						}
-				
+
 						restart_policy {
 							condition    = "on-failure"
 							delay        = "3s"
 							max_attempts = 4
 							window       = "10s"
 						}
-				
+
 						placement {
 							constraints = [
 								"node.role==manager",
 							]
-				
+
 							prefs = [
 								"spread=node.role.manager",
 							]
 						}
-				
+
 						force_update = 0
 						runtime      = "container"
 						networks     = ["${docker_network.test_network.id}"]
-				
+
 						log_driver {
 							name = "json-file"
-				
+
 							options {
 								max-size = "10m"
 								max-file = "3"
 							}
 						}
 					}
-				
+
 					mode {
 						replicated {
 							replicas = 2
 						}
 					}
-				
+
 					update_config {
 						parallelism       = 2
 						delay             = "10s"
@@ -269,7 +272,7 @@ func TestAccDockerService_full(t *testing.T) {
 						max_failure_ratio = "0.1"
 						order             = "start-first"
 					}
-				
+
 					rollback_config {
 						parallelism       = 2
 						delay             = "5ms"
@@ -278,10 +281,10 @@ func TestAccDockerService_full(t *testing.T) {
 						max_failure_ratio = "0.9"
 						order             = "stop-first"
 					}
-				
+
 					endpoint_spec {
 						mode = "vip"
-				
+
 						ports {
 							name           = "random"
 							protocol       = "tcp"
@@ -291,7 +294,7 @@ func TestAccDockerService_full(t *testing.T) {
 						}
 					}
 				}
-				
+
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
@@ -338,12 +341,12 @@ func TestAccDockerService_full(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.secrets.#", "1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.resources.0.limits.0.nano_cpus", "1000000"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.resources.0.limits.0.memory_bytes", "536870912"),
-					// resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.condition", "on-failure"),
-					// resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.delay", "3s"),
-					// resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.max_attempts", "4"),
-					// resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.window", "10s"),
-					// resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.constraints.4248571116", "node.role==manager"),
-					// resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.prefs.1751004438", "spread=node.role.manager"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.condition", "on-failure"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.delay", "3s"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.max_attempts", "4"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.window", "10s"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.constraints.4248571116", "node.role==manager"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.prefs.1751004438", "spread=node.role.manager"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.force_update", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.name", "json-file"),
@@ -503,6 +506,7 @@ func TestAccDockerService_GlobalAndReplicated(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_GlobalWithConvergeConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -692,7 +696,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 					task_spec {
 						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
-							
+
 							configs = [
 								{
 									config_id   = "${docker_config.service_config.id}"
@@ -700,7 +704,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 									file_name   = "/configs.json"
 								},
 							]
-								
+
 							healthcheck {
 								test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
 								interval = "1s"
@@ -708,7 +712,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 								start_period = "0s"
 								retries  = 2
 							}
-								
+
 							stop_grace_period = "10s"
 						}
 					}
@@ -822,7 +826,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 								target_port    = "8080"
 								published_port = "8082"
 							}
-						] 
+						]
 					}
 				}
 				`,
@@ -914,7 +918,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 								target_port    = "8080"
 								published_port = "8082"
 							}
-						] 
+						]
 					}
 				}
 				`,
@@ -961,7 +965,7 @@ func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
 						container_spec = {
 							image    = "127.0.0.1:15000/idonoexist:latest"
 						}
-					}	
+					}
 
 					mode {
 						replicated {
@@ -983,6 +987,7 @@ func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -996,7 +1001,7 @@ func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 						container_spec = {
 							image    = "stovogel/blablabla:part5"
 						}
-					}	
+					}
 
 					mode {
 						replicated {
@@ -1070,6 +1075,7 @@ func TestAccDockerService_basicConvergeAndStopGracefully(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -1082,7 +1088,7 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 					task_spec {
 						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
-							
+
 							healthcheck {
 								test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
 								interval = "5s"
@@ -1212,6 +1218,7 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 }
 
 func TestAccDockerService_updateNetworksConverge(t *testing.T) {
+	// t.Skip("Skipped because response from daemon is not always consistent")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -1242,8 +1249,7 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
-					
+
 					endpoint_spec {
 						mode = "vip"
 
@@ -1253,8 +1259,8 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 					}
 
 					converge_config {
-						delay    = "7s"
-						timeout  = "3m"
+						delay    = "5s"
+						timeout  = "60s"
 					}
 
 				}
@@ -1303,8 +1309,8 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 					}
 
 					converge_config {
-						delay    = "7s"
-						timeout  = "3m"
+						delay    = "5s"
+						timeout  = "60s"
 					}
 				}
 				`,
@@ -1356,8 +1362,8 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 					}
 
 					converge_config {
-						delay    = "7s"
-						timeout  = "3m"
+						delay    = "5s"
+						timeout  = "60s"
 					}
 				}
 				`,
@@ -1372,6 +1378,7 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateMountsConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -1381,10 +1388,6 @@ func TestAccDockerService_updateMountsConverge(t *testing.T) {
 				Config: `
 				resource "docker_volume" "foo" {
 					name = "tftest-volume"
-				}
-
-				resource "docker_volume" "foo2" {
-					name = "tftest-volume2"
 				}
 
 				resource "docker_service" "foo" {
@@ -1415,10 +1418,9 @@ func TestAccDockerService_updateMountsConverge(t *testing.T) {
 						}
 					}
 
-
 					converge_config {
-						delay    = "7s"
-						timeout  = "3m"
+						delay    = "5s"
+						timeout  = "60s"
 					}
 				}
 				`,
@@ -1482,8 +1484,8 @@ func TestAccDockerService_updateMountsConverge(t *testing.T) {
 					}
 
 					converge_config {
-						delay    = "7s"
-						timeout  = "3m"
+						delay    = "5s"
+						timeout  = "60s"
 					}
 				}
 				`,
@@ -1498,6 +1500,7 @@ func TestAccDockerService_updateMountsConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateHostsConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -1525,7 +1528,6 @@ func TestAccDockerService_updateHostsConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-
 
 					converge_config {
 						delay    = "7s"
@@ -1622,6 +1624,7 @@ func TestAccDockerService_updateHostsConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateLoggingConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -1639,7 +1642,7 @@ func TestAccDockerService_updateLoggingConverge(t *testing.T) {
 
 						log_driver {
 							name = "json-file"
-						
+
 							options {
 								max-size = "10m"
 								max-file = "3"
@@ -1681,7 +1684,7 @@ func TestAccDockerService_updateLoggingConverge(t *testing.T) {
 						}
 						log_driver {
 							name = "json-file"
-						
+
 							options {
 								max-size = "15m"
 								max-file = "5"
@@ -1760,7 +1763,7 @@ func TestAccDockerService_updateHealthcheckConverge(t *testing.T) {
 						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 							stop_grace_period = "10s"
-		
+
 							healthcheck {
 								test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
 								interval = "1s"
@@ -1775,7 +1778,7 @@ func TestAccDockerService_updateHealthcheckConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -1843,7 +1846,7 @@ func TestAccDockerService_updateHealthcheckConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -1859,7 +1862,7 @@ func TestAccDockerService_updateHealthcheckConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-					
+
 					converge_config {
 						delay    = "7s"
 						timeout  = "3m"
@@ -1922,7 +1925,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 							replicas = 1
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -1977,7 +1980,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 							stop_grace_period = "10s"
-							
+
 							healthcheck {
 								test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
 								interval = "1s"
@@ -1992,7 +1995,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 							replicas = 3
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2008,7 +2011,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-					
+
 					converge_config {
 						delay    = "7s"
 						timeout  = "3m"
@@ -2042,6 +2045,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -2055,7 +2059,7 @@ func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 							stop_grace_period = "10s"
-							
+
 							healthcheck {
 								test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
 								interval = "1s"
@@ -2070,7 +2074,7 @@ func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 							replicas = 5
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2139,7 +2143,7 @@ func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 							replicas = 1
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2155,7 +2159,7 @@ func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-					
+
 					converge_config {
 						delay    = "7s"
 						timeout  = "3m"
@@ -2381,7 +2385,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2397,7 +2401,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-					
+
 					converge_config {
 						delay    = "7s"
 						timeout  = "30s"
@@ -2467,7 +2471,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2483,7 +2487,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-					
+
 					converge_config {
 						delay    = "7s"
 						timeout  = "30s"
@@ -2516,6 +2520,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -2578,7 +2583,7 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2594,7 +2599,6 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-
 
 					converge_config {
 						delay    = "7s"
@@ -2684,7 +2688,7 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 							replicas = 2
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -2700,7 +2704,6 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 							published_port = "8080"
 						}
 					}
-
 
 					converge_config {
 						delay    = "7s"
@@ -2736,6 +2739,7 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updatePortConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -2852,7 +2856,7 @@ func TestAccDockerService_updatePortConverge(t *testing.T) {
 								target_port    = "8080"
 								published_port = "8082"
 							}
-							] 
+							]
 					}
 
 					converge_config {
@@ -2889,6 +2893,7 @@ func TestAccDockerService_updatePortConverge(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerService_updateConfigReplicasImageAndHealthConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -3038,7 +3043,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthConverge(t *testing.
 								target_port    = "8080"
 								published_port = "8082"
 							}
-						] 
+						]
 					}
 
 					converge_config {
@@ -3075,6 +3080,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthConverge(t *testing.
 		},
 	})
 }
+
 func TestAccDockerService_updateConfigAndDecreaseReplicasConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -3119,7 +3125,7 @@ func TestAccDockerService_updateConfigAndDecreaseReplicasConverge(t *testing.T) 
 							replicas = 5
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -3204,7 +3210,7 @@ func TestAccDockerService_updateConfigAndDecreaseReplicasConverge(t *testing.T) 
 							replicas = 1
 						}
 					}
-					
+
 					update_config {
 						parallelism       = 1
 						delay             = "1s"
@@ -3253,6 +3259,7 @@ func TestAccDockerService_updateConfigAndDecreaseReplicasConverge(t *testing.T) 
 		},
 	})
 }
+
 func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseReplicasConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -3402,7 +3409,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 								target_port    = "8080"
 								published_port = "8082"
 							}
-						] 
+						]
 					}
 
 					converge_config {
@@ -3495,7 +3502,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 								target_port    = "8080"
 								published_port = "8082"
 							}
-						] 
+						]
 					}
 
 					converge_config {
@@ -3579,10 +3586,10 @@ func TestAccDockerService_privateConverge(t *testing.T) {
 func isServiceRemoved(serviceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		filter := make(map[string][]string)
-		filter["name"] = []string{serviceName}
-		services, err := client.ListServices(dc.ListServicesOptions{
-			Filters: filter,
+		filters := filters.NewArgs()
+		filters.Add("name", serviceName)
+		services, err := client.ServiceList(context.Background(), types.ServiceListOptions{
+			Filters: filters,
 		})
 		if err != nil {
 			return fmt.Errorf("Error listing service for name %s: %v", serviceName, err)

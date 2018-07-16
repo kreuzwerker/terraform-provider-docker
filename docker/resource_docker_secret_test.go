@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"context"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -29,7 +30,7 @@ func TestAccDockerSecret_basic(t *testing.T) {
 		},
 	})
 }
-func TestAccDockerSecret_basicUpdateble(t *testing.T) {
+func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -82,9 +83,9 @@ func testCheckDockerSecretDestroy(s *terraform.State) error {
 		}
 
 		id := rs.Primary.Attributes["id"]
-		secret, err := client.InspectSecret(id)
+		_, _, err := client.SecretInspectWithRaw(context.Background(), id)
 
-		if err == nil || secret != nil {
+		if err == nil {
 			return fmt.Errorf("Secret with id '%s' still exists", id)
 		}
 		return nil

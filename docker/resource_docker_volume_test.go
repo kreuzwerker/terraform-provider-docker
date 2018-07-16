@@ -1,16 +1,16 @@
 package docker
 
 import (
+	"context"
 	"fmt"
-	"testing"
-
-	dc "github.com/fsouza/go-dockerclient"
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"testing"
 )
 
 func TestAccDockerVolume_basic(t *testing.T) {
-	var v dc.Volume
+	var v types.Volume
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -28,7 +28,7 @@ func TestAccDockerVolume_basic(t *testing.T) {
 	})
 }
 
-func checkDockerVolume(n string, volume *dc.Volume) resource.TestCheckFunc {
+func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -39,24 +39,16 @@ func checkDockerVolume(n string, volume *dc.Volume) resource.TestCheckFunc {
 			return fmt.Errorf("No ID is set")
 		}
 
+		ctx := context.Background()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		volumes, err := client.ListVolumes(dc.ListVolumesOptions{})
+		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		for _, v := range volumes {
-			if v.Name == rs.Primary.ID {
-				inspected, err := client.InspectVolume(v.Name)
-				if err != nil {
-					return fmt.Errorf("Volume could not be inspected: %s", err)
-				}
-				*volume = *inspected
-				return nil
-			}
-		}
+		*volume = v
 
-		return fmt.Errorf("Volume not found: %s", rs.Primary.ID)
+		return nil
 	}
 }
 

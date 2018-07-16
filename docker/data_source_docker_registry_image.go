@@ -171,9 +171,9 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 			}
 
 			return digestResponse.Header.Get("Docker-Content-Digest"), nil
-		} else {
-			return "", fmt.Errorf("Bad credentials: " + resp.Status)
 		}
+
+		return "", fmt.Errorf("Bad credentials: " + resp.Status)
 
 		// Some unexpected status was given, return an error
 	default:

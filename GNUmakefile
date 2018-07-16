@@ -16,6 +16,9 @@ test: fmtcheck
 testacc: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runAccTests.sh'"
 
+compile: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/compile.sh'"
+
 vet:
 	@echo "go vet ."
 	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \

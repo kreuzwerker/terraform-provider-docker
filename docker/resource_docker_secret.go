@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"log"
 
+	"context"
 	"github.com/docker/docker/api/types/swarm"
-	dc "github.com/fsouza/go-dockerclient"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -39,16 +39,14 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
-	createSecretOpts := dc.CreateSecretOptions{
-		SecretSpec: swarm.SecretSpec{
-			Annotations: swarm.Annotations{
-				Name: d.Get("name").(string),
-			},
-			Data: data,
+	secretSpec := swarm.SecretSpec{
+		Annotations: swarm.Annotations{
+			Name: d.Get("name").(string),
 		},
+		Data: data,
 	}
 
-	secret, err := client.CreateSecret(createSecretOpts)
+	secret, err := client.SecretCreate(context.Background(), secretSpec)
 	if err != nil {
 		return err
 	}
@@ -60,15 +58,12 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
-	secret, err := client.InspectSecret(d.Id())
+	secret, _, err := client.SecretInspectWithRaw(context.Background(), d.Id())
 
 	if err != nil {
-		if _, ok := err.(*dc.NoSuchSecret); ok {
-			log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return err
+		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
+		d.SetId("")
+		return nil
 	}
 	d.SetId(secret.ID)
 	return nil
@@ -76,9 +71,7 @@ func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDockerSecretDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
-	err := client.RemoveSecret(dc.RemoveSecretOptions{
-		ID: d.Id(),
-	})
+	err := client.SecretRemove(context.Background(), d.Id())
 
 	if err != nil {
 		return err

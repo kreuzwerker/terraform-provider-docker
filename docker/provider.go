@@ -1,12 +1,18 @@
 package docker
 
 import (
+	"bytes"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/user"
 	"strings"
 
-	dc "github.com/fsouza/go-dockerclient"
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -107,7 +113,7 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	config := DockerConfig{
+	config := Config{
 		Host:     d.Get("host").(string),
 		Ca:       d.Get("ca_material").(string),
 		Cert:     d.Get("cert_material").(string),
@@ -120,12 +126,13 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, fmt.Errorf("Error initializing Docker client: %s", err)
 	}
 
-	err = client.Ping()
+	ctx := context.Background()
+	_, err = client.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("Error pinging Docker server: %s", err)
 	}
 
-	authConfigs := &dc.AuthConfigurations{}
+	authConfigs := &AuthConfigs{}
 
 	if v, ok := d.GetOk("registry_auth"); ok {
 		authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
@@ -143,15 +150,31 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	return &providerConfig, nil
 }
 
+// ErrCannotParseDockercfg is the error returned by NewAuthConfigurations when the dockercfg cannot be parsed.
+var ErrCannotParseDockercfg = errors.New("Failed to read authentication from dockercfg")
+
+// AuthConfigs represents authentication options to use for the
+// PushImage method accommodating the new X-Registry-Config header
+type AuthConfigs struct {
+	Configs map[string]types.AuthConfig `json:"configs"`
+}
+
+// dockerConfig represents a registry authentation configuration from the
+// .dockercfg file.
+type dockerConfig struct {
+	Auth  string `json:"auth"`
+	Email string `json:"email"`
+}
+
 // Take the given registry_auth schemas and return a map of registry auth configurations
-func providerSetToRegistryAuth(authSet *schema.Set) (*dc.AuthConfigurations, error) {
-	authConfigs := dc.AuthConfigurations{
-		Configs: make(map[string]dc.AuthConfiguration),
+func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
+	authConfigs := AuthConfigs{
+		Configs: make(map[string]types.AuthConfig),
 	}
 
 	for _, authInt := range authSet.List() {
 		auth := authInt.(map[string]interface{})
-		authConfig := dc.AuthConfiguration{}
+		authConfig := types.AuthConfig{}
 		authConfig.ServerAddress = normalizeRegistryAddress(auth["address"].(string))
 
 		// For each registry_auth block, generate an AuthConfiguration using either
@@ -174,7 +197,7 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*dc.AuthConfigurations, err
 				return nil, fmt.Errorf("Error opening docker registry config file: %v", err)
 			}
 
-			auths, err := dc.NewAuthConfigurations(r)
+			auths, err := newAuthConfigurations(r)
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing docker registry config json: %v", err)
 			}
@@ -198,4 +221,69 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*dc.AuthConfigurations, err
 	}
 
 	return &authConfigs, nil
+}
+
+// newAuthConfigurations returns AuthConfigs from a JSON encoded string in the
+// same format as the .dockercfg file.
+func newAuthConfigurations(r io.Reader) (*AuthConfigs, error) {
+	var auth *AuthConfigs
+	confs, err := parseDockerConfig(r)
+	if err != nil {
+		return nil, err
+	}
+	auth, err = authConfigs(confs)
+	if err != nil {
+		return nil, err
+	}
+	return auth, nil
+}
+
+// parseDockerConfig parses the docker config file for auths
+func parseDockerConfig(r io.Reader) (map[string]dockerConfig, error) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r)
+	byteData := buf.Bytes()
+
+	confsWrapper := struct {
+		Auths map[string]dockerConfig `json:"auths"`
+	}{}
+	if err := json.Unmarshal(byteData, &confsWrapper); err == nil {
+		if len(confsWrapper.Auths) > 0 {
+			return confsWrapper.Auths, nil
+		}
+	}
+
+	var confs map[string]dockerConfig
+	if err := json.Unmarshal(byteData, &confs); err != nil {
+		return nil, err
+	}
+	return confs, nil
+}
+
+// authConfigs converts a dockerConfigs map to a AuthConfigs object.
+func authConfigs(confs map[string]dockerConfig) (*AuthConfigs, error) {
+	c := &AuthConfigs{
+		Configs: make(map[string]types.AuthConfig),
+	}
+	for reg, conf := range confs {
+		if conf.Auth == "" {
+			continue
+		}
+		data, err := base64.StdEncoding.DecodeString(conf.Auth)
+		if err != nil {
+			return nil, err
+		}
+		userpass := strings.SplitN(string(data), ":", 2)
+		if len(userpass) != 2 {
+			return nil, ErrCannotParseDockercfg
+		}
+		c.Configs[reg] = types.AuthConfig{
+			Email:         conf.Email,
+			Username:      userpass[0],
+			Password:      userpass[1],
+			ServerAddress: reg,
+			Auth:          conf.Auth,
+		}
+	}
+	return c, nil
 }

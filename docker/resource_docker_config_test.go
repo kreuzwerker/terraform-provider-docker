@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"context"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -82,9 +83,9 @@ func testCheckDockerConfigDestroy(s *terraform.State) error {
 		}
 
 		id := rs.Primary.Attributes["id"]
-		config, err := client.InspectConfig(id)
+		_, _, err := client.ConfigInspectWithRaw(context.Background(), id)
 
-		if err == nil || config != nil {
+		if err == nil {
 			return fmt.Errorf("Config with id '%s' still exists", id)
 		}
 		return nil

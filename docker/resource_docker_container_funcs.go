@@ -8,8 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	dc "github.com/fsouza/go-dockerclient"
+	"context"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
+	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform/helper/schema"
+	"math/rand"
 )
 
 var (
@@ -33,27 +40,19 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		image = image + ":latest"
 	}
 
-	// The awesome, wonderful, splendiferous, sensical
-	// Docker API now lets you specify a HostConfig in
-	// CreateContainerOptions, but in my testing it still only
-	// actually applies HostConfig options set in StartContainer.
-	// How cool is that?
-	createOpts := dc.CreateContainerOptions{
-		Name: d.Get("name").(string),
-		Config: &dc.Config{
-			Image:      image,
-			Hostname:   d.Get("hostname").(string),
-			Domainname: d.Get("domainname").(string),
-		},
+	config := &container.Config{
+		Image:      image,
+		Hostname:   d.Get("hostname").(string),
+		Domainname: d.Get("domainname").(string),
 	}
 
 	if v, ok := d.GetOk("env"); ok {
-		createOpts.Config.Env = stringSetToStringSlice(v.(*schema.Set))
+		config.Env = stringSetToStringSlice(v.(*schema.Set))
 	}
 
 	if v, ok := d.GetOk("command"); ok {
-		createOpts.Config.Cmd = stringListToStringSlice(v.([]interface{}))
-		for _, v := range createOpts.Config.Cmd {
+		config.Cmd = stringListToStringSlice(v.([]interface{}))
+		for _, v := range config.Cmd {
 			if v == "" {
 				return fmt.Errorf("values for command may not be empty")
 			}
@@ -61,21 +60,21 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if v, ok := d.GetOk("entrypoint"); ok {
-		createOpts.Config.Entrypoint = stringListToStringSlice(v.([]interface{}))
+		config.Entrypoint = stringListToStringSlice(v.([]interface{}))
 	}
 
 	if v, ok := d.GetOk("user"); ok {
-		createOpts.Config.User = v.(string)
+		config.User = v.(string)
 	}
 
-	exposedPorts := map[dc.Port]struct{}{}
-	portBindings := map[dc.Port][]dc.PortBinding{}
+	exposedPorts := map[nat.Port]struct{}{}
+	portBindings := map[nat.Port][]nat.PortBinding{}
 
 	if v, ok := d.GetOk("ports"); ok {
 		exposedPorts, portBindings = portSetToDockerPorts(v.(*schema.Set))
 	}
 	if len(exposedPorts) != 0 {
-		createOpts.Config.ExposedPorts = exposedPorts
+		config.ExposedPorts = exposedPorts
 	}
 
 	extraHosts := []string{}
@@ -83,7 +82,7 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		extraHosts = extraHostsSetToDockerExtraHosts(v.(*schema.Set))
 	}
 
-	extraUlimits := []dc.ULimit{}
+	extraUlimits := []*units.Ulimit{}
 	if v, ok := d.GetOk("ulimit"); ok {
 		extraUlimits = ulimitsToDockerUlimits(v.(*schema.Set))
 	}
@@ -98,21 +97,21 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 	if len(volumes) != 0 {
-		createOpts.Config.Volumes = volumes
+		config.Volumes = volumes
 	}
 
 	if v, ok := d.GetOk("labels"); ok {
-		createOpts.Config.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+		config.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
-	hostConfig := &dc.HostConfig{
+	hostConfig := &container.HostConfig{
 		Privileged:      d.Get("privileged").(bool),
 		PublishAllPorts: d.Get("publish_all_ports").(bool),
-		RestartPolicy: dc.RestartPolicy{
+		RestartPolicy: container.RestartPolicy{
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
-		LogConfig: dc.LogConfig{
+		LogConfig: container.LogConfig{
 			Type: d.Get("log_driver").(string),
 		},
 	}
@@ -182,36 +181,29 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.LogConfig.Config = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
+	networkingConfig := &network.NetworkingConfig{}
 	if v, ok := d.GetOk("network_mode"); ok {
-		hostConfig.NetworkMode = v.(string)
+		hostConfig.NetworkMode = container.NetworkMode(v.(string))
 	}
 
-	createOpts.HostConfig = hostConfig
+	var retContainer container.ContainerCreateCreatedBody
 
-	var retContainer *dc.Container
-	if retContainer, err = client.CreateContainer(createOpts); err != nil {
+	if retContainer, err = client.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, d.Get("name").(string)); err != nil {
 		return fmt.Errorf("Unable to create container: %s", err)
-	}
-	if retContainer == nil {
-		return fmt.Errorf("Returned container is nil")
 	}
 
 	d.SetId(retContainer.ID)
 
 	if v, ok := d.GetOk("networks"); ok {
-		var connectionOpts dc.NetworkConnectionOptions
+		endpointConfig := &network.EndpointSettings{}
 		if v, ok := d.GetOk("network_alias"); ok {
-			endpointConfig := &dc.EndpointConfig{}
 			endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
-			connectionOpts = dc.NetworkConnectionOptions{Container: retContainer.ID, EndpointConfig: endpointConfig}
-		} else {
-			connectionOpts = dc.NetworkConnectionOptions{Container: retContainer.ID}
 		}
 
 		for _, rawNetwork := range v.(*schema.Set).List() {
-			network := rawNetwork.(string)
-			if err := client.ConnectNetwork(network, connectionOpts); err != nil {
-				return fmt.Errorf("Unable to connect to network '%s': %s", network, err)
+			networkID := rawNetwork.(string)
+			if err := client.NetworkConnect(context.Background(), networkID, retContainer.ID, endpointConfig); err != nil {
+				return fmt.Errorf("Unable to connect to network '%s': %s", networkID, err)
 			}
 		}
 	}
@@ -246,19 +238,18 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 				return fmt.Errorf("Error creating tar archive: %s", err)
 			}
 
-			uploadOpts := dc.UploadToContainerOptions{
-				InputStream: bytes.NewReader(buf.Bytes()),
-				Path:        "/",
-			}
-
-			if err := client.UploadToContainer(retContainer.ID, uploadOpts); err != nil {
+			dstPath := "/"
+			uploadContent := bytes.NewReader(buf.Bytes())
+			options := types.CopyToContainerOptions{}
+			if err := client.CopyToContainer(context.Background(), retContainer.ID, dstPath, uploadContent, options); err != nil {
 				return fmt.Errorf("Unable to upload volume content: %s", err)
 			}
 		}
 	}
 
 	creationTime = time.Now()
-	if err := client.StartContainer(retContainer.ID, nil); err != nil {
+	options := types.ContainerStartOptions{}
+	if err := client.ContainerStart(context.Background(), retContainer.ID, options); err != nil {
 		return fmt.Errorf("Unable to start container: %s", err)
 	}
 
@@ -278,7 +269,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		return nil
 	}
 
-	var container *dc.Container
+	var container types.ContainerJSON
 
 	// TODO fix this with statefunc
 	loops := 1 // if it hasn't just been created, don't delay
@@ -288,7 +279,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 	sleepTime := 500 * time.Millisecond
 
 	for i := loops; i > 0; i-- {
-		container, err = client.InspectContainer(apiContainer.ID)
+		container, err = client.ContainerInspect(context.Background(), apiContainer.ID)
 		if err != nil {
 			return fmt.Errorf("Error inspecting container %s: %s", apiContainer.ID, err)
 		}
@@ -302,7 +293,11 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 			return resourceDockerContainerDelete(d, meta)
 		}
 
-		if container.State.FinishedAt.After(creationTime) {
+		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
+		if err != nil {
+			return fmt.Errorf("Container finish time could not be parsed: %s", container.State.FinishedAt)
+		}
+		if finishTime.After(creationTime) {
 			// It exited immediately, so error out so dependent containers
 			// aren't started
 			resourceDockerContainerDelete(d, meta)
@@ -338,19 +333,20 @@ func resourceDockerContainerDelete(d *schema.ResourceData, meta interface{}) err
 
 	// Stop the container before removing if destroy_grace_seconds is defined
 	if d.Get("destroy_grace_seconds").(int) > 0 {
-		var timeout = uint(d.Get("destroy_grace_seconds").(int))
-		if err := client.StopContainer(d.Id(), timeout); err != nil {
+		mapped := int32(d.Get("destroy_grace_seconds").(int))
+		timeoutInSeconds := rand.Int31n(mapped)
+		timeout := time.Duration(time.Duration(timeoutInSeconds) * time.Second)
+		if err := client.ContainerStop(context.Background(), d.Id(), &timeout); err != nil {
 			return fmt.Errorf("Error stopping container %s: %s", d.Id(), err)
 		}
 	}
 
-	removeOpts := dc.RemoveContainerOptions{
-		ID:            d.Id(),
+	removeOpts := types.ContainerRemoveOptions{
 		RemoveVolumes: true,
 		Force:         true,
 	}
 
-	if err := client.RemoveContainer(removeOpts); err != nil {
+	if err := client.ContainerRemove(context.Background(), d.Id(), removeOpts); err != nil {
 		return fmt.Errorf("Error deleting container %s: %s", d.Id(), err)
 	}
 
@@ -398,8 +394,8 @@ func mapTypeMapValsToStringSlice(typeMap map[string]interface{}) []string {
 	return mapped
 }
 
-func fetchDockerContainer(ID string, client *dc.Client) (*dc.APIContainers, error) {
-	apiContainers, err := client.ListContainers(dc.ListContainersOptions{All: true})
+func fetchDockerContainer(ID string, client *client.Client) (*types.Container, error) {
+	apiContainers, err := client.ContainerList(context.Background(), types.ContainerListOptions{All: true})
 
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching container information from Docker: %s\n", err)
@@ -414,23 +410,23 @@ func fetchDockerContainer(ID string, client *dc.Client) (*dc.APIContainers, erro
 	return nil, nil
 }
 
-func portSetToDockerPorts(ports *schema.Set) (map[dc.Port]struct{}, map[dc.Port][]dc.PortBinding) {
-	retExposedPorts := map[dc.Port]struct{}{}
-	retPortBindings := map[dc.Port][]dc.PortBinding{}
+func portSetToDockerPorts(ports *schema.Set) (map[nat.Port]struct{}, map[nat.Port][]nat.PortBinding) {
+	retExposedPorts := map[nat.Port]struct{}{}
+	retPortBindings := map[nat.Port][]nat.PortBinding{}
 
 	for _, portInt := range ports.List() {
 		port := portInt.(map[string]interface{})
 		internal := port["internal"].(int)
 		protocol := port["protocol"].(string)
 
-		exposedPort := dc.Port(strconv.Itoa(internal) + "/" + protocol)
+		exposedPort := nat.Port(strconv.Itoa(internal) + "/" + protocol)
 		retExposedPorts[exposedPort] = struct{}{}
 
 		external, extOk := port["external"].(int)
 		ip, ipOk := port["ip"].(string)
 
 		if extOk {
-			portBinding := dc.PortBinding{
+			portBinding := nat.PortBinding{
 				HostPort: strconv.Itoa(external),
 			}
 			if ipOk {
@@ -443,12 +439,12 @@ func portSetToDockerPorts(ports *schema.Set) (map[dc.Port]struct{}, map[dc.Port]
 	return retExposedPorts, retPortBindings
 }
 
-func ulimitsToDockerUlimits(extraUlimits *schema.Set) []dc.ULimit {
-	retExtraUlimits := []dc.ULimit{}
+func ulimitsToDockerUlimits(extraUlimits *schema.Set) []*units.Ulimit {
+	retExtraUlimits := []*units.Ulimit{}
 
 	for _, ulimitInt := range extraUlimits.List() {
 		ulimits := ulimitInt.(map[string]interface{})
-		u := dc.ULimit{
+		u := &units.Ulimit{
 			Name: ulimits["name"].(string),
 			Soft: int64(ulimits["soft"].(int)),
 			Hard: int64(ulimits["hard"].(int)),
@@ -508,8 +504,8 @@ func volumeSetToDockerVolumes(volumes *schema.Set) (map[string]struct{}, []strin
 	return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, nil
 }
 
-func deviceSetToDockerDevices(devices *schema.Set) []dc.Device {
-	retDevices := []dc.Device{}
+func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
+	retDevices := []container.DeviceMapping{}
 	for _, deviceInt := range devices.List() {
 		deviceMap := deviceInt.(map[string]interface{})
 		hostPath := deviceMap["host_path"].(string)
@@ -524,7 +520,7 @@ func deviceSetToDockerDevices(devices *schema.Set) []dc.Device {
 			permissions = "rwm"
 		}
 
-		device := dc.Device{
+		device := container.DeviceMapping{
 			PathOnHost:        hostPath,
 			PathInContainer:   containerPath,
 			CgroupPermissions: permissions,
