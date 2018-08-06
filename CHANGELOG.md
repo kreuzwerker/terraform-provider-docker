@@ -1,13 +1,13 @@
 ## 1.0.1 (Unreleased)
 
 BUG FIXES
-* Fixes empty strings on mapping from map to slice causes GH-81
+* Fixes empty strings on mapping from map to slice causes [GH-81]
 
 ## 1.0.0 (July 03, 2018)
 
 NOTES:
-* Update `go-dockerclient` to `bf3bc17bb` [#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46)
-* The `links` property on `resource_docker_container` is now marked as deprecated [#47](https://github.com/terraform-providers/terraform-provider-docker/pull/47)
+* Update `go-dockerclient` to `bf3bc17bb` ([#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46))
+* The `links` property on `resource_docker_container` is now marked as deprecated ([#47](https://github.com/terraform-providers/terraform-provider-docker/pull/47))
 
 FEATURES:
 * Add `swarm` capabilities ([#29](https://github.com/terraform-providers/terraform-provider-docker/issues/29), [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40) which fixes [#66](https://github.com/terraform-providers/terraform-provider-docker/pull/66) up to Docker `18.03.1` and API Version `1.37` ([#64](https://github.com/terraform-providers/terraform-provider-docker/issues/64))
