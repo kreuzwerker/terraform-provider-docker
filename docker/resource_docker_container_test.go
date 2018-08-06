@@ -14,6 +14,16 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+func TestMapTypeMapValsToStringSlice(t *testing.T) {
+	typeMap := make(map[string]interface{})
+	typeMap["foo"] = "bar"
+	typeMap[""] = ""
+	stringSlice := mapTypeMapValsToStringSlice(typeMap)
+	if len(stringSlice) != 1 {
+		t.Fatalf("slice should have length 1 but has %v", len(stringSlice))
+	}
+}
+
 func TestAccDockerContainer_basic(t *testing.T) {
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
