@@ -1,7 +1,7 @@
-## 1.0.1 (Unreleased)
+## 1.0.1 (August 06, 2018)
 
 BUG FIXES
-* Fixes empty strings on mapping from map to slice causes [GH-81]
+* Fixes empty strings on mapping from map to slice causes ([#81](https://github.com/terraform-providers/terraform-provider-docker/issues/81))
 
 ## 1.0.0 (July 03, 2018)
 
