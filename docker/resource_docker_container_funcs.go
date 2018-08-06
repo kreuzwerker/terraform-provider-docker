@@ -387,9 +387,11 @@ func mapTypeMapValsToString(typeMap map[string]interface{}) map[string]string {
 
 // mapTypeMapValsToStringSlice maps a map to a slice with '=': e.g. foo = "bar" -> 'foo=bar'
 func mapTypeMapValsToStringSlice(typeMap map[string]interface{}) []string {
-	mapped := make([]string, len(typeMap))
+	mapped := make([]string, 0)
 	for k, v := range typeMap {
-		mapped = append(mapped, k+"="+v.(string))
+		if len(k) > 0 {
+			mapped = append(mapped, k+"="+v.(string))
+		}
 	}
 	return mapped
 }
