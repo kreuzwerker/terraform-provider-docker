@@ -1,4 +1,9 @@
 ## 1.0.2 (Unreleased)
+
+BUG FIXES
+* Fixes connection via TLS to docker host with file contents [GH-86]
+* Skips TLS verification if `ca_material` is not set [GH-14]
+
 ## 1.0.1 (August 06, 2018)
 
 BUG FIXES
