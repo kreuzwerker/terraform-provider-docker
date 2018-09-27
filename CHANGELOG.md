@@ -1,8 +1,8 @@
-## 1.0.2 (Unreleased)
+## 1.0.2 (September 27, 2018)
 
 BUG FIXES
-* Fixes connection via TLS to docker host with file contents [GH-86]
-* Skips TLS verification if `ca_material` is not set [GH-14]
+* Fixes connection via TLS to docker host with file contents ([#86](https://github.com/terraform-providers/terraform-provider-docker/issues/86))
+* Skips TLS verification if `ca_material` is not set ([#14](https://github.com/terraform-providers/terraform-provider-docker/issues/14))
 
 ## 1.0.1 (August 06, 2018)
 
