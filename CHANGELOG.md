@@ -1,4 +1,8 @@
-## 1.1.0 (Unreleased)
+## 1.0.3 (Unreleased)
+
+IMPROVEMENTS
+* Add support for running tests on Windows [GH-54] and ([#90](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
+
 ## 1.0.2 (September 27, 2018)
 
 BUG FIXES
