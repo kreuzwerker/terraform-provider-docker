@@ -80,3 +80,16 @@ provider "docker" {
 Don't forget to run `terraform init` each time you rebuild the provider. Check [here](https://www.youtube.com/watch?v=TMmovxyo5sY&t=30m14s) for a more detailed explanation.
 
 You can check the latest released version of a provider at https://releases.hashicorp.com/terraform-provider-docker/.
+
+Developing on Windows
+---------------------
+
+You can build and test on Widows without `make`.  Run `go install` to
+build and `Scripts\runAccTests.bat` to run the test suite.
+
+Continuous integration for Windows is not available at the moment due
+to lack of a CI provider that is free for open source projects *and*
+supports running Linux containers in Docker for Windows.  For example,
+AppVeyor is free for open source projects and provides Docker on its
+Windows builds, but only offers Linux containers on Windows as a paid
+upgrade.
