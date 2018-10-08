@@ -65,6 +65,8 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
   one of "no", "on-failure", "always", "unless-stopped".
 * `max_retry_count` - (Optional, int) The maximum amount of times to an attempt
   a restart when `restart` is set to "on-failure"
+* `start` - (Optional, bool) If true, then the Docker container will be
+  started after creation. If false, then the container is only created.
 * `must_run` - (Optional, bool) If true, then the Docker container will be
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
