@@ -613,6 +613,23 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_nostart(t *testing.T) {
+	var c types.ContainerJSON
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerNoStartConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
+
 func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -642,6 +659,33 @@ func testAccContainerRunning(n string, container *types.ContainerJSON) resource.
 		}
 
 		return fmt.Errorf("Container not found: %s", rs.Primary.ID)
+	}
+}
+
+func testAccContainerNotRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, c := range containers {
+			if c.ID == rs.Primary.ID {
+				return fmt.Errorf("Container found: %s", rs.Primary.ID)
+			}
+		}
+
+		return nil
 	}
 }
 
@@ -883,5 +927,18 @@ resource "docker_container" "foo" {
 			external = "32788"
 		}
 	] 
+}
+`
+const testAccDockerContainerNoStartConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "nginx:latest"
+	start = false
+    must_run = false
 }
 `
