@@ -94,6 +94,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
   details.
 * `pid_mode` - (Optional, string) The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 * `userns_mode` - (Optional, string) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
+* `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck) below for details.
 
 <a id="capabilities"></a>
 ### Capabilities
@@ -200,6 +201,18 @@ the following:
 * `name` - (Required, string)
 * `soft` - (Required, int)
 * `hard` - (Required, int)
+
+<a id="healthcheck"></a>
+### Healthcheck
+
+`healthcheck` is a block within the configuration that can be repeated only **once** to specify the extra healthcheck configuration for the container. The `healthcheck` block is a test to perform to check that the container is healthy and supports the following:
+
+* `test` - (Required, list of strings) Command to run to check health. For example, to run `curl -f http://localhost/health` set the
+    command to be `["CMD", "curl", "-f", "http://localhost/health"]`.
+* `interval` - (Optional, string) Time between running the check `(ms|s|m|h)`. Default: `0s`.
+* `timeout` - (Optional, string) Maximum time to allow one check to run `(ms|s|m|h)`. Default: `0s`.
+* `start_period` - (Optional, string) Start period for the container to initialize before counting retries towards unstable `(ms|s|m|h)`. Default: `0s`.
+* `retries` - (Optional, int) Consecutive failures needed to report unhealthy. Default: `0`.
 
 ## Attributes Reference
 
