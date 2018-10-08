@@ -18,6 +18,12 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"start": &schema.Schema{
+				Type:     schema.TypeBool,
+				Default:  true,
+				Optional: true,
+			},
+
 			// Indicates whether the container must be running.
 			//
 			// An assumption is made that configured containers

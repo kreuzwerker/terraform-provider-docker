@@ -262,10 +262,12 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	creationTime = time.Now()
-	options := types.ContainerStartOptions{}
-	if err := client.ContainerStart(context.Background(), retContainer.ID, options); err != nil {
-		return fmt.Errorf("Unable to start container: %s", err)
+	if d.Get("start").(bool) {
+		creationTime = time.Now()
+		options := types.ContainerStartOptions{}
+		if err := client.ContainerStart(context.Background(), retContainer.ID, options); err != nil {
+			return fmt.Errorf("Unable to start container: %s", err)
+		}
 	}
 
 	return resourceDockerContainerRead(d, meta)
