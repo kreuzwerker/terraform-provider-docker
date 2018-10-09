@@ -3,6 +3,10 @@
 IMPROVEMENTS
 * Add support for running tests on Windows [GH-54] and ([#90](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
 
+BUG FIXES
+* Fixes issue with internal and external ports on containers [GH-8] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
+* Fixes `tfstate` having correct external port for containers [GH-73]
+
 ## 1.0.2 (September 27, 2018)
 
 BUG FIXES

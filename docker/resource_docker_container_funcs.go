@@ -3,12 +3,17 @@ package docker
 import (
 	"archive/tar"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"context"
+	"math/rand"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -16,7 +21,6 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform/helper/schema"
-	"math/rand"
 )
 
 var (
@@ -284,6 +288,9 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 			return fmt.Errorf("Error inspecting container %s: %s", apiContainer.ID, err)
 		}
 
+		jsonObj, _ := json.MarshalIndent(container, "", "\t")
+		log.Printf("[DEBUG] Docker container inspect: %s", jsonObj)
+
 		if container.State.Running ||
 			!container.State.Running && !d.Get("must_run").(bool) {
 			break
@@ -319,12 +326,16 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		d.Set("ip_prefix_length", container.NetworkSettings.IPPrefixLen)
 		d.Set("gateway", container.NetworkSettings.Gateway)
 		d.Set("bridge", container.NetworkSettings.Bridge)
+		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+			log.Printf("[WARN] failed to set ports from API: %s", err)
+		}
 	}
 
 	return nil
 }
 
 func resourceDockerContainerUpdate(d *schema.ResourceData, meta interface{}) error {
+	// TODO call resourceDockerContainerRead here
 	return nil
 }
 
@@ -354,6 +365,28 @@ func resourceDockerContainerDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
+// TODO extract to structures_container.go
+func flattenContainerPorts(in nat.PortMap) *schema.Set {
+	var out = make([]interface{}, 0)
+	for port, portBindings := range in {
+		m := make(map[string]interface{})
+		for _, portBinding := range portBindings {
+			portProtocolSplit := strings.Split(string(port), "/")
+			convertedInternal, _ := strconv.Atoi(portProtocolSplit[0])
+			convertedExternal, _ := strconv.Atoi(portBinding.HostPort)
+			m["internal"] = convertedInternal
+			m["external"] = convertedExternal
+			m["ip"] = portBinding.HostIP
+			m["protocol"] = portProtocolSplit[1]
+			out = append(out, m)
+		}
+	}
+	portsSpecResource := resourceDockerContainer().Schema["ports"].Elem.(*schema.Resource)
+	f := schema.HashResource(portsSpecResource)
+	return schema.NewSet(f, out)
+}
+
+// TODO move to separate flattener file
 func stringListToStringSlice(stringList []interface{}) []string {
 	ret := []string{}
 	for _, v := range stringList {
@@ -424,18 +457,19 @@ func portSetToDockerPorts(ports *schema.Set) (map[nat.Port]struct{}, map[nat.Por
 		exposedPort := nat.Port(strconv.Itoa(internal) + "/" + protocol)
 		retExposedPorts[exposedPort] = struct{}{}
 
-		external, extOk := port["external"].(int)
-		ip, ipOk := port["ip"].(string)
+		portBinding := nat.PortBinding{}
 
+		external, extOk := port["external"].(int)
 		if extOk {
-			portBinding := nat.PortBinding{
-				HostPort: strconv.Itoa(external),
-			}
-			if ipOk {
-				portBinding.HostIP = ip
-			}
-			retPortBindings[exposedPort] = append(retPortBindings[exposedPort], portBinding)
+			portBinding.HostPort = strconv.Itoa(external)
 		}
+
+		ip, ipOk := port["ip"].(string)
+		if ipOk {
+			portBinding.HostIP = ip
+		}
+
+		retPortBindings[exposedPort] = append(retPortBindings[exposedPort], portBinding)
 	}
 
 	return retExposedPorts, retPortBindings

@@ -122,8 +122,8 @@ the port mappings of the container. Each `ports` block supports
 the following:
 
 * `internal` - (Required, int) Port within the container.
-* `external` - (Required, int) Port exposed out of the container.
-* `ip` - (Optional, string) IP address/mask that can access this port.
+* `external` - (Optional, int) Port exposed out of the container, defaults to `32768`.
+* `ip` - (Optional, string) IP address/mask that can access this port, default to `0.0.0.0`
 * `protocol` - (Optional, string) Protocol that can be used over this port,
   defaults to TCP.
 
