@@ -190,6 +190,13 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.NetworkMode = container.NetworkMode(v.(string))
 	}
 
+	if v, ok := d.GetOk("userns_mode"); ok {
+		hostConfig.UsernsMode = container.UsernsMode(v.(string))
+	}
+	if v, ok := d.GetOk("pid_mode"); ok {
+		hostConfig.PidMode = container.PidMode(v.(string))
+	}
+
 	var retContainer container.ContainerCreateCreatedBody
 
 	if retContainer, err = client.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, d.Get("name").(string)); err != nil {

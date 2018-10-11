@@ -411,6 +411,17 @@ func resourceDockerContainer() *schema.Resource {
 				Set:      schema.HashString,
 			},
 
+			"pid_mode": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+			"userns_mode": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"upload": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,

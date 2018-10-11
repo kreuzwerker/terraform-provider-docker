@@ -249,6 +249,13 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have a correct nofile soft limit")
 		}
 
+		if c.HostConfig.PidMode != "host" {
+			return fmt.Errorf("Container doesn't have a correct pid mode")
+		}
+		if c.HostConfig.UsernsMode != "testuser:231072:65536" {
+			return fmt.Errorf("Container doesn't have a correct userns mode")
+		}
+
 		return nil
 	}
 
@@ -593,6 +600,9 @@ resource "docker_container" "foo" {
 		hard = 262144
 		soft = 200000
 	}
+
+	pid_mode 		= "host"
+	userns_mode = "testuser:231072:65536"
 }
 
 resource "docker_network" "test_network" {

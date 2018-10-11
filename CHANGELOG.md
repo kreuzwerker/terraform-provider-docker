@@ -2,6 +2,7 @@
 
 IMPROVEMENTS
 * Add support for running tests on Windows [GH-54] and ([#90](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
+* Add options for PID and user namespace mode [GH-88] and ([#96](https://github.com/terraform-providers/terraform-provider-docker/pull/96))
 
 BUG FIXES
 * Fixes issue with internal and external ports on containers [GH-8] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
