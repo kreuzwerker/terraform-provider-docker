@@ -125,6 +125,22 @@ func TestAccDockerImage_data_private(t *testing.T) {
 	})
 }
 
+func TestAccDockerImage_sha265(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDockerImageDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAddDockerImageWithSHA256RepoDigest,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 func testAccDockerImageDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "docker_image" {
@@ -195,5 +211,11 @@ resource "docker_image" "foo_private" {
 	name = "${data.docker_registry_image.foo_private.name}"
 	keep_locally = true
 	pull_triggers = ["${data.docker_registry_image.foo_private.sha256_digest}"]
+}
+`
+
+const testAddDockerImageWithSHA256RepoDigest = `
+resource "docker_image" "foobar" {
+	name = "stocard/gotthard@sha256:ed752380c07940c651b46c97ca2101034b3be112f4d86198900aa6141f37fe7b"
 }
 `

@@ -43,7 +43,7 @@ resource "docker_image" "ubuntu" {
 
 The following arguments are supported:
 
-* `name` - (Required, string) The name of the Docker image, including any tags.
+* `name` - (Required, string) The name of the Docker image, including any tags or SHA256 repo digests.
 * `keep_locally` - (Optional, boolean) If true, then the Docker image won't be
   deleted on destroy operation. If this is false, it will delete the image from
   the docker local storage on destroy operation.

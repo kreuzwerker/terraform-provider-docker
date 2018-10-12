@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -120,12 +121,15 @@ func fetchLocalImages(data *Data, client *client.Client) error {
 
 	// Docker uses different nomenclatures in different places...sometimes a short
 	// ID, sometimes long, etc. So we store both in the map so we can always find
-	// the same image object. We store the tags, too.
+	// the same image object. We store the tags and digests, too.
 	for i, image := range images {
 		data.DockerImages[image.ID[:12]] = &images[i]
 		data.DockerImages[image.ID] = &images[i]
 		for _, repotag := range image.RepoTags {
 			data.DockerImages[repotag] = &images[i]
+		}
+		for _, repodigest := range image.RepoDigests {
+			data.DockerImages[repodigest] = &images[i]
 		}
 	}
 

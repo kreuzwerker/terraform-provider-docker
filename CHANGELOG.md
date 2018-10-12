@@ -7,6 +7,7 @@ IMPROVEMENTS
 BUG FIXES
 * Fixes issue with internal and external ports on containers [GH-8] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
 * Fixes `tfstate` having correct external port for containers [GH-73]
+* Fixes that a `docker_image` can be pulled with its SHA256 tag/repo digest [GH-79]
 
 ## 1.0.2 (September 27, 2018)
 
