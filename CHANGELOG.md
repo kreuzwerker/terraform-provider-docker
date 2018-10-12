@@ -1,13 +1,13 @@
-## 1.0.3 (Unreleased)
+## 1.0.3 (October 12, 2018)
 
 IMPROVEMENTS
-* Add support for running tests on Windows [GH-54] and ([#90](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
-* Add options for PID and user namespace mode [GH-88] and ([#96](https://github.com/terraform-providers/terraform-provider-docker/pull/96))
+* Add support for running tests on Windows [[#54](https://github.com/terraform-providers/terraform-provider-docker/issues/54)] and ([#90](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
+* Add options for PID and user namespace mode [[#88](https://github.com/terraform-providers/terraform-provider-docker/issues/88)] and ([#96](https://github.com/terraform-providers/terraform-provider-docker/pull/96))
 
 BUG FIXES
-* Fixes issue with internal and external ports on containers [GH-8] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/89))
-* Fixes `tfstate` having correct external port for containers [GH-73] and ([#95](https://github.com/terraform-providers/terraform-provider-docker/pull/95))
-* Fixes that a `docker_image` can be pulled with its SHA256 tag/repo digest [GH-79] and ([#97](https://github.com/terraform-providers/terraform-provider-docker/pull/97))
+* Fixes issue with internal and external ports on containers [[#8](https://github.com/terraform-providers/terraform-provider-docker/issues/8)] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/89))
+* Fixes `tfstate` having correct external port for containers [[#73](https://github.com/terraform-providers/terraform-provider-docker/issues/73)] and ([#95](https://github.com/terraform-providers/terraform-provider-docker/pull/95))
+* Fixes that a `docker_image` can be pulled with its SHA256 tag/repo digest [[#79](https://github.com/terraform-providers/terraform-provider-docker/issues/79)] and ([#97](https://github.com/terraform-providers/terraform-provider-docker/pull/97))
 
 ## 1.0.2 (September 27, 2018)
 
