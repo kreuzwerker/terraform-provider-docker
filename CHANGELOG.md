@@ -5,9 +5,9 @@ IMPROVEMENTS
 * Add options for PID and user namespace mode [GH-88] and ([#96](https://github.com/terraform-providers/terraform-provider-docker/pull/96))
 
 BUG FIXES
-* Fixes issue with internal and external ports on containers [GH-8] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
-* Fixes `tfstate` having correct external port for containers [GH-73]
-* Fixes that a `docker_image` can be pulled with its SHA256 tag/repo digest [GH-79]
+* Fixes issue with internal and external ports on containers [GH-8] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/89))
+* Fixes `tfstate` having correct external port for containers [GH-73] and ([#95](https://github.com/terraform-providers/terraform-provider-docker/pull/95))
+* Fixes that a `docker_image` can be pulled with its SHA256 tag/repo digest [GH-79] and ([#97](https://github.com/terraform-providers/terraform-provider-docker/pull/97))
 
 ## 1.0.2 (September 27, 2018)
 
