@@ -75,7 +75,7 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	portBindings := map[nat.Port][]nat.PortBinding{}
 
 	if v, ok := d.GetOk("ports"); ok {
-		exposedPorts, portBindings = portSetToDockerPorts(v.(*schema.Set))
+		exposedPorts, portBindings = portSetToDockerPorts(v.([]interface{}))
 	}
 	if len(exposedPorts) != 0 {
 		config.ExposedPorts = exposedPorts
@@ -373,7 +373,7 @@ func resourceDockerContainerDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // TODO extract to structures_container.go
-func flattenContainerPorts(in nat.PortMap) *schema.Set {
+func flattenContainerPorts(in nat.PortMap) []interface{} {
 	var out = make([]interface{}, 0)
 	for port, portBindings := range in {
 		m := make(map[string]interface{})
@@ -388,9 +388,7 @@ func flattenContainerPorts(in nat.PortMap) *schema.Set {
 			out = append(out, m)
 		}
 	}
-	portsSpecResource := resourceDockerContainer().Schema["ports"].Elem.(*schema.Resource)
-	f := schema.HashResource(portsSpecResource)
-	return schema.NewSet(f, out)
+	return out
 }
 
 // TODO move to separate flattener file
@@ -452,11 +450,11 @@ func fetchDockerContainer(ID string, client *client.Client) (*types.Container, e
 	return nil, nil
 }
 
-func portSetToDockerPorts(ports *schema.Set) (map[nat.Port]struct{}, map[nat.Port][]nat.PortBinding) {
+func portSetToDockerPorts(ports []interface{}) (map[nat.Port]struct{}, map[nat.Port][]nat.PortBinding) {
 	retExposedPorts := map[nat.Port]struct{}{}
 	retPortBindings := map[nat.Port][]nat.PortBinding{}
 
-	for _, portInt := range ports.List() {
+	for _, portInt := range ports {
 		port := portInt.(map[string]interface{})
 		internal := port["internal"].(int)
 		protocol := port["protocol"].(string)

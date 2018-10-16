@@ -124,10 +124,10 @@ the port mappings of the container. Each `ports` block supports
 the following:
 
 * `internal` - (Required, int) Port within the container.
-* `external` - (Optional, int) Port exposed out of the container, defaults to `32768`.
+* `external` - (Optional, int) Port exposed out of the container. If not given a free random port `>= 32768` will be used.
 * `ip` - (Optional, string) IP address/mask that can access this port, default to `0.0.0.0`
 * `protocol` - (Optional, string) Protocol that can be used over this port,
-  defaults to TCP.
+  defaults to `tcp`.
 
 <a id="extra_hosts"></a>
 ### Extra Hosts

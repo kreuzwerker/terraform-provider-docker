@@ -1,4 +1,8 @@
 ## 1.0.4 (Unreleased)
+
+BUG FIXES
+* Support and fix for random external ports for containers [GH-102] and ([103](https://github.com/terraform-providers/terraform-provider-docker/pull/103))
+
 ## 1.0.3 (October 12, 2018)
 
 IMPROVEMENTS

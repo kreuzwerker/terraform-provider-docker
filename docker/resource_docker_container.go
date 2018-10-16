@@ -192,7 +192,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"ports": &schema.Schema{
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
@@ -205,8 +205,8 @@ func resourceDockerContainer() *schema.Resource {
 
 						"external": &schema.Schema{
 							Type:     schema.TypeInt,
-							Default:  "32678",
 							Optional: true,
+							Computed: true,
 							ForceNew: true,
 						},
 
