@@ -25,6 +25,11 @@ func resourceDockerVolume() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
+			"labels": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+			},
 			"driver": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -52,6 +57,9 @@ func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 
 	if v, ok := d.GetOk("name"); ok {
 		createOpts.Name = v.(string)
+	}
+	if v, ok := d.GetOk("labels"); ok {
+		createOpts.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 	if v, ok := d.GetOk("driver"); ok {
 		createOpts.Driver = v.(string)

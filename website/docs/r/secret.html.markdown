@@ -55,7 +55,7 @@ The following arguments are supported:
 
 * `name` - (Required, string) The name of the Docker secret.
 * `data` - (Required, string) The base64 encoded data of the secret.
-
+* `labels` - (Optional, map of string/string key/value pairs) User-defined key/value metadata.
 
 ## Attributes Reference
 

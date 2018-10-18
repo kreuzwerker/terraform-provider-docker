@@ -211,6 +211,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
 		}
 
+		if err := client.NetworkDisconnect(context.Background(), "bridge", retContainer.ID, false); err != nil {
+			return fmt.Errorf("Unable to disconnect the default network: %s", err)
+		}
+
 		for _, rawNetwork := range v.(*schema.Set).List() {
 			networkID := rawNetwork.(string)
 			if err := client.NetworkConnect(context.Background(), networkID, retContainer.ID, endpointConfig); err != nil {

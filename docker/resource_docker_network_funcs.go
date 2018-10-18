@@ -17,6 +17,9 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 	client := meta.(*ProviderConfig).DockerClient
 
 	createOpts := types.NetworkCreate{}
+	if v, ok := d.GetOk("labels"); ok {
+		createOpts.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+	}
 	if v, ok := d.GetOk("check_duplicate"); ok {
 		createOpts.CheckDuplicate = v.(bool)
 	}
@@ -28,6 +31,15 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 	}
 	if v, ok := d.GetOk("internal"); ok {
 		createOpts.Internal = v.(bool)
+	}
+	if v, ok := d.GetOk("attachable"); ok {
+		createOpts.Attachable = v.(bool)
+	}
+	if v, ok := d.GetOk("ingress"); ok {
+		createOpts.Ingress = v.(bool)
+	}
+	if v, ok := d.GetOk("ipv6"); ok {
+		createOpts.EnableIPv6 = v.(bool)
 	}
 
 	ipamOpts := &network.IPAM{}
@@ -128,6 +140,9 @@ func resourceDockerNetworkReadRefreshFunc(
 		log.Printf("[DEBUG] Docker network inspect: %s", jsonObj)
 
 		d.Set("internal", retNetwork.Internal)
+		d.Set("attachable", retNetwork.Attachable)
+		d.Set("ingress", retNetwork.Ingress)
+		d.Set("ipv6", retNetwork.EnableIPv6)
 		d.Set("driver", retNetwork.Driver)
 		d.Set("scope", retNetwork.Scope)
 		if retNetwork.Scope == "overlay" {

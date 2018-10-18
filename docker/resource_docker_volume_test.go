@@ -57,3 +57,41 @@ resource "docker_volume" "foo" {
 	name = "testAccDockerVolume_basic"
 }
 `
+
+func TestAccDockerVolume_labels(t *testing.T) {
+	var v types.Volume
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerVolumeLabelsConfig,
+				Check: resource.ComposeTestCheckFunc(
+					checkDockerVolume("docker_volume.foo", &v),
+					testAccVolumeLabel(&v, "com.docker.compose.project", "test"),
+					testAccVolumeLabel(&v, "com.docker.compose.volume", "foo"),
+				),
+			},
+		},
+	})
+}
+
+func testAccVolumeLabel(volume *types.Volume, name string, value string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if volume.Labels[name] != value {
+			return fmt.Errorf("Bad value for label '%s': %s", name, volume.Labels[name])
+		}
+		return nil
+	}
+}
+
+const testAccDockerVolumeLabelsConfig = `
+resource "docker_volume" "foo" {
+  name = "test_foo"
+  labels {
+    "com.docker.compose.project" = "test"
+    "com.docker.compose.volume"  = "foo"
+  }
+}
+`

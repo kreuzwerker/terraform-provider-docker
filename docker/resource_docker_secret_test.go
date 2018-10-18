@@ -30,6 +30,7 @@ func TestAccDockerSecret_basic(t *testing.T) {
 		},
 	})
 }
+
 func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -66,6 +67,32 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("docker_secret.foo", "data", "U3VuIDI1IE1hciAyMDE4IDE0OjUzOjIxIENFU1QK"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerSecret_labels(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testCheckDockerSecretDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: `
+				resource "docker_secret" "foo" {
+					name = "foo-secret"
+					data = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
+					labels {
+						"test1" = "foo"
+						"test2" = "bar"
+					}
+				}
+				`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_secret.foo", "labels.test1", "foo"),
+					resource.TestCheckResourceAttr("docker_secret.foo", "labels.test2", "bar"),
 				),
 			},
 		},

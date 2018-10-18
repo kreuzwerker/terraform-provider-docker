@@ -22,6 +22,12 @@ func resourceDockerNetwork() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"labels": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"check_duplicate": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -46,6 +52,24 @@ func resourceDockerNetwork() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
+				ForceNew: true,
+			},
+
+			"attachable": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"ingress": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"ipv6": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
 				ForceNew: true,
 			},
 

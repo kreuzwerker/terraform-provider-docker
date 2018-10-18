@@ -30,6 +30,7 @@ The following arguments are supported:
 
 * `name` - (Optional, string) The name of the Docker volume (generated if not
   provided).
+* `labels` - (Optional, map of string/string key/value pairs) User-defined key/value metadata.
 * `driver` - (Optional, string) Driver type for the volume (defaults to local).
 * `driver_opts` - (Optional, map of strings) Options specific to the driver.
 

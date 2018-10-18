@@ -31,6 +31,12 @@ func resourceDockerSecret() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validateStringIsBase64Encoded(),
 			},
+
+			"labels": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -44,6 +50,10 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 			Name: d.Get("name").(string),
 		},
 		Data: data,
+	}
+
+	if v, ok := d.GetOk("labels"); ok {
+		secretSpec.Annotations.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
 	secret, err := client.SecretCreate(context.Background(), secretSpec)

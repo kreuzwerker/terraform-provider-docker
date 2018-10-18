@@ -95,6 +95,78 @@ func testAccNetworkInternal(network *types.NetworkResource, internal bool) resou
 const testAccDockerNetworkInternalConfig = `
 resource "docker_network" "foobar" {
   name = "foobar"
-  internal = "true"
+  internal = true
+}
+`
+
+func TestAccDockerNetwork_attachable(t *testing.T) {
+	var n types.NetworkResource
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerNetworkAttachableConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccNetwork("docker_network.foobar", &n),
+					testAccNetworkAttachable(&n, true),
+				),
+			},
+		},
+	})
+}
+
+func testAccNetworkAttachable(network *types.NetworkResource, attachable bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if network.Attachable != attachable {
+			return fmt.Errorf("Bad value for attribute 'attachable': %t", network.Attachable)
+		}
+		return nil
+	}
+}
+
+const testAccDockerNetworkAttachableConfig = `
+resource "docker_network" "foobar" {
+  name = "foobar"
+  attachable = true
+}
+`
+
+func TestAccDockerNetwork_labels(t *testing.T) {
+	var n types.NetworkResource
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerNetworkLabelsConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccNetwork("docker_network.foobar", &n),
+					testAccNetworkLabel(&n, "com.docker.compose.network", "foobar"),
+					testAccNetworkLabel(&n, "com.docker.compose.project", "test"),
+				),
+			},
+		},
+	})
+}
+
+func testAccNetworkLabel(network *types.NetworkResource, name string, value string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if network.Labels[name] != value {
+			return fmt.Errorf("Bad value for label '%s': %s", name, network.Labels[name])
+		}
+		return nil
+	}
+}
+
+const testAccDockerNetworkLabelsConfig = `
+resource "docker_network" "foobar" {
+  name = "test_foobar"
+  labels {
+    "com.docker.compose.network" = "foobar"
+    "com.docker.compose.project" = "test"
+  }
 }
 `

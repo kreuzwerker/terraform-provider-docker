@@ -398,9 +398,10 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"network_mode": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateStringMatchesPattern(`^(bridge|host|none|container:.+|service:.+)$`),
 			},
 
 			"networks": &schema.Schema{
