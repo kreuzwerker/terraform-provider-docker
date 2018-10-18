@@ -1,4 +1,12 @@
-## 1.0.5 (Unreleased)
+## 1.1.0 (Unreleased)
+
+IMPROVEMENTS
+* Adds labels for `network`, `volume` and `secret` to support docker stacks. [[92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)] 
+
+BUG FIXES
+* Fixes that new network were appended to the default bridge [GH-10]
+* Fixes that container resource returns a non-existent IP address [GH-36]
+
 ## 1.0.4 (October 17, 2018)
 
 BUG FIXES
