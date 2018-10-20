@@ -865,7 +865,7 @@ resource "docker_container" "foo" {
 	image = "${docker_image.foo.latest}"
 	
 	ports {
-		internal = "80"
+		internal = 80
 	}
 }
 `
@@ -882,10 +882,10 @@ resource "docker_container" "foo" {
 	
 	ports = [
 		{
-			internal = "80"
+			internal = 80
 		},
 		{
-			internal = "81"
+			internal = 81
 		}
 	]
 }
@@ -901,8 +901,8 @@ resource "docker_container" "foo" {
 	image = "${docker_image.foo.latest}"
 
 	ports {
-		internal = "80"
-		external = "32787"
+		internal = 80
+		external = 32787
 	}
 }
 `
@@ -918,12 +918,12 @@ resource "docker_container" "foo" {
 
 	ports = [
 		{
-			internal = "80"
-			external = "32787"
+			internal = 80
+			external = 32787
 		},
 		{
-			internal = "81"
-			external = "32788"
+			internal = 81
+			external = 32788
 		}
 	] 
 }
