@@ -7,13 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
 	"context"
-	"math/rand"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -45,9 +44,12 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	config := &container.Config{
-		Image:      image,
-		Hostname:   d.Get("hostname").(string),
-		Domainname: d.Get("domainname").(string),
+		Image:        image,
+		Hostname:     d.Get("hostname").(string),
+		Domainname:   d.Get("domainname").(string),
+		AttachStdin:  d.Get("attach").(bool),
+		AttachStdout: d.Get("attach").(bool),
+		AttachStderr: d.Get("attach").(bool),
 	}
 
 	if v, ok := d.GetOk("env"); ok {
@@ -115,6 +117,7 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
+		AutoRemove: d.Get("rm").(bool),
 		LogConfig: container.LogConfig{
 			Type: d.Get("log_driver").(string),
 		},
@@ -264,10 +267,21 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
+	ctx := context.Background()
 	creationTime = time.Now()
-	options := types.ContainerStartOptions{}
-	if err := client.ContainerStart(context.Background(), retContainer.ID, options); err != nil {
+	if err := client.ContainerStart(ctx, retContainer.ID, types.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("Unable to start container: %s", err)
+	}
+
+	if d.Get("attach").(bool) {
+		statusCh, errCh := client.ContainerWait(ctx, retContainer.ID, container.WaitConditionNotRunning)
+		select {
+		case err := <-errCh:
+			if err != nil {
+				return fmt.Errorf("Unable to wait container end of execution: %s", err)
+			}
+		case <-statusCh:
+		}
 	}
 
 	return resourceDockerContainerRead(d, meta)
@@ -333,6 +347,10 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Container %s failed to be in running state", apiContainer.ID)
 	}
 
+	if !container.State.Running {
+		d.Set("exit_code", container.State.ExitCode)
+	}
+
 	// Read Network Settings
 	if container.NetworkSettings != nil {
 		// TODO remove deprecated attributes in next major
@@ -369,13 +387,20 @@ func resourceDockerContainerUpdate(d *schema.ResourceData, meta interface{}) err
 func resourceDockerContainerDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 
-	// Stop the container before removing if destroy_grace_seconds is defined
-	if d.Get("destroy_grace_seconds").(int) > 0 {
-		mapped := int32(d.Get("destroy_grace_seconds").(int))
-		timeoutInSeconds := rand.Int31n(mapped)
-		timeout := time.Duration(time.Duration(timeoutInSeconds) * time.Second)
-		if err := client.ContainerStop(context.Background(), d.Id(), &timeout); err != nil {
-			return fmt.Errorf("Error stopping container %s: %s", d.Id(), err)
+	if d.Get("rm").(bool) {
+		d.SetId("")
+		return nil
+	}
+
+	if !d.Get("attach").(bool) {
+		// Stop the container before removing if destroy_grace_seconds is defined
+		if d.Get("destroy_grace_seconds").(int) > 0 {
+			mapped := int32(d.Get("destroy_grace_seconds").(int))
+			timeoutInSeconds := rand.Int31n(mapped)
+			timeout := time.Duration(time.Duration(timeoutInSeconds) * time.Second)
+			if err := client.ContainerStop(context.Background(), d.Id(), &timeout); err != nil {
+				return fmt.Errorf("Error stopping container %s: %s", d.Id(), err)
+			}
 		}
 	}
 

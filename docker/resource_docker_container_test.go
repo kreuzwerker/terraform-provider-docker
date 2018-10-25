@@ -4,9 +4,11 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"github.com/docker/docker/api/types/container"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"context"
 
@@ -680,6 +682,88 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_rm(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if !c.HostConfig.AutoRemove {
+			return fmt.Errorf("Container doesn't have a correct autoremove flag")
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccContainerWaitConditionRemoved("docker_container.foo", &c),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerRmConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "rm", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_attach(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if !c.Config.AttachStdin {
+			return fmt.Errorf("Container doesn't have the correct value to stderr attach flag")
+		}
+		if !c.Config.AttachStdout {
+			return fmt.Errorf("Container doesn't have the correct value to stdout flag")
+		}
+		if !c.Config.AttachStderr {
+			return fmt.Errorf("Container doesn't have the correct value to stderr attach flag")
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerAttachConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+					testCheck,
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_exitcode(t *testing.T) {
+	var c types.ContainerJSON
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerExitCodeConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "exit_code", "123"),
+				),
+			},
+		},
+	})
+}
+
 func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -709,6 +793,107 @@ func testAccContainerRunning(n string, container *types.ContainerJSON) resource.
 		}
 
 		return fmt.Errorf("Container not found: %s", rs.Primary.ID)
+	}
+}
+
+func testAccContainerNotRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+			All: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, c := range containers {
+			if c.ID == rs.Primary.ID {
+				inspected, err := client.ContainerInspect(context.Background(), c.ID)
+				if err != nil {
+					return fmt.Errorf("Container could not be inspected: %s", err)
+				}
+				*container = inspected
+
+				if container.State.Running {
+					return fmt.Errorf("Container is running: %s", rs.Primary.ID)
+				}
+			}
+		}
+
+		return nil
+	}
+}
+
+func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		statusC, errC := client.ContainerWait(ctx, rs.Primary.ID, container.WaitConditionNotRunning)
+
+		select {
+		case err := <-errC:
+			{
+				if err != nil {
+					return fmt.Errorf("Container is still running")
+				}
+			}
+
+		case <-statusC:
+		}
+
+		return nil
+	}
+}
+
+func testAccContainerWaitConditionRemoved(n string, ct *types.ContainerJSON) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		statusC, errC := client.ContainerWait(ctx, rs.Primary.ID, container.WaitConditionRemoved)
+
+		select {
+		case err := <-errC:
+			{
+				if err != nil {
+					return fmt.Errorf("Container has not been removed")
+				}
+			}
+
+		case <-statusC:
+		}
+
+		return nil
 	}
 }
 
@@ -912,7 +1097,7 @@ resource "docker_container" "foo" {
 	image = "${docker_image.foo.latest}"
 	
 	ports {
-		internal = "80"
+		internal = 80
 	}
 }
 `
@@ -929,10 +1114,10 @@ resource "docker_container" "foo" {
 	
 	ports = [
 		{
-			internal = "80"
+			internal = 80
 		},
 		{
-			internal = "81"
+			internal = 81
 		}
 	]
 }
@@ -948,8 +1133,8 @@ resource "docker_container" "foo" {
 	image = "${docker_image.foo.latest}"
 
 	ports {
-		internal = "80"
-		external = "32787"
+		internal = 80
+		external = 32787
 	}
 }
 `
@@ -965,16 +1150,60 @@ resource "docker_container" "foo" {
 
 	ports = [
 		{
-			internal = "80"
-			external = "32787"
+			internal = 80
+			external = 32787
 		},
 		{
-			internal = "81"
-			external = "32788"
+			internal = 81
+			external = 32788
 		}
 	] 
 }
 `
+const testAccDockerContainerRmConfig = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sleep", "15"]
+	rm = true
+}
+`
+
+const testAccDockerContainerAttachConfig = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1 && echo \"test $i\"; done"]
+	attach = true
+	must_run = false
+}
+`
+
+const testAccDockerContainerExitCodeConfig = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sh", "-c", "exit 123"]
+	attach = true
+	must_run = false
+}
+`
+
 const testAccDockerContainer2NetworksConfig = `
 resource "docker_image" "foo" {
   name         = "nginx:latest"
