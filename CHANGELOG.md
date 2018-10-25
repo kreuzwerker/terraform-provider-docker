@@ -1,16 +1,19 @@
 ## 1.1.0 (Unreleased)
 
 IMPROVEMENTS
-* Adds labels for `network`, `volume` and `secret` to support docker stacks. [[92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)] 
+* Adds labels for `network`, `volume` and `secret` to support docker stacks. [[#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)] 
 
 BUG FIXES
 * Fixes that new network were appended to the default bridge [GH-10]
 * Fixes that container resource returns a non-existent IP address [GH-36]
+* Fixes container's ip_address is empty when using custom network [GH-9] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50)]
+* Fixes terraform destroy failing to remove a bridge network [GH-98] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50)]
+
 
 ## 1.0.4 (October 17, 2018)
 
 BUG FIXES
-* Support and fix for random external ports for containers [[#102](https://github.com/terraform-providers/terraform-provider-docker/issues/102)] and ([103](https://github.com/terraform-providers/terraform-provider-docker/pull/103))
+* Support and fix for random external ports for containers [[#102](https://github.com/terraform-providers/terraform-provider-docker/issues/102)] and ([#103](https://github.com/terraform-providers/terraform-provider-docker/pull/103))
 
 ## 1.0.3 (October 12, 2018)
 

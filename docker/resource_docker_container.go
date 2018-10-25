@@ -291,23 +291,51 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"ip_address": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "Use ip_adresses_data instead. This field exposes the data of the container's first network.",
 			},
 
 			"ip_prefix_length": &schema.Schema{
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:       schema.TypeInt,
+				Computed:   true,
+				Deprecated: "Use ip_prefix_length from ip_adresses_data instead. This field exposes the data of the container's first network.",
 			},
 
 			"gateway": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "Use gateway from ip_adresses_data instead. This field exposes the data of the container's first network.",
 			},
 
 			"bridge": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+
+			"network_data": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"network_name": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ip_address": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ip_prefix_length": &schema.Schema{
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"gateway": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
 			},
 
 			"privileged": &schema.Schema{
@@ -398,10 +426,9 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"network_mode": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validateStringMatchesPattern(`^(bridge|host|none|container:.+|service:.+)$`),
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 
 			"networks": &schema.Schema{

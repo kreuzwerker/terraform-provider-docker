@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"encoding/base64"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -275,6 +276,7 @@ func deleteService(serviceID string, d *schema.ResourceData, client *client.Clie
 			destroyGraceSeconds, _ := time.ParseDuration(v.(string))
 			log.Printf("[INFO] Waiting for container: '%s' to exit: max %v", containerID, destroyGraceSeconds)
 			ctx, cancel := context.WithTimeout(context.Background(), destroyGraceSeconds)
+			// TODO why defer? see container_resource with handling return channels! why not remove then wait?
 			defer cancel()
 			exitCode, _ := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
 			log.Printf("[INFO] Container exited with code [%v]: '%s'", exitCode, containerID)
