@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -680,6 +681,48 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_healthcheck(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if !reflect.DeepEqual(c.Config.Healthcheck.Test, []string{"CMD", "/bin/true"}) {
+			return fmt.Errorf("Container doesn't have a correct healthcheck test")
+		}
+
+		if c.Config.Healthcheck.Interval != 30000000000 {
+			return fmt.Errorf("Container doesn't have a correct healthcheck interval")
+		}
+
+		if c.Config.Healthcheck.Timeout != 5000000000 {
+			return fmt.Errorf("Container doesn't have a correct healthcheck timeout")
+		}
+
+		if c.Config.Healthcheck.StartPeriod != 15000000000 {
+			return fmt.Errorf("Container doesn't have a correct healthcheck retries")
+		}
+
+		if c.Config.Healthcheck.Retries != 10 {
+			return fmt.Errorf("Container doesn't have a correct healthcheck retries")
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerHealthcheckConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
 func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -912,7 +955,7 @@ resource "docker_container" "foo" {
 	image = "${docker_image.foo.latest}"
 	
 	ports {
-		internal = "80"
+		internal = 80
 	}
 }
 `
@@ -929,10 +972,10 @@ resource "docker_container" "foo" {
 	
 	ports = [
 		{
-			internal = "80"
+			internal = 80
 		},
 		{
-			internal = "81"
+			internal = 81
 		}
 	]
 }
@@ -948,8 +991,8 @@ resource "docker_container" "foo" {
 	image = "${docker_image.foo.latest}"
 
 	ports {
-		internal = "80"
-		external = "32787"
+		internal = 80
+		external = 32787
 	}
 }
 `
@@ -965,12 +1008,12 @@ resource "docker_container" "foo" {
 
 	ports = [
 		{
-			internal = "80"
-			external = "32787"
+			internal = 80
+			external = 32787
 		},
 		{
-			internal = "81"
-			external = "32788"
+			internal = 81
+			external = 32788
 		}
 	] 
 }
@@ -1003,5 +1046,24 @@ resource "docker_container" "bar" {
   network_mode  = "bridge"
   networks      = ["${docker_network.test_network_2.name}"]
   network_alias = ["tftest-container-foo"]
+}
+`
+const testAccDockerContainerHealthcheckConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+  name  = "tf-test"
+  image = "${docker_image.foo.latest}"
+
+  healthcheck {
+    test         = ["CMD", "/bin/true"]
+    interval     = "30s"
+    timeout      = "5s"
+    start_period = "15s"
+    retries      = 10
+  }
 }
 `
