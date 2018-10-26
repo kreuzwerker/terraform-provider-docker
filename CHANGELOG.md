@@ -2,6 +2,7 @@
 
 IMPROVEMENTS
 * Adds labels for `network`, `volume` and `secret` to support docker stacks. [[#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)] 
+* Adds `rm` and `attach` options to execute short-lived containers [GH-43] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106)]
 
 BUG FIXES
 * Fixes that new network were appended to the default bridge [GH-10]
