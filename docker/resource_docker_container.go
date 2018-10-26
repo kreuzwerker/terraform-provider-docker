@@ -494,6 +494,51 @@ func resourceDockerContainer() *schema.Resource {
 					},
 				},
 			},
+
+			"healthcheck": &schema.Schema{
+				Type:        schema.TypeList,
+				Description: "A test to perform to check that the container is healthy",
+				MaxItems:    1,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"test": &schema.Schema{
+							Type:        schema.TypeList,
+							Description: "The test to perform as list",
+							Required:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"interval": &schema.Schema{
+							Type:         schema.TypeString,
+							Description:  "Time between running the check (ms|s|m|h)",
+							Optional:     true,
+							Default:      "0s",
+							ValidateFunc: validateDurationGeq0(),
+						},
+						"timeout": &schema.Schema{
+							Type:         schema.TypeString,
+							Description:  "Maximum time to allow one check to run (ms|s|m|h)",
+							Optional:     true,
+							Default:      "0s",
+							ValidateFunc: validateDurationGeq0(),
+						},
+						"start_period": &schema.Schema{
+							Type:         schema.TypeString,
+							Description:  "Start period for the container to initialize before counting retries towards unstable (ms|s|m|h)",
+							Optional:     true,
+							Default:      "0s",
+							ValidateFunc: validateDurationGeq0(),
+						},
+						"retries": &schema.Schema{
+							Type:         schema.TypeInt,
+							Description:  "Consecutive failures needed to report unhealthy",
+							Optional:     true,
+							Default:      0,
+							ValidateFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
 		},
 	}
 }

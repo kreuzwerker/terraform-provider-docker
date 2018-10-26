@@ -112,6 +112,30 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		config.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
+	if value, ok := d.GetOk("healthcheck"); ok {
+		config.Healthcheck = &container.HealthConfig{}
+		if len(value.([]interface{})) > 0 {
+			for _, rawHealthCheck := range value.([]interface{}) {
+				rawHealthCheck := rawHealthCheck.(map[string]interface{})
+				if testCommand, ok := rawHealthCheck["test"]; ok {
+					config.Healthcheck.Test = stringListToStringSlice(testCommand.([]interface{}))
+				}
+				if rawInterval, ok := rawHealthCheck["interval"]; ok {
+					config.Healthcheck.Interval, _ = time.ParseDuration(rawInterval.(string))
+				}
+				if rawTimeout, ok := rawHealthCheck["timeout"]; ok {
+					config.Healthcheck.Timeout, _ = time.ParseDuration(rawTimeout.(string))
+				}
+				if rawStartPeriod, ok := rawHealthCheck["start_period"]; ok {
+					config.Healthcheck.StartPeriod, _ = time.ParseDuration(rawStartPeriod.(string))
+				}
+				if rawRetries, ok := rawHealthCheck["retries"]; ok {
+					config.Healthcheck.Retries, _ = rawRetries.(int)
+				}
+			}
+		}
+	}
+
 	hostConfig := &container.HostConfig{
 		Privileged:      d.Get("privileged").(bool),
 		PublishAllPorts: d.Get("publish_all_ports").(bool),
