@@ -4,11 +4,12 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"github.com/docker/docker/api/types/container"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
 
 	"context"
 

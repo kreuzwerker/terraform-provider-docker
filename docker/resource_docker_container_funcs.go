@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"context"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -428,12 +430,37 @@ func resourceDockerContainerDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // TODO extract to structures_container.go
+type byPortAndProtocol []string
+
+func (s byPortAndProtocol) Len() int {
+	return len(s)
+}
+func (s byPortAndProtocol) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s byPortAndProtocol) Less(i, j int) bool {
+	iSplit := strings.Split(string(s[i]), "/")
+	iPort, _ := strconv.Atoi(iSplit[0])
+	jSplit := strings.Split(string(s[j]), "/")
+	jPort, _ := strconv.Atoi(jSplit[0])
+	return iPort < jPort
+}
+
 func flattenContainerPorts(in nat.PortMap) []interface{} {
 	var out = make([]interface{}, 0)
-	for port, portBindings := range in {
+
+	var internalPortKeys []string
+	for portAndProtocolKeys := range in {
+		internalPortKeys = append(internalPortKeys, string(portAndProtocolKeys))
+	}
+	sort.Sort(byPortAndProtocol(internalPortKeys))
+
+	for _, portKey := range internalPortKeys {
 		m := make(map[string]interface{})
+
+		portBindings := in[nat.Port(portKey)]
 		for _, portBinding := range portBindings {
-			portProtocolSplit := strings.Split(string(port), "/")
+			portProtocolSplit := strings.Split(string(portKey), "/")
 			convertedInternal, _ := strconv.Atoi(portProtocolSplit[0])
 			convertedExternal, _ := strconv.Atoi(portBinding.HostPort)
 			m["internal"] = convertedInternal
