@@ -293,14 +293,16 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	ctx := context.Background()
-	creationTime = time.Now()
-	if err := client.ContainerStart(ctx, retContainer.ID, types.ContainerStartOptions{}); err != nil {
-		return fmt.Errorf("Unable to start container: %s", err)
+	if d.Get("start").(bool) {
+		creationTime = time.Now()
+		options := types.ContainerStartOptions{}
+		if err := client.ContainerStart(context.Background(), retContainer.ID, options); err != nil {
+			return fmt.Errorf("Unable to start container: %s", err)
+		}
 	}
 
 	if d.Get("attach").(bool) {
-		statusCh, errCh := client.ContainerWait(ctx, retContainer.ID, container.WaitConditionNotRunning)
+		statusCh, errCh := client.ContainerWait(context.Background(), retContainer.ID, container.WaitConditionNotRunning)
 		select {
 		case err := <-errCh:
 			if err != nil {
@@ -342,7 +344,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		}
 
 		jsonObj, _ := json.MarshalIndent(container, "", "\t")
-		log.Printf("[INFO] Docker container inspect: %s", jsonObj)
+		log.Printf("[DEBUG] Docker container inspect: %s", jsonObj)
 
 		if container.State.Running ||
 			!container.State.Running && !d.Get("must_run").(bool) {
