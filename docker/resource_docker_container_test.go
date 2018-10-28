@@ -717,59 +717,6 @@ func TestAccDockerContainer_rm(t *testing.T) {
 	})
 }
 
-func TestAccDockerContainer_attach(t *testing.T) {
-	var c types.ContainerJSON
-
-	testCheck := func(*terraform.State) error {
-		if !c.Config.AttachStdin {
-			return fmt.Errorf("Container doesn't have the correct value to stdin attach flag")
-		}
-		if !c.Config.AttachStdout {
-			return fmt.Errorf("Container doesn't have the correct value to stdout flag")
-		}
-		if !c.Config.AttachStderr {
-			return fmt.Errorf("Container doesn't have the correct value to stderr attach flag")
-		}
-
-		return nil
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccDockerContainerAttachConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccContainerNotRunning("docker_container.foo", &c),
-					testCheck,
-					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
-					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccDockerContainer_exitcode(t *testing.T) {
-	var c types.ContainerJSON
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccDockerContainerExitCodeConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
-					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
-					resource.TestCheckResourceAttr("docker_container.foo", "exit_code", "123"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccDockerContainer_healthcheck(t *testing.T) {
 	var c types.ContainerJSON
 	testCheck := func(*terraform.State) error {
@@ -821,6 +768,67 @@ func TestAccDockerContainer_nostart(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_attach(t *testing.T) {
+	var c types.ContainerJSON
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerAttachConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "must_run", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_logs(t *testing.T) {
+	var c types.ContainerJSON
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerLogsConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "logs", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "must_run", "false"),
+					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00021\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00022\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00023\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00024\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00025\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00026\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00027\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00028\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00029\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u000310\n"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_exitcode(t *testing.T) {
+	var c types.ContainerJSON
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccDockerContainerExitCodeConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "exit_code", "123"),
+				),
+			},
+		},
+	})
+}
+
 func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -859,9 +867,11 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
+
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No ID is set")
 		}
+
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
 			All: true,
@@ -869,6 +879,7 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 		if err != nil {
 			return err
 		}
+
 		for _, c := range containers {
 			if c.ID == rs.Primary.ID {
 				inspected, err := client.ContainerInspect(context.Background(), c.ID)
@@ -882,6 +893,7 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 				}
 			}
 		}
+
 		return nil
 	}
 }
@@ -1214,49 +1226,6 @@ resource "docker_container" "foo" {
 	] 
 }
 `
-const testAccDockerContainerRmConfig = `
-resource "docker_image" "foo" {
-	name = "busybox:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = "${docker_image.foo.latest}"
-	command = ["/bin/sleep", "15"]
-	rm = true
-}
-`
-
-const testAccDockerContainerAttachConfig = `
-resource "docker_image" "foo" {
-  name         = "busybox:latest"
-  keep_locally = true
-}
-
-resource "docker_container" "foo" {
-  name     = "tf-test"
-  image    = "${docker_image.foo.latest}"
-  command  = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1 && echo \"test $i\"; done"]
-  attach   = true
-  must_run = false
-}
-`
-
-const testAccDockerContainerExitCodeConfig = `
-resource "docker_image" "foo" {
-	name = "busybox:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = "${docker_image.foo.latest}"
-	command = ["/bin/sh", "-c", "exit 123"]
-	attach = true
-	must_run = false
-}
-`
 
 const testAccDockerContainer2NetworksConfig = `
 resource "docker_image" "foo" {
@@ -1288,6 +1257,7 @@ resource "docker_container" "bar" {
   network_alias = ["tftest-container-foo"]
 }
 `
+
 const testAccDockerContainerHealthcheckConfig = `
 resource "docker_image" "foo" {
 	name = "nginx:latest"
@@ -1318,5 +1288,65 @@ resource "docker_container" "foo" {
   image    = "nginx:latest"
   start    = false
   must_run = false
+}
+`
+
+const testAccDockerContainerRmConfig = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sleep", "15"]
+	rm = true
+}
+`
+
+const testAccDockerContainerAttachConfig = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1; done"]
+	attach = true
+	must_run = false
+}
+`
+
+const testAccDockerContainerLogsConfig = `
+resource "docker_image" "foo" {
+name = "busybox:latest"
+keep_locally = true
+}
+
+resource "docker_container" "foo" {
+name = "tf-test"
+image = "${docker_image.foo.latest}"
+command = ["/bin/sh", "-c", "for i in $(seq 1 10); do echo \"$i\"; done"]
+attach = true
+logs = true
+must_run = false
+}
+`
+
+const testAccDockerContainerExitCodeConfig = `
+resource "docker_image" "foo" {
+name = "busybox:latest"
+keep_locally = true
+}
+
+resource "docker_container" "foo" {
+name = "tf-test"
+image = "${docker_image.foo.latest}"
+command = ["/bin/sh", "-c", "exit 123"]
+attach = true
+must_run = false
 }
 `
