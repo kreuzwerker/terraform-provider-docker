@@ -69,8 +69,8 @@ data "docker_registry_image" "quay" {
 ```
 
 -> **Note**
-When passing in a config file make sure every repo in the `auths` object has
-an `auth` string. If not you'll get an `ErrCannotParseDockercfg` by the underlying `go-dockerclient`. On OSX the `auth` base64 string is stored in the `osxkeychain`, but reading from there is not yet supported. See [go-dockerclient#677](https://github.com/fsouza/go-dockerclient/issues/677) for details. 
+When passing in a config file make sure every repo in the `auths` object should have
+a corresponding `auth` string. 
 
 In this case, either use `username` and `password` directly or set the enviroment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS` or add the string manually via
 
