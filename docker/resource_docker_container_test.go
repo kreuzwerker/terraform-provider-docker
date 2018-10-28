@@ -212,6 +212,10 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container has wrong cpu shares setting: %d", c.HostConfig.CPUShares)
 		}
 
+		if c.HostConfig.CpusetCpus != "0-1" {
+			return fmt.Errorf("Container has wrong cpu set setting: %s", c.HostConfig.CpusetCpus)
+		}
+
 		if len(c.HostConfig.DNS) != 1 {
 			return fmt.Errorf("Container does not have the correct number of dns entries: %d", len(c.HostConfig.DNS))
 		}
@@ -1048,6 +1052,7 @@ resource "docker_container" "foo" {
 	memory = 512
 	memory_swap = 2048
 	cpu_shares = 32
+	cpu_set = "0-1"
 
 	capabilities {
 		add= ["ALL"]

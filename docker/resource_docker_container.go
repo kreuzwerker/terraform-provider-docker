@@ -426,6 +426,13 @@ func resourceDockerContainer() *schema.Resource {
 				ValidateFunc: validateIntegerGeqThan(0),
 			},
 
+			"cpu_set": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateStringMatchesPattern(`^\d+([,-]\d+)*$`),
+			},
+
 			"log_driver": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
