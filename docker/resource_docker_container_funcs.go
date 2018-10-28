@@ -2,6 +2,7 @@ package docker
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -46,12 +47,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	config := &container.Config{
-		Image:        image,
-		Hostname:     d.Get("hostname").(string),
-		Domainname:   d.Get("domainname").(string),
-		AttachStdin:  d.Get("attach").(bool),
-		AttachStdout: d.Get("attach").(bool),
-		AttachStderr: d.Get("attach").(bool),
+		Image:      image,
+		Hostname:   d.Get("hostname").(string),
+		Domainname: d.Get("domainname").(string),
 	}
 
 	if v, ok := d.GetOk("env"); ok {
@@ -306,13 +304,47 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if d.Get("attach").(bool) {
-		statusCh, errCh := client.ContainerWait(context.Background(), retContainer.ID, container.WaitConditionNotRunning)
+		var b bytes.Buffer
+
+		ctx := context.Background()
+
+		if d.Get("logs").(bool) {
+			go func() {
+				reader, err := client.ContainerLogs(ctx, retContainer.ID, types.ContainerLogsOptions{
+					ShowStdout: true,
+					ShowStderr: true,
+					Follow:     true,
+					Timestamps: false,
+				})
+				if err != nil {
+					log.Panic(err)
+				}
+				defer reader.Close()
+
+				scanner := bufio.NewScanner(reader)
+				for scanner.Scan() {
+					line := scanner.Text()
+					b.WriteString(line)
+					b.WriteString("\n")
+
+					log.Printf("[DEBUG] container logs: %s", line)
+				}
+				if err := scanner.Err(); err != nil {
+					log.Fatal(err)
+				}
+			}()
+		}
+
+		attachCh, errAttachCh := client.ContainerWait(ctx, retContainer.ID, container.WaitConditionNotRunning)
 		select {
-		case err := <-errCh:
+		case err := <-errAttachCh:
 			if err != nil {
 				return fmt.Errorf("Unable to wait container end of execution: %s", err)
 			}
-		case <-statusCh:
+		case <-attachCh:
+			if d.Get("logs").(bool) {
+				d.Set("container_logs", b.String())
+			}
 		}
 	}
 
