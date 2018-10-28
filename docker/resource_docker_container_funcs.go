@@ -210,6 +210,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.CPUShares = int64(v.(int))
 	}
 
+	if v, ok := d.GetOk("cpuset"); ok {
+		hostConfig.CPUSetCPUs = v.(string)
+	}
+
 	if v, ok := d.GetOk("log_opts"); ok {
 		hostConfig.LogConfig.Config = mapTypeMapValsToString(v.(map[string]interface{}))
 	}

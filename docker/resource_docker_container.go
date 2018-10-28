@@ -426,6 +426,20 @@ func resourceDockerContainer() *schema.Resource {
 				ValidateFunc: validateIntegerGeqThan(0),
 			},
 
+			"cpuset": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+
+				ValidateFunc: func(v interface{}, k string) (ws []string, es []error) {
+					value := v.(string)
+					if !regexp.MustCompile(`^\d+([,-]\d+)*$`).MatchString(value) {
+						es = append(es, fmt.Errorf("%q must be comma or hyphen separated string of cpus to use", k))
+					}
+					return
+				},
+			},
+
 			"log_driver": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
