@@ -6,6 +6,7 @@ IMPROVEMENTS
 * Adds container healthcheck[[#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93)]
 * Adds the docker container start flag [GH-62] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94)]
 * Adds `cpu_set` to docker container [[#41](https://github.com/terraform-providers/terraform-provider-docker/pull/41)]
+* Simplifies the image options parser and adds missing registry combinations [[#49](https://github.com/terraform-providers/terraform-provider-docker/pull/49)]
 
 BUG FIXES
 * Fixes that new network were appended to the default bridge [GH-10]
