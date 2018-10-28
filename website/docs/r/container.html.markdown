@@ -84,7 +84,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `memory_swap` - (Optional, int) The total memory limit (memory + swap) for the
   container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 * `cpu_shares` - (Optional, int) CPU shares (relative weight) for the container.
-* `cpuset` - (Optional, string) A comma-separated list or hyphen-separated range of CPUs a container can use.
+* `cpu_set` - (Optional, string) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
 * `log_driver` - (Optional, string) The logging driver to use for the container.
   Defaults to "json-file".
 * `log_opts` - (Optional, map of strings) Key/value pairs to use as options for

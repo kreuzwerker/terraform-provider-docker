@@ -5,6 +5,7 @@ IMPROVEMENTS
 * Adds `rm` and `attach` options to execute short-lived containers [GH-43] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106)]
 * Adds container healthcheck[[#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93)]
 * Adds the docker container start flag [GH-62] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94)]
+* Adds `cpu_set` to docker container [[#41](https://github.com/terraform-providers/terraform-provider-docker/pull/41)]
 
 BUG FIXES
 * Fixes that new network were appended to the default bridge [GH-10]
