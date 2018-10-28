@@ -718,7 +718,7 @@ func TestAccDockerContainer_attach(t *testing.T) {
 
 	testCheck := func(*terraform.State) error {
 		if !c.Config.AttachStdin {
-			return fmt.Errorf("Container doesn't have the correct value to stderr attach flag")
+			return fmt.Errorf("Container doesn't have the correct value to stdin attach flag")
 		}
 		if !c.Config.AttachStdout {
 			return fmt.Errorf("Container doesn't have the correct value to stdout flag")
@@ -859,13 +859,23 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 			return fmt.Errorf("No ID is set")
 		}
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
+		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+			All: true,
+		})
 		if err != nil {
 			return err
 		}
 		for _, c := range containers {
 			if c.ID == rs.Primary.ID {
-				return fmt.Errorf("Container found: %s", rs.Primary.ID)
+				inspected, err := client.ContainerInspect(context.Background(), c.ID)
+				if err != nil {
+					return fmt.Errorf("Container could not be inspected: %s", err)
+				}
+				*container = inspected
+
+				if container.State.Running {
+					return fmt.Errorf("Container is running: %s", rs.Primary.ID)
+				}
 			}
 		}
 		return nil
@@ -1215,16 +1225,16 @@ resource "docker_container" "foo" {
 
 const testAccDockerContainerAttachConfig = `
 resource "docker_image" "foo" {
-	name = "busybox:latest"
-	keep_locally = true
+  name         = "busybox:latest"
+  keep_locally = true
 }
 
 resource "docker_container" "foo" {
-	name = "tf-test"
-	image = "${docker_image.foo.latest}"
-	command = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1 && echo \"test $i\"; done"]
-	attach = true
-	must_run = false
+  name     = "tf-test"
+  image    = "${docker_image.foo.latest}"
+  command  = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1 && echo \"test $i\"; done"]
+  attach   = true
+  must_run = false
 }
 `
 
