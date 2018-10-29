@@ -89,10 +89,11 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
   Defaults to "json-file".
 * `log_opts` - (Optional, map of strings) Key/value pairs to use as options for
   the logging driver.
-* `network_alias` - (Optional, set of strings) Network aliases of the container for user-defined networks only.
+* `network_alias` - (Optional, set of strings) Network aliases of the container for user-defined networks only. *Deprecated:* use `networks_advanced` instead.
 * `network_mode` - (Optional, string) Network mode of the container.
 * `networks` - (Optional, set of strings) Id of the networks in which the
-  container is.
+  container is. *Deprecated:* use `networks_advanced` instead.
+* `networks_advanced` - (Optional, block) See [Networks Advanced](#networks_advanced) below for details.
 * `destroy_grace_seconds` - (Optional, int) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 * `upload` - (Optional, block) See [File Upload](#upload) below for details.
 * `ulimit` - (Optional, block) See [Ulimits](#ulimits) below for
@@ -180,6 +181,18 @@ Each `upload` supports the following
 * `executable` - (Optional, bool) If true, the file will be uploaded with user
   executable permission.
   Defaults to false.
+
+<a id="networks_advanced"></a>
+### Network advanced
+
+`networks_advanced` is a block within the configuration that can be repeated to specify
+files to upload to the container before starting it.
+Each `networks_advanced` supports the following:
+
+* `name` - (Required, string) A content of a file to upload.
+* `aliases` - (Optional, set of strings) The network aliases of the container in the specific network.
+* `ipv4_address` - (Optional, string) The IPV4 address of the container in the specific network.
+* `ipv6_address` - (Optional, string) The IPV6 address of the container in the specific network.
 
 <a id="devices"></a>
 ### Devices
