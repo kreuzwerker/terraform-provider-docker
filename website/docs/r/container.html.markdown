@@ -61,14 +61,16 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 
 * `hostname` - (Optional, string) Hostname of the container.
 * `domainname` - (Optional, string) Domain name of the container.
-* `attach` - (Optional, bool) Attach to container.
 * `restart` - (Optional, string) The restart policy for the container. Must be
   one of "no", "on-failure", "always", "unless-stopped".
 * `max_retry_count` - (Optional, int) The maximum amount of times to an attempt
   a restart when `restart` is set to "on-failure"
-* `rm` - (Optional, bool) If true, then the container will be automatically removed after his execution. Terraform won't check this container after creation.
+* `rm` - (Optional, bool) If true, then the container will be automatically removed after his execution. Terraform
+   won't check this container after creation.
 * `start` - (Optional, bool) If true, then the Docker container will be
   started after creation. If false, then the container is only created.
+* `attach` - (Optional, bool) If true attach to the container after its creation and waits the end of his execution.
+* `logs` - (Optional, bool) Save the container logs (`attach` must be enabled).
 * `must_run` - (Optional, bool) If true, then the Docker container will be
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
@@ -236,8 +238,9 @@ the following:
 
 The following attributes are exported:
 
- * `exit_code` - The exit code of the container if it is not running (and should not i.e. `must_run` is disabled).
- * `network_data` - (Map of a block) The IP addresses of the container on each
+ * `exit_code` - The exit code of the container if its execution is done (`must_run` must be disabled).
+ * `container_logs` - The logs of the container if its execution is done (`attach` must be disabled).
+* `network_data` - (Map of a block) The IP addresses of the container on each
    network. Key are the network names, values are the IP addresses.
   * `ip_address` - The IP address of the container.
   * `ip_prefix_length` - The IP prefix length of the container.
