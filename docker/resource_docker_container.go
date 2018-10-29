@@ -448,11 +448,13 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"network_alias": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Description: "Set an alias for the container in all specified networks",
+				Deprecated:  "Use networks_advanced instead. Will be removed in v2.0.0",
 			},
 
 			"network_mode": &schema.Schema{
@@ -462,11 +464,44 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"networks": &schema.Schema{
+				Type:       schema.TypeSet,
+				Optional:   true,
+				ForceNew:   true,
+				Elem:       &schema.Schema{Type: schema.TypeString},
+				Set:        schema.HashString,
+				Deprecated: "Use networks_advanced instead. Will be removed in v2.0.0",
+			},
+
+			"networks_advanced": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"aliases": &schema.Schema{
+							Type:     schema.TypeSet,
+							Optional: true,
+							ForceNew: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Set:      schema.HashString,
+						},
+						"ipv4_address": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"ipv6_address": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+					},
+				},
 			},
 
 			"pid_mode": &schema.Schema{

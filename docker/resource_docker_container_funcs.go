@@ -238,12 +238,28 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 
 	d.SetId(retContainer.ID)
 
+	// Still support the deprecated properties
 	if v, ok := d.GetOk("networks"); ok {
+		if err := client.NetworkDisconnect(context.Background(), "bridge", retContainer.ID, false); err != nil {
+			if !strings.Contains(err.Error(), "is not connected to the network bridge") {
+				return fmt.Errorf("Unable to disconnect the default network: %s", err)
+			}
+		}
 		endpointConfig := &network.EndpointSettings{}
 		if v, ok := d.GetOk("network_alias"); ok {
 			endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
 		}
 
+		for _, rawNetwork := range v.(*schema.Set).List() {
+			networkID := rawNetwork.(string)
+			if err := client.NetworkConnect(context.Background(), networkID, retContainer.ID, endpointConfig); err != nil {
+				return fmt.Errorf("Unable to connect to network '%s': %s", networkID, err)
+			}
+		}
+	}
+
+	// But overwrite them with the future ones, if set
+	if v, ok := d.GetOk("networks_advanced"); ok {
 		if err := client.NetworkDisconnect(context.Background(), "bridge", retContainer.ID, false); err != nil {
 			if !strings.Contains(err.Error(), "is not connected to the network bridge") {
 				return fmt.Errorf("Unable to disconnect the default network: %s", err)
@@ -251,7 +267,21 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 
 		for _, rawNetwork := range v.(*schema.Set).List() {
-			networkID := rawNetwork.(string)
+			networkID := rawNetwork.(map[string]interface{})["name"].(string)
+
+			endpointConfig := &network.EndpointSettings{}
+			endpointIPAMConfig := &network.EndpointIPAMConfig{}
+			if v, ok := rawNetwork.(map[string]interface{})["aliases"]; ok {
+				endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["ipv4_address"]; ok {
+				endpointIPAMConfig.IPv4Address = v.(string)
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["ipv6_address"]; ok {
+				endpointIPAMConfig.IPv6Address = v.(string)
+			}
+			endpointConfig.IPAMConfig = endpointIPAMConfig
+
 			if err := client.NetworkConnect(context.Background(), networkID, retContainer.ID, endpointConfig); err != nil {
 				return fmt.Errorf("Unable to connect to network '%s': %s", networkID, err)
 			}
