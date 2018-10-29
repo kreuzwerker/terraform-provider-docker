@@ -30,6 +30,18 @@ func resourceDockerContainer() *schema.Resource {
 				Optional: true,
 			},
 
+			"attach": &schema.Schema{
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+			},
+
+			"logs": &schema.Schema{
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+			},
+
 			// Indicates whether the container must be running.
 			//
 			// An assumption is made that configured containers
@@ -56,6 +68,11 @@ func resourceDockerContainer() *schema.Resource {
 				Computed: true,
 			},
 
+			"container_logs": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			// ForceNew is not true for image because we need to
 			// sane this against Docker image IDs, as each image
 			// can have multiple names/tags attached do it.
@@ -75,12 +92,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-			},
-
-			"attach": &schema.Schema{
-				Type:     schema.TypeBool,
-				Default:  false,
-				Optional: true,
 			},
 
 			"command": &schema.Schema{

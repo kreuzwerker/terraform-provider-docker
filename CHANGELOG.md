@@ -7,6 +7,8 @@ IMPROVEMENTS
 * Adds the docker container start flag [GH-62] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94)]
 * Adds `cpu_set` to docker container [[#41](https://github.com/terraform-providers/terraform-provider-docker/pull/41)]
 * Simplifies the image options parser and adds missing registry combinations [[#49](https://github.com/terraform-providers/terraform-provider-docker/pull/49)]
+* Adds container static IPv4/IPv6 address. Marks network and network_alias as deprecated. [[#105](https://github.com/terraform-providers/terraform-provider-docker/pull/105)]
+* Adds container logs option [[#108](https://github.com/terraform-providers/terraform-provider-docker/pull/108)]
 
 BUG FIXES
 * Fixes that new network were appended to the default bridge [GH-10]
