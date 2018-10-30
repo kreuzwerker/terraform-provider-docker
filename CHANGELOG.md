@@ -1,20 +1,20 @@
-## 1.1.0 (Unreleased)
+## 1.1.0 (October 30, 2018)
 
 IMPROVEMENTS
 * Adds labels for `network`, `volume` and `secret` to support docker stacks. [[#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)] 
-* Adds `rm` and `attach` options to execute short-lived containers [GH-43] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106)]
-* Adds container healthcheck[[#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93)]
-* Adds the docker container start flag [GH-62] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94)]
-* Adds `cpu_set` to docker container [[#41](https://github.com/terraform-providers/terraform-provider-docker/pull/41)]
-* Simplifies the image options parser and adds missing registry combinations [[#49](https://github.com/terraform-providers/terraform-provider-docker/pull/49)]
-* Adds container static IPv4/IPv6 address. Marks network and network_alias as deprecated. [[#105](https://github.com/terraform-providers/terraform-provider-docker/pull/105)]
-* Adds container logs option [[#108](https://github.com/terraform-providers/terraform-provider-docker/pull/108)]
+* Adds `rm` and `attach` options to execute short-lived containers ([#43](https://github.com/terraform-providers/terraform-provider-docker/issues/43)] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106))
+* Adds container healthcheck([#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93))
+* Adds the docker container start flag ([#62](https://github.com/terraform-providers/terraform-provider-docker/issues/62)] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94))
+* Adds `cpu_set` to docker container ([#41](https://github.com/terraform-providers/terraform-provider-docker/pull/41))
+* Simplifies the image options parser and adds missing registry combinations ([#49](https://github.com/terraform-providers/terraform-provider-docker/pull/49))
+* Adds container static IPv4/IPv6 address. Marks network and network_alias as deprecated. ([#105](https://github.com/terraform-providers/terraform-provider-docker/pull/105))
+* Adds container logs option ([#108](https://github.com/terraform-providers/terraform-provider-docker/pull/108))
 
 BUG FIXES
-* Fixes that new network were appended to the default bridge [GH-10]
-* Fixes that container resource returns a non-existent IP address [GH-36]
-* Fixes container's ip_address is empty when using custom network [GH-9] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50)]
-* Fixes terraform destroy failing to remove a bridge network [GH-98] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50)]
+* Fixes that new network were appended to the default bridge ([#10](https://github.com/terraform-providers/terraform-provider-docker/issues/10))
+* Fixes that container resource returns a non-existent IP address ([#36](https://github.com/terraform-providers/terraform-provider-docker/issues/36))
+* Fixes container's ip_address is empty when using custom network ([#9](https://github.com/terraform-providers/terraform-provider-docker/issues/9)] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50))
+* Fixes terraform destroy failing to remove a bridge network ([#98](https://github.com/terraform-providers/terraform-provider-docker/issues/98)] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50))
 
 
 ## 1.0.4 (October 17, 2018)
