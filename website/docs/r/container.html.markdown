@@ -95,7 +95,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `network_mode` - (Optional, string) Network mode of the container.
 * `networks` - (Optional, set of strings) Id of the networks in which the
   container is. *Deprecated:* use `networks_advanced` instead.
-* `networks_advanced` - (Optional, block) See [Networks Advanced](#networks_advanced) below for details.
+* `networks_advanced` - (Optional, block) See [Networks Advanced](#networks_advanced) below for details. If this block has priority to the deprecated `network_alias` and `network` properties.
 * `destroy_grace_seconds` - (Optional, int) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 * `upload` - (Optional, block) See [File Upload](#upload) below for details.
 * `ulimit` - (Optional, block) See [Ulimits](#ulimits) below for
@@ -188,10 +188,10 @@ Each `upload` supports the following
 ### Network advanced
 
 `networks_advanced` is a block within the configuration that can be repeated to specify
-files to upload to the container before starting it.
+advanced options for the container in a specific network.
 Each `networks_advanced` supports the following:
 
-* `name` - (Required, string) A content of a file to upload.
+* `name` - (Required, string) The name of the network.
 * `aliases` - (Optional, set of strings) The network aliases of the container in the specific network.
 * `ipv4_address` - (Optional, string) The IPV4 address of the container in the specific network.
 * `ipv6_address` - (Optional, string) The IPV6 address of the container in the specific network.
