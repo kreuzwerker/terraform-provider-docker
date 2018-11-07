@@ -1,4 +1,8 @@
-## 1.2.0 (Unreleased)
+## 1.1.1 (Unreleased)
+
+DOCS
+* Corrects `networks_advanced` section [GH-109]
+
 ## 1.1.0 (October 30, 2018)
 
 IMPROVEMENTS
