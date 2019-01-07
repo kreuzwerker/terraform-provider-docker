@@ -17,14 +17,14 @@ func resourceDockerConfig() *schema.Resource {
 		Delete: resourceDockerConfigDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Description: "User-defined name of the config",
 				Required:    true,
 				ForceNew:    true,
 			},
 
-			"data": &schema.Schema{
+			"data": {
 				Type:         schema.TypeString,
 				Description:  "Base64-url-safe-encoded config data",
 				Required:     true,

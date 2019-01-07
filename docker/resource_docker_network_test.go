@@ -17,7 +17,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerNetworkConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork("docker_network.foo", &n),
@@ -72,7 +72,7 @@ func TestAccDockerNetwork_internal(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerNetworkInternalConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork("docker_network.foo", &n),
@@ -106,7 +106,7 @@ func TestAccDockerNetwork_attachable(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerNetworkAttachableConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork("docker_network.foo", &n),
@@ -174,7 +174,7 @@ func TestAccDockerNetwork_ipv4(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerNetworkIPv4Config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork("docker_network.foo", &n),
@@ -213,7 +213,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerNetworkIPv6Config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork("docker_network.foo", &n),
@@ -256,7 +256,7 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerNetworkLabelsConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork("docker_network.foo", &n),

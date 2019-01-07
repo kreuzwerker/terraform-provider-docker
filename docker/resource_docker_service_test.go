@@ -80,7 +80,7 @@ func TestAccDockerService_minimal(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -106,7 +106,7 @@ func TestAccDockerService_full(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_volume" "test_volume" {
 					name = "tftest-volume"
@@ -382,7 +382,7 @@ func TestAccDockerService_partialReplicated(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -401,7 +401,7 @@ func TestAccDockerService_partialReplicated(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -422,7 +422,7 @@ func TestAccDockerService_partialReplicated(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -454,7 +454,7 @@ func TestAccDockerService_basicGlobal(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -484,7 +484,7 @@ func TestAccDockerService_GlobalAndReplicated(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -512,7 +512,7 @@ func TestAccDockerService_GlobalWithConvergeConfig(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
@@ -541,7 +541,7 @@ func TestAccDockerService_updateImage(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-fnf-service-up-image"
@@ -605,7 +605,7 @@ func TestAccDockerService_updateImage(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-fnf-service-up-image"
@@ -678,7 +678,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -763,7 +763,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -855,7 +855,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -957,7 +957,7 @@ func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-privateimagedoesnotexist"
@@ -993,7 +993,7 @@ func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-publicimagedoesnotexist"
@@ -1029,7 +1029,7 @@ func TestAccDockerService_basicConvergeAndStopGracefully(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic-converge"
@@ -1081,7 +1081,7 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-updateFailsAndRollbackConverge"
@@ -1147,7 +1147,7 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-updateFailsAndRollbackConverge"
@@ -1223,7 +1223,7 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_network" "test_network" {
 					name   = "tftest-network"
@@ -1273,7 +1273,7 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_network" "test_network" {
 					name   = "tftest-network"
@@ -1322,7 +1322,7 @@ func TestAccDockerService_updateNetworksConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_network" "test_network" {
 					name   = "tftest-network"
@@ -1384,7 +1384,7 @@ func TestAccDockerService_updateMountsConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_volume" "foo" {
 					name = "tftest-volume"
@@ -1432,7 +1432,7 @@ func TestAccDockerService_updateMountsConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_volume" "foo" {
 					name = "tftest-volume"
@@ -1506,7 +1506,7 @@ func TestAccDockerService_updateHostsConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-hosts"
@@ -1543,7 +1543,7 @@ func TestAccDockerService_updateHostsConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-hosts"
@@ -1581,7 +1581,7 @@ func TestAccDockerService_updateHostsConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-hosts"
@@ -1630,7 +1630,7 @@ func TestAccDockerService_updateLoggingConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-logging"
@@ -1673,7 +1673,7 @@ func TestAccDockerService_updateLoggingConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-file", "3"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-logging"
@@ -1715,7 +1715,7 @@ func TestAccDockerService_updateLoggingConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-file", "5"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-logging"
@@ -1755,7 +1755,7 @@ func TestAccDockerService_updateHealthcheckConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-healthcheck"
@@ -1825,7 +1825,7 @@ func TestAccDockerService_updateHealthcheckConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-healthcheck"
@@ -1902,7 +1902,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-increase-replicas"
@@ -1972,7 +1972,7 @@ func TestAccDockerService_updateIncreaseReplicasConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-increase-replicas"
@@ -2051,7 +2051,7 @@ func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-decrease-replicas"
@@ -2120,7 +2120,7 @@ func TestAccDockerService_updateDecreaseReplicasConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-decrease-replicas"
@@ -2198,7 +2198,7 @@ func TestAccDockerService_updateImageConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-image"
@@ -2267,7 +2267,7 @@ func TestAccDockerService_updateImageConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-image"
@@ -2345,7 +2345,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -2432,7 +2432,7 @@ func TestAccDockerService_updateConfigConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -2526,7 +2526,7 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -2631,7 +2631,7 @@ func TestAccDockerService_updateConfigAndSecretConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name       = "tftest-myconfig-${uuid()}"
@@ -2745,7 +2745,7 @@ func TestAccDockerService_updatePortConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-port"
@@ -2814,7 +2814,7 @@ func TestAccDockerService_updatePortConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_service" "foo" {
 					name     = "tftest-service-up-port"
@@ -2899,7 +2899,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthConverge(t *testing.
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -2984,7 +2984,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthConverge(t *testing.
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -3086,7 +3086,7 @@ func TestAccDockerService_updateConfigAndDecreaseReplicasConverge(t *testing.T) 
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -3171,7 +3171,7 @@ func TestAccDockerService_updateConfigAndDecreaseReplicasConverge(t *testing.T) 
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -3265,7 +3265,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -3350,7 +3350,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -3443,7 +3443,7 @@ func TestAccDockerService_updateConfigReplicasImageAndHealthIncreaseAndDecreaseR
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "service_config" {
 					name 			 = "tftest-myconfig-${uuid()}"
@@ -3548,7 +3548,7 @@ func TestAccDockerService_privateConverge(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(`
 					provider "docker" {
 						alias = "private"

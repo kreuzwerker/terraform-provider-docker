@@ -19,7 +19,7 @@ func TestAccDockerImage_basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerImageConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foo", "latest", contentDigestRegexp),
@@ -35,7 +35,7 @@ func TestAccDockerImage_private(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAddDockerPrivateImageConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
@@ -64,7 +64,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerImageKeepLocallyConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobarzoo", "latest", contentDigestRegexp),
@@ -80,7 +80,7 @@ func TestAccDockerImage_data(t *testing.T) {
 		Providers:                 testAccProviders,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerImageFromDataConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobarbaz", "latest", contentDigestRegexp),
@@ -96,7 +96,7 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 		Providers:                 testAccProviders,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerImageFromDataConfigWithPullTrigger,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobarbazoo", "latest", contentDigestRegexp),
@@ -115,7 +115,7 @@ func TestAccDockerImage_data_private(t *testing.T) {
 		Providers:                 testAccProviders,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccDockerImageFromDataPrivateConfig, registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
@@ -131,7 +131,7 @@ func TestAccDockerImage_sha265(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAddDockerImageWithSHA256RepoDigest,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),

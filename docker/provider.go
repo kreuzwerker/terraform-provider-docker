@@ -21,51 +21,51 @@ import (
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"host": &schema.Schema{
+			"host": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DOCKER_HOST", "unix:///var/run/docker.sock"),
 				Description: "The Docker daemon address",
 			},
 
-			"ca_material": &schema.Schema{
+			"ca_material": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DOCKER_CA_MATERIAL", ""),
 				Description: "PEM-encoded content of Docker host CA certificate",
 			},
-			"cert_material": &schema.Schema{
+			"cert_material": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_MATERIAL", ""),
 				Description: "PEM-encoded content of Docker client certificate",
 			},
-			"key_material": &schema.Schema{
+			"key_material": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DOCKER_KEY_MATERIAL", ""),
 				Description: "PEM-encoded content of Docker client private key",
 			},
 
-			"cert_path": &schema.Schema{
+			"cert_path": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_PATH", ""),
 				Description: "Path to directory with Docker TLS config",
 			},
 
-			"registry_auth": &schema.Schema{
+			"registry_auth": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"address": &schema.Schema{
+						"address": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Address of the registry",
 						},
 
-						"username": &schema.Schema{
+						"username": {
 							Type:          schema.TypeString,
 							Optional:      true,
 							ConflictsWith: []string{"registry_auth.config_file"},
@@ -73,7 +73,7 @@ func Provider() terraform.ResourceProvider {
 							Description:   "Username for the registry",
 						},
 
-						"password": &schema.Schema{
+						"password": {
 							Type:          schema.TypeString,
 							Optional:      true,
 							Sensitive:     true,
@@ -82,7 +82,7 @@ func Provider() terraform.ResourceProvider {
 							Description:   "Password for the registry",
 						},
 
-						"config_file": &schema.Schema{
+						"config_file": {
 							Type:          schema.TypeString,
 							Optional:      true,
 							ConflictsWith: []string{"registry_auth.username", "registry_auth.password"},
