@@ -240,11 +240,11 @@ The following attributes are exported:
 
  * `exit_code` - The exit code of the container if its execution is done (`must_run` must be disabled).
  * `container_logs` - The logs of the container if its execution is done (`attach` must be disabled).
-* `network_data` - (Map of a block) The IP addresses of the container on each
+ * `network_data` - (Map of a block) The IP addresses of the container on each
    network. Key are the network names, values are the IP addresses.
-  * `ip_address` - The IP address of the container.
-  * `ip_prefix_length` - The IP prefix length of the container.
-  * `gateway` - The network gateway of the container.
+   * `ip_address` - The IP address of the container.
+   * `ip_prefix_length` - The IP prefix length of the container.
+   * `gateway` - The network gateway of the container.
  * `bridge` - The network bridge of the container as read from its NetworkSettings.
  * `ip_address` - *Deprecated:* Use `network_data` instead. The IP address of the container's first network it.
  * `ip_prefix_length` - *Deprecated:* Use `network_data` instead. The IP prefix length of the container as read from its
