@@ -2,6 +2,8 @@
 
 DOCS
 * Corrects `networks_advanced` section [GH-109]
+* Corrects `tmpfs_options` section [GH-122]
+* Corrects indentation for container in docs [GH-126]
 
 ## 1.1.0 (October 30, 2018)
 
