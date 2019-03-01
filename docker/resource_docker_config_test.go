@@ -15,7 +15,7 @@ func TestAccDockerConfig_basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testCheckDockerConfigDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "foo" {
 					name = "foo-config"
@@ -36,7 +36,7 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testCheckDockerConfigDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "foo" {
 					name 			 = "tftest-myconfig-${replace(timestamp(),":", ".")}"
@@ -52,7 +52,7 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_config.foo", "data", "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_config" "foo" {
 					name 			 = "tftest-myconfig2-${replace(timestamp(),":", ".")}"

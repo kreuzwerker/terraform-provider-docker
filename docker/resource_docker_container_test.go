@@ -35,7 +35,7 @@ func TestAccDockerContainer_basic(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -50,7 +50,7 @@ func TestAccDockerContainer_basic_network(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerWith2BridgeNetworkConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -79,7 +79,7 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainer2NetworksConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -166,7 +166,7 @@ func TestAccDockerContainer_volume(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerVolumeConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -338,7 +338,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t); testAccCheckSwapLimit(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerCustomizedConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -398,7 +398,7 @@ func TestAccDockerContainer_upload(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerUploadConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -460,7 +460,7 @@ func TestAccDockerContainer_device(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerDeviceConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -501,7 +501,7 @@ func TestAccDockerContainer_port_internal(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerInternalPortConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -566,7 +566,7 @@ func TestAccDockerContainer_port_multiple_internal(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerMultipleInternalPortConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -617,7 +617,7 @@ func TestAccDockerContainer_port(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerPortConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -682,7 +682,7 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerMultiplePortConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -719,7 +719,7 @@ func TestAccDockerContainer_rm(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccContainerWaitConditionRemoved("docker_container.foo", &c),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerRmConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -756,7 +756,7 @@ func TestAccDockerContainer_healthcheck(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerHealthcheckConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -773,7 +773,7 @@ func TestAccDockerContainer_nostart(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerNoStartConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
@@ -790,7 +790,7 @@ func TestAccDockerContainer_attach(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerAttachConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
@@ -810,7 +810,7 @@ func TestAccDockerContainer_logs(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerLogsConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
@@ -832,7 +832,7 @@ func TestAccDockerContainer_exitcode(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerExitCodeConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
@@ -870,7 +870,7 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerNetworksIPv4AddressConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -908,7 +908,7 @@ func TestAccDockerContainer_ipv6address(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerNetworksIPv6AddressConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
@@ -949,7 +949,7 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDockerContainerNetworksDualStackAddressConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
