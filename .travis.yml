@@ -19,13 +19,11 @@ install:
 # packages that live there.
 # See: https://github.com/golang/go/issues/12933
 - bash scripts/gogetcookie.sh
-- go get github.com/kardianos/govendor
 - sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
 - sudo cat /etc/default/docker
 - sudo service docker restart
 
 script:
-- make vendor-status
 - make vet
 - make test
 - make testacc
@@ -39,3 +37,5 @@ matrix:
   fast_finish: true
   allow_failures:
   - go: tip
+env:
+  - GOFLAGS=-mod=vendor GO111MODULE=on
