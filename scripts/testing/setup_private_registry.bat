@@ -63,8 +63,9 @@ if %ErrorLevel% neq 0 (
 for /L %%i in (1,1,3) do (
   call docker build ^
     -t tftest-service ^
+    --build-arg JS_FILE_PATH=server_v%%i.js ^
     %~dp0 ^
-    -f %~dp0Dockerfile_v%%i
+    -f %~dp0Dockerfile
   call docker tag ^
     tftest-service ^
     127.0.0.1:15000/tftest-service:v%%i
