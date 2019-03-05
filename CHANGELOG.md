@@ -1,5 +1,10 @@
 ## 1.1.1 (Unreleased)
 
+BUG FIXES
+* Fixes no more 'force new resource' for container ports when
+there are no changes. This was caused to the ascending order. See [GH-110] 
+for details and [[#115](https://github.com/terraform-providers/terraform-provider-docker/pull/115)]
+
 DOCS
 * Corrects `networks_advanced` section [GH-109]
 * Corrects `tmpfs_options` section [GH-122]

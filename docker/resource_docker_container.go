@@ -1,15 +1,19 @@
 package docker
 
 import (
+	"log"
+
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceDockerContainer() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerContainerCreate,
-		Read:   resourceDockerContainerRead,
-		Update: resourceDockerContainerUpdate,
-		Delete: resourceDockerContainerDelete,
+		Create:        resourceDockerContainerCreate,
+		Read:          resourceDockerContainerRead,
+		Update:        resourceDockerContainerUpdate,
+		Delete:        resourceDockerContainerDelete,
+		MigrateState:  resourceDockerContainerMigrateState,
+		SchemaVersion: 1,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -259,6 +263,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
+				DiffSuppressFunc: suppressIfPortsDidNotChangeForMigrationV0ToV1(),
 			},
 
 			"host": &schema.Schema{
@@ -599,5 +604,51 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 		},
+	}
+}
+
+func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFunc {
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		portsOldRaw, portsNewRaw := d.GetChange("ports")
+		portsOld := portsOldRaw.([]interface{})
+		portsNew := portsNewRaw.([]interface{})
+		if len(portsOld) != len(portsNew) {
+			log.Printf("[DEBUG] suppress diff ports: old and new don't have the same length")
+			return false
+		}
+		log.Printf("[DEBUG] suppress diff ports: old and new have same length")
+
+		for _, portOld := range portsOld {
+			portOldMapped := portOld.(map[string]interface{})
+			oldInternalPort := portOldMapped["internal"]
+			portFound := false
+			for _, portNew := range portsNew {
+				portNewMapped := portNew.(map[string]interface{})
+				newInternalPort := portNewMapped["internal"]
+				// port is still there in new
+				if newInternalPort == oldInternalPort {
+					log.Printf("[DEBUG] suppress diff ports: comparing port '%v'", oldInternalPort)
+					portFound = true
+					if portNewMapped["external"] != portOldMapped["external"] {
+						log.Printf("[DEBUG] suppress diff ports: 'external' changed for '%v'", oldInternalPort)
+						return false
+					}
+					if portNewMapped["ip"] != portOldMapped["ip"] {
+						log.Printf("[DEBUG] suppress diff ports: 'ip' changed for '%v'", oldInternalPort)
+						return false
+					}
+					if portNewMapped["protocol"] != portOldMapped["protocol"] {
+						log.Printf("[DEBUG] suppress diff ports: 'protocol' changed for '%v'", oldInternalPort)
+						return false
+					}
+				}
+			}
+			// port was deleted or exchanges in new
+			if !portFound {
+				log.Printf("[DEBUG] suppress diff ports: port was deleted '%v'", oldInternalPort)
+				return false
+			}
+		}
+		return true
 	}
 }
