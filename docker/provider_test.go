@@ -55,4 +55,9 @@ func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("DOCKER_PRIVATE_IMAGE"); v == "" {
 		t.Fatalf("DOCKER_PRIVATE_IMAGE must be set for acceptance tests")
 	}
+
+	err := testAccProvider.Configure(terraform.NewResourceConfig(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
 }

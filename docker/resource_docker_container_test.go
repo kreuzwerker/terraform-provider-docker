@@ -335,7 +335,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheck(t); testAccCheckSwapLimit(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
@@ -347,6 +347,18 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckSwapLimit(t *testing.T) {
+	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	info, err := client.Info(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to check swap limit capability: %s", err)
+	}
+
+	if !info.SwapLimit {
+		t.Skip("Swap limit capability not available, skipping test")
+	}
 }
 
 func TestAccDockerContainer_upload(t *testing.T) {
@@ -1187,7 +1199,7 @@ resource "docker_container" "foo" {
 	cpu_set = "0-1"
 
 	capabilities {
-		add= ["ALL"]
+		add  = ["ALL"]
 		drop = ["SYS_ADMIN"]
 	}
 
