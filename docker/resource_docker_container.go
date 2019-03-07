@@ -253,6 +253,14 @@ func resourceDockerContainer() *schema.Resource {
 							Default:  "0.0.0.0",
 							Optional: true,
 							ForceNew: true,
+							StateFunc: func(val interface{}) string {
+								// Empty IP assignments default to 0.0.0.0
+								if val.(string) == "" {
+									return "0.0.0.0"
+								}
+
+								return val.(string)
+							},
 						},
 
 						"protocol": &schema.Schema{
