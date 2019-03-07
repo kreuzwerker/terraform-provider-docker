@@ -4,11 +4,17 @@ BUG FIXES
 * Fixes no more 'force new resource' for container ports when
 there are no changes. This was caused to the ascending order. See [GH-110] 
 for details and [[#115](https://github.com/terraform-providers/terraform-provider-docker/pull/115)]
+* Normalize blank port IP's to 0.0.0.0 [[#128](https://github.com/terraform-providers/terraform-provider-docker/pull/128)]
+
+BUILD
+* Simplify Dockerfile(s) for tests [[#135](https://github.com/terraform-providers/terraform-provider-docker/pull/135)]
+* Skip test if swap limit isn't available [[#136](https://github.com/terraform-providers/terraform-provider-docker/pull/136)]
 
 DOCS
 * Corrects `networks_advanced` section [GH-109]
 * Corrects `tmpfs_options` section [GH-122]
 * Corrects indentation for container in docs [GH-126]
+* Fix syntax error in docker_service example and make all examples adhere to terraform fmt [[#137](https://github.com/terraform-providers/terraform-provider-docker/pull/137)]
 
 ## 1.1.0 (October 30, 2018)
 
