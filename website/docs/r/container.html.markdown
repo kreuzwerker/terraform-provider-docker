@@ -116,10 +116,11 @@ Example:
 
 ```hcl
 resource "docker_container" "ubuntu" {
-  name = "foo"
+  name  = "foo"
   image = "${docker_image.ubuntu.latest}"
+
   capabilities {
-    add = ["ALL"]
+    add  = ["ALL"]
     drop = ["SYS_ADMIN"]
   }
 }

@@ -33,13 +33,14 @@ resource "docker_secret" "service_secret" {
   data = "${base64encode(data.template_file.service_secret_tpl.rendered)}"
 
   lifecycle {
-    ignore_changes = ["name"]
+    ignore_changes        = ["name"]
     create_before_destroy = true
   }
 }
+
 resource "docker_service" "service" {
-   # ...
-   secrets = [
+  # ...
+  secrets = [
     {
       secret_id   = "${docker_secret.service_secret.id}"
       secret_name = "${docker_secret.service_secret.name}"

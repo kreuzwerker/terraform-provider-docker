@@ -27,18 +27,19 @@ The following configuration starts a Docker Service with
 
 ```hcl
 resource "docker_service" "foo" {
-    name     = "foo-service"
-    task_spec {
-        container_spec {
-            image = "repo.mycompany.com:8080/foo-service:v1"
-        }
-    }
+  name = "foo-service"
 
-    endpoint_spec {
-      ports {
-        target_port = "8080"
-      }
+  task_spec {
+    container_spec {
+      image = "repo.mycompany.com:8080/foo-service:v1"
     }
+  }
+
+  endpoint_spec {
+    ports {
+      target_port = "8080"
+    }
+  }
 }
 ```
 
@@ -53,208 +54,208 @@ The following configuration shows the full capabilities of a Docker Service. Cur
 
 ```hcl
 resource "docker_volume" "test_volume" {
-    name = "tftest-volume"
+  name = "tftest-volume"
 }
 
 resource "docker_config" "service_config" {
-    name = "tftest-full-myconfig"
-    data = "ewogICJwcmVmaXgiOiAiMTIzIgp9"
+  name = "tftest-full-myconfig"
+  data = "ewogICJwcmVmaXgiOiAiMTIzIgp9"
 }
 
 resource "docker_secret" "service_secret" {
-    name = "tftest-mysecret"
-    data = "ewogICJrZXkiOiAiUVdFUlRZIgp9"
+  name = "tftest-mysecret"
+  data = "ewogICJrZXkiOiAiUVdFUlRZIgp9"
 }
 
 resource "docker_network" "test_network" {
-    name   = "tftest-network"
-    driver = "overlay"
+  name   = "tftest-network"
+  driver = "overlay"
 }
 
 resource "docker_service" "foo" {
-    name = "tftest-service-basic"
+  name = "tftest-service-basic"
 
-    task_spec {
-        container_spec {
-            image = "repo.mycompany.com:8080/foo-service:v1"
+  task_spec {
+    container_spec {
+      image = "repo.mycompany.com:8080/foo-service:v1"
 
-            labels {
-                foo = "bar"
-            }
+      labels {
+        foo = "bar"
+      }
 
-            command  = ["ls"]
-            args     = ["-las"]
-            hostname = "my-fancy-service"
+      command  = ["ls"]
+      args     = ["-las"]
+      hostname = "my-fancy-service"
 
-            env {
-                MYFOO = "BAR"
-            }
+      env {
+        MYFOO = "BAR"
+      }
 
-            dir    = "/root"
-            user   = "root"
-            groups = ["docker", "foogroup"]
+      dir    = "/root"
+      user   = "root"
+      groups = ["docker", "foogroup"]
 
-            privileges {
-                se_linux_context {
-                    disable = true
-                    user    = "user-label"
-                    role    = "role-label"
-                    type    = "type-label"
-                    level   = "level-label"
-                }
-            }
-
-            read_only = true
-
-            mounts = [
-                {
-                    target      = "/mount/test"
-                    source      = "${docker_volume.test_volume.name}"
-                    type        = "volume"
-                    read_only   = true
-
-                    bind_options {
-                        propagation = "private"
-                    }
-                },
-            ]
-
-            stop_signal       = "SIGTERM"
-            stop_grace_period = "10s"
-
-            healthcheck {
-                test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
-                interval = "5s"
-                timeout  = "2s"
-                retries  = 4
-            }
-
-            hosts {
-                host = "testhost"
-                ip   = "10.0.1.0"
-            }
-
-            dns_config {
-                nameservers = ["8.8.8.8"]
-                search      = ["example.org"]
-                options     = ["timeout:3"]
-            }
-
-            secrets = [
-                {
-                    secret_id   = "${docker_secret.service_secret.id}"
-                    secret_name = "${docker_secret.service_secret.name}"
-                    file_name = "/secrets.json"
-                },
-            ]
-
-            configs = [
-                {
-                    config_id   = "${docker_config.service_config.id}"
-                    config_name = "${docker_config.service_config.name}"
-                    file_name = "/configs.json"
-                },
-            ]
+      privileges {
+        se_linux_context {
+          disable = true
+          user    = "user-label"
+          role    = "role-label"
+          type    = "type-label"
+          level   = "level-label"
         }
+      }
 
-        resources {
-            limits {
-                nano_cpus    = 1000000
-                memory_bytes = 536870912
+      read_only = true
 
-                generic_resources {
-                    named_resources_spec = [
-                        "GPU=UUID1"
-                    ]
+      mounts = [
+        {
+          target    = "/mount/test"
+          source    = "${docker_volume.test_volume.name}"
+          type      = "volume"
+          read_only = true
 
-                    discrete_resources_spec = [
-                        "SSD=3"
-                    ]
-                }
-            }
+          bind_options {
+            propagation = "private"
+          }
+        },
+      ]
 
-            reservation {
-                nano_cpus    = 1000000
-                memory_bytes = 536870912
+      stop_signal       = "SIGTERM"
+      stop_grace_period = "10s"
 
-                generic_resources {
-                    named_resources_spec = [
-                        "GPU=UUID1"
-                    }
+      healthcheck {
+        test     = ["CMD", "curl", "-f", "http://localhost:8080/health"]
+        interval = "5s"
+        timeout  = "2s"
+        retries  = 4
+      }
 
-                    discrete_resources_spec = [
-                        "SSD=3"
-                    ]
-                }
-            }
-        }
+      hosts {
+        host = "testhost"
+        ip   = "10.0.1.0"
+      }
 
-        restart_policy {
-            condition    = "on-failure"
-            delay        = "3s"
-            max_attempts = 4
-            window       = "10s"
-        }
+      dns_config {
+        nameservers = ["8.8.8.8"]
+        search      = ["example.org"]
+        options     = ["timeout:3"]
+      }
 
-        placement {
-            constraints = [
-                "node.role==manager",
-            ]
+      secrets = [
+        {
+          secret_id   = "${docker_secret.service_secret.id}"
+          secret_name = "${docker_secret.service_secret.name}"
+          file_name   = "/secrets.json"
+        },
+      ]
 
-            prefs = [
-                "spread=node.role.manager",
-            ]
-        }
-
-        force_update = 0
-        runtime      = "container"
-        networks     = ["${docker_network.test_network.id}"]
-
-        log_driver {
-            name = "json-file"
-
-            options {
-                max-size = "10m"
-                max-file = "3"
-            }
-        }
+      configs = [
+        {
+          config_id   = "${docker_config.service_config.id}"
+          config_name = "${docker_config.service_config.name}"
+          file_name   = "/configs.json"
+        },
+      ]
     }
 
-    mode {
-        replicated {
-            replicas = 2
+    resources {
+      limits {
+        nano_cpus    = 1000000
+        memory_bytes = 536870912
+
+        generic_resources {
+          named_resources_spec = [
+            "GPU=UUID1",
+          ]
+
+          discrete_resources_spec = [
+            "SSD=3",
+          ]
         }
-    }
+      }
 
-    update_config {
-        parallelism       = 2
-        delay             = "10s"
-        failure_action    = "pause"
-        monitor           = "5s"
-        max_failure_ratio = "0.1"
-        order             = "start-first"
-    }
+      reservation {
+        nano_cpus    = 1000000
+        memory_bytes = 536870912
 
-    rollback_config {
-        parallelism       = 2
-        delay             = "5ms"
-        failure_action    = "pause"
-        monitor           = "10h"
-        max_failure_ratio = "0.9"
-        order             = "stop-first"
-    }
+        generic_resources {
+          named_resources_spec = [
+            "GPU=UUID1",
+          ]
 
-    endpoint_spec {
-        mode = "vip"
-
-        ports {
-            name           = "random"
-            protocol       = "tcp"
-            target_port    = "8080"
-            published_port = "8080"
-            publish_mode   = "ingress"
+          discrete_resources_spec = [
+            "SSD=3",
+          ]
         }
+      }
     }
+
+    restart_policy {
+      condition    = "on-failure"
+      delay        = "3s"
+      max_attempts = 4
+      window       = "10s"
+    }
+
+    placement {
+      constraints = [
+        "node.role==manager",
+      ]
+
+      prefs = [
+        "spread=node.role.manager",
+      ]
+    }
+
+    force_update = 0
+    runtime      = "container"
+    networks     = ["${docker_network.test_network.id}"]
+
+    log_driver {
+      name = "json-file"
+
+      options {
+        max-size = "10m"
+        max-file = "3"
+      }
+    }
+  }
+
+  mode {
+    replicated {
+      replicas = 2
+    }
+  }
+
+  update_config {
+    parallelism       = 2
+    delay             = "10s"
+    failure_action    = "pause"
+    monitor           = "5s"
+    max_failure_ratio = "0.1"
+    order             = "start-first"
+  }
+
+  rollback_config {
+    parallelism       = 2
+    delay             = "5ms"
+    failure_action    = "pause"
+    monitor           = "10h"
+    max_failure_ratio = "0.9"
+    order             = "stop-first"
+  }
+
+  endpoint_spec {
+    mode = "vip"
+
+    ports {
+      name           = "random"
+      protocol       = "tcp"
+      target_port    = "8080"
+      published_port = "8080"
+      publish_mode   = "ingress"
+    }
+  }
 }
 ```
 

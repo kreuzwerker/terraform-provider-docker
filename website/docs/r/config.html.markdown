@@ -68,13 +68,14 @@ resource "docker_config" "service_config" {
   data = "${base64encode(data.template_file.service_config_tpl.rendered)}"
 
   lifecycle {
-    ignore_changes = ["name"]
+    ignore_changes        = ["name"]
     create_before_destroy = true
   }
 }
+
 resource "docker_service" "service" {
-   # ...
-   configs = [
+  # ...
+  configs = [
     {
       config_id   = "${docker_config.service_config.id}"
       config_name = "${docker_config.service_config.name}"
