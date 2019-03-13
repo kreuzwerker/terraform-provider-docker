@@ -19,29 +19,29 @@ func resourceDockerVolume() *schema.Resource {
 		Delete: resourceDockerVolumeDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"labels": &schema.Schema{
+			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
-			"driver": &schema.Schema{
+			"driver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"driver_opts": &schema.Schema{
+			"driver_opts": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
-			"mountpoint": &schema.Schema{
+			"mountpoint": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

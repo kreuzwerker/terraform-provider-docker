@@ -12,22 +12,22 @@ func resourceDockerImage() *schema.Resource {
 		Delete: resourceDockerImageDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"latest": &schema.Schema{
+			"latest": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"keep_locally": &schema.Schema{
+			"keep_locally": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
 
-			"pull_trigger": &schema.Schema{
+			"pull_trigger": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
@@ -35,7 +35,7 @@ func resourceDockerImage() *schema.Resource {
 				Deprecated:    "Use field pull_triggers instead",
 			},
 
-			"pull_triggers": &schema.Schema{
+			"pull_triggers": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,

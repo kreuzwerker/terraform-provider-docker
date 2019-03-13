@@ -15,7 +15,7 @@ func TestAccDockerSecret_basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testCheckDockerSecretDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_secret" "foo" {
 					name = "foo-secret"
@@ -37,7 +37,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testCheckDockerSecretDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_secret" "foo" {
 					name 			 = "tftest-mysecret-${replace(timestamp(),":", ".")}"
@@ -53,7 +53,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_secret.foo", "data", "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_secret" "foo" {
 					name 			 = "tftest-mysecret2-${replace(timestamp(),":", ".")}"
@@ -79,7 +79,7 @@ func TestAccDockerSecret_labels(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testCheckDockerSecretDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: `
 				resource "docker_secret" "foo" {
 					name = "foo-secret"

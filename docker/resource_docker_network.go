@@ -16,94 +16,94 @@ func resourceDockerNetwork() *schema.Resource {
 		Delete: resourceDockerNetworkDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"labels": &schema.Schema{
+			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"check_duplicate": &schema.Schema{
+			"check_duplicate": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"driver": &schema.Schema{
+			"driver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
 
-			"options": &schema.Schema{
+			"options": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
 
-			"internal": &schema.Schema{
+			"internal": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"attachable": &schema.Schema{
+			"attachable": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"ingress": &schema.Schema{
+			"ingress": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"ipv6": &schema.Schema{
+			"ipv6": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"ipam_driver": &schema.Schema{
+			"ipam_driver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"ipam_config": &schema.Schema{
+			"ipam_config": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"subnet": &schema.Schema{
+						"subnet": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
 
-						"ip_range": &schema.Schema{
+						"ip_range": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
 
-						"gateway": &schema.Schema{
+						"gateway": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
 
-						"aux_address": &schema.Schema{
+						"aux_address": {
 							Type:     schema.TypeMap,
 							Optional: true,
 							ForceNew: true,
@@ -113,7 +113,7 @@ func resourceDockerNetwork() *schema.Resource {
 				Set: resourceDockerIpamConfigHash,
 			},
 
-			"scope": &schema.Schema{
+			"scope": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

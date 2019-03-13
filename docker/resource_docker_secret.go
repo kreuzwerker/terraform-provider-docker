@@ -16,14 +16,14 @@ func resourceDockerSecret() *schema.Resource {
 		Delete: resourceDockerSecretDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Description: "User-defined name of the secret",
 				Required:    true,
 				ForceNew:    true,
 			},
 
-			"data": &schema.Schema{
+			"data": {
 				Type:         schema.TypeString,
 				Description:  "User-defined name of the secret",
 				Required:     true,
@@ -32,7 +32,7 @@ func resourceDockerSecret() *schema.Resource {
 				ValidateFunc: validateStringIsBase64Encoded(),
 			},
 
-			"labels": &schema.Schema{
+			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
