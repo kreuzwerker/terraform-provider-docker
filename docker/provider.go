@@ -109,6 +109,7 @@ func Provider() terraform.ResourceProvider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"docker_registry_image": dataSourceDockerRegistryImage(),
+			"docker_network":        dataSourceDockerNetwork(),
 		},
 
 		ConfigureFunc: providerConfigure,
