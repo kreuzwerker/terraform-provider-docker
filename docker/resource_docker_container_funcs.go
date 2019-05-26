@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
@@ -127,6 +129,82 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
+	mounts := []mount.Mount{}
+
+	if value, ok := d.GetOk("mounts"); ok {
+		for _, rawMount := range value.(*schema.Set).List() {
+			rawMount := rawMount.(map[string]interface{})
+			mountType := mount.Type(rawMount["type"].(string))
+			mountInstance := mount.Mount{
+				Type:   mountType,
+				Target: rawMount["target"].(string),
+				Source: rawMount["source"].(string),
+			}
+			if value, ok := rawMount["read_only"]; ok {
+				mountInstance.ReadOnly = value.(bool)
+			}
+
+			if mountType == mount.TypeBind {
+				if value, ok := rawMount["bind_options"]; ok {
+					if len(value.([]interface{})) > 0 {
+						mountInstance.BindOptions = &mount.BindOptions{}
+						for _, rawBindOptions := range value.([]interface{}) {
+							rawBindOptions := rawBindOptions.(map[string]interface{})
+							if value, ok := rawBindOptions["propagation"]; ok {
+								mountInstance.BindOptions.Propagation = mount.Propagation(value.(string))
+							}
+						}
+					}
+				}
+			} else if mountType == mount.TypeVolume {
+				if value, ok := rawMount["volume_options"]; ok {
+					if len(value.([]interface{})) > 0 {
+						mountInstance.VolumeOptions = &mount.VolumeOptions{}
+						for _, rawVolumeOptions := range value.([]interface{}) {
+							rawVolumeOptions := rawVolumeOptions.(map[string]interface{})
+							if value, ok := rawVolumeOptions["no_copy"]; ok {
+								mountInstance.VolumeOptions.NoCopy = value.(bool)
+							}
+							if value, ok := rawVolumeOptions["labels"]; ok {
+								mountInstance.VolumeOptions.Labels = mapTypeMapValsToString(value.(map[string]interface{}))
+							}
+							// because it is not possible to nest maps
+							if value, ok := rawVolumeOptions["driver_name"]; ok {
+								if mountInstance.VolumeOptions.DriverConfig == nil {
+									mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
+								}
+								mountInstance.VolumeOptions.DriverConfig.Name = value.(string)
+							}
+							if value, ok := rawVolumeOptions["driver_options"]; ok {
+								if mountInstance.VolumeOptions.DriverConfig == nil {
+									mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
+								}
+								mountInstance.VolumeOptions.DriverConfig.Options = mapTypeMapValsToString(value.(map[string]interface{}))
+							}
+						}
+					}
+				}
+			} else if mountType == mount.TypeTmpfs {
+				if value, ok := rawMount["tmpfs_options"]; ok {
+					if len(value.([]interface{})) > 0 {
+						mountInstance.TmpfsOptions = &mount.TmpfsOptions{}
+						for _, rawTmpfsOptions := range value.([]interface{}) {
+							rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
+							if value, ok := rawTmpfsOptions["size_bytes"]; ok {
+								mountInstance.TmpfsOptions.SizeBytes = value.(int64)
+							}
+							if value, ok := rawTmpfsOptions["mode"]; ok {
+								mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
+							}
+						}
+					}
+				}
+			}
+
+			mounts = append(mounts, mountInstance)
+		}
+	}
+
 	hostConfig := &container.HostConfig{
 		Privileged:      d.Get("privileged").(bool),
 		PublishAllPorts: d.Get("publish_all_ports").(bool),
@@ -134,10 +212,15 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
+		Mounts:     mounts,
 		AutoRemove: d.Get("rm").(bool),
 		LogConfig: container.LogConfig{
 			Type: d.Get("log_driver").(string),
 		},
+	}
+
+	if v, ok := d.GetOk("tmpfs"); ok {
+		hostConfig.Tmpfs = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
 	if len(portBindings) != 0 {

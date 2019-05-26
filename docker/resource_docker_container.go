@@ -189,7 +189,104 @@ func resourceDockerContainer() *schema.Resource {
 					},
 				},
 			},
-
+			"mounts": {
+				Type:        schema.TypeSet,
+				Description: "Specification for mounts to be added to containers created as part of the service",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"target": {
+							Type:        schema.TypeString,
+							Description: "Container path",
+							Required:    true,
+						},
+						"source": {
+							Type:        schema.TypeString,
+							Description: "Mount source (e.g. a volume name, a host path)",
+							Optional:    true,
+						},
+						"type": {
+							Type:         schema.TypeString,
+							Description:  "The mount type",
+							Required:     true,
+							ValidateFunc: validateStringMatchesPattern(`^(bind|volume|tmpfs)$`),
+						},
+						"read_only": {
+							Type:        schema.TypeBool,
+							Description: "Whether the mount should be read-only",
+							Optional:    true,
+						},
+						"bind_options": {
+							Type:        schema.TypeList,
+							Description: "Optional configuration for the bind type",
+							Optional:    true,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"propagation": {
+										Type:         schema.TypeString,
+										Description:  "A propagation mode with the value",
+										Optional:     true,
+										ValidateFunc: validateStringMatchesPattern(`^(private|rprivate|shared|rshared|slave|rslave)$`),
+									},
+								},
+							},
+						},
+						"volume_options": {
+							Type:        schema.TypeList,
+							Description: "Optional configuration for the volume type",
+							Optional:    true,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"no_copy": {
+										Type:        schema.TypeBool,
+										Description: "Populate volume with data from the target",
+										Optional:    true,
+									},
+									"labels": {
+										Type:        schema.TypeMap,
+										Description: "User-defined key/value metadata",
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+									"driver_name": {
+										Type:        schema.TypeString,
+										Description: "Name of the driver to use to create the volume.",
+										Optional:    true,
+									},
+									"driver_options": {
+										Type:        schema.TypeMap,
+										Description: "key/value map of driver specific options",
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
+						"tmpfs_options": {
+							Type:        schema.TypeList,
+							Description: "Optional configuration for the tmpfs type",
+							Optional:    true,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"size_bytes": {
+										Type:        schema.TypeInt,
+										Description: "The size for the tmpfs mount in bytes",
+										Optional:    true,
+									},
+									"mode": {
+										Type:        schema.TypeInt,
+										Description: "The permission mode for the tmpfs mount in an integer",
+										Optional:    true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"volumes": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -228,6 +325,11 @@ func resourceDockerContainer() *schema.Resource {
 						},
 					},
 				},
+			},
+
+			"tmpfs": {
+				Type:     schema.TypeMap,
+				Optional: true,
 			},
 
 			"ports": {
