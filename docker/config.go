@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/cli/connhelper"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
@@ -118,7 +119,20 @@ func (c *Config) NewClient() (*client.Client, error) {
 		)
 	}
 
-	// If there is no cert information, then just return the direct client
+	// If there is no cert information, then check for ssh://
+	helper, err := connhelper.GetConnectionHelper(c.Host)
+	if err != nil {
+		return nil, err
+	}
+	if helper != nil {
+		return client.NewClientWithOpts(
+			client.WithHost(helper.Host),
+			client.WithDialContext(helper.Dialer),
+			client.WithVersion(apiVersion),
+		)
+	}
+
+	// If there is no ssh://, then just return the direct client
 	return client.NewClientWithOpts(
 		client.WithHost(c.Host),
 		client.WithVersion(apiVersion),

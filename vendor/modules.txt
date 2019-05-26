@@ -48,6 +48,10 @@ github.com/bgentry/speakeasy
 github.com/blang/semver
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/docker/cli v0.0.0-20190524120722-0f337f1dfe57
+github.com/docker/cli/cli/connhelper
+github.com/docker/cli/cli/connhelper/commandconn
+github.com/docker/cli/cli/connhelper/ssh
 # github.com/docker/distribution v0.0.0-20180522175653-f0cc92778478
 github.com/docker/distribution/reference
 github.com/docker/distribution/registry/api/errcode
