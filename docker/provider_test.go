@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"os"
 	"os/exec"
 	"testing"
 
@@ -41,19 +40,6 @@ func testAccPreCheck(t *testing.T) {
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("Docker swarm could not be initialized: %s", err)
 		}
-	}
-
-	if v := os.Getenv("DOCKER_REGISTRY_ADDRESS"); v == "" {
-		t.Fatalf("DOCKER_REGISTRY_ADDRESS must be set for acceptance tests")
-	}
-	if v := os.Getenv("DOCKER_REGISTRY_USER"); v == "" {
-		t.Fatalf("DOCKER_REGISTRY_USER must be set for acceptance tests")
-	}
-	if v := os.Getenv("DOCKER_REGISTRY_PASS"); v == "" {
-		t.Fatalf("DOCKER_REGISTRY_PASS must be set for acceptance tests")
-	}
-	if v := os.Getenv("DOCKER_PRIVATE_IMAGE"); v == "" {
-		t.Fatalf("DOCKER_PRIVATE_IMAGE must be set for acceptance tests")
 	}
 
 	err := testAccProvider.Configure(terraform.NewResourceConfig(nil))

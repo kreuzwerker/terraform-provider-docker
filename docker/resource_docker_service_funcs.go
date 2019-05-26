@@ -62,13 +62,15 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 	if v, ok := d.GetOk("auth"); ok {
 		auth = authToServiceAuth(v.(map[string]interface{}))
 	} else {
-		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), meta.(*ProviderConfig).AuthConfigs.Configs)
+		authConfigs := meta.(*ProviderConfig).AuthConfigs.Configs
+		log.Printf("[DEBUG] Getting configs from '%v'", authConfigs)
+		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), authConfigs)
 	}
-	encodedJSON, err := json.Marshal(auth)
-	if err != nil {
-		return fmt.Errorf("error creating auth config: %s", err)
-	}
-	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+
+	marshalledAuth, _ := json.Marshal(auth) // https://docs.docker.com/engine/api/v1.37/#section/Versioning
+	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
+	serviceOptions.QueryRegistry = true
+	log.Printf("[DEBUG] Passing registry auth '%s'", serviceOptions.EncodedRegistryAuth)
 
 	service, err := client.ServiceCreate(context.Background(), serviceSpec, serviceOptions)
 	if err != nil {
@@ -1284,15 +1286,15 @@ func authToServiceAuth(auth map[string]interface{}) types.AuthConfig {
 }
 
 // fromRegistryAuth extract the desired AuthConfiguration for the given image
-func fromRegistryAuth(image string, configs map[string]types.AuthConfig) types.AuthConfig {
-	// Remove normalized prefixes to simlify substring
+func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) types.AuthConfig {
+	// Remove normalized prefixes to simplify substring
 	image = strings.Replace(strings.Replace(image, "http://", "", 1), "https://", "", 1)
 	// Get the registry with optional port
 	lastBin := strings.Index(image, "/")
 	// No auth given and image name has no slash like 'alpine:3.1'
 	if lastBin != -1 {
 		serverAddress := image[0:lastBin]
-		if fromRegistryAuth, ok := configs[normalizeRegistryAddress(serverAddress)]; ok {
+		if fromRegistryAuth, ok := authConfigs[normalizeRegistryAddress(serverAddress)]; ok {
 			return fromRegistryAuth
 		}
 	}

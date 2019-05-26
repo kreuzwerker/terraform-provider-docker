@@ -32,18 +32,11 @@ var (
 func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) error {
 	var err error
 	client := meta.(*ProviderConfig).DockerClient
-
-	var data Data
-	if err := fetchLocalImages(&data, client); err != nil {
-		return err
-	}
-
+	authConfigs := meta.(*ProviderConfig).AuthConfigs
 	image := d.Get("image").(string)
-	if _, ok := data.DockerImages[image]; !ok {
-		if _, ok := data.DockerImages[image+":latest"]; !ok {
-			return fmt.Errorf("Unable to find image %s", image)
-		}
-		image = image + ":latest"
+	_, err = findImage(image, client, authConfigs)
+	if err != nil {
+		return fmt.Errorf("Unable to create container with image %s: %s", image, err)
 	}
 
 	config := &container.Config{

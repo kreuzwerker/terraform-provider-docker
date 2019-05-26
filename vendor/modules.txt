@@ -69,6 +69,9 @@ github.com/docker/docker/api
 github.com/docker/docker/api/types/events
 github.com/docker/docker/api/types/image
 github.com/docker/docker/api/types/time
+# github.com/docker/docker-credential-helpers v0.6.2
+github.com/docker/docker-credential-helpers/client
+github.com/docker/docker-credential-helpers/credentials
 # github.com/docker/go-connections v0.4.0
 github.com/docker/go-connections/nat
 github.com/docker/go-connections/sockets

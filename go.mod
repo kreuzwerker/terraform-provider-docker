@@ -5,6 +5,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/docker/distribution v0.0.0-20180522175653-f0cc92778478 // indirect
 	github.com/docker/docker v0.0.0-20180530012807-65bd038fc5e4
+	github.com/docker/docker-credential-helpers v0.6.2
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.0.0-20171221200356-d59758554a3d
 	github.com/gogo/protobuf v0.0.0-20180121160031-26de2f9a7d3b // indirect

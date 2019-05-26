@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -42,8 +41,8 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 }
 
 func TestAccDockerRegistryImage_auth(t *testing.T) {
-	registry := os.Getenv("DOCKER_REGISTRY_ADDRESS")
-	image := os.Getenv("DOCKER_PRIVATE_IMAGE")
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -55,6 +54,7 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 				),
 			},
 		},
+		CheckDestroy: checkAndRemoveImages,
 	})
 }
 

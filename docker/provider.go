@@ -8,10 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/user"
+	"runtime"
 	"strings"
 
+	osx "github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -134,7 +137,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	authConfigs := &AuthConfigs{}
 
-	if v, ok := d.GetOk("registry_auth"); ok {
+	if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
 		authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
 
 		if err != nil {
@@ -224,14 +227,17 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 }
 
 // newAuthConfigurations returns AuthConfigs from a JSON encoded string in the
-// same format as the .dockercfg file.
+// same format as the .dockercfg/ ~/.docker/config.json file.
 func newAuthConfigurations(r io.Reader) (*AuthConfigs, error) {
 	var auth *AuthConfigs
+	log.Println("[DEBUG] Parsing Docker config file")
 	confs, err := parseDockerConfig(r)
 	if err != nil {
 		return nil, err
 	}
-	auth, err = authConfigs(confs)
+
+	log.Printf("[DEBUG] Found Docker configs '%v'", confs)
+	auth, err = convertDockerConfigToAuthConfigs(confs)
 	if err != nil {
 		return nil, err
 	}
@@ -260,13 +266,18 @@ func parseDockerConfig(r io.Reader) (map[string]dockerConfig, error) {
 	return confs, nil
 }
 
-// authConfigs converts a dockerConfigs map to a AuthConfigs object.
-func authConfigs(confs map[string]dockerConfig) (*AuthConfigs, error) {
+// convertDockerConfigToAuthConfigs converts a dockerConfigs map to a AuthConfigs object.
+func convertDockerConfigToAuthConfigs(confs map[string]dockerConfig) (*AuthConfigs, error) {
 	c := &AuthConfigs{
 		Configs: make(map[string]types.AuthConfig),
 	}
-	for reg, conf := range confs {
+	for registryAddress, conf := range confs {
 		if conf.Auth == "" {
+			authFromKeyChain, err := getCredentialsFromOSKeychain(registryAddress)
+			if err != nil {
+				return nil, err
+			}
+			c.Configs[registryAddress] = authFromKeyChain
 			continue
 		}
 		data, err := base64.StdEncoding.DecodeString(conf.Auth)
@@ -277,13 +288,31 @@ func authConfigs(confs map[string]dockerConfig) (*AuthConfigs, error) {
 		if len(userpass) != 2 {
 			return nil, ErrCannotParseDockercfg
 		}
-		c.Configs[reg] = types.AuthConfig{
+		c.Configs[registryAddress] = types.AuthConfig{
 			Email:         conf.Email,
 			Username:      userpass[0],
 			Password:      userpass[1],
-			ServerAddress: reg,
+			ServerAddress: registryAddress,
 			Auth:          conf.Auth,
 		}
 	}
 	return c, nil
+}
+
+// getCredentialsFromOSKeychain get config from system specific keychains
+func getCredentialsFromOSKeychain(registryAddress string) (types.AuthConfig, error) {
+	authConfig := types.AuthConfig{}
+	log.Printf("[DEBUG] Getting auth for registry '%s' on OS: '%s'", registryAddress, runtime.GOOS)
+	if runtime.GOOS == "darwin" {
+		p := osx.NewShellProgramFunc("docker-credential-osxkeychain")
+		credentials, err := osx.Get(p, registryAddress)
+		if err != nil {
+			return authConfig, err
+		}
+		authConfig.Username = credentials.Username
+		authConfig.Password = credentials.Secret
+		authConfig.ServerAddress = registryAddress
+		authConfig.Auth = base64.StdEncoding.EncodeToString([]byte(credentials.Username + ":" + credentials.Secret))
+	}
+	return authConfig, nil
 }

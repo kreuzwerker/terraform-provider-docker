@@ -62,6 +62,8 @@ github.com/docker/distribution v0.0.0-20180522175653-f0cc92778478 h1:yCzgNaIN+6i
 github.com/docker/distribution v0.0.0-20180522175653-f0cc92778478/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v0.0.0-20180530012807-65bd038fc5e4 h1:l3X/U8oT8xvht8bB/kHUntALLPIYSzmUf4Wyr6UnGWU=
 github.com/docker/docker v0.0.0-20180530012807-65bd038fc5e4/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker-credential-helpers v0.6.2 h1:CrW9H1VMf3a4GrtyAi7IUJjkJVpwBBpX0+mvkvYJaus=
+github.com/docker/docker-credential-helpers v0.6.2/go.mod h1:WRaJzqw3CTB9bk10avuGsjVBZsD05qeibJ1/TYlvc0Y=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
 github.com/docker/go-connections v0.4.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
 github.com/docker/go-units v0.0.0-20171221200356-d59758554a3d h1:QEYTOUa4JROW5CSAHU8qc0rD8uhx1tsUkBsSDk8P5eM=

@@ -1,0 +1,7 @@
+{
+	"auths": {
+		"127.0.0.1:15000": {
+			"auth": "dGVzdHVzZXI6dGVzdHB3ZA=="
+		}
+	}
+}

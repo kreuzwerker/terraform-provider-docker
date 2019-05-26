@@ -107,8 +107,8 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 }
 
 func TestAccDockerImage_data_private(t *testing.T) {
-	registry := os.Getenv("DOCKER_REGISTRY_ADDRESS")
-	image := os.Getenv("DOCKER_PRIVATE_IMAGE")
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -122,6 +122,29 @@ func TestAccDockerImage_data_private(t *testing.T) {
 				),
 			},
 		},
+		CheckDestroy: checkAndRemoveImages,
+	})
+}
+
+func TestAccDockerImage_data_private_config_file(t *testing.T) {
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
+	wd, _ := os.Getwd()
+	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                  func() { testAccPreCheck(t) },
+		Providers:                 testAccProviders,
+		PreventPostDestroyRefresh: true,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccDockerImageFromDataPrivateConfigFile, registry, dockerConfig, image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
+				),
+			},
+		},
+		CheckDestroy: checkAndRemoveImages,
 	})
 }
 
@@ -211,6 +234,20 @@ resource "docker_image" "foo_private" {
 	name = "${data.docker_registry_image.foo_private.name}"
 	keep_locally = true
 	pull_triggers = ["${data.docker_registry_image.foo_private.sha256_digest}"]
+}
+`
+
+const testAccDockerImageFromDataPrivateConfigFile = `
+provider "docker" {
+	alias = "private"
+	registry_auth {
+		address = "%s"
+		config_file = "%s"
+	}
+}
+resource "docker_image" "foo_private" {
+	provider = "docker.private"
+	name = "%s"
 }
 `
 

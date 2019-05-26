@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -27,6 +28,28 @@ func TestMapTypeMapValsToStringSlice(t *testing.T) {
 	if len(stringSlice) != 1 {
 		t.Fatalf("slice should have length 1 but has %v", len(stringSlice))
 	}
+}
+
+func TestAccDockerContainer_private_image(t *testing.T) {
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
+	wd, _ := os.Getwd()
+	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+
+	var c types.ContainerJSON
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccDockerContainerPrivateImage, registry, dockerConfig, image),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+				),
+			},
+		},
+		CheckDestroy: checkAndRemoveImages,
+	})
 }
 
 func TestAccDockerContainer_basic(t *testing.T) {
@@ -1124,6 +1147,22 @@ func testValueHigherEqualThan(name, key string, value int) resource.TestCheckFun
 		return nil
 	}
 }
+
+const testAccDockerContainerPrivateImage = `
+provider "docker" {
+	alias = "private"
+	registry_auth {
+		address = "%s"
+		config_file = "%s"
+	}
+}
+
+resource "docker_container" "foo" {
+	provider = "docker.private"
+	name  = "tf-test"
+	image = "%s"
+}
+`
 
 const testAccDockerContainerConfig = `
 resource "docker_image" "foo" {
