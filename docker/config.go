@@ -17,7 +17,7 @@ import (
 	"github.com/docker/docker/client"
 )
 
-const apiVersion = "1.37"
+const apiVersion = "1.39"
 
 // Config is the structure that stores the configuration to talk to a
 // Docker API compatible host.
