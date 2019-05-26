@@ -326,12 +326,10 @@ func resourceDockerContainer() *schema.Resource {
 					},
 				},
 			},
-
 			"tmpfs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 			},
-
 			"ports": {
 				Type:     schema.TypeList,
 				Optional: true,
