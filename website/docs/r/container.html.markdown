@@ -75,6 +75,8 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
 * `capabilities` - (Optional, block) See [Capabilities](#capabilities) below for details.
+* `mounts` - (Optional, set of blocks) See [Mounts](#mounts) below for details.
+* `tmpfs` - (Optional, map) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
 * `ports` - (Optional, block) See [Ports](#ports) below for details.
 * `host` - (Optional, block) See [Extra Hosts](#extra_hosts) below for
   details.
@@ -125,6 +127,29 @@ resource "docker_container" "ubuntu" {
   }
 }
 ```
+
+<a id="mounts"></a>
+### Mounts
+
+`mount` is a block within the configuration that can be repeated to specify
+the extra mount mappings for the container. Each `mount` block is the Specification for mounts to be added to container and 
+supports the following:
+
+* `target` - (Required, string) The container path.
+* `source` - (Optional, string) The mount source (e.g., a volume name, a host path)
+* `type` - (Required, string) The mount type: valid values are `bind|volume|tmpfs`.
+* `read_only` - (Optional, string) Whether the mount should be read-only
+* `bind_options` - (Optional, map) Optional configuration for the `bind` type.
+  * `propagation` - (Optional, string) A propagation mode with the value.
+* `volume_options` - (Optional, map) Optional configuration for the `volume` type.
+  * `no_copy` - (Optional, string) Whether to populate volume with data from the target.
+  * `labels` - (Optional, map of key/value pairs) Adding labels.
+  * `driver_config` - (Optional, map) The name of the driver to create the volume.
+    * `name` - (Optional, string) The name of the driver to create the volume.
+    * `options` - (Optional, map of key/value pairs) Options for the driver.
+* `tmpfs_options` - (Optional, map) Optional configuration for the `tmpf` type.
+  * `size_bytes` - (Optional, int) The size for the tmpfs mount in bytes. 
+  * `mode` - (Optional, int) The permission mode for the tmpfs mount in an integer.
 
 <a id="ports"></a>
 ### Ports

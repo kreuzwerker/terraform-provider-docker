@@ -352,7 +352,7 @@ the extra mount mappings for the container. Each `mount` block is the Specificat
 the following:
 
 * `target` - (Required, string) The container path.
-* `source` - (Required, string) The mount source (e.g., a volume name, a host path)
+* `source` - (Optional, string) The mount source (e.g., a volume name, a host path)
 * `type` - (Required, string) The mount type: valid values are `bind|volume|tmpfs`.
 * `read_only` - (Optional, string) Whether the mount should be read-only
 * `bind_options` - (Optional, map) Optional configuration for the `bind` type.
