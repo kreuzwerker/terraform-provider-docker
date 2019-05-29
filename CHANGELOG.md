@@ -1,11 +1,11 @@
-## 1.2.0 (Unreleased)
+## 1.2.0 (May 29, 2019)
 
 IMPROVEMENTS
-* Updates to docker `18.09` and API Version `1.39` [GH-114]
+* Updates to docker `18.09` and API Version `1.39` ([#114](https://github.com/terraform-providers/terraform-provider-docker/issues/114))
 * Upgrades to go `1.11` ([#116](https://github.com/terraform-providers/terraform-provider-docker/pull/116))
-* Switches to `go modules` [GH-124]
-* Adds data source for networks [GH-84]
-* Adds `ssh` protocol support [GH-153]
+* Switches to `go modules` ([#124](https://github.com/terraform-providers/terraform-provider-docker/issues/124))
+* Adds data source for networks ([#84](https://github.com/terraform-providers/terraform-provider-docker/issues/84))
+* Adds `ssh` protocol support ([#153](https://github.com/terraform-providers/terraform-provider-docker/issues/153))
 * Adds docker container mounts support ([#147](https://github.com/terraform-providers/terraform-provider-docker/pull/147))
 
 BUG FIXES
