@@ -58,16 +58,7 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	serviceOptions := types.ServiceCreateOptions{}
-	auth := types.AuthConfig{}
-	if v, ok := d.GetOk("auth"); ok {
-		auth = authToServiceAuth(v.(map[string]interface{}))
-	} else {
-		authConfigs := meta.(*ProviderConfig).AuthConfigs.Configs
-		log.Printf("[DEBUG] Getting configs from '%v'", authConfigs)
-		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), authConfigs)
-	}
-
-	marshalledAuth, _ := json.Marshal(auth) // https://docs.docker.com/engine/api/v1.37/#section/Versioning
+	marshalledAuth := retrieveAndMarshalAuth(d, meta, "create")
 	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
 	serviceOptions.QueryRegistry = true
 	log.Printf("[DEBUG] Passing registry auth '%s'", serviceOptions.EncodedRegistryAuth)
@@ -162,17 +153,11 @@ func resourceDockerServiceUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	updateOptions := types.ServiceUpdateOptions{}
-	auth := types.AuthConfig{}
-	if v, ok := d.GetOk("auth"); ok {
-		auth = authToServiceAuth(v.(map[string]interface{}))
-	} else {
-		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), meta.(*ProviderConfig).AuthConfigs.Configs)
-	}
-	encodedJSON, err := json.Marshal(auth)
+	marshalledAuth := retrieveAndMarshalAuth(d, meta, "update")
 	if err != nil {
 		return fmt.Errorf("error creating auth config: %s", err)
 	}
-	updateOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(encodedJSON)
+	updateOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
 
 	updateResponse, err := client.ServiceUpdate(context.Background(), d.Id(), service.Version, serviceSpec, updateOptions)
 	if err != nil {
@@ -1300,6 +1285,29 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 	}
 
 	return types.AuthConfig{}
+}
+
+// retrieveAndMarshalAuth retrieves and marshals the service registry auth
+func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType string) []byte {
+	auth := types.AuthConfig{}
+	if v, ok := d.GetOk("auth"); ok {
+		auth = authToServiceAuth(v.(map[string]interface{}))
+	} else {
+		authConfigs := meta.(*ProviderConfig).AuthConfigs.Configs
+		if len(authConfigs) == 0 {
+			log.Printf("[DEBUG] AuthConfigs empty on %s. Wait 3s and try again", stageType)
+			// sometimes the dockerconfig is read succesfully from disk but the
+			// call to create/update the service is faster. So we delay to prevent the
+			// passing of an empty auth configuration in this case
+			<-time.After(3 * time.Second)
+			authConfigs = meta.(*ProviderConfig).AuthConfigs.Configs
+		}
+		log.Printf("[DEBUG] Getting configs from '%v'", authConfigs)
+		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), authConfigs)
+	}
+
+	marshalledAuth, _ := json.Marshal(auth) // https://docs.docker.com/engine/api/v1.37/#section/Versioning
+	return marshalledAuth
 }
 
 // stringSetToPlacementPrefs maps a string set to PlacementPreference
