@@ -62,9 +62,24 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 $ make testacc
 ```
 
+In order to run only single Acceptance tests, execute the following steps:
+
+```sh
+# setup the testing environment
+$ make testacc_setup
+
+# run single tests
+TF_LOG=INFO TF_ACC=1 go test -v ./docker -run ^TestAccDockerImage_data_private_config_file$ -timeout 360s
+
+# cleanup the local testing resources
+$ make testacc_cleanup
+```
+
 In order to extend the provider and test it with `terraform`, build the provider as mentioned above with
 ```sh
 $ make build
+# or a specific version
+$ go build -o terraform-provider-docker_v1.2.0_x4
 ```
 
 Remove an explicit version of the provider you develop, because `terraform` will fetch

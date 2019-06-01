@@ -13,8 +13,14 @@ test: fmtcheck
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
+testacc_setup: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/testacc_setup.sh'"
+
 testacc: fmtcheck
-	@sh -c "'$(CURDIR)/scripts/runAccTests.sh'"
+	@sh -c "'$(CURDIR)/scripts/testacc_full.sh'"
+
+testacc_cleanup: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/testacc_cleanup.sh'"
 
 compile: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/compile.sh'"
