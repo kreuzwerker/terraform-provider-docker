@@ -84,7 +84,7 @@ func TestAccDockerSecret_labels(t *testing.T) {
 				resource "docker_secret" "foo" {
 					name = "foo-secret"
 					data = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
-					labels {
+					labels = {
 						"test1" = "foo"
 						"test2" = "bar"
 					}

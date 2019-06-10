@@ -89,7 +89,7 @@ func testAccVolumeLabel(volume *types.Volume, name string, value string) resourc
 const testAccDockerVolumeLabelsConfig = `
 resource "docker_volume" "foo" {
   name = "test_foo"
-  labels {
+  labels = {
     "com.docker.compose.project" = "test"
     "com.docker.compose.volume"  = "foo"
   }

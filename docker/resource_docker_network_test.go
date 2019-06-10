@@ -280,7 +280,7 @@ func testAccNetworkLabel(network *types.NetworkResource, name string, value stri
 const testAccDockerNetworkLabelsConfig = `
 resource "docker_network" "foo" {
   name = "test_foo"
-  labels {
+  labels = {
     "com.docker.compose.network" = "foo"
     "com.docker.compose.project" = "test"
   }

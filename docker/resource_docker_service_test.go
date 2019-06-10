@@ -227,7 +227,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 						container_spec {
 							image = "127.0.0.1:15000/tftest-service:v1"
 
-							labels {
+							labels = {
 								foo = "bar"
 							}
 
@@ -235,7 +235,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 							args     = ["-las"]
 							hostname = "my-fancy-service"
 
-							env {
+							env = {
 								MYFOO = "BAR"
 							}
 
@@ -255,25 +255,23 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 
 							read_only = true
 
-							mounts = [
-								{
-									target      = "/mount/test"
-									source      = "${docker_volume.test_volume.name}"
-									type        = "volume"
-									read_only   = true
+							mounts {
+								target      = "/mount/test"
+								source      = "${docker_volume.test_volume.name}"
+								type        = "volume"
+								read_only   = true
 
-									volume_options {
-										no_copy = true
-										labels {
-											foo = "bar"
-										}
-										driver_name = "random-driver"
-										driver_options {
-											op1 = "val1"
-										}
+								volume_options {
+									no_copy = true
+									labels = {
+										foo = "bar"
 									}
-								},
-							]
+									driver_name = "random-driver"
+									driver_options = {
+										op1 = "val1"
+									}
+								}
+							}
 
 							stop_signal       = "SIGTERM"
 							stop_grace_period = "10s"
@@ -296,21 +294,17 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 								options     = ["timeout:3"]
 							}
 
-							secrets = [
-								{
-									secret_id   = "${docker_secret.service_secret.id}"
-									secret_name = "${docker_secret.service_secret.name}"
-									file_name = "/secrets.json"
-								},
-							]
+							secrets {
+								secret_id   = "${docker_secret.service_secret.id}"
+								secret_name = "${docker_secret.service_secret.name}"
+								file_name = "/secrets.json"
+							}
 
-							configs = [
-								{
-									config_id   = "${docker_config.service_config.id}"
-									config_name = "${docker_config.service_config.name}"
-									file_name = "/configs.json"
-								},
-							]
+							configs {
+								config_id   = "${docker_config.service_config.id}"
+								config_name = "${docker_config.service_config.name}"
+								file_name = "/configs.json"
+							}
 						}
 
 						resources {
@@ -320,7 +314,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 							}
 						}
 
-						restart_policy {
+						restart_policy = {
 							condition    = "on-failure"
 							delay        = "3s"
 							max_attempts = 4
@@ -336,13 +330,11 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 								"spread=node.role.manager",
 							]
 
-							platforms = [
-								{
-									architecture = "amd64"
-									os 			 = "linux"
-								}
-							]
- 
+							platforms {
+								architecture = "amd64"
+								os 			 = "linux"
+							}
+
 						}
 
 						force_update = 0
@@ -352,7 +344,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 						log_driver {
 							name = "json-file"
 
-							options {
+							options = {
 								max-size = "10m"
 								max-file = "3"
 							}
@@ -497,7 +489,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 						}
 					}
@@ -524,7 +516,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 						}
 					}
@@ -553,7 +545,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 						}
 					}
@@ -594,7 +586,7 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 						}
 					}
@@ -625,7 +617,7 @@ func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
 				resource "docker_service" "foo" {
 					name     = "tftest-service-basic"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 						}
 					}
@@ -662,7 +654,7 @@ func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/tftest-service:v1"
 						}
 					}
@@ -737,29 +729,29 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	secretData := "ewogICJrZXkiOiAiUVdFUlRZIgp9"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	mounts := `
-		{
-			source = "${docker_volume.foo.name}"
-			target = "/mount/test"
-			type   = "volume"
-			read_only = true
-			volume_options {
-				labels {
-					env = "dev"
-					terraform = "true"
-				}
+	mounts {
+		source = "${docker_volume.foo.name}"
+		target = "/mount/test"
+		type   = "volume"
+		read_only = true
+		volume_options {
+			labels = {
+				env = "dev"
+				terraform = "true"
 			}
 		}
+	}
 	`
 	hosts := `
-		{
-			host = "testhost"
-			ip = "10.0.1.0"
-		}
+	hosts {
+		host = "testhost"
+		ip = "10.0.1.0"
+	}
 	`
 	logging := `
 		name = "json-file"
 
-		options {
+		options = {
 			max-size = "10m"
 			max-file = "3"
 		}
@@ -768,10 +760,10 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	healthcheckTimeout := "500ms"
 	replicas := 2
 	portsSpec := `
-		{
-			target_port    = "8080"
-			published_port = "8081"
-		}
+	ports {
+		target_port    = "8080"
+		published_port = "8081"
+	}
 	`
 
 	// Step 2
@@ -780,41 +772,41 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	image2 := "127.0.0.1:15000/tftest-service:v2"
 	healthcheckInterval2 := "2s"
 	mounts2 := `
-		{
-			source = "${docker_volume.foo.name}"
-			target = "/mount/test"
-			type   = "volume"
-			read_only = true
-			volume_options {
-				labels {
-					env = "dev"
-					terraform = "true"
-				}
-			}
-		},
-		{
-			source = "${docker_volume.foo2.name}"
-			target = "/mount/test2"
-			type   = "volume"
-			read_only = true
-			volume_options {
-				labels {
-					env = "dev"
-					terraform = "true"
-				}
+	mounts {
+		source = "${docker_volume.foo.name}"
+		target = "/mount/test"
+		type   = "volume"
+		read_only = true
+		volume_options {
+			labels = {
+				env = "dev"
+				terraform = "true"
 			}
 		}
+	}
+	mounts {
+		source = "${docker_volume.foo2.name}"
+		target = "/mount/test2"
+		type   = "volume"
+		read_only = true
+		volume_options {
+			labels  = {
+				env = "dev"
+				terraform = "true"
+			}
+		}
+	}
 	`
 	hosts2 := `
-		{
-			host = "testhost2"
-			ip = "10.0.2.2"
-		}
+	hosts {
+		host = "testhost2"
+		ip = "10.0.2.2"
+	}
 	`
 	logging2 := `
 		name = "json-file"
 
-		options {
+		options = {
 			max-size = "15m"
 			max-file = "5"
 		}
@@ -822,14 +814,14 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	healthcheckTimeout2 := "800ms"
 	replicas2 := 6
 	portsSpec2 := `
-		{
-			target_port    = "8080"
-			published_port = "8081"
-		},
-		{
-			target_port    = "8080"
-			published_port = "8082"
-		}
+	ports {
+		target_port    = "8080"
+		published_port = "8081"
+	}
+	ports {
+		target_port    = "8080"
+		published_port = "8082"
+	}
 	`
 
 	// Step 3
@@ -843,6 +835,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	healthcheckTimeout3 := healthcheckTimeout2
 	replicas3 := 3 // only decrease
 	portsSpec3 := portsSpec2
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -1004,7 +997,7 @@ func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
 				resource "docker_service" "foo" {
 					name     = "tftest-service-privateimagedoesnotexist"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "127.0.0.1:15000/idonoexist:latest"
 						}
 					}
@@ -1040,7 +1033,7 @@ func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 				resource "docker_service" "foo" {
 					name     = "tftest-service-publicimagedoesnotexist"
 					task_spec {
-						container_spec = {
+						container_spec {
 							image    = "stovogel/blablabla:part5"
 						}
 					}
@@ -1203,29 +1196,21 @@ resource "docker_service" "foo" {
 		container_spec {
 			image   = "%s"
 
-			mounts = [
-				%s
-			]
+			%s
 
-			hosts = [
-				%s
-			]
+			%s
 
-			configs = [
-				{
-					config_id   = "${docker_config.service_config.id}"
-					config_name = "${docker_config.service_config.name}"
-					file_name   = "/configs.json"
-				},
-			]
+			configs {
+				config_id   = "${docker_config.service_config.id}"
+				config_name = "${docker_config.service_config.name}"
+				file_name   = "/configs.json"
+			}
 
-			secrets = [
-				{
-					secret_id   = "${docker_secret.service_secret.id}"
-					secret_name = "${docker_secret.service_secret.name}"
-					file_name   = "/secrets.json"
-				},
-			]
+			secrets {
+				secret_id   = "${docker_secret.service_secret.id}"
+				secret_name = "${docker_secret.service_secret.name}"
+				file_name   = "/secrets.json"
+			}
 
 			healthcheck {
 				test     = ["CMD", "curl", "-f", "localhost:8080/health"]
@@ -1260,9 +1245,7 @@ resource "docker_service" "foo" {
 	}
 
 	endpoint_spec {
-		ports = [ 
-			%s
-		]
+		%s
 	}
 
 	converge_config {

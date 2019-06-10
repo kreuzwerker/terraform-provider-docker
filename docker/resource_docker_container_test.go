@@ -1296,18 +1296,16 @@ resource "docker_container" "foo_mounts" {
 	name = "tf-test"
 	image = "${docker_image.foo_mounts.latest}"
 
-	mounts = [
-		{
-			target      = "/mount/test"
-			source      = "${docker_volume.foo_mounts.name}"
-			type        = "volume"
-			read_only   = true
-		},
-		{
-			target  = "/mount/tmpfs"
-			type    = "tmpfs"
-		}
-	]
+	mounts {
+		target      = "/mount/test"
+		source      = "${docker_volume.foo_mounts.name}"
+		type        = "volume"
+		read_only   = true
+	}
+	mounts {
+		target  = "/mount/tmpfs"
+		type    = "tmpfs"
+	}
 }
 `
 
@@ -1352,7 +1350,7 @@ resource "docker_container" "foo" {
 	dns = ["8.8.8.8"]
 	dns_opts = ["rotate"]
 	dns_search = ["example.com"]
-	labels {
+	labels = {
 		env = "prod"
 		role = "test"
 	}
@@ -1363,12 +1361,10 @@ resource "docker_container" "foo" {
 	}
 	network_mode = "bridge"
 
-	networks_advanced =  [
-		{
-			name = "${docker_network.test_network.name}"
-			aliases = ["tftest"]
-		}
-	]
+	networks_advanced {
+		name = "${docker_network.test_network.name}"
+		aliases = ["tftest"]
+	}
 
 	host {
 		host = "testhost"
@@ -1443,7 +1439,7 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
-	
+
 	ports {
 		internal = 80
 	}
@@ -1459,15 +1455,14 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
-	
-	ports = [
-		{
-			internal = 80
-		},
-		{
-			internal = 81
-		}
-	]
+
+	ports {
+		internal = 80
+	}
+
+	ports {
+		internal = 81
+	}
 }
 `
 const testAccDockerContainerPortConfig = `
@@ -1496,16 +1491,16 @@ resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
 
-	ports = [
-		{
-			internal = 80
-			external = 32787
-		},
-		{
-			internal = 81
-			external = 32788
-		}
-	] 
+	ports {
+		internal = 80
+		external = 32787
+	}
+
+	ports {
+		internal = 81
+		external = 32788
+	}
+
 }
 `
 
@@ -1586,12 +1581,10 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
-	networks_advanced =  [
-		{
-			name = "${docker_network.test.name}",
-			ipv4_address = "10.0.1.123"
-		}
-	]
+	networks_advanced {
+		name = "${docker_network.test.name}"
+		ipv4_address = "10.0.1.123"
+	}
 }
 `
 const testAccDockerContainerNetworksIPv6AddressConfig = `
@@ -1609,26 +1602,24 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
-	networks_advanced =  [
-		{
-			name = "${docker_network.test.name}",
-			ipv6_address = "fd00:0:0:0::123"
-		}
-	]
+	networks_advanced {
+		name = "${docker_network.test.name}"
+		ipv6_address = "fd00:0:0:0::123"
+	}
 }
 `
 const testAccDockerContainerNetworksDualStackAddressConfig = `
 resource "docker_network" "test" {
 	name = "tf-test"
 	ipv6 = true
-	ipam_config = [
-		{
-			subnet = "10.0.1.0/24"
-		},
-		{
-			subnet = "fd00::1/64"
-		}
-	]
+
+	ipam_config {
+		subnet = "10.0.1.0/24"
+	}
+
+	ipam_config {
+		subnet = "fd00::1/64"
+	}
 }
 resource "docker_image" "foo" {
 	name = "nginx:latest"
@@ -1637,13 +1628,11 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
-	networks_advanced =  [
-		{
-			name = "${docker_network.test.name}",
-			ipv4_address = "10.0.1.123"
-			ipv6_address = "fd00:0:0:0::123"
-		}
-	]
+	networks_advanced {
+		name = "${docker_network.test.name}"
+		ipv4_address = "10.0.1.123"
+		ipv6_address = "fd00:0:0:0::123"
+	}
 }
 `
 const testAccDockerContainerRmConfig = `
