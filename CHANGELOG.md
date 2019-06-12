@@ -1,4 +1,12 @@
-## 1.3.0 (Unreleased)
+## 2.0.0 (Unreleased)
+
+BREAKING CHANGES
+* Updates to Terraform `v0.12` [GH-144] and ([#150](https://github.com/terraform-providers/terraform-provider-docker/pull/150))
+  
+IMPROVEMENTS
+* Refactors test setup ([#156](https://github.com/terraform-providers/terraform-provider-docker/pull/156))
+* Fixes flaky acceptance tests ([#154](https://github.com/terraform-providers/terraform-provider-docker/pull/154))
+
 ## 1.2.0 (May 29, 2019)
 
 IMPROVEMENTS
