@@ -14,7 +14,7 @@ import (
 	"runtime"
 	"strings"
 
-	osx "github.com/docker/docker-credential-helpers/client"
+	credhelper "github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -232,13 +232,13 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 func newAuthConfigurations(r io.Reader) (*AuthConfigs, error) {
 	var auth *AuthConfigs
 	log.Println("[DEBUG] Parsing Docker config file")
-	confs, err := parseDockerConfig(r)
+	confs, credsStore, err := parseDockerConfig(r)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Printf("[DEBUG] Found Docker configs '%v'", confs)
-	auth, err = convertDockerConfigToAuthConfigs(confs)
+	auth, err = convertDockerConfigToAuthConfigs(confs, credsStore)
 	if err != nil {
 		return nil, err
 	}
@@ -246,35 +246,36 @@ func newAuthConfigurations(r io.Reader) (*AuthConfigs, error) {
 }
 
 // parseDockerConfig parses the docker config file for auths
-func parseDockerConfig(r io.Reader) (map[string]dockerConfig, error) {
+func parseDockerConfig(r io.Reader) (map[string]dockerConfig, string, error) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r)
 	byteData := buf.Bytes()
 
 	confsWrapper := struct {
-		Auths map[string]dockerConfig `json:"auths"`
+		Auths      map[string]dockerConfig `json:"auths"`
+		CredsStore string                  `json:"credsStore,omitempty"`
 	}{}
 	if err := json.Unmarshal(byteData, &confsWrapper); err == nil {
 		if len(confsWrapper.Auths) > 0 {
-			return confsWrapper.Auths, nil
+			return confsWrapper.Auths, confsWrapper.CredsStore, nil
 		}
 	}
 
 	var confs map[string]dockerConfig
 	if err := json.Unmarshal(byteData, &confs); err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return confs, nil
+	return confs, "", nil
 }
 
 // convertDockerConfigToAuthConfigs converts a dockerConfigs map to a AuthConfigs object.
-func convertDockerConfigToAuthConfigs(confs map[string]dockerConfig) (*AuthConfigs, error) {
+func convertDockerConfigToAuthConfigs(confs map[string]dockerConfig, credsStore string) (*AuthConfigs, error) {
 	c := &AuthConfigs{
 		Configs: make(map[string]types.AuthConfig),
 	}
 	for registryAddress, conf := range confs {
 		if conf.Auth == "" {
-			authFromKeyChain, err := getCredentialsFromOSKeychain(registryAddress)
+			authFromKeyChain, err := getCredentialsFromOSKeychain(registryAddress, credsStore)
 			if err != nil {
 				return nil, err
 			}
@@ -301,19 +302,24 @@ func convertDockerConfigToAuthConfigs(confs map[string]dockerConfig) (*AuthConfi
 }
 
 // getCredentialsFromOSKeychain get config from system specific keychains
-func getCredentialsFromOSKeychain(registryAddress string) (types.AuthConfig, error) {
+func getCredentialsFromOSKeychain(registryAddress string, credsStore string) (types.AuthConfig, error) {
 	authConfig := types.AuthConfig{}
-	log.Printf("[DEBUG] Getting auth for registry '%s' on OS: '%s'", registryAddress, runtime.GOOS)
-	if runtime.GOOS == "darwin" {
-		p := osx.NewShellProgramFunc("docker-credential-osxkeychain")
-		credentials, err := osx.Get(p, registryAddress)
-		if err != nil {
-			return authConfig, err
-		}
-		authConfig.Username = credentials.Username
-		authConfig.Password = credentials.Secret
-		authConfig.ServerAddress = registryAddress
-		authConfig.Auth = base64.StdEncoding.EncodeToString([]byte(credentials.Username + ":" + credentials.Secret))
+	log.Printf("[DEBUG] Getting auth for registry '%s' from credential store: '%s'", registryAddress, credsStore)
+	if credsStore == "" {
+		return authConfig, errors.New("No credential store configured")
 	}
+	executable := "docker-credential-" + credsStore
+	if runtime.GOOS == "windows" {
+		executable = executable + ".exe"
+	}
+	p := credhelper.NewShellProgramFunc(executable)
+	credentials, err := credhelper.Get(p, registryAddress)
+	if err != nil {
+		return authConfig, err
+	}
+	authConfig.Username = credentials.Username
+	authConfig.Password = credentials.Secret
+	authConfig.ServerAddress = registryAddress
+	authConfig.Auth = base64.StdEncoding.EncodeToString([]byte(credentials.Username + ":" + credentials.Secret))
 	return authConfig, nil
 }
