@@ -131,8 +131,8 @@ resource "docker_container" "ubuntu" {
 <a id="mounts"></a>
 ### Mounts
 
-`mount` is a block within the configuration that can be repeated to specify
-the extra mount mappings for the container. Each `mount` block is the Specification for mounts to be added to container and 
+`mounts` is a block within the configuration that can be repeated to specify
+the extra mount mappings for the container. Each `mounts` block is the Specification for mounts to be added to container and
 supports the following:
 
 * `target` - (Required, string) The container path.
