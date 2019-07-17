@@ -35,6 +35,16 @@ resource "docker_image" "ubuntu" {
 }
 ```
 
+-> **Note**
+You can also use the `ssh` protocol to connect to the docker host on a remote machine.
+The configuration would look as follows:
+
+```hcl
+provider "docker" {
+  host = "ssh://user@remote-host:22"
+}
+```
+
 ## Registry Credentials
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
@@ -49,7 +59,7 @@ provider "docker" {
 
   registry_auth {
     address = "registry.hub.docker.com"
-    config_file = "~/.docker/config.json"
+    config_file = "${pathexpand("~/.docker/config.json")}"
   }
 
   registry_auth {
@@ -69,25 +79,25 @@ data "docker_registry_image" "quay" {
 ```
 
 -> **Note**
-When passing in a config file make sure every repo in the `auths` object should have
-a corresponding `auth` string. 
+When passing in a config file either the corresponding `auth` string of the repository is read or the os specific
+credential helpers (see [here](https://github.com/docker/docker-credential-helpers#available-programs)) are
+used to retrieve the authentication credentials.
 
-In this case, either use `username` and `password` directly or set the enviroment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS` or add the string manually via
+You can still use the enviroment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
-```sh
-echo -n "user:pass" | base64
-# dXNlcjpwYXNz=
-``` 
-
-and paste it into `~/.docker/config.json`:
+An example content of the file `~/.docker/config.json` on OSX may look like follows:
 
 ```json
 {
 	"auths": {
 		"repo.mycompany:8181": {
 			"auth": "dXNlcjpwYXNz="
+		},
+		"otherrepo.other-company:8181": {
+
 		}
-	}	
+	},
+  "credsStore" : "osxkeychain"
 }
 ```
 

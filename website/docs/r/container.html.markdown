@@ -144,9 +144,7 @@ supports the following:
 * `volume_options` - (Optional, map) Optional configuration for the `volume` type.
   * `no_copy` - (Optional, string) Whether to populate volume with data from the target.
   * `labels` - (Optional, map of key/value pairs) Adding labels.
-  * `driver_config` - (Optional, map) The name of the driver to create the volume.
-    * `name` - (Optional, string) The name of the driver to create the volume.
-    * `options` - (Optional, map of key/value pairs) Options for the driver.
+  * `driver_options` - (Optional, map of key/value pairs) Options for the driver.
 * `tmpfs_options` - (Optional, map) Optional configuration for the `tmpf` type.
   * `size_bytes` - (Optional, int) The size for the tmpfs mount in bytes. 
   * `mode` - (Optional, int) The permission mode for the tmpfs mount in an integer.
