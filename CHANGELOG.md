@@ -1,4 +1,12 @@
 ## 2.1.0 (Unreleased)
+
+IMPROVEMENTS
+* Adds cross-platform support for generic Docker credential helper([#159](https://github.com/terraform-providers/terraform-provider-docker/pull/159))
+
+DOC
+* Updates the docs for ssh protocol and mounts [GH-158]
+* Fixes website typo / containers / mount vs mounts ([#162](https://github.com/terraform-providers/terraform-provider-docker/pull/162))
+
 ## 2.0.0 (June 25, 2019)
 
 BREAKING CHANGES
