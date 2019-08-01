@@ -718,6 +718,10 @@ func resourceDockerContainer() *schema.Resource {
 
 func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFunc {
 	return func(k, old, new string, d *schema.ResourceData) bool {
+		if k == "ports.#" && old != new {
+			log.Printf("[DEBUG] suppress diff ports: old and new don't have the same length")
+			return false
+		}
 		portsOldRaw, portsNewRaw := d.GetChange("ports")
 		portsOld := portsOldRaw.([]interface{})
 		portsNew := portsNewRaw.([]interface{})

@@ -1,4 +1,8 @@
 ## 2.1.1 (Unreleased)
+
+BUG FIXES
+* Fixes 'No changes' for containers when all port blocks have been removed ([#167](https://github.com/terraform-providers/terraform-provider-docker/issues/167))
+
 ## 2.1.0 (July 19, 2019)
 
 IMPROVEMENTS
@@ -12,7 +16,7 @@ DOC
 
 BREAKING CHANGES
 * Updates to Terraform `v0.12` [[#144](https://github.com/terraform-providers/terraform-provider-docker/issues/144)] and ([#150](https://github.com/terraform-providers/terraform-provider-docker/pull/150))
-  
+
 IMPROVEMENTS
 * Refactors test setup ([#156](https://github.com/terraform-providers/terraform-provider-docker/pull/156))
 * Fixes flaky acceptance tests ([#154](https://github.com/terraform-providers/terraform-provider-docker/pull/154))
@@ -34,7 +38,7 @@ BUG FIXES
 
 BUG FIXES
 * Fixes no more 'force new resource' for container ports when
-there are no changes. This was caused to the ascending order. See [[#110](https://github.com/terraform-providers/terraform-provider-docker/issues/110)] 
+there are no changes. This was caused to the ascending order. See [[#110](https://github.com/terraform-providers/terraform-provider-docker/issues/110)]
 for details and ([#115](https://github.com/terraform-providers/terraform-provider-docker/pull/115))
 * Normalize blank port IP's to 0.0.0.0 ([#128](https://github.com/terraform-providers/terraform-provider-docker/pull/128))
 
@@ -51,7 +55,7 @@ DOCS
 ## 1.1.0 (October 30, 2018)
 
 IMPROVEMENTS
-* Adds labels for `network`, `volume` and `secret` to support docker stacks. [[#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)] 
+* Adds labels for `network`, `volume` and `secret` to support docker stacks. [[#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)]
 * Adds `rm` and `attach` options to execute short-lived containers ([#43](https://github.com/terraform-providers/terraform-provider-docker/issues/43)] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106))
 * Adds container healthcheck([#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93))
 * Adds the docker container start flag ([#62](https://github.com/terraform-providers/terraform-provider-docker/issues/62)] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94))

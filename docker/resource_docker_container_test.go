@@ -717,6 +717,14 @@ func TestAccDockerContainer_port(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_container.foo", "ports.0.external", "32787"),
 				),
 			},
+			{
+				Config: testAccDockerContainerConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "ports.#", "0"),
+				),
+			},
 		},
 	})
 }
