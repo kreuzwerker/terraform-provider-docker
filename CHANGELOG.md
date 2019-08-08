@@ -1,4 +1,4 @@
-## 2.1.1 (Unreleased)
+## 2.1.1 (August 08, 2019)
 
 BUG FIXES
 * Fixes 'No changes' for containers when all port blocks have been removed ([#167](https://github.com/terraform-providers/terraform-provider-docker/issues/167))
@@ -38,7 +38,7 @@ BUG FIXES
 
 BUG FIXES
 * Fixes no more 'force new resource' for container ports when
-there are no changes. This was caused to the ascending order. See [[#110](https://github.com/terraform-providers/terraform-provider-docker/issues/110)]
+there are no changes. This was caused to the ascending order. See ([#110](https://github.com/terraform-providers/terraform-provider-docker/issues/110))
 for details and ([#115](https://github.com/terraform-providers/terraform-provider-docker/pull/115))
 * Normalize blank port IP's to 0.0.0.0 ([#128](https://github.com/terraform-providers/terraform-provider-docker/pull/128))
 
@@ -55,7 +55,7 @@ DOCS
 ## 1.1.0 (October 30, 2018)
 
 IMPROVEMENTS
-* Adds labels for `network`, `volume` and `secret` to support docker stacks. [[#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92)]
+* Adds labels for `network`, `volume` and `secret` to support docker stacks. ([#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92))
 * Adds `rm` and `attach` options to execute short-lived containers ([#43](https://github.com/terraform-providers/terraform-provider-docker/issues/43)] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106))
 * Adds container healthcheck([#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93))
 * Adds the docker container start flag ([#62](https://github.com/terraform-providers/terraform-provider-docker/issues/62)] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94))
