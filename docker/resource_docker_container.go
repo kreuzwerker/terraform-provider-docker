@@ -712,6 +712,12 @@ func resourceDockerContainer() *schema.Resource {
 					},
 				},
 			},
+
+			"sysctls": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+			},
 		},
 	}
 }

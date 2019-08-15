@@ -264,6 +264,40 @@ func TestAccDockerContainer_tmpfs(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_sysctls(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if len(c.HostConfig.Sysctls) != 1 {
+			return fmt.Errorf("Incorrect number of sysctls: expected 1, got %d", len(c.HostConfig.Sysctls))
+		}
+
+		if ctl, ok := c.HostConfig.Sysctls["net.ipv4.ip_forward"]; ok {
+			if ctl != "1" {
+				return fmt.Errorf("Bad value for sysctl net.ipv4.ip_forward: expected 1, got %s", ctl)
+			}
+		} else {
+			return fmt.Errorf("net.ipv4.ip_forward not found in Sysctls")
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerSysctlsConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_customized(t *testing.T) {
 	var c types.ContainerJSON
 
@@ -1694,5 +1728,20 @@ image = "${docker_image.foo.latest}"
 command = ["/bin/sh", "-c", "exit 123"]
 attach = true
 must_run = false
+}
+`
+
+const testAccDockerContainerSysctlsConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+
+	sysctls = {
+		"net.ipv4.ip_forward" = "1"
+	}
 }
 `

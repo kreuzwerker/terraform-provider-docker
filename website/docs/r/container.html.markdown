@@ -105,7 +105,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `pid_mode` - (Optional, string) The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 * `userns_mode` - (Optional, string) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 * `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck) below for details.
-
+* `sysctls` - (Optional, map) A map of kernel parameters (sysctls) to set in the container.
 <a id="capabilities"></a>
 ### Capabilities
 

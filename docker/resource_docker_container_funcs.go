@@ -304,6 +304,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.PidMode = container.PidMode(v.(string))
 	}
 
+	if v, ok := d.GetOk("sysctls"); ok {
+		hostConfig.Sysctls = mapTypeMapValsToString(v.(map[string]interface{}))
+	}
+
 	var retContainer container.ContainerCreateCreatedBody
 
 	if retContainer, err = client.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, d.Get("name").(string)); err != nil {
