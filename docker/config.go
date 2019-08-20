@@ -17,8 +17,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-const apiVersion = "1.39"
-
 // Config is the structure that stores the configuration to talk to a
 // Docker API compatible host.
 type Config struct {
@@ -103,7 +101,7 @@ func (c *Config) NewClient() (*client.Client, error) {
 		return client.NewClientWithOpts(
 			client.WithHTTPClient(httpClient),
 			client.WithHost(c.Host),
-			client.WithVersion(apiVersion),
+			client.WithAPIVersionNegotiation(),
 		)
 	}
 
@@ -115,7 +113,7 @@ func (c *Config) NewClient() (*client.Client, error) {
 		return client.NewClientWithOpts(
 			client.WithHost(c.Host),
 			client.WithTLSClientConfig(ca, cert, key),
-			client.WithVersion(apiVersion),
+			client.WithAPIVersionNegotiation(),
 		)
 	}
 
@@ -128,14 +126,14 @@ func (c *Config) NewClient() (*client.Client, error) {
 		return client.NewClientWithOpts(
 			client.WithHost(helper.Host),
 			client.WithDialContext(helper.Dialer),
-			client.WithVersion(apiVersion),
+			client.WithAPIVersionNegotiation(),
 		)
 	}
 
 	// If there is no ssh://, then just return the direct client
 	return client.NewClientWithOpts(
 		client.WithHost(c.Host),
-		client.WithVersion(apiVersion),
+		client.WithAPIVersionNegotiation(),
 	)
 }
 
