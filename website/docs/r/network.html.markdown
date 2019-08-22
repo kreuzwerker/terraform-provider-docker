@@ -46,10 +46,10 @@ The following arguments are supported:
   Defaults to `false`.
 * `ipam_driver` - (Optional, string) Driver used by the custom IP scheme of the
   network.
-* `ipam_config` - (Optional, block) See [IPAM config](#ipam_config) below for
+* `ipam_config` - (Optional, block) See [IPAM config](#ipam_config-1) below for
   details.
 
-<a id="ipam_config"></a>
+<a id="ipam_config-1"></a>
 ### IPAM config
 Configuration of the custom IP scheme of the network.
 

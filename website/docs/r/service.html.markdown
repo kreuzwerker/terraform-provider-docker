@@ -265,16 +265,16 @@ See also the `TestAccDockerService_full` test or all the other tests for a compl
 
 The following arguments are supported:
 
-* `auth` - (Optional, block) See [Auth](#auth) below for details.
+* `auth` - (Optional, block) See [Auth](#auth-1) below for details.
 * `name` - (Required, string) The name of the Docker service.
-* `task_spec` - (Required, block) See [TaskSpec](#task-spec) below for details.
-* `mode` - (Optional, block) See [Mode](#mode) below for details.
-* `update_config` - (Optional, block) See [UpdateConfig](#update-rollback-config) below for details.
-* `rollback_config` - (Optional, block) See [RollbackConfig](#update-rollback-config) below for details.
-* `endpoint_spec` - (Optional, block) See [EndpointSpec](#endpoint-spec) below for details.
-* `converge_config` - (Optional, block) See [Converge Config](#converge-config) below for details.
+* `task_spec` - (Required, block) See [TaskSpec](#task-spec-1) below for details.
+* `mode` - (Optional, block) See [Mode](#mode-1) below for details.
+* `update_config` - (Optional, block) See [UpdateConfig](#update-rollback-config-1) below for details.
+* `rollback_config` - (Optional, block) See [RollbackConfig](#update-rollback-config-1) below for details.
+* `endpoint_spec` - (Optional, block) See [EndpointSpec](#endpoint-spec-1) below for details.
+* `converge_config` - (Optional, block) See [Converge Config](#converge-config-1) below for details.
 
-<a id="auth"></a>
+<a id="auth-1"></a>
 ### Auth
 
 `auth` can be used additionally to the `registry_auth`. If both properties are given the `auth` wins and overwrites the auth of the provider.
@@ -284,23 +284,23 @@ The following arguments are supported:
 * `password` - (Optional, string) The password to use for authenticating to the registry. If this is blank, the `DOCKER_REGISTRY_PASS` is also be checked.
 
 <!-- start task-spec -->
-<a id="task-spec"></a>
+<a id="task-spec-1"></a>
 ### TaskSpec
 
 `task_spec` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `task_spec` block is the user modifiable task configuration and supports the following:
 
-* `container_spec` (Required, block) See [ContainerSpec](#container-spec) below for details.
-* `resources` (Optional, block) See [Resources](#resources) below for details.
-* `restart_policy` (Optional, block) See [Restart Policy](#restart-policy) below for details.
-* `placement` (Optional, block) See [Placement](#placement) below for details.
+* `container_spec` (Required, block) See [ContainerSpec](#container-spec-1) below for details.
+* `resources` (Optional, block) See [Resources](#resources-1) below for details.
+* `restart_policy` (Optional, block) See [Restart Policy](#restart-policy-1) below for details.
+* `placement` (Optional, block) See [Placement](#placement-1) below for details.
 * `force_update` (Optional, int) A counter that triggers an update even if no relevant parameters have been changed. See [Docker Spec](https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126).
 * `runtime` (Optional, string) Runtime is the type of runtime specified for the task executor. See [Docker Runtime](https://github.com/moby/moby/blob/master/api/types/swarm/runtime.go).
 * `networks` - (Optional, set of strings) Ids of the networks in which the container will be put in.
-* `log_driver` - (Optional, block) See [Log Driver](#log-driver) below for details.
+* `log_driver` - (Optional, block) See [Log Driver](#log-driver-1) below for details.
 
 
 <!-- start task-container-spec -->
-<a id="container-spec"></a>
+<a id="container-spec-1"></a>
 #### ContainerSpec
 
 `container_spec` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `container_spec` block is the spec for each container and supports the following:
@@ -314,22 +314,22 @@ The following arguments are supported:
 * `dir` - (Optional, string) The working directory for commands to run in.
 * `user` - (Optional, string) The user inside the container.
 * `groups` - (Optional, list of strings) A list of additional groups that the container process will run as.
-* `privileges` (Optional, block) See [Privileges](#privileges) below for details.
+* `privileges` (Optional, block) See [Privileges](#privileges-1) below for details.
 * `read_only` - (Optional, bool) Mount the container's root filesystem as read only.
-* `mounts` - (Optional, set of blocks) See [Mounts](#mounts) below for details.
+* `mounts` - (Optional, set of blocks) See [Mounts](#mounts-1) below for details.
 * `stop_signal` - (Optional, string) Signal to stop the container.
 * `stop_grace_period` - (Optional, string) Amount of time to wait for the container to terminate before forcefully removing it `(ms|s|m|h)`.
-* `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck) below for details.
+* `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck-1) below for details.
 * `host` - (Optional, map of string/string) A list of hostname/IP mappings to add to the container's hosts file.
   * `ip` - (Required string) The ip
   * `host` - (Required string) The hostname
-* `dns_config` - (Optional, block) See [DNS Config](#dnsconfig) below for details.
-* `secrets` - (Optional, set of blocks) See [Secrets](#secrets) below for details.
-* `configs` - (Optional, set of blocks) See [Configs](#configs) below for details.
+* `dns_config` - (Optional, block) See [DNS Config](#dnsconfig-1) below for details.
+* `secrets` - (Optional, set of blocks) See [Secrets](#secrets-1) below for details.
+* `configs` - (Optional, set of blocks) See [Configs](#configs-1) below for details.
 * `isolation` - (Optional, string) Isolation technology of the containers running the service. (Windows only). Valid values are: `default|process|hyperv`
 
 
-<a id="privileges"></a>
+<a id="privileges-1"></a>
 #### Privileges
 
 `privileges` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `privileges` block holds the security options for the container and supports the following:
@@ -344,7 +344,7 @@ The following arguments are supported:
   * `type` - (Optional, string) SELinux type label
   * `level` - (Optional, string) SELinux level label
 
-<a id="mounts"></a>
+<a id="mounts-1"></a>
 #### Mounts
 
 `mount` is a block within the configuration that can be repeated to specify
@@ -367,7 +367,7 @@ the following:
   * `size_bytes` - (Optional, int) The size for the tmpfs mount in bytes. 
   * `mode` - (Optional, int) The permission mode for the tmpfs mount in an integer.
 
-<a id="healthcheck"></a>
+<a id="healthcheck-1"></a>
 #### Healthcheck
 
 `healthcheck` is a block within the configuration that can be repeated only **once** to specify the extra healthcheck configuration for the containers of the service. The `healthcheck` block is a test to perform to check that the container is healthy and supports the following:
@@ -380,7 +380,7 @@ the following:
 * `start_period` - Start period for the container to initialize before counting retries towards unstable `(ms|s|m|h)`. Default: `0s`.
 * `retries` - (Optional, int) Consecutive failures needed to report unhealthy. Default: `0`.
 
-<a id="dnsconfig"></a>
+<a id="dnsconfig-1"></a>
 ### DNS Config
 
 `dns_config` is a block within the configuration that can be repeated only **once** to specify the extra DNS configuration for the containers of the service. The `dns_config` block supports the following:
@@ -389,7 +389,7 @@ the following:
 * `search` - (Optional, list of strings)A search list for host-name lookup.
 * `options` - (Optional, list of strings) A list of internal resolver variables to be modified, for example, `debug`, `ndots:3`
 
-<a id="secrets"></a>
+<a id="secrets-1"></a>
 ### Secrets
 
 `secrets` is a block within the configuration that can be repeated to specify
@@ -399,7 +399,7 @@ the extra mount mappings for the container. Each `secrets` block is a reference 
 * `secret_name` - (Optional, string) The name of the secret that this references, but internally it is just provided for lookup/display purposes
 * `file_name` - (Required, string) Represents the final filename in the filesystem. The specific target file that the secret data is written within the docker container, e.g. `/root/secret/secret.json`
 
-<a id="configs"></a>
+<a id="configs-1"></a>
 ### Configs
 
 `configs` is a block within the configuration that can be repeated to specify
@@ -412,7 +412,7 @@ the extra mount mappings for the container. Each `configs` is a reference to a s
 <!-- end task-container-spec -->
 
 <!-- start task-resources-spec -->
-<a id="resources"></a>
+<a id="resources-1"></a>
 #### Resources
 
 `resources` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `resources` block represents the requirements which apply to each container created as part of the service and supports the following:
@@ -432,7 +432,7 @@ the extra mount mappings for the container. Each `configs` is a reference to a s
 
 <!-- end task-resources-spec -->
 <!-- start task-restart-policy-spec -->
-<a id="restart_policy"></a>
+<a id="restart_policy-1"></a>
 #### Restart Policy
 
 `restart_policy` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `restart_policy` block specifies the restart policy which applies to containers created as part of this service and supports the following:
@@ -444,7 +444,7 @@ the extra mount mappings for the container. Each `configs` is a reference to a s
 
 <!-- end task-restart-policy-spec -->
 <!-- start task-placement-spec -->
-<a id="placement"></a>
+<a id="placement-1"></a>
 #### Placement
 
 `placement` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `placement` block specifies the placement preferences and supports the following:
@@ -457,7 +457,7 @@ the extra mount mappings for the container. Each `configs` is a reference to a s
 
 <!-- end task-placement-spec -->
 <!-- end log-driver-spec -->
-<a id="log-driver"></a>
+<a id="log-driver-1"></a>
 ### Log Driver
 
 `log_driver` is a block within the configuration that can be repeated only **once** to specify the extra log_driver configuration for the containers of the service. The `log_driver` specifies the log driver to use for tasks created from this spec. If not present, the default one for the swarm will be used, finally falling back to the engine default if not specified. The block supports the following:
@@ -474,7 +474,7 @@ options {
 <!-- end log-driver-spec -->
 <!-- end task-spec -->
 
-<a id="mode"></a>
+<a id="mode-1"></a>
 ### Mode
 
 `mode` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `mode` block supports the following:
@@ -507,7 +507,7 @@ resource "docker_service" "foo" {
 ~> **NOTE on `mode`:** if neither `global` nor `replicated` is specified, the service
 is started in `replicated` mode with 1 replica. A change of service mode is not possible. The service has to be destroyed an recreated in the new mode.
 
-<a id="update-rollback-config"></a>
+<a id="update-rollback-config-1"></a>
 ### UpdateConfig and RollbackConfig
 
 `update_config` or `rollback_config` is a block within the configuration that can be repeated only **once** to specify the extra update configuration for the containers of the service. The `update_config` `rollback_config` block supports the following:
@@ -520,15 +520,15 @@ is started in `replicated` mode with 1 replica. A change of service mode is not 
 casting and precision errors.
 * `order` - (Optional, int) Update order either 'stop-first' or 'start-first'.
 
-<a id="endpoint-spec"></a>
+<a id="endpoint-spec-1"></a>
 ### EndpointSpec
 
 `endpoint_spec` is a block within the configuration that can be repeated only **once** to specify properties that can be configured to access and load balance a service. The block supports the following:
 
 * `mode` - (Optional, string) The mode of resolution to use for internal load balancing between tasks. `(vip|dnsrr)`. Default: `vip`.
-* `ports` - (Optional, block) See [Ports](#ports) below for details.
+* `ports` - (Optional, block) See [Ports](#ports-1) below for details.
 
-<a id="ports"></a>
+<a id="ports-1"></a>
 #### Ports
 
 `ports` is a block within the configuration that can be repeated to specify
@@ -541,7 +541,7 @@ the following:
 * `published_port` - (Required, int) The port on the swarm hosts. If not set the value of `target_port` will be used.
 * `publish_mode` - (Optional, string) Represents the mode in which the port is to be published: `ingress|host`
 
-<a id="converge-config"></a>
+<a id="converge-config-1"></a>
 ### Converge Config
 
 `converge_config` is a block within the configuration that can be repeated only **once** to specify the extra Converging configuration for the containers of the service. This is the same behavior as the `docker cli`. By adding this configuration, it is monitored with the

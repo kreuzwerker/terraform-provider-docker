@@ -74,16 +74,16 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `must_run` - (Optional, bool) If true, then the Docker container will be
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
-* `capabilities` - (Optional, block) See [Capabilities](#capabilities) below for details.
-* `mounts` - (Optional, set of blocks) See [Mounts](#mounts) below for details.
+* `capabilities` - (Optional, block) See [Capabilities](#capabilities-1) below for details.
+* `mounts` - (Optional, set of blocks) See [Mounts](#mounts-1) below for details.
 * `tmpfs` - (Optional, map) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
-* `ports` - (Optional, block) See [Ports](#ports) below for details.
-* `host` - (Optional, block) See [Extra Hosts](#extra_hosts) below for
+* `ports` - (Optional, block) See [Ports](#ports-1) below for details.
+* `host` - (Optional, block) See [Extra Hosts](#extra_hosts-1) below for
   details.
 * `privileged` - (Optional, bool) Run container in privileged mode.
-* `devices` - (Optional, bool) See [Devices](#devices) below for details.
+* `devices` - (Optional, bool) See [Devices](#devices-1) below for details.
 * `publish_all_ports` - (Optional, bool) Publish all ports of the container.
-* `volumes` - (Optional, block) See [Volumes](#volumes) below for details.
+* `volumes` - (Optional, block) See [Volumes](#volumes-1) below for details.
 * `memory` - (Optional, int) The memory limit for the container in MBs.
 * `memory_swap` - (Optional, int) The total memory limit (memory + swap) for the
   container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
@@ -97,16 +97,17 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `network_mode` - (Optional, string) Network mode of the container.
 * `networks` - (Optional, set of strings) Id of the networks in which the
   container is. *Deprecated:* use `networks_advanced` instead.
-* `networks_advanced` - (Optional, block) See [Networks Advanced](#networks_advanced) below for details. If this block has priority to the deprecated `network_alias` and `network` properties.
+* `networks_advanced` - (Optional, block) See [Networks Advanced](#networks_advanced-1) below for details. If this block has priority to the deprecated `network_alias` and `network` properties.
 * `destroy_grace_seconds` - (Optional, int) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
-* `upload` - (Optional, block) See [File Upload](#upload) below for details.
-* `ulimit` - (Optional, block) See [Ulimits](#ulimits) below for
+* `upload` - (Optional, block) See [File Upload](#upload-1) below for details.
+* `ulimit` - (Optional, block) See [Ulimits](#ulimits-1) below for
   details.
 * `pid_mode` - (Optional, string) The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 * `userns_mode` - (Optional, string) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
-* `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck) below for details.
+* `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck-1) below for details.
 * `sysctls` - (Optional, map) A map of kernel parameters (sysctls) to set in the container.
-<a id="capabilities"></a>
+
+<a id="capabilities-1"></a>
 ### Capabilities
 
 `capabilities` is a block within the configuration that allows you to add or drop linux capabilities. For more information about what capabilities you can add and drop please visit the docker run documentation.
@@ -128,7 +129,7 @@ resource "docker_container" "ubuntu" {
 }
 ```
 
-<a id="mounts"></a>
+<a id="mounts-1"></a>
 ### Mounts
 
 `mounts` is a block within the configuration that can be repeated to specify
@@ -149,7 +150,7 @@ supports the following:
   * `size_bytes` - (Optional, int) The size for the tmpfs mount in bytes. 
   * `mode` - (Optional, int) The permission mode for the tmpfs mount in an integer.
 
-<a id="ports"></a>
+<a id="ports-1"></a>
 ### Ports
 
 `ports` is a block within the configuration that can be repeated to specify
@@ -175,7 +176,7 @@ the following:
 This is equivalent to using the `--add-host` option when using the `run`
 command of the Docker CLI.
 
-<a id="volumes"></a>
+<a id="volumes-1"></a>
 ### Volumes
 
 `volumes` is a block within the configuration that can be repeated to specify
@@ -195,7 +196,7 @@ the following:
 
 One of `from_container`, `host_path` or `volume_name` must be set.
 
-<a id="upload"></a>
+<a id="upload-1"></a>
 ### File Upload
 
 `upload` is a block within the configuration that can be repeated to specify
@@ -220,7 +221,7 @@ Each `networks_advanced` supports the following:
 * `ipv4_address` - (Optional, string) The IPV4 address of the container in the specific network.
 * `ipv6_address` - (Optional, string) The IPV6 address of the container in the specific network.
 
-<a id="devices"></a>
+<a id="devices-1"></a>
 ### Devices
 
 `devices` is a block within the configuration that can be repeated to specify
@@ -235,7 +236,7 @@ the following:
   container to access the device.
   Defaults to `rwm`.
 
-<a id="ulimits"></a>
+<a id="ulimits-1"></a>
 ### Ulimits
 
 `ulimit` is a block within the configuration that can be repeated to specify
@@ -246,7 +247,7 @@ the following:
 * `soft` - (Required, int)
 * `hard` - (Required, int)
 
-<a id="healthcheck"></a>
+<a id="healthcheck-1"></a>
 ### Healthcheck
 
 `healthcheck` is a block within the configuration that can be repeated only **once** to specify the extra healthcheck configuration for the container. The `healthcheck` block is a test to perform to check that the container is healthy and supports the following:
