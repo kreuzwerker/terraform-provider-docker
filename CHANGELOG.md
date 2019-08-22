@@ -1,10 +1,10 @@
-## 2.2.0 (Unreleased)
+## 2.2.0 (August 22, 2019)
 
 IMPROVEMENTS
-* Docker client negotiates the version with the server instead of using a fixed version [GH-173]
+* Docker client negotiates the version with the server instead of using a fixed version ([#173](https://github.com/terraform-providers/terraform-provider-docker/issues/173))
 
 DOCS
-* Fixes section links so they point to the right id [GH-176]
+* Fixes section links so they point to the right id ([#176](https://github.com/terraform-providers/terraform-provider-docker/issues/176))
 
 ## 2.1.1 (August 08, 2019)
 
