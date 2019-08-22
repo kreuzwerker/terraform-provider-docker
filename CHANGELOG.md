@@ -1,4 +1,11 @@
 ## 2.2.0 (Unreleased)
+
+IMPROVEMENTS
+* Docker client negotiates the version with the server instead of using a fixed version [GH-173]
+
+DOCS
+* Fixes section links so they point to the right id [GH-176]
+
 ## 2.1.1 (August 08, 2019)
 
 BUG FIXES
