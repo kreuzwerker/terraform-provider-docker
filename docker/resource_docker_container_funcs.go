@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -569,9 +568,8 @@ func resourceDockerContainerDelete(d *schema.ResourceData, meta interface{}) err
 	if !d.Get("attach").(bool) {
 		// Stop the container before removing if destroy_grace_seconds is defined
 		if d.Get("destroy_grace_seconds").(int) > 0 {
-			mapped := int32(d.Get("destroy_grace_seconds").(int))
-			timeoutInSeconds := rand.Int31n(mapped)
-			timeout := time.Duration(time.Duration(timeoutInSeconds) * time.Second)
+			timeout := time.Duration(int32(d.Get("destroy_grace_seconds").(int))) * time.Second
+
 			if err := client.ContainerStop(context.Background(), d.Id(), &timeout); err != nil {
 				return fmt.Errorf("Error stopping container %s: %s", d.Id(), err)
 			}
