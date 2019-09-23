@@ -42,7 +42,7 @@ func testAccPreCheck(t *testing.T) {
 		}
 	}
 
-	err := testAccProvider.Configure(terraform.NewResourceConfig(nil))
+	err := testAccProvider.Configure(terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
