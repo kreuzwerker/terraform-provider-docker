@@ -1,3 +1,13 @@
+## 2.3.0 (Unreleased)
+
+IMPROVEMENTS:
+* feat: adds container ipc mode [GH-12]
+* feat: adds container working dir [GH-146]
+* remove usage of config pkg ([#183](https://github.com/terraform-providers/terraform-provider-docker/pull/183))
+
+BUG FIXES:
+* fix for destroy_grace_seconds is not adhered [GH-174]
+
 ## 2.2.0 (August 22, 2019)
 
 IMPROVEMENTS
@@ -14,7 +24,7 @@ BUG FIXES
 ## 2.1.0 (July 19, 2019)
 
 IMPROVEMENTS
-* Adds cross-platform support for generic Docker credential helper([#159](https://github.com/terraform-providers/terraform-provider-docker/pull/159))
+* Adds cross-platform support for generic Docker credential helper ([#159](https://github.com/terraform-providers/terraform-provider-docker/pull/159))
 
 DOC
 * Updates the docs for ssh protocol and mounts ([#158](https://github.com/terraform-providers/terraform-provider-docker/issues/158))
