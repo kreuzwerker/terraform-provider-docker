@@ -1,12 +1,12 @@
-## 2.3.0 (Unreleased)
+## 2.3.0 (September 23, 2019)
 
 IMPROVEMENTS:
-* feat: adds container ipc mode [GH-12]
-* feat: adds container working dir [GH-146]
+* feat: adds container ipc mode ([#12](https://github.com/terraform-providers/terraform-provider-docker/issues/12))
+* feat: adds container working dir ([#146](https://github.com/terraform-providers/terraform-provider-docker/issues/146))
 * remove usage of config pkg ([#183](https://github.com/terraform-providers/terraform-provider-docker/pull/183))
 
 BUG FIXES:
-* fix for destroy_grace_seconds is not adhered [GH-174]
+* fix for destroy_grace_seconds is not adhered ([#174](https://github.com/terraform-providers/terraform-provider-docker/issues/174))
 
 ## 2.2.0 (August 22, 2019)
 
