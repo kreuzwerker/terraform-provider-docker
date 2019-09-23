@@ -1,3 +1,4 @@
+## 2.3.1 (Unreleased)
 ## 2.3.0 (September 23, 2019)
 
 IMPROVEMENTS:
