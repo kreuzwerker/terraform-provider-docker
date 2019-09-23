@@ -308,6 +308,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	if v, ok := d.GetOk("sysctls"); ok {
 		hostConfig.Sysctls = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
+	if v, ok := d.GetOk("ipc_mode"); ok {
+		hostConfig.IpcMode = container.IpcMode(v.(string))
+	}
 
 	var retContainer container.ContainerCreateCreatedBody
 

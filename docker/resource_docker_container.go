@@ -722,6 +722,12 @@ func resourceDockerContainer() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"ipc_mode": {
+				Type:        schema.TypeString,
+				Description: "IPC sharing mode for the container",
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }
