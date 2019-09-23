@@ -451,6 +451,9 @@ func TestAccDockerContainer_customized(t *testing.T) {
 		if c.HostConfig.UsernsMode != "testuser:231072:65536" {
 			return fmt.Errorf("Container doesn't have a correct userns mode")
 		}
+		if c.Config.WorkingDir != "/tmp" {
+			return fmt.Errorf("Container doesn't have a correct working dir")
+		}
 
 		return nil
 	}
@@ -1432,6 +1435,7 @@ resource "docker_container" "foo" {
 
 	pid_mode 		= "host"
 	userns_mode = "testuser:231072:65536"
+	working_dir = "/tmp"
 }
 
 resource "docker_network" "test_network" {

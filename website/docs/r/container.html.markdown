@@ -65,6 +65,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
   one of "no", "on-failure", "always", "unless-stopped".
 * `max_retry_count` - (Optional, int) The maximum amount of times to an attempt
   a restart when `restart` is set to "on-failure"
+* `working_dir`- (Optional, string) The working directory for commands to run in
 * `rm` - (Optional, bool) If true, then the container will be automatically removed after his execution. Terraform
    won't check this container after creation.
 * `start` - (Optional, bool) If true, then the Docker container will be

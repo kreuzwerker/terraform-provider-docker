@@ -76,7 +76,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	if len(exposedPorts) != 0 {
 		config.ExposedPorts = exposedPorts
 	}
-
+	if v, ok := d.GetOk("working_dir"); ok {
+		config.WorkingDir = v.(string)
+	}
 	extraHosts := []string{}
 	if v, ok := d.GetOk("host"); ok {
 		extraHosts = extraHostsSetToDockerExtraHosts(v.(*schema.Set))
