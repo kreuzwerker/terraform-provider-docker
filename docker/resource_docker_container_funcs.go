@@ -311,6 +311,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	if v, ok := d.GetOk("ipc_mode"); ok {
 		hostConfig.IpcMode = container.IpcMode(v.(string))
 	}
+	if v, ok := d.GetOk("group_add"); ok {
+		hostConfig.GroupAdd = stringSetToStringSlice(v.(*schema.Set))
+	}
 
 	var retContainer container.ContainerCreateCreatedBody
 

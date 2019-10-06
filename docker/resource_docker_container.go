@@ -728,6 +728,14 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"group_add": {
+				Type:        schema.TypeSet,
+				Description: "Additional groups for the container user",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+			},
 		},
 	}
 }

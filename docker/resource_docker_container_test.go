@@ -298,6 +298,81 @@ func TestAccDockerContainer_sysctls(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_groupadd_id(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if len(c.HostConfig.GroupAdd) != 1 || c.HostConfig.GroupAdd[0] != "100" {
+			return fmt.Errorf("Wrong group add: %s", c.HostConfig.GroupAdd)
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerGroupAddIdConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_groupadd_name(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if len(c.HostConfig.GroupAdd) != 1 || c.HostConfig.GroupAdd[0] != "users" {
+			return fmt.Errorf("Wrong group add: %s", c.HostConfig.GroupAdd)
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerGroupAddNameConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_groupadd_multiple(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if len(c.HostConfig.GroupAdd) != 3 {
+			return fmt.Errorf("Wrong group add: %s", c.HostConfig.GroupAdd)
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerGroupAddMultipleConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_customized(t *testing.T) {
 	var c types.ContainerJSON
 
@@ -1752,5 +1827,52 @@ resource "docker_container" "foo" {
 	sysctls = {
 		"net.ipv4.ip_forward" = "1"
 	}
+}
+`
+
+const testAccDockerContainerGroupAddNameConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+
+	group_add = [
+		"users"
+	]
+}
+`
+
+const testAccDockerContainerGroupAddIdConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+
+	group_add = [
+		100
+	]
+}
+`
+
+const testAccDockerContainerGroupAddMultipleConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+
+	group_add = [
+		1,
+		2,
+		3,
+	]
 }
 `

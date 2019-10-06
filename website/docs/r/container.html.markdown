@@ -108,6 +108,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `healthcheck` - (Optional, block) See [Healthcheck](#healthcheck-1) below for details.
 * `sysctls` - (Optional, map) A map of kernel parameters (sysctls) to set in the container.
 * `ipc_mode` - (Optional, string) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
+* `group_add` - (Optional, set of strings) Add additional groups to run as.
 
 <a id="capabilities-1"></a>
 ### Capabilities
