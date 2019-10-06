@@ -377,7 +377,6 @@ the following:
 * `interval` - (Optional, string) Time between running the check `(ms|s|m|h)`. Default: `0s`.
 * `timeout` - (Optional, string) Maximum time to allow one check to run `(ms|s|m|h)`. Default: `0s`.
 * `start_period` - (Optional, string) Start period for the container to initialize before counting retries towards unstable `(ms|s|m|h)`. Default: `0s`.
-* `start_period` - Start period for the container to initialize before counting retries towards unstable `(ms|s|m|h)`. Default: `0s`.
 * `retries` - (Optional, int) Consecutive failures needed to report unhealthy. Default: `0`.
 
 <a id="dnsconfig-1"></a>
