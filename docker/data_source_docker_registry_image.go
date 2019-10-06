@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -119,7 +120,7 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 	switch resp.StatusCode {
 	// Basic auth was valid or not needed
 	case http.StatusOK:
-		return resp.Header.Get("Docker-Content-Digest"), nil
+		return getDigestFromResponse(resp)
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
@@ -170,7 +171,7 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 				return "", fmt.Errorf("Got bad response from registry: " + digestResponse.Status)
 			}
 
-			return digestResponse.Header.Get("Docker-Content-Digest"), nil
+			return getDigestFromResponse(digestResponse)
 		}
 
 		return "", fmt.Errorf("Bad credentials: " + resp.Status)
@@ -199,4 +200,19 @@ func parseAuthHeader(header string) map[string]string {
 	}
 
 	return opts
+}
+
+func getDigestFromResponse(response *http.Response) (string, error) {
+	header := response.Header.Get("Docker-Content-Digest")
+
+	if header == "" {
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return "", fmt.Errorf("Error reading registry response body: %s", err)
+		}
+
+		return fmt.Sprintf("sha256:%x", sha256.Sum256(body)), nil
+	}
+
+	return header, nil
 }

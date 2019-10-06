@@ -1,7 +1,10 @@
 package docker
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"regexp"
 	"testing"
 
@@ -82,3 +85,27 @@ data "docker_registry_image" "foobar" {
 	name = "%s"
 }
 `
+
+func TestGetDigestFromResponse(t *testing.T) {
+	headerContent := "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+	respWithHeaders := &http.Response{
+		Header: http.Header{
+			"Docker-Content-Digest": []string{headerContent},
+		},
+		Body: ioutil.NopCloser(bytes.NewReader([]byte("foo"))),
+	}
+
+	if digest, _ := getDigestFromResponse(respWithHeaders); digest != headerContent {
+		t.Errorf("Expected digest from header to be %s, but was %s", headerContent, digest)
+	}
+
+	bodyDigest := "sha256:fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
+	respWithoutHeaders := &http.Response{
+		Header: make(http.Header),
+		Body:   ioutil.NopCloser(bytes.NewReader([]byte("bar"))),
+	}
+
+	if digest, _ := getDigestFromResponse(respWithoutHeaders); digest != bodyDigest {
+		t.Errorf("Expected digest calculated from body to be %s, but was %s", bodyDigest, digest)
+	}
+}
