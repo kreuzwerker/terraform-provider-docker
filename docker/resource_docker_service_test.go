@@ -237,6 +237,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 
 							env = {
 								MYFOO = "BAR"
+								URI   = "/api-call?param1=value1"
 							}
 
 							dir    = "/root"
@@ -398,6 +399,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.args.0", "-las"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hostname", "my-fancy-service"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.env.MYFOO", "BAR"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.env.URI", "/api-call?param1=value1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.dir", "/root"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.user", "root"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.groups.0", "docker"),

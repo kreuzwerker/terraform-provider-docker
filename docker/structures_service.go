@@ -516,14 +516,16 @@ func newStringSet(f schema.SchemaSetFunc, in []string) *schema.Set {
 	return schema.NewSet(f, out)
 }
 
-// mapStringSliceToMap maps a slice with '='  delimiter to as map: e.g. 'foo=bar' -> foo = "bar"
+// mapStringSliceToMap maps a slice with '='  delimiter to as map: e.g.
+// - 'foo=bar' -> foo = "bar"
+// - 'foo=bar?p=baz' -> foo = "bar?p=baz"
 func mapStringSliceToMap(in []string) map[string]string {
 	mapped := make(map[string]string, len(in))
 	for _, v := range in {
 		if len(v) > 0 {
 			splitted := strings.Split(v, "=")
 			key := splitted[0]
-			value := splitted[1]
+			value := strings.Join(splitted[1:], "=")
 			mapped[key] = value
 		}
 	}
