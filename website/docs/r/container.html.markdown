@@ -88,6 +88,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `memory` - (Optional, int) The memory limit for the container in MBs.
 * `memory_swap` - (Optional, int) The total memory limit (memory + swap) for the
   container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
+* `shm_size` - (Optional, int) Size of `/dev/shm` in MBs.
 * `cpu_shares` - (Optional, int) CPU shares (relative weight) for the container.
 * `cpu_set` - (Optional, string) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
 * `log_driver` - (Optional, string) The logging driver to use for the container.
@@ -150,7 +151,7 @@ supports the following:
   * `labels` - (Optional, map of key/value pairs) Adding labels.
   * `driver_options` - (Optional, map of key/value pairs) Options for the driver.
 * `tmpfs_options` - (Optional, map) Optional configuration for the `tmpf` type.
-  * `size_bytes` - (Optional, int) The size for the tmpfs mount in bytes. 
+  * `size_bytes` - (Optional, int) The size for the tmpfs mount in bytes.
   * `mode` - (Optional, int) The permission mode for the tmpfs mount in an integer.
 
 <a id="ports-1"></a>

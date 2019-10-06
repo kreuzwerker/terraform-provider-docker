@@ -281,6 +281,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.MemorySwap = swap
 	}
 
+	if v, ok := d.GetOk("shm_size"); ok {
+		hostConfig.ShmSize = int64(v.(int)) * 1024 * 1024
+	}
+
 	if v, ok := d.GetOk("cpu_shares"); ok {
 		hostConfig.CPUShares = int64(v.(int))
 	}

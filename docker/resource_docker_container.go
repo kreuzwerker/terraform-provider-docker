@@ -548,6 +548,13 @@ func resourceDockerContainer() *schema.Resource {
 				ValidateFunc: validateIntegerGeqThan(-1),
 			},
 
+			"shm_size": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateIntegerGeqThan(0),
+			},
+
 			"cpu_shares": {
 				Type:         schema.TypeInt,
 				Optional:     true,
