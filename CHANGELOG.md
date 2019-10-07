@@ -1,4 +1,17 @@
-## 2.3.1 (Unreleased)
+## 2.4.0 (Unreleased)
+
+IMPROVEMENTS:
+* feat: adds `shm_size attribute` for `docker_container` resource [GH-164]
+* feat: supports for group-add [GH-191]
+
+BUG FIXES:
+* fix: binary upload as base 64 content [GH-48]
+* fix: service env truncation for multiple delimiters [GH-121]
+* fix: allows docker_registry_image to read from AWS ECR registry [GH-186]
+
+DOCS
+* Removes duplicate `start_period` entry in `healthcheck` section of the documentation for `docker_service` ([#189](https://github.com/terraform-providers/terraform-provider-docker/pull/189))
+
 ## 2.3.0 (September 23, 2019)
 
 IMPROVEMENTS:
