@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -382,6 +383,21 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		var mode int64
 		for _, upload := range v.(*schema.Set).List() {
 			content := upload.(map[string]interface{})["content"].(string)
+			contentBase64 := upload.(map[string]interface{})["content_base64"].(string)
+			if content == "" && contentBase64 == "" {
+				return fmt.Errorf("Error with upload content: neither 'content', nor 'content_base64' was set")
+			}
+			if content != "" && contentBase64 != "" {
+				return fmt.Errorf("Error with upload content: only one of 'content' or 'content_base64' can be specified")
+			}
+			var contentToUpload string
+			if content != "" {
+				contentToUpload = content
+			}
+			if contentBase64 != "" {
+				decoded, _ := base64.StdEncoding.DecodeString(contentBase64)
+				contentToUpload = string(decoded)
+			}
 			file := upload.(map[string]interface{})["file"].(string)
 			executable := upload.(map[string]interface{})["executable"].(bool)
 
@@ -395,12 +411,12 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			hdr := &tar.Header{
 				Name: file,
 				Mode: mode,
-				Size: int64(len(content)),
+				Size: int64(len(contentToUpload)),
 			}
 			if err := tw.WriteHeader(hdr); err != nil {
 				return fmt.Errorf("Error creating tar archive: %s", err)
 			}
-			if _, err := tw.Write([]byte(content)); err != nil {
+			if _, err := tw.Write([]byte(contentToUpload)); err != nil {
 				return fmt.Errorf("Error creating tar archive: %s", err)
 			}
 			if err := tw.Close(); err != nil {

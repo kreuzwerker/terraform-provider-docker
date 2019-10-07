@@ -659,10 +659,16 @@ func resourceDockerContainer() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"content": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 							// This is intentional. The container is mutated once, and never updated later.
 							// New configuration forces a new deployment, even with the same binaries.
 							ForceNew: true,
+						},
+						"content_base64": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: validateStringIsBase64Encoded(),
 						},
 						"file": {
 							Type:     schema.TypeString,
