@@ -3,7 +3,7 @@ package docker
 import (
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceDockerContainer() *schema.Resource {

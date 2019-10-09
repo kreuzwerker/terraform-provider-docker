@@ -9,12 +9,15 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.2
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.0.0-20171221200356-d59758554a3d
+	github.com/gogo/protobuf v1.3.0 // indirect
 	github.com/gorilla/mux v1.7.2 // indirect
-	github.com/hashicorp/terraform v0.12.8
+	github.com/hashicorp/terraform-plugin-sdk v1.0.0
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v0.0.0-20171125024018-577479e4dc27 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
-	google.golang.org/grpc v1.21.0 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )
+
+go 1.13

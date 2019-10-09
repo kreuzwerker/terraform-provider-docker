@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/docker/docker/api/types/swarm"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceDockerConfig() *schema.Resource {

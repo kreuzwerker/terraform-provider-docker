@@ -3,7 +3,7 @@ package docker
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
 func TestAccDockerNetworkDataSource_basic(t *testing.T) {
