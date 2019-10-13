@@ -1,20 +1,4 @@
-dist: xenial
-sudo: required
-services:
-  - docker
 language: go
-go:
-  - "1.11.x"
-
-before_install:
-# locally: docker run -it ubuntu:16.04 bash
-- sudo apt-get update
-- sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-- sudo apt-get update
-- sudo apt-get -y install docker-ce=5:18.09.6~3-0~ubuntu-xenial
-- docker version
 
 install:
 # This script is used by the Travis build to install a cookie for
@@ -22,23 +6,105 @@ install:
 # packages that live there.
 # See: https://github.com/golang/go/issues/12933
 - bash scripts/gogetcookie.sh
-- sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
-- sudo cat /etc/default/docker
-- sudo service docker restart
-
-script:
-- make vet
-- make test
-- make testacc
-- make compile
-- make website-test
 
 branches:
   only:
   - master
+
 matrix:
   fast_finish: true
+
   allow_failures:
   - go: tip
+  - os: osx
+  - os: windows
+
+  include:
+    ####################################
+    # Acceptance tests
+    ####################################
+    - os: linux
+      name: "Acceptance tests"
+      dist: xenial
+      go: "1.13.x"
+      services:
+        - docker
+      sudo: required
+      before_install:
+        # locally: docker run -it ubuntu:16.04 bash
+        # Install 18.09
+        - sudo apt-get update
+        - sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        - sudo apt-get update
+        - sudo apt-get -y install docker-ce=5:18.09.6~3-0~ubuntu-xenial
+        - docker version
+        # Allow local registry to be insecure
+        - sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
+        - sudo cat /etc/default/docker
+        - sudo service docker restart
+      script:
+        - make testacc
+
+    # https://golang.org/doc/devel/release.html#policy
+    - os: linux
+      name: "Build (golang current amd64)"
+      dist: xenial
+      go: "1.13.x"
+      script:
+        - make compile
+
+    - os: linux
+      name: "Build (golang previous amd64)"
+      dist: xenial
+      go: "1.12.x"
+      script:
+        - make compile
+
+    ####################################
+    # Unit, vet, website, etc
+    ####################################
+    - os: linux
+      name: "Unit-tests, vet, and website"
+      dist: xenial
+      go: "1.13.x"
+      script:
+        - make vet
+        - make test
+        - make website-test
+
+    ####################################
+    # Windows and Mac
+    ####################################
+    - os: osx
+      name: "Build (golang current)"
+      go: "1.13.x"
+      script:
+        - XC_OS=darwin make compile
+
+    # XXX it doesn't seem possible right now to run linux containers on windows
+    # see: https://travis-ci.community/t/docker-linux-containers-on-windows/301
+    # --platform does not work, apparently missing experimental features being enabled for dockerd in the host
+    - os: windows
+      name: "Build (golang current)"
+      # name: "Acceptance tests"
+      go: "1.13.x"
+      # services:
+      #  - docker
+      script:
+        - go install
+      #  - scripts/runAccTests.bat
+
+    ####################################
+    # Go tip
+    ####################################
+    - os: linux
+      name: "Build (golang future amd64)"
+      dist: xenial
+      go: tip
+      script:
+        - make compile
+
 env:
   - GOFLAGS=-mod=vendor GO111MODULE=on
