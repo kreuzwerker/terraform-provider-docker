@@ -1,4 +1,14 @@
 ## 2.4.1 (Unreleased)
+
+IMPROVEMENTS:
+* ci: update to go 1.13 [GH-198]
+* feat: migrate to standalone plugin sdk [GH-197]
+
+BUG FIXES:
+* fix: removes whitelists of attributes [GH-208]
+* fix: splunk Log Driver missing from container `log_driver` [GH-204]
+
+
 ## 2.4.0 (October 07, 2019)
 
 IMPROVEMENTS:
