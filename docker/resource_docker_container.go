@@ -570,11 +570,10 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"log_driver": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Default:      "json-file",
-				ValidateFunc: validateStringMatchesPattern(`^(none|local|json-file|syslog|journald|gelf|fluentd|awslogs|splunk|etwlogs|gcplogs|logentries)$`),
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "json-file",
 			},
 
 			"log_opts": {

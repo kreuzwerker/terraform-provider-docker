@@ -661,10 +661,9 @@ func resourceDockerService() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {
-										Type:         schema.TypeString,
-										Description:  "The logging driver to use: one of none|json-file|syslog|journald|gelf|fluentd|awslogs|splunk|etwlogs|gcplogs",
-										Required:     true,
-										ValidateFunc: validateStringMatchesPattern("(none|json-file|syslog|journald|gelf|fluentd|awslogs|splunk|etwlogs|gcplogs)"),
+										Type:        schema.TypeString,
+										Description: "The logging driver to use",
+										Required:    true,
 									},
 									"options": {
 										Type:        schema.TypeMap,
