@@ -1,4 +1,4 @@
-## 2.4.1 (Unreleased)
+## 2.5.0 (Unreleased)
 
 IMPROVEMENTS:
 * ci: update to go 1.13 [GH-198]
