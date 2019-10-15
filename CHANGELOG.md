@@ -1,12 +1,12 @@
-## 2.5.0 (Unreleased)
+## 2.5.0 (October 15, 2019)
 
 IMPROVEMENTS:
-* ci: update to go 1.13 [GH-198]
-* feat: migrate to standalone plugin sdk [GH-197]
+* ci: update to go 1.13 ([#198](https://github.com/terraform-providers/terraform-provider-docker/issues/198))
+* feat: migrate to standalone plugin sdk ([#197](https://github.com/terraform-providers/terraform-provider-docker/issues/197))
 
 BUG FIXES:
-* fix: removes whitelists of attributes [GH-208]
-* fix: splunk Log Driver missing from container `log_driver` [GH-204]
+* fix: removes whitelists of attributes ([#208](https://github.com/terraform-providers/terraform-provider-docker/issues/208))
+* fix: splunk Log Driver missing from container `log_driver` ([#204](https://github.com/terraform-providers/terraform-provider-docker/issues/204))
 
 
 ## 2.4.0 (October 07, 2019)
