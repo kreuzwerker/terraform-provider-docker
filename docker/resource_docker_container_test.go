@@ -1100,6 +1100,34 @@ func TestAccDockerContainer_rm(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_readonly(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if !c.HostConfig.ReadonlyRootfs {
+			return fmt.Errorf("Container isn't readonly")
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerReadOnlyConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "read_only", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_healthcheck(t *testing.T) {
 	var c types.ContainerJSON
 	testCheck := func(*terraform.State) error {
@@ -1953,6 +1981,18 @@ resource "docker_image" "foo" {
 	image = "${docker_image.foo.latest}"
 	command = ["/bin/sleep", "15"]
 	rm = true
+}
+`
+const testAccDockerContainerReadOnlyConfig = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+ resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sleep", "15"]
+	read_only = true
 }
 `
 const testAccDockerContainerAttachConfig = `

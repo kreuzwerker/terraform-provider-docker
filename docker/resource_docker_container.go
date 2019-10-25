@@ -28,6 +28,13 @@ func resourceDockerContainer() *schema.Resource {
 				Optional: true,
 			},
 
+			"read_only": {
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"start": {
 				Type:     schema.TypeBool,
 				Default:  true,

@@ -68,6 +68,7 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `working_dir`- (Optional, string) The working directory for commands to run in
 * `rm` - (Optional, bool) If true, then the container will be automatically removed after his execution. Terraform
    won't check this container after creation.
+* `read_only` - (Optional, bool) If true, the container will be started as readonly.
 * `start` - (Optional, bool) If true, then the Docker container will be
   started after creation. If false, then the container is only created.
 * `attach` - (Optional, bool) If true attach to the container after its creation and waits the end of his execution.

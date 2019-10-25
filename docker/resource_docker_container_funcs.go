@@ -214,8 +214,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
-		Mounts:     mounts,
-		AutoRemove: d.Get("rm").(bool),
+		Mounts:         mounts,
+		AutoRemove:     d.Get("rm").(bool),
+		ReadonlyRootfs: d.Get("read_only").(bool),
 		LogConfig: container.LogConfig{
 			Type: d.Get("log_driver").(string),
 		},
