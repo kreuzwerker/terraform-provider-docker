@@ -35,6 +35,7 @@ func resourceDockerSecret() *schema.Resource {
 
 			"labels": {
 				Type:     schema.TypeSet,
+				Optional: true,
 				ForceNew: true,
 				Elem:     labelSchema,
 			},
