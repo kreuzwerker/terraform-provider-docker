@@ -75,7 +75,6 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 }
 
 func TestAccDockerSecret_labels(t *testing.T) {
-	var test1LabelKey = hashStringLabel("test1")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
