@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -74,6 +75,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 }
 
 func TestAccDockerSecret_labels(t *testing.T) {
+	var test1LabelKey = hashStringLabel("test1")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -84,15 +86,21 @@ func TestAccDockerSecret_labels(t *testing.T) {
 				resource "docker_secret" "foo" {
 					name = "foo-secret"
 					data = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
-					labels = {
-						"test1" = "foo"
-						"test2" = "bar"
+					labels {
+						label = "test1"
+						value = "foo"
+					}
+					labels {
+						label = "test2"
+						value = "bar"
 					}
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_secret.foo", "labels.test1", "foo"),
-					resource.TestCheckResourceAttr("docker_secret.foo", "labels.test2", "bar"),
+					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%s.label", hashStringLabel("test1")), "test1"),
+					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%s.value", hashStringLabel("test1")), "foo"),
+					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%s.label", hashStringLabel("test2")), "test1"),
+					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%s.value", hashStringLabel("test2")), "bar"),
 				),
 			},
 		},

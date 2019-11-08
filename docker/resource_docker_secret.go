@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"context"
+
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -33,9 +34,9 @@ func resourceDockerSecret() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:     schema.TypeSet,
 				ForceNew: true,
+				Elem:     labelSchema,
 			},
 		},
 	}
@@ -53,7 +54,7 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	if v, ok := d.GetOk("labels"); ok {
-		secretSpec.Annotations.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
 	}
 
 	secret, err := client.SecretCreate(context.Background(), secretSpec)
