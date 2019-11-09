@@ -1,6 +1,10 @@
 package docker
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import (
+	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+)
 
 func labelToPair(label map[string]interface{}) (string, string) {
 	return label["label"].(string), label["value"].(string)
@@ -50,4 +54,33 @@ var labelSchema = &schema.Resource{
 			Required:    true,
 		},
 	},
+}
+
+//gatherImmediateSubkeys given an incomplete attribute identifier, find all
+//the strings (if any) that appear after this one in the various dot-separated
+//identifiers.
+func gatherImmediateSubkeys(attrs map[string]string, partialKey string) []string {
+	var immediateSubkeys = []string{}
+	for k := range attrs {
+		prefix := partialKey + "."
+		if strings.HasPrefix(k, prefix) {
+			rest := strings.TrimPrefix(k, prefix)
+			parts := strings.SplitN(rest, ".", 2)
+			immediateSubkeys = append(immediateSubkeys, parts[0])
+		}
+	}
+
+	return immediateSubkeys
+}
+
+func getLabelMapForPartialKey(attrs map[string]string, partialKey string) map[string]string {
+	setIDs := gatherImmediateSubkeys(attrs, partialKey)
+
+	var labelMap = map[string]string{}
+	for _, id := range setIDs {
+		prefix := partialKey + "." + id
+		labelMap[attrs[prefix+".label"]] = attrs[prefix+".value"]
+	}
+
+	return labelMap
 }

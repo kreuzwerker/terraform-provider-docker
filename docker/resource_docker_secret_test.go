@@ -6,7 +6,6 @@ import (
 
 	"context"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -98,13 +97,17 @@ func TestAccDockerSecret_labels(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					func(s *terraform.State) error {
-						spew.Dump(s.RootModule().Resources["docker_secret.foo"].Primary.Attributes)
+						attrs := s.RootModule().Resources["docker_secret.foo"].Primary.Attributes
+						labelMap := getLabelMapForPartialKey(attrs, "labels")
+
+						if len(labelMap) != 2 ||
+							labelMap["test1"] != "foo" ||
+							labelMap["test2"] != "bar" {
+							return fmt.Errorf("label map had unexpected structure: %v", labelMap)
+						}
+
 						return nil
 					},
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.label", hashStringLabel("test1")), "test1"),
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.value", hashStringLabel("test1")), "foo"),
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.label", hashStringLabel("test2")), "test1"),
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.value", hashStringLabel("test2")), "bar"),
 				),
 			},
 		},
