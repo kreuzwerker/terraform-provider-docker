@@ -96,10 +96,10 @@ func TestAccDockerSecret_labels(t *testing.T) {
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.label", hashStringLabel("test1")), "test1"),
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.value", hashStringLabel("test1")), "foo"),
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.label", hashStringLabel("test2")), "test1"),
-					resource.TestCheckResourceAttr("docker_secret.foo", fmt.Sprintf("labels.%v.value", hashStringLabel("test2")), "bar"),
+					resource.TestCheckResourceAttr("docker_secret.foo", "labels.0.label", "test1"),
+					resource.TestCheckResourceAttr("docker_secret.foo", "labels.0.value", "foo"),
+					resource.TestCheckResourceAttr("docker_secret.foo", "labels.1.label", "test1"),
+					resource.TestCheckResourceAttr("docker_secret.foo", "labels.1.value", "bar"),
 				),
 			},
 		},
