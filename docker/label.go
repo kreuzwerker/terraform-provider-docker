@@ -78,6 +78,9 @@ func getLabelMapForPartialKey(attrs map[string]string, partialKey string) map[st
 
 	var labelMap = map[string]string{}
 	for _, id := range setIDs {
+		if id == "#" {
+			continue
+		}
 		prefix := partialKey + "." + id
 		labelMap[attrs[prefix+".label"]] = attrs[prefix+".value"]
 	}
