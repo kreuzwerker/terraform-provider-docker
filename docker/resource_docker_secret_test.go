@@ -6,6 +6,7 @@ import (
 
 	"context"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -96,6 +97,10 @@ func TestAccDockerSecret_labels(t *testing.T) {
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
+					func(s *terraform.State) error {
+						spew.Dump(s.RootModule().Resources["docker_secret.foo"].Primary.Attributes)
+						return nil
+					},
 					resource.TestCheckResourceAttr("docker_secret.foo", "labels.0.label", "test1"),
 					resource.TestCheckResourceAttr("docker_secret.foo", "labels.0.value", "foo"),
 					resource.TestCheckResourceAttr("docker_secret.foo", "labels.1.label", "test1"),
