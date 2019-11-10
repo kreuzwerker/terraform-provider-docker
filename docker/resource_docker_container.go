@@ -256,10 +256,10 @@ func resourceDockerContainer() *schema.Resource {
 										Optional:    true,
 									},
 									"labels": {
-										Type:        schema.TypeMap,
+										Type:        schema.TypeSet,
 										Description: "User-defined key/value metadata",
 										Optional:    true,
-										Elem:        &schema.Schema{Type: schema.TypeString},
+										Elem:        labelSchema,
 									},
 									"driver_name": {
 										Type:        schema.TypeString,
@@ -536,9 +536,10 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
+				Elem:     labelSchema,
 			},
 
 			"memory": {
