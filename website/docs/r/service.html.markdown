@@ -347,8 +347,8 @@ The following arguments are supported:
 <a id="mounts-1"></a>
 #### Mounts
 
-`mount` is a block within the configuration that can be repeated to specify
-the extra mount mappings for the container. Each `mount` block is the Specification for mounts to be added to containers created as part of the service and supports
+`mounts` is a block within the configuration that can be repeated to specify
+the extra mount mappings for the container. Each `mounts` block is the Specification for mounts to be added to containers created as part of the service and supports
 the following:
 
 * `target` - (Required, string) The container path.
