@@ -95,18 +95,10 @@ func TestAccDockerSecret_labels(t *testing.T) {
 					}
 				}
 				`,
-				Check: resource.ComposeTestCheckFunc(
-					func(s *terraform.State) error {
-						attrs := s.RootModule().Resources["docker_secret.foo"].Primary.Attributes
-						labelMap := getLabelMapForPartialKey(attrs, "labels")
-
-						if len(labelMap) != 2 ||
-							labelMap["test1"] != "foo" ||
-							labelMap["test2"] != "bar" {
-							return fmt.Errorf("label map had unexpected structure: %v", labelMap)
-						}
-
-						return nil
+				Check: testCheckLabelMap("docker_secret.foo", "labels",
+					map[string]string{
+						"test1": "foo",
+						"test2": "bar",
 					},
 				),
 			},

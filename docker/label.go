@@ -1,9 +1,12 @@
 package docker
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func labelToPair(label map[string]interface{}) (string, string) {
@@ -56,6 +59,22 @@ var labelSchema = &schema.Resource{
 	},
 }
 
+//unfortunately, _one_ of the several place that the old label schema was
+//used specified that the keys had to be strings, while the others allowed
+//any type of key and coerced them into strings.
+func upgradeLabelMapFromV0ToV1(labelMap map[string]interface{}) []map[string]string {
+	var migratedState []map[string]string
+
+	for l, v := range labelMap {
+		migratedState = append(migratedState, map[string]string{
+			"label": l,
+			"value": fmt.Sprintf("%v", v),
+		})
+	}
+
+	return migratedState
+}
+
 //gatherImmediateSubkeys given an incomplete attribute identifier, find all
 //the strings (if any) that appear after this one in the various dot-separated
 //identifiers.
@@ -86,4 +105,23 @@ func getLabelMapForPartialKey(attrs map[string]string, partialKey string) map[st
 	}
 
 	return labelMap
+}
+
+func testCheckLabelMap(name string, partialKey string, expectedLabels map[string]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		attrs := s.RootModule().Resources[name].Primary.Attributes
+		labelMap := getLabelMapForPartialKey(attrs, partialKey)
+
+		if len(labelMap) != len(expectedLabels) {
+			return fmt.Errorf("expected %v labels, found %v", len(expectedLabels), len(labelMap))
+		}
+
+		for l, v := range expectedLabels {
+			if labelMap[l] != v {
+				return fmt.Errorf("expected value %v for label %v, got %v", v, l, labelMap[v])
+			}
+		}
+
+		return nil
+	}
 }
