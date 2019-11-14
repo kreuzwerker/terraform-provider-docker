@@ -223,12 +223,18 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					provider = "docker.private"
 					name     = "tftest-service-basic"
 
+					labels {
+						label = "servicelabel"
+						value = "true"
+					}
+
 					task_spec {
 						container_spec {
 							image = "127.0.0.1:15000/tftest-service:v1"
 
-							labels = {
-								foo = "bar"
+							labels {
+								label = "foo"
+								value = "bar"
 							}
 
 							command  = ["ls"]
@@ -264,8 +270,9 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 
 								volume_options {
 									no_copy = true
-									labels = {
-										foo = "bar"
+									labels {
+										label = "foo"
+										value = "bar"
 									}
 									driver_name = "random-driver"
 									driver_options = {
@@ -393,8 +400,10 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
+					testCheckLabelMap("docker_service.foo", "labels", map[string]string{"servicelabel": "true"}),
 					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.foo", "bar"),
+					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.labels", map[string]string{"foo": "bar"}),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.command.0", "ls"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.args.0", "-las"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hostname", "my-fancy-service"),
@@ -415,7 +424,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.type", "volume"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.read_only", "true"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.volume_options.0.no_copy", "true"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.volume_options.0.labels.foo", "bar"),
+					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.volume_options.0.labels", map[string]string{"foo": "bar"}),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.volume_options.0.driver_name", "random-driver"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.816078185.volume_options.0.driver_options.op1", "val1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_signal", "SIGTERM"),
@@ -738,9 +747,13 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 		type   = "volume"
 		read_only = true
 		volume_options {
-			labels = {
-				env = "dev"
-				terraform = "true"
+			labels {
+				label = "env"
+				value = "dev"
+			}
+			labels {
+				label = "terraform"
+				value = "true"
 			}
 		}
 	}
@@ -781,9 +794,13 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 		type   = "volume"
 		read_only = true
 		volume_options {
-			labels = {
-				env = "dev"
-				terraform = "true"
+			labels {
+				label = "env"
+				value = "dev"
+			}
+			labels {
+				label = "terraform"
+				value = "true"
 			}
 		}
 	}
@@ -793,9 +810,13 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 		type   = "volume"
 		read_only = true
 		volume_options {
-			labels  = {
-				env = "dev"
-				terraform = "true"
+			labels {
+				label = "env"
+				value = "dev"
+			}
+			labels {
+				label = "terraform"
+				value = "true"
 			}
 		}
 	}
@@ -877,7 +898,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.1878413705.host", "testhost"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.1878413705.ip", "10.0.1.0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.isolation", "default"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.%", "0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_grace_period", "10s"),
@@ -925,7 +946,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.host", "testhost2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.ip", "10.0.2.2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.isolation", "default"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.%", "0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_grace_period", "10s"),
@@ -973,7 +994,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.host", "testhost2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.ip", "10.0.2.2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.isolation", "default"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.%", "0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_grace_period", "10s"),
