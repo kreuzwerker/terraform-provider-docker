@@ -3,10 +3,11 @@ package docker
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"testing"
 )
 
 func TestAccDockerVolume_basic(t *testing.T) {
@@ -69,8 +70,12 @@ func TestAccDockerVolume_labels(t *testing.T) {
 				Config: testAccDockerVolumeLabelsConfig,
 				Check: resource.ComposeTestCheckFunc(
 					checkDockerVolume("docker_volume.foo", &v),
-					testAccVolumeLabel(&v, "com.docker.compose.project", "test"),
-					testAccVolumeLabel(&v, "com.docker.compose.volume", "foo"),
+					testCheckLabelMap("docker_volume.foo", "labels",
+						map[string]string{
+							"com.docker.compose.project": "test",
+							"com.docker.compose.volume":  "foo",
+						},
+					),
 				),
 			},
 		},
@@ -90,8 +95,12 @@ const testAccDockerVolumeLabelsConfig = `
 resource "docker_volume" "foo" {
   name = "test_foo"
   labels = {
-    "com.docker.compose.project" = "test"
-    "com.docker.compose.volume"  = "foo"
+    label = "com.docker.compose.project"
+    value = "test"
+  }
+  labels = {
+    label = "com.docker.compose.volume"
+    value = "foo"
   }
 }
 `

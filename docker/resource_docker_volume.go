@@ -3,13 +3,14 @@ package docker
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"log"
-	"strings"
-	"time"
 )
 
 func resourceDockerVolume() *schema.Resource {
@@ -18,6 +19,55 @@ func resourceDockerVolume() *schema.Resource {
 		Read:   resourceDockerVolumeRead,
 		Delete: resourceDockerVolumeDelete,
 
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+			"labels": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				Elem:     labelSchema,
+			},
+			"driver": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+			"driver_opts": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+			},
+			"mountpoint": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 0,
+				Type:    resourceDockerVolumeV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+					labelMap := rawState["labels"].(map[string]interface{})
+					rawState["labels"] = upgradeLabelMapFromV0ToV1(labelMap)
+
+					return rawState, nil
+				},
+			},
+		},
+	}
+}
+
+func resourceDockerVolumeV0() *schema.Resource {
+	return &schema.Resource{
+		//This is only used for state migration, so the CRUD
+		//callbacks are no longer relevant
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -59,7 +109,7 @@ func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 		createOpts.Name = v.(string)
 	}
 	if v, ok := d.GetOk("labels"); ok {
-		createOpts.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+		createOpts.Labels = labelSetToMap(v.(*schema.Set))
 	}
 	if v, ok := d.GetOk("driver"); ok {
 		createOpts.Driver = v.(string)
