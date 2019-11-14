@@ -33,6 +33,17 @@ func hashStringLabel(str string) int {
 	return schema.HashString(str)
 }
 
+func mapStringInterfaceToLabelSet(labels map[string]interface{}) *schema.Set {
+	var mapped []interface{}
+	for k, v := range labels {
+		mapped = append(mapped, map[string]interface{}{
+			"label": k,
+			"value": fmt.Sprintf("%v", v),
+		})
+	}
+	return schema.NewSet(hashLabel, mapped)
+}
+
 func mapToLabelSet(labels map[string]string) *schema.Set {
 	var mapped []interface{}
 	for k, v := range labels {
@@ -57,22 +68,6 @@ var labelSchema = &schema.Resource{
 			Required:    true,
 		},
 	},
-}
-
-//unfortunately, _one_ of the several place that the old label schema was
-//used specified that the keys had to be strings, while the others allowed
-//any type of key and coerced them into strings.
-func upgradeLabelMapFromV0ToV1(labelMap map[string]interface{}) []map[string]string {
-	var migratedState []map[string]string
-
-	for l, v := range labelMap {
-		migratedState = append(migratedState, map[string]string{
-			"label": l,
-			"value": fmt.Sprintf("%v", v),
-		})
-	}
-
-	return migratedState
 }
 
 //gatherImmediateSubkeys given an incomplete attribute identifier, find all

@@ -19,24 +19,11 @@ func resourceDockerContainer() *schema.Resource {
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
 				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					labelMap := rawState["labels"].(map[string]interface{})
-					rawState["labels"] = upgradeLabelMapFromV0ToV1(labelMap)
+					//TODO do the ohter V0-to-V1 migration, unless we're okay
+					//with breaking for users who straggled on their docker
+					//provider version
 
-					mounts := rawState["mounts"].(*schema.Set).List()
-					newMounts := make([]interface{}, len(mounts))
-					for i, mountI := range newMounts {
-						mount := mountI.(map[string]interface{})
-						vo := mount["volume_options"].([]interface{})[0].(map[string]interface{})
-
-						labelMap = vo["labels"].(map[string]interface{})
-						vo["labels"] = upgradeLabelMapFromV0ToV1(labelMap)
-
-						mount["volume_options"] = vo
-						newMounts[i] = mount
-					}
-					rawState["mounts"] = newMounts
-
-					return rawState, nil
+					return migrateContainerLabels(rawState), nil
 				},
 			},
 		},

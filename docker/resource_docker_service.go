@@ -901,6 +901,16 @@ func resourceDockerService() *schema.Resource {
 				},
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 0,
+				Type:    resourceDockerServiceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+					return migrateServiceLabels(rawState), nil
+				},
+			},
+		},
 	}
 }
 
