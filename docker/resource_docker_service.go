@@ -906,6 +906,8 @@ func resourceDockerService() *schema.Resource {
 
 func resourceDockerServiceV0() *schema.Resource {
 	return &schema.Resource{
+		//This is only used for state migration, so the CRUD
+		//callbacks are no longer relevant
 		Schema: map[string]*schema.Schema{
 			"auth": {
 				Type:     schema.TypeMap,

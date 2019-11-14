@@ -103,7 +103,7 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 		m["image"] = in.Image
 	}
 	if len(in.Labels) > 0 {
-		m["labels"] = in.Labels
+		m["labels"] = mapToLabelSet(in.Labels)
 	}
 	if len(in.Command) > 0 {
 		m["command"] = in.Command
@@ -219,7 +219,7 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 			volumeOptionsItem := make(map[string]interface{}, 0)
 
 			volumeOptionsItem["no_copy"] = v.VolumeOptions.NoCopy
-			volumeOptionsItem["labels"] = mapStringStringToMapStringInterface(v.VolumeOptions.Labels)
+			volumeOptionsItem["labels"] = mapToLabelSet(v.VolumeOptions.Labels)
 			if v.VolumeOptions.DriverConfig != nil {
 				if len(v.VolumeOptions.DriverConfig.Name) > 0 {
 					volumeOptionsItem["driver_name"] = v.VolumeOptions.DriverConfig.Name

@@ -551,6 +551,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
+					testCheckLabelMap("docker_container.foo", "labels", map[string]string{"env": "prod", "role": "test"}),
 				),
 			},
 		},
