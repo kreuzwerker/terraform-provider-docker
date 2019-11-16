@@ -13,7 +13,7 @@ func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[stri
 }
 
 func migrateContainerLabels(rawState map[string]interface{}) map[string]interface{} {
-	rawState = replaceLabelsMapFieldWithSetField(rawState)
+	replaceLabelsMapFieldWithSetField(rawState)
 
 	mounts := rawState["mounts"].([]interface{})
 	newMounts := make([]interface{}, len(mounts))
@@ -22,7 +22,7 @@ func migrateContainerLabels(rawState map[string]interface{}) map[string]interfac
 		volumeOptionsList := mount["volume_options"].([]interface{})
 
 		if len(volumeOptionsList) != 0 {
-			mount["volume_options"] = replaceLabelsMapFieldWithSetField(volumeOptionsList[0].(map[string]interface{}))
+			replaceLabelsMapFieldWithSetField(volumeOptionsList[0].(map[string]interface{}))
 		}
 		newMounts[i] = mount
 	}
@@ -32,7 +32,7 @@ func migrateContainerLabels(rawState map[string]interface{}) map[string]interfac
 }
 
 func migrateServiceLabels(rawState map[string]interface{}) map[string]interface{} {
-	rawState = replaceLabelsMapFieldWithSetField(rawState)
+	replaceLabelsMapFieldWithSetField(rawState)
 
 	taskSpec := rawState["task_spec"].([]interface{})[0].(map[string]interface{})
 	containerSpec := taskSpec["container_spec"].([]interface{})[0].(map[string]interface{})
