@@ -33,7 +33,7 @@ func hashStringLabel(str string) int {
 	return schema.HashString(str)
 }
 
-func mapStringInterfaceToLabelSet(labels map[string]interface{}) *schema.Set {
+func mapStringInterfaceToLabelList(labels map[string]interface{}) []interface{} {
 	var mapped []interface{}
 	for k, v := range labels {
 		mapped = append(mapped, map[string]interface{}{
@@ -41,7 +41,7 @@ func mapStringInterfaceToLabelSet(labels map[string]interface{}) *schema.Set {
 			"value": fmt.Sprintf("%v", v),
 		})
 	}
-	return schema.NewSet(hashLabel, mapped)
+	return mapped
 }
 
 func mapToLabelSet(labels map[string]string) *schema.Set {

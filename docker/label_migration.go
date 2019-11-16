@@ -1,12 +1,13 @@
 package docker
 
-import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-)
-
 func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[string]interface{} {
-	labelMap := rawState["labels"].(map[string]interface{})
-	rawState["labels"] = mapStringInterfaceToLabelSet(labelMap)
+	labelMapIFace := rawState["labels"]
+	if labelMapIFace != nil {
+		labelMap := labelMapIFace.(map[string]interface{})
+		rawState["labels"] = mapStringInterfaceToLabelList(labelMap)
+	} else {
+		rawState["labels"] = []interface{}{}
+	}
 
 	return rawState
 }
@@ -14,13 +15,15 @@ func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[stri
 func migrateContainerLabels(rawState map[string]interface{}) map[string]interface{} {
 	rawState = replaceLabelsMapFieldWithSetField(rawState)
 
-	mounts := rawState["mounts"].(*schema.Set).List()
+	mounts := rawState["mounts"].([]interface{})
 	newMounts := make([]interface{}, len(mounts))
-	for i, mountI := range newMounts {
+	for i, mountI := range mounts {
 		mount := mountI.(map[string]interface{})
-		volumeOptions := mount["volume_options"].([]interface{})[0].(map[string]interface{})
+		volumeOptionsList := mount["volume_options"].([]interface{})
 
-		mount["volume_options"] = replaceLabelsMapFieldWithSetField(volumeOptions)
+		if len(volumeOptionsList) != 0 {
+			mount["volume_options"] = replaceLabelsMapFieldWithSetField(volumeOptionsList[0].(map[string]interface{}))
+		}
 		newMounts[i] = mount
 	}
 	rawState["mounts"] = newMounts
@@ -33,8 +36,7 @@ func migrateServiceLabels(rawState map[string]interface{}) map[string]interface{
 
 	taskSpec := rawState["task_spec"].([]interface{})[0].(map[string]interface{})
 	containerSpec := taskSpec["container_spec"].([]interface{})[0].(map[string]interface{})
-	taskSpec["container_spec"] = migrateContainerLabels(containerSpec)
+	migrateContainerLabels(containerSpec)
 
-	rawState["task_spec"] = taskSpec
 	return rawState
 }
