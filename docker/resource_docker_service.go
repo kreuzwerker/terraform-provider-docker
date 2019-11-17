@@ -700,7 +700,7 @@ func resourceDockerService() *schema.Resource {
 										Description:  "The amount of replicas of the service",
 										Optional:     true,
 										Default:      1,
-										ValidateFunc: validateIntegerGeqThan(1),
+										ValidateFunc: validateIntegerGeqThan(0),
 									},
 								},
 							},
