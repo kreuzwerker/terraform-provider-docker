@@ -1,4 +1,13 @@
-## 2.5.1 (Unreleased)
+## 2.6.0 (Unreleased)
+
+IMPROVEMENTS:
+* adds import for resources [GH-99]
+* supports --read-only root fs [GH-203]
+  
+DOCS
+* corrects mounts block name in docs ([#218](https://github.com/terraform-providers/terraform-provider-docker/pull/218))
+
+
 ## 2.5.0 (October 15, 2019)
 
 IMPROVEMENTS:
