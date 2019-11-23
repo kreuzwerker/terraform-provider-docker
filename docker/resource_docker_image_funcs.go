@@ -24,8 +24,6 @@ func resourceDockerImageCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(apiImage.ID + d.Get("name").(string))
-	d.Set("latest", apiImage.ID)
-
 	return resourceDockerImageRead(d, meta)
 }
 
@@ -35,14 +33,18 @@ func resourceDockerImageRead(d *schema.ResourceData, meta interface{}) error {
 	if err := fetchLocalImages(&data, client); err != nil {
 		return fmt.Errorf("Error reading docker image list: %s", err)
 	}
+	for id := range data.DockerImages {
+		log.Printf("[DEBUG] local images data: %v", id)
+	}
 	foundImage := searchLocalImages(data, d.Get("name").(string))
 
-	if foundImage != nil {
-		d.Set("latest", foundImage.ID)
-	} else {
+	if foundImage == nil {
 		d.SetId("")
+		return nil
 	}
 
+	d.SetId(foundImage.ID + d.Get("name").(string))
+	d.Set("latest", foundImage.ID)
 	return nil
 }
 
@@ -73,9 +75,11 @@ func resourceDockerImageDelete(d *schema.ResourceData, meta interface{}) error {
 
 func searchLocalImages(data Data, imageName string) *types.ImageSummary {
 	if apiImage, ok := data.DockerImages[imageName]; ok {
+		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
 		return apiImage
 	}
 	if apiImage, ok := data.DockerImages[imageName+":latest"]; ok {
+		log.Printf("[DEBUG] found local image via imageName + latest: %v", imageName)
 		imageName = imageName + ":latest"
 		return apiImage
 	}

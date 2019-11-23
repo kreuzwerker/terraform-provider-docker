@@ -3,10 +3,11 @@ package docker
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"testing"
 )
 
 func TestAccDockerVolume_basic(t *testing.T) {
@@ -23,6 +24,11 @@ func TestAccDockerVolume_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_basic"),
 					resource.TestCheckResourceAttr("docker_volume.foo", "name", "testAccDockerVolume_basic"),
 				),
+			},
+			{
+				ResourceName:      "docker_volume.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -72,6 +78,11 @@ func TestAccDockerVolume_labels(t *testing.T) {
 					testAccVolumeLabel(&v, "com.docker.compose.project", "test"),
 					testAccVolumeLabel(&v, "com.docker.compose.volume", "foo"),
 				),
+			},
+			{
+				ResourceName:      "docker_volume.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

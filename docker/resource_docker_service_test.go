@@ -159,14 +159,12 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
@@ -181,6 +179,11 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
 				),
 			},
+			{
+				ResourceName:      "docker_service.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 		CheckDestroy: checkAndRemoveImages,
 	})
@@ -194,7 +197,6 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
@@ -220,7 +222,6 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 
 					task_spec {
@@ -468,6 +469,11 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "endpoint_spec.0.ports.1714132424.publish_mode", "ingress"),
 				),
 			},
+			{
+				ResourceName:      "docker_service.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 		CheckDestroy: checkAndRemoveImages,
 	})
@@ -481,14 +487,12 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
@@ -508,14 +512,12 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
@@ -537,14 +539,12 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
@@ -565,6 +565,11 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 				),
 			},
+			{
+				ResourceName:      "docker_service.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 		CheckDestroy: checkAndRemoveImages,
 	})
@@ -578,14 +583,12 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
@@ -603,6 +606,11 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.global", "true"),
 				),
+			},
+			{
+				ResourceName:      "docker_service.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 		CheckDestroy: checkAndRemoveImages,
@@ -646,14 +654,12 @@ func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
@@ -688,15 +694,13 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 			{
 				Config: fmt.Sprintf(`
 					provider "docker" {
-						alias = "private"
 						registry_auth {
 							address = "%s"
 						}
 					}
 
-					resource "docker_service" "bar" {
-						provider = "docker.private"
-						name     = "tftest-service-bar"
+					resource "docker_service" "foo" {
+						name     = "tftest-service-foo"
 						task_spec {
 							container_spec {
 								image    = "%s"
@@ -715,9 +719,9 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 					}
 				`, registry, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_service.bar", "id", serviceIDRegex),
-					resource.TestCheckResourceAttr("docker_service.bar", "name", "tftest-service-bar"),
-					resource.TestMatchResourceAttr("docker_service.bar", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
+					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-foo"),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
 				),
 			},
 		},
@@ -985,6 +989,11 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-size", "15m"),
 				),
 			},
+			{
+				ResourceName:      "docker_service.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 		CheckDestroy: checkAndRemoveImages,
 	})
@@ -1070,14 +1079,12 @@ func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
 			{
 				Config: `
 				provider "docker" {
-					alias = "private"
 					registry_auth {
 						address = "127.0.0.1:15000"
 					}
 				}
 
 				resource "docker_service" "foo" {
-					provider = "docker.private"
 					name     = "tftest-service-basic-converge"
 					task_spec {
 						container_spec {

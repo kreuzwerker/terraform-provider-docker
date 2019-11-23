@@ -3,13 +3,14 @@ package docker
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"log"
-	"strings"
-	"time"
 )
 
 func resourceDockerVolume() *schema.Resource {
@@ -17,6 +18,9 @@ func resourceDockerVolume() *schema.Resource {
 		Create: resourceDockerVolumeCreate,
 		Read:   resourceDockerVolumeRead,
 		Delete: resourceDockerVolumeDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -77,10 +81,6 @@ func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	d.SetId(retVolume.Name)
-	d.Set("name", retVolume.Name)
-	d.Set("driver", retVolume.Driver)
-	d.Set("mountpoint", retVolume.Mountpoint)
-
 	return resourceDockerVolumeRead(d, meta)
 }
 
@@ -97,7 +97,9 @@ func resourceDockerVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", retVolume.Name)
+	d.Set("labels", retVolume.Labels)
 	d.Set("driver", retVolume.Driver)
+	d.Set("driver_opts", retVolume.Options)
 	d.Set("mountpoint", retVolume.Mountpoint)
 
 	return nil

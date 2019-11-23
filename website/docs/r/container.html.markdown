@@ -284,5 +284,12 @@ The following attributes are exported:
  * `gateway` - *Deprecated:* Use `network_data` instead. The network gateway of the container as read from its
    NetworkSettings.
 
+## Import
+
+Docker containers can be imported using the long id, e.g. for a container named `foo`:
+
+```sh
+$ terraform import docker_container.foo $(docker inspect -f {{.ID}} foo)
+```
 
 [linkdoc] https://docs.docker.com/network/links/

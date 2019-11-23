@@ -17,6 +17,9 @@ func resourceDockerService() *schema.Resource {
 		Update: resourceDockerServiceUpdate,
 		Delete: resourceDockerServiceDelete,
 		Exists: resourceDockerServiceExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"auth": {

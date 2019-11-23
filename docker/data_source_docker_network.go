@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -68,7 +69,6 @@ func dataSourceDockerNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerIpamConfigHash,
 			},
 
 			"scope": &schema.Schema{

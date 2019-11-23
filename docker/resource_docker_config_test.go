@@ -27,6 +27,11 @@ func TestAccDockerConfig_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_config.foo", "data", "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="),
 				),
 			},
+			{
+				ResourceName:      "docker_config.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -67,6 +72,11 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("docker_config.foo", "data", "U3VuIDI1IE1hciAyMDE4IDE0OjQ2OjE5IENFU1QK"),
 				),
+			},
+			{
+				ResourceName:      "docker_config.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

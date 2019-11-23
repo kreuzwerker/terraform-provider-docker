@@ -1,11 +1,11 @@
 package docker
 
 import (
-	"bytes"
-	"fmt"
-	"sort"
+	"log"
+	"net"
+	"regexp"
+	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -14,6 +14,9 @@ func resourceDockerNetwork() *schema.Resource {
 		Create: resourceDockerNetworkCreate,
 		Read:   resourceDockerNetworkRead,
 		Delete: resourceDockerNetworkDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -38,7 +41,7 @@ func resourceDockerNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
+				Default:  "bridge",
 			},
 
 			"options": {
@@ -77,12 +80,15 @@ func resourceDockerNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Default:  "default",
 			},
 
 			"ipam_config": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
+				// DiffSuppressFunc: suppressIfIPAMConfigWithIpv6Changes(),
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"subnet": {
@@ -110,7 +116,6 @@ func resourceDockerNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerIpamConfigHash,
 			},
 
 			"scope": {
@@ -121,37 +126,50 @@ func resourceDockerNetwork() *schema.Resource {
 	}
 }
 
-func resourceDockerIpamConfigHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	if v, ok := m["subnet"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["ip_range"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["gateway"]; ok {
-		buf.WriteString(fmt.Sprintf("%v-", v.(string)))
-	}
-
-	if v, ok := m["aux_address"]; ok {
-		auxAddress := v.(map[string]interface{})
-
-		keys := make([]string, len(auxAddress))
-		i := 0
-		for k := range auxAddress {
-			keys[i] = k
-			i++
+func suppressIfIPAMConfigWithIpv6Changes() schema.SchemaDiffSuppressFunc {
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		// the initial case when the resource is created
+		if old == "" && new != "" {
+			return false
 		}
-		sort.Strings(keys)
 
-		for _, k := range keys {
-			buf.WriteString(fmt.Sprintf("%v-%v-", k, auxAddress[k].(string)))
+		// if ipv6 is not given we do not consider
+		ipv6, ok := d.GetOk("ipv6")
+		if !ok {
+			return false
 		}
-	}
 
-	return hashcode.String(buf.String())
+		// if ipv6 is given but false we do not consider
+		isIPv6 := ipv6.(bool)
+		if !isIPv6 {
+			return false
+		}
+		if k == "ipam_config.#" {
+			log.Printf("[INFO] ipam_config: k: %q, old: %s, new: %s\n", k, old, new)
+			oldVal, _ := strconv.Atoi(string(old))
+			newVal, _ := strconv.Atoi(string(new))
+			log.Printf("[INFO] ipam_config: oldVal: %d, newVal: %d\n", oldVal, newVal)
+			if newVal <= oldVal {
+				log.Printf("[INFO] suppressingDiff for ipam_config: oldVal: %d, newVal: %d\n", oldVal, newVal)
+				return true
+			}
+		}
+		if regexp.MustCompile(`ipam_config\.\d+\.gateway`).MatchString(k) {
+			ip := net.ParseIP(old)
+			ipv4Address := ip.To4()
+			log.Printf("[INFO] ipam_config.gateway: k: %q, old: %s, new: %s - %v\n", k, old, new, ipv4Address != nil)
+			// is an ipv4Address and content changed from non-empty to empty
+			if ipv4Address != nil && old != "" && new == "" {
+				log.Printf("[INFO] suppressingDiff for ipam_config.gateway %q: oldVal: %s, newVal: %s\n", ipv4Address.String(), old, new)
+				return true
+			}
+		}
+		if regexp.MustCompile(`ipam_config\.\d+\.subnet`).MatchString(k) {
+			if old != "" && new == "" {
+				log.Printf("[INFO] suppressingDiff for ipam_config.subnet: oldVal: %s, newVal: %s\n", old, new)
+				return true
+			}
+		}
+		return false
+	}
 }

@@ -557,3 +557,11 @@ all tasks are up when a service is created, or to check if all tasks are success
 The following attributes are exported in addition to the above configuration:
 
 * `id` (string)
+
+## Import
+
+Docker service can be imported using the long id, e.g. for a service with the short id `55ba873dd`:
+
+```sh
+$ terraform import docker_service.foo $(docker service inspect -f {{.ID}} 55b)
+```

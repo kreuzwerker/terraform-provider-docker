@@ -66,3 +66,11 @@ The following attributes are exported in addition to the above configuration:
 
 * `id` (string)
 * `scope` (string)
+
+## Import
+
+Docker networks can be imported using the long id, e.g. for a network with the short id `p73jelnrme5f`:
+
+```sh
+$ terraform import docker_network.foo $(docker network inspect -f {{.ID}} p73)
+```

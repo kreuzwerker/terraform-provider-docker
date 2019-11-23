@@ -66,7 +66,7 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	d.SetId(retNetwork.ID)
-
+	// d.Set("check_duplicate") TODO
 	return resourceDockerNetworkRead(d, meta)
 }
 
@@ -152,11 +152,14 @@ func resourceDockerNetworkReadRefreshFunc(
 		jsonObj, _ := json.MarshalIndent(retNetwork, "", "\t")
 		log.Printf("[DEBUG] Docker network inspect: %s", jsonObj)
 
+		d.Set("name", retNetwork.Name)
+		d.Set("labels", retNetwork.Labels)
+		d.Set("driver", retNetwork.Driver)
 		d.Set("internal", retNetwork.Internal)
 		d.Set("attachable", retNetwork.Attachable)
 		d.Set("ingress", retNetwork.Ingress)
 		d.Set("ipv6", retNetwork.EnableIPv6)
-		d.Set("driver", retNetwork.Driver)
+		d.Set("ipam_driver", retNetwork.IPAM.Driver)
 		d.Set("scope", retNetwork.Scope)
 		if retNetwork.Scope == "overlay" {
 			if retNetwork.Options != nil && len(retNetwork.Options) != 0 {
@@ -167,6 +170,10 @@ func resourceDockerNetworkReadRefreshFunc(
 			}
 		} else {
 			d.Set("options", retNetwork.Options)
+		}
+
+		if err = d.Set("ipam_config", flattenIpamConfigSpec(retNetwork.IPAM.Config)); err != nil {
+			log.Printf("[WARN] failed to set ipam config from API: %s", err)
 		}
 
 		log.Println("[DEBUG] all network fields exposed")
@@ -195,4 +202,32 @@ func resourceDockerNetworkRemoveRefreshFunc(
 
 		return networkID, "removed", nil
 	}
+}
+
+// TODO mavogel: separate structure file
+// TODO 2: seems like we can replace the set hash generation with plain lists -> #219
+func flattenIpamConfigSpec(in []network.IPAMConfig) *schema.Set { // []interface{} {
+	var out = make([]interface{}, len(in), len(in))
+	for i, v := range in {
+		log.Printf("[DEBUG] flatten ipam %d: %#v", i, v)
+		m := make(map[string]interface{})
+		if len(v.Subnet) > 0 {
+			m["subnet"] = v.Subnet
+		}
+		if len(v.IPRange) > 0 {
+			m["ip_range"] = v.IPRange
+		}
+		if len(v.Gateway) > 0 {
+			m["gateway"] = v.Gateway
+		}
+		if len(v.AuxAddress) > 0 {
+			m["aux_address"] = v.AuxAddress
+		}
+		out[i] = m
+	}
+	// log.Printf("[INFO] flatten ipam out: %#v", out)
+	imapConfigsResource := resourceDockerNetwork().Schema["ipam_config"].Elem.(*schema.Resource)
+	f := schema.HashResource(imapConfigsResource)
+	return schema.NewSet(f, out)
+	// return out
 }

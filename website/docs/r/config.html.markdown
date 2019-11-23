@@ -98,3 +98,11 @@ The following arguments are supported:
 The following attributes are exported in addition to the above configuration:
 
 * `id` (string)
+
+## Import
+
+Docker config can be imported using the long id, e.g. for a config with the short id `p73jelnrme5f`:
+
+```sh
+$ terraform import docker_config.foo $(docker config inspect -f {{.ID}} p73)
+```

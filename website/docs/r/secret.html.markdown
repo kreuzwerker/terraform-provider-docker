@@ -63,3 +63,7 @@ The following arguments are supported:
 The following attributes are exported in addition to the above configuration:
 
 * `id` (string)
+
+## Import
+
+Docker secret cannot be imported as the secret data, once set, is never exposed again.

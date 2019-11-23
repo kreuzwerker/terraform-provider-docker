@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"context"
+
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -25,7 +26,7 @@ func resourceDockerSecret() *schema.Resource {
 
 			"data": {
 				Type:         schema.TypeString,
-				Description:  "User-defined name of the secret",
+				Description:  "Base64-url-safe-encoded secret data",
 				Required:     true,
 				Sensitive:    true,
 				ForceNew:     true,
@@ -76,6 +77,10 @@ func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	d.SetId(secret.ID)
+	d.Set("name", secret.Spec.Name)
+	// Note mavogel: secret data is not exposed via the API
+	// TODO next major if we do not explicitly do not store it in the state we could import it, but BC
+	// d.Set("data", base64.StdEncoding.EncodeToString(secret.Spec.Data))
 	return nil
 }
 

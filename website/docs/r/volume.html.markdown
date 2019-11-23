@@ -39,3 +39,11 @@ The following arguments are supported:
 The following attributes are exported in addition to the above configuration:
 
 * `mountpoint` (string) - The mountpoint of the volume.
+
+## Import
+
+Docker volume can be imported using the long id, e.g. for a volume with the short id `ecae276c5`:
+
+```sh
+$ terraform import docker_volume.foo $(docker volume inspect -f {{.ID}} eca)
+```

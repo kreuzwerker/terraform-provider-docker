@@ -518,7 +518,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		}
 
 		jsonObj, _ := json.MarshalIndent(container, "", "\t")
-		log.Printf("[DEBUG] Docker container inspect: %s", jsonObj)
+		log.Printf("[INFO] Docker container inspect: %s", jsonObj)
 
 		if container.State.Running ||
 			!container.State.Running && !d.Get("must_run").(bool) {
@@ -578,6 +578,11 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
+	// TODO all the other attributes
+	d.SetId(container.ID)
+	// d.Set("name", container.Name) // api prefixes with '/' ...
+	// d.Set("image", container.Image)
+	// d.Set("log_driver", container.HostConfig.LogConfig.Type)
 	return nil
 }
 

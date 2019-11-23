@@ -15,6 +15,9 @@ func resourceDockerConfig() *schema.Resource {
 		Create: resourceDockerConfigCreate,
 		Read:   resourceDockerConfigRead,
 		Delete: resourceDockerConfigDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -66,6 +69,8 @@ func resourceDockerConfigRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	d.SetId(config.ID)
+	d.Set("name", config.Spec.Name)
+	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
 	return nil
 }
 
