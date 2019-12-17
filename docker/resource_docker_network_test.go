@@ -301,8 +301,12 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 				Config: testAccDockerNetworkLabelsConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
-					testAccNetworkLabel(&n, "com.docker.compose.network", "foo"),
-					testAccNetworkLabel(&n, "com.docker.compose.project", "test"),
+					testCheckLabelMap(resourceName, "labels",
+						map[string]string{
+							"com.docker.compose.network": "foo",
+							"com.docker.compose.project": "test",
+						},
+					),
 				),
 			},
 			{
@@ -326,9 +330,13 @@ func testAccNetworkLabel(network *types.NetworkResource, name string, value stri
 const testAccDockerNetworkLabelsConfig = `
 resource "docker_network" "foo" {
   name = "test_foo"
-  labels = {
-    "com.docker.compose.network" = "foo"
-    "com.docker.compose.project" = "test"
+  labels {
+    label = "com.docker.compose.network"
+    value = "foo"
+  }
+  labels {
+    label = "com.docker.compose.project"
+    value = "test"
   }
 }
 `

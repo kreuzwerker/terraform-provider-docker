@@ -34,6 +34,47 @@ func resourceDockerSecret() *schema.Resource {
 			},
 
 			"labels": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				Elem:     labelSchema,
+			},
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 0,
+				Type:    resourceDockerSecretV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+					return replaceLabelsMapFieldWithSetField(rawState), nil
+				},
+			},
+		},
+	}
+}
+
+func resourceDockerSecretV0() *schema.Resource {
+	return &schema.Resource{
+		//This is only used for state migration, so the CRUD
+		//callbacks are no longer relevant
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Description: "User-defined name of the secret",
+				Required:    true,
+				ForceNew:    true,
+			},
+
+			"data": {
+				Type:         schema.TypeString,
+				Description:  "User-defined name of the secret",
+				Required:     true,
+				Sensitive:    true,
+				ForceNew:     true,
+				ValidateFunc: validateStringIsBase64Encoded(),
+			},
+
+			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
@@ -54,7 +95,7 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	if v, ok := d.GetOk("labels"); ok {
-		secretSpec.Annotations.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
 	}
 
 	secret, err := client.SecretCreate(context.Background(), secretSpec)

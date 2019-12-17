@@ -567,6 +567,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
+					testCheckLabelMap("docker_container.foo", "labels", map[string]string{"env": "prod", "role": "test"}),
 				),
 			},
 		},
@@ -1677,9 +1678,13 @@ resource "docker_container" "foo" {
 	dns = ["8.8.8.8"]
 	dns_opts = ["rotate"]
 	dns_search = ["example.com"]
-	labels = {
-		env = "prod"
-		role = "test"
+	labels {
+		label = "env"
+		value = "prod"
+	}
+	labels {
+		label = "role"
+		value = "test"
 	}
 	log_driver = "json-file"
 	log_opts = {
