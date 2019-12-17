@@ -104,7 +104,7 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if v, ok := d.GetOk("labels"); ok {
-		config.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+		config.Labels = labelSetToMap(v.(*schema.Set))
 	}
 
 	if value, ok := d.GetOk("healthcheck"); ok {
@@ -168,7 +168,7 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 								mountInstance.VolumeOptions.NoCopy = value.(bool)
 							}
 							if value, ok := rawVolumeOptions["labels"]; ok {
-								mountInstance.VolumeOptions.Labels = mapTypeMapValsToString(value.(map[string]interface{}))
+								mountInstance.VolumeOptions.Labels = labelSetToMap(value.(*schema.Set))
 							}
 							// because it is not possible to nest maps
 							if value, ok := rawVolumeOptions["driver_name"]; ok {

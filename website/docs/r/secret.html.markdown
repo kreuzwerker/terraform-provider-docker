@@ -56,7 +56,19 @@ The following arguments are supported:
 
 * `name` - (Required, string) The name of the Docker secret.
 * `data` - (Required, string) The base64 encoded data of the secret.
-* `labels` - (Optional, map of string/string key/value pairs) User-defined key/value metadata.
+* `labels` - (Optional, block) See [Labels](#labels-1) below for details.
+
+<a id="labels-1"></a>
+#### Labels
+
+`labels` is a block within the configuration that can be repeated to specify
+additional label name and value data to the container. Each `labels` block supports
+the following:
+
+* `label` - (Required, string) Name of the label
+* `value` (Required, string) Value of the label
+
+See [214](https://github.com/terraform-providers/terraform-provider-docker/issues/214#issuecomment-550128950) for Details.
 
 ## Attributes Reference
 

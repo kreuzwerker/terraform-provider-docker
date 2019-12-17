@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -84,15 +85,21 @@ func TestAccDockerSecret_labels(t *testing.T) {
 				resource "docker_secret" "foo" {
 					name = "foo-secret"
 					data = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
-					labels = {
-						"test1" = "foo"
-						"test2" = "bar"
+					labels {
+						label = "test1"
+						value = "foo"
+					}
+					labels {
+						label = "test2"
+						value = "bar"
 					}
 				}
 				`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_secret.foo", "labels.test1", "foo"),
-					resource.TestCheckResourceAttr("docker_secret.foo", "labels.test2", "bar"),
+				Check: testCheckLabelMap("docker_secret.foo", "labels",
+					map[string]string{
+						"test1": "foo",
+						"test2": "bar",
+					},
 				),
 			},
 		},

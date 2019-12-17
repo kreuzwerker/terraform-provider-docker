@@ -118,7 +118,7 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(service.ID)
 	d.Set("name", service.Spec.Name)
-	d.Set("labels", service.Spec.Labels)
+	d.Set("labels", mapToLabelSet(service.Spec.Labels))
 
 	if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate)); err != nil {
 		log.Printf("[WARN] failed to set task spec from API: %s", err)
@@ -607,7 +607,7 @@ func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
 // createServiceLabels creates the labels for the service
 func createServiceLabels(d *schema.ResourceData) (map[string]string, error) {
 	if v, ok := d.GetOk("labels"); ok {
-		return mapTypeMapValsToString(v.(map[string]interface{})), nil
+		return labelSetToMap(v.(*schema.Set)), nil
 	}
 	return nil, nil
 }
@@ -686,7 +686,7 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 				containerSpec.Image = value.(string)
 			}
 			if value, ok := rawContainerSpec["labels"]; ok {
-				containerSpec.Labels = mapTypeMapValsToString(value.(map[string]interface{}))
+				containerSpec.Labels = labelSetToMap(value.(*schema.Set))
 			}
 			if value, ok := rawContainerSpec["command"]; ok {
 				containerSpec.Command = stringListToStringSlice(value.([]interface{}))
@@ -796,7 +796,7 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 										mountInstance.VolumeOptions.NoCopy = value.(bool)
 									}
 									if value, ok := rawVolumeOptions["labels"]; ok {
-										mountInstance.VolumeOptions.Labels = mapTypeMapValsToString(value.(map[string]interface{}))
+										mountInstance.VolumeOptions.Labels = labelSetToMap(value.(*schema.Set))
 									}
 									// because it is not possible to nest maps
 									if value, ok := rawVolumeOptions["driver_name"]; ok {

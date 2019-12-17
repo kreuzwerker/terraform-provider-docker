@@ -49,8 +49,7 @@ The following arguments are supported:
 * `dns_opts` - (Optional, set of strings) Set of DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 * `dns_search` - (Optional, set of strings) Set of DNS search domains that are used when bare unqualified hostnames are used inside of the container.
 * `env` - (Optional, set of strings) Environment variables to set.
-* `labels` - (Optional, map of strings) Key/value pairs to set as labels on the
-  container.
+* `labels` - (Optional, block) See [Labels](#labels-1) below for details.
 * `links` - (Optional, set of strings) Set of links for link based
   connectivity between containers that are running on the same host.
 
@@ -111,6 +110,18 @@ data is stored in them. See [the docker documentation][linkdoc] for more details
 * `sysctls` - (Optional, map) A map of kernel parameters (sysctls) to set in the container.
 * `ipc_mode` - (Optional, string) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
 * `group_add` - (Optional, set of strings) Add additional groups to run as.
+
+<a id="labels-1"></a>
+#### Labels
+
+`labels` is a block within the configuration that can be repeated to specify
+additional label name and value data to the container. Each `labels` block supports
+the following:
+
+* `label` - (Required, string) Name of the label
+* `value` (Required, string) Value of the label
+
+See [214](https://github.com/terraform-providers/terraform-provider-docker/issues/214#issuecomment-550128950) for Details.
 
 <a id="capabilities-1"></a>
 ### Capabilities

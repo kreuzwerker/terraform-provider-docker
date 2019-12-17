@@ -29,7 +29,7 @@ resource "docker_network" "private_network" {
 The following arguments are supported:
 
 * `name` - (Required, string) The name of the Docker network.
-* `labels` - (Optional, map of string/string key/value pairs) User-defined key/value metadata.
+* `labels` - (Optional, block) See [Labels](#labels-1) below for details.
 * `check_duplicate` - (Optional, boolean) Requests daemon to check for networks
   with same name.
 * `driver` - (Optional, string) Name of the network driver to use. Defaults to
@@ -48,6 +48,18 @@ The following arguments are supported:
   network.
 * `ipam_config` - (Optional, block) See [IPAM config](#ipam_config-1) below for
   details.
+
+<a id="labels-1"></a>
+#### Labels
+
+`labels` is a block within the configuration that can be repeated to specify
+additional label name and value data to the container. Each `labels` block supports
+the following:
+
+* `label` - (Required, string) Name of the label
+* `value` (Required, string) Value of the label
+
+See [214](https://github.com/terraform-providers/terraform-provider-docker/issues/214#issuecomment-550128950) for Details.
 
 <a id="ipam_config-1"></a>
 ### IPAM config

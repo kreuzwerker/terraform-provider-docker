@@ -20,7 +20,7 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 
 	createOpts := types.NetworkCreate{}
 	if v, ok := d.GetOk("labels"); ok {
-		createOpts.Labels = mapTypeMapValsToString(v.(map[string]interface{}))
+		createOpts.Labels = labelSetToMap(v.(*schema.Set))
 	}
 	if v, ok := d.GetOk("check_duplicate"); ok {
 		createOpts.CheckDuplicate = v.(bool)
@@ -153,7 +153,7 @@ func resourceDockerNetworkReadRefreshFunc(
 		log.Printf("[DEBUG] Docker network inspect: %s", jsonObj)
 
 		d.Set("name", retNetwork.Name)
-		d.Set("labels", retNetwork.Labels)
+		d.Set("labels", mapToLabelSet(retNetwork.Labels))
 		d.Set("driver", retNetwork.Driver)
 		d.Set("internal", retNetwork.Internal)
 		d.Set("attachable", retNetwork.Attachable)
