@@ -30,7 +30,7 @@ func validateIntegerGeqThan(threshold int) schema.SchemaValidateFunc {
 		value := v.(int)
 		if value < threshold {
 			errors = append(errors, fmt.Errorf(
-				"%q cannot be lower than %q", k, threshold))
+				"%q cannot be lower than %d", k, threshold))
 		}
 		return
 	}
