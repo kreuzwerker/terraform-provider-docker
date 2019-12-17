@@ -143,7 +143,7 @@ func resourceDockerVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", retVolume.Name)
-	d.Set("labels", retVolume.Labels)
+	d.Set("labels", mapToLabelSet(retVolume.Labels))
 	d.Set("driver", retVolume.Driver)
 	d.Set("driver_opts", retVolume.Options)
 	d.Set("mountpoint", retVolume.Mountpoint)

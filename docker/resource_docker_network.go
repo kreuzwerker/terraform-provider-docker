@@ -81,12 +81,15 @@ func resourceDockerNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Default:  "default",
 			},
 
 			"ipam_config": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
+				// DiffSuppressFunc: suppressIfIPAMConfigWithIpv6Changes(),
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"subnet": {
@@ -114,7 +117,6 @@ func resourceDockerNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceDockerIpamConfigHash,
 			},
 
 			"scope": {
