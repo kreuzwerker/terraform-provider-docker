@@ -80,7 +80,8 @@ resource "docker_service" "foo" {
       image = "repo.mycompany.com:8080/foo-service:v1"
 
       labels {
-        foo = "bar"
+        label = "foo.bar"
+        value = "baz"
       }
 
       command  = ["ls"]
@@ -306,7 +307,7 @@ The following arguments are supported:
 `container_spec` is a block within the configuration that can be repeated only **once** to specify the mode configuration for the service. The `container_spec` block is the spec for each container and supports the following:
 
 * `image` - (Required, string) The image used to create the Docker service.
-* `labels` - (Optional, map of string/string key/value pairs) User-defined key/value metadata.
+* `labels` - (Optional, block) See [Labels](#labels-1) below for details.
 * `command` - (Optional, list of strings) The command to be run in the image.
 * `args` - (Optional, list of strings) Arguments to the command.
 * `hostname` - (Optional, string) The hostname to use for the container, as a valid RFC 1123 hostname.
@@ -328,6 +329,18 @@ The following arguments are supported:
 * `configs` - (Optional, set of blocks) See [Configs](#configs-1) below for details.
 * `isolation` - (Optional, string) Isolation technology of the containers running the service. (Windows only). Valid values are: `default|process|hyperv`
 
+
+<a id="labels-1"></a>
+#### Labels
+
+`labels` is a block within the configuration that can be repeated to specify
+additional label name and value data to the container. Each `labels` block supports
+the following:
+
+* `label` - (Required, string) Name of the label
+* `value` (Required, string) Value of the label
+
+See [214](https://github.com/terraform-providers/terraform-provider-docker/issues/214#issuecomment-550128950) for Details.
 
 <a id="privileges-1"></a>
 #### Privileges
@@ -359,7 +372,7 @@ the following:
   * `propagation` - (Optional, string) A propagation mode with the value.
 * `volume_options` - (Optional, map) Optional configuration for the `volume` type.
   * `no_copy` - (Optional, string) Whether to populate volume with data from the target.
-  * `labels` - (Optional, map of key/value pairs) Adding labels.
+  * `labels` - (Optional, block) See [Labels](#labels-1) above for details.
   * `driver_config` - (Optional, map) The name of the driver to create the volume.
     * `name` - (Optional, string) The name of the driver to create the volume.
     * `options` - (Optional, map of key/value pairs) Options for the driver.
