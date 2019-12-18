@@ -306,7 +306,10 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 							secrets {
 								secret_id   = "${docker_secret.service_secret.id}"
 								secret_name = "${docker_secret.service_secret.name}"
-								file_name = "/secrets.json"
+								file_name   = "/secrets.json"
+								file_uid    = "0"
+								file_gid    = "0"
+								file_mode   = 0777
 							}
 
 							configs {
