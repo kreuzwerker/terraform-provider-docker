@@ -148,6 +148,28 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 	})
 }
 
+func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
+	wd, _ := os.Getwd()
+	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                  func() { testAccPreCheck(t) },
+		Providers:                 testAccProviders,
+		PreventPostDestroyRefresh: true,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccDockerImageFromDataPrivateConfigFileContent, registry, dockerConfig, image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
+				),
+			},
+		},
+		CheckDestroy: checkAndRemoveImages,
+	})
+}
+
 func TestAccDockerImage_sha265(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -243,6 +265,20 @@ provider "docker" {
 	registry_auth {
 		address = "%s"
 		config_file = "%s"
+	}
+}
+resource "docker_image" "foo_private" {
+	provider = "docker.private"
+	name = "%s"
+}
+`
+
+const testAccDockerImageFromDataPrivateConfigFileContent = `
+provider "docker" {
+	alias = "private"
+	registry_auth {
+		address = "%s"
+		config_file_content = "${file("%s")}"
 	}
 }
 resource "docker_image" "foo_private" {

@@ -63,6 +63,11 @@ provider "docker" {
   }
 
   registry_auth {
+    address = "registry.my.company.com"
+    config_file_content = "${var.plain_content_of_config_file}"
+  }
+
+  registry_auth {
     address = "quay.io:8181"
     username = "someuser"
     password = "somepass"
@@ -149,8 +154,11 @@ The following arguments are supported:
   will also be checked.
  
   * `config_file` - (Optional) The path to a config file containing credentials for
-  authenticating to the registry. Cannot be used with the `username`/`password` options.
+  authenticating to the registry. Cannot be used with the `username`/`password` or `config_file_content` options.
   If this is blank, the `DOCKER_CONFIG` will also be checked.
+  
+  * `config_file_content` - (Optional) The content of a config file as string containing credentials for
+  authenticating to the registry. Cannot be used with the `username`/`password` or `config_file` options.
  
  
 
