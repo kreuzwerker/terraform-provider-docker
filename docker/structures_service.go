@@ -85,10 +85,10 @@ func flattenServiceUpdateOrRollbackConfig(in *swarm.UpdateConfig) []interface{} 
 	return out
 }
 
-func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
+func flattenServiceEndpointSpec(in swarm.Endpoint) []interface{} {
 	var out = make([]interface{}, 0, 0)
 	m := make(map[string]interface{})
-	m["mode"] = string(in.Mode)
+	m["mode"] = string(in.Spec.Mode)
 	m["ports"] = flattenServicePorts(in.Ports)
 
 	out = append(out, m)
@@ -491,7 +491,7 @@ func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 
 ///// end TaskSpec
 ///// start EndpointSpec
-func flattenServicePorts(in []swarm.PortConfig) *schema.Set {
+func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 	var out = make([]interface{}, len(in), len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
@@ -502,10 +502,7 @@ func flattenServicePorts(in []swarm.PortConfig) *schema.Set {
 		m["publish_mode"] = string(v.PublishMode)
 		out[i] = m
 	}
-	endpointSpecResource := resourceDockerService().Schema["endpoint_spec"].Elem.(*schema.Resource)
-	portsResource := endpointSpecResource.Schema["ports"].Elem.(*schema.Resource)
-	f := schema.HashResource(portsResource)
-	return schema.NewSet(f, out)
+	return out
 }
 
 ///// end EndpointSpec

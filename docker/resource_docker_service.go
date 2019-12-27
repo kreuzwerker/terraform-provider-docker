@@ -876,7 +876,7 @@ func resourceDockerService() *schema.Resource {
 							ValidateFunc: validateStringMatchesPattern(`^(vip|dnsrr)$`),
 						},
 						"ports": {
-							Type:        schema.TypeSet,
+							Type:        schema.TypeList,
 							Description: "List of exposed ports that this service is accessible on from the outside. Ports can only be provided if 'vip' resolution mode is used.",
 							Optional:    true,
 							Elem: &schema.Resource{
@@ -902,6 +902,7 @@ func resourceDockerService() *schema.Resource {
 										Type:        schema.TypeInt,
 										Description: "The port on the swarm hosts.",
 										Optional:    true,
+										Computed:    true,
 									},
 									"publish_mode": {
 										Type:         schema.TypeString,

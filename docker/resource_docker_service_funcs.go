@@ -132,7 +132,7 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 	if err = d.Set("rollback_config", flattenServiceUpdateOrRollbackConfig(service.Spec.RollbackConfig)); err != nil {
 		log.Printf("[WARN] failed to set rollback_config from API: %s", err)
 	}
-	if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Spec.EndpointSpec)); err != nil {
+	if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Endpoint)); err != nil {
 		log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
 	}
 
@@ -1183,8 +1183,8 @@ func createServiceEndpointSpec(d *schema.ResourceData) (*swarm.EndpointSpec, err
 // portSetToServicePorts maps a set of ports to portConfig
 func portSetToServicePorts(v interface{}) []swarm.PortConfig {
 	retPortConfigs := []swarm.PortConfig{}
-	if len(v.(*schema.Set).List()) > 0 {
-		for _, portInt := range v.(*schema.Set).List() {
+	if len(v.([]interface{})) > 0 {
+		for _, portInt := range v.([]interface{}) {
 			portConfig := swarm.PortConfig{}
 			rawPort := portInt.(map[string]interface{})
 			if value, ok := rawPort["name"]; ok {
