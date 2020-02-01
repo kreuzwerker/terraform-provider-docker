@@ -45,7 +45,7 @@ matrix:
         - sudo cat /etc/default/docker
         - sudo service docker restart
       script:
-        - TF_LOG=DEBUG make testacc
+        - make testacc
 
     # https://golang.org/doc/devel/release.html#policy
     - os: linux
