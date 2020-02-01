@@ -94,6 +94,7 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
+	d.SetId(service.ID)
 	return resourceDockerServiceRead(d, meta)
 }
 
@@ -141,8 +142,8 @@ func resourceDockerServiceReadRefreshFunc(
 		jsonObj, _ := json.MarshalIndent(service, "", "\t")
 		log.Printf("[DEBUG] Docker service inspect: %s", jsonObj)
 
-		if service.Endpoint.Spec.Mode != service.Spec.EndpointSpec.Mode {
-			log.Printf("[DEBUG] endpoint.Spec of Service %s does not match Spec.EndpointSpec yet", serviceID)
+		if string(service.Endpoint.Spec.Mode) == "" && string(service.Spec.EndpointSpec.Mode) == "" {
+			log.Printf("[DEBUG] Service %s does not expose endpoint spec yet", apiService.ID)
 			return serviceID, "pending", nil
 		}
 
@@ -162,8 +163,17 @@ func resourceDockerServiceReadRefreshFunc(
 		if err = d.Set("rollback_config", flattenServiceUpdateOrRollbackConfig(service.Spec.RollbackConfig)); err != nil {
 			log.Printf("[WARN] failed to set rollback_config from API: %s", err)
 		}
-		if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Endpoint)); err != nil {
-			log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
+
+		if service.Endpoint.Spec.Mode != "" {
+			if err = d.Set("endpoint_spec", flattenServiceEndpoint(service.Endpoint)); err != nil {
+				log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
+			}
+		} else if service.Spec.EndpointSpec.Mode != "" {
+			if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Spec.EndpointSpec)); err != nil {
+				log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
+			}
+		} else {
+			return serviceID, "", fmt.Errorf("Error no endpoint spec for service %s", apiService.ID)
 		}
 
 		return serviceID, "all_fields", nil
