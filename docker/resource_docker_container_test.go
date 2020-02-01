@@ -66,21 +66,29 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					testAccContainerRunning(resourceName, &c),
 				),
 			},
-			// TODO mavogel: Will be done in #219
-			// {
-			// 	ResourceName:      resourceName,
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	ImportStateVerifyIgnore: []string{
-			// 		"attach",
-			// 		"log_driver",
-			// 		"logs",
-			// 		"must_run",
-			// 		"restart",
-			// 		"rm",
-			// 		"start",
-			// 	},
-			// },
+			{
+				ResourceName:      "docker_container.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"attach",
+					"log_driver",
+					"logs",
+					"must_run",
+					"restart",
+					"rm",
+					"start",
+					"container_logs",
+					"destroy_grace_seconds",
+					"upload",
+
+					// TODO mavogel: Will be done in #219
+					"volumes",
+					"network_alias",
+					"networks",
+					"network_advanced",
+				},
+			},
 		},
 	})
 }
@@ -257,7 +265,7 @@ func TestAccDockerContainer_tmpfs(t *testing.T) {
 			return fmt.Errorf("Incorrect number of tmpfs: expected 1, got %d", len(c.HostConfig.Tmpfs))
 		}
 
-		for mountPath, _ := range c.HostConfig.Tmpfs {
+		for mountPath := range c.HostConfig.Tmpfs {
 			if mountPath != "/mount/tmpfs" {
 				return fmt.Errorf("Bad destination on tmpfs: expected /mount/tmpfs, got %q", mountPath)
 			}
@@ -567,7 +575,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
-					testCheckLabelMap("docker_container.foo", "labels", map[string]string{"env": "prod", "role": "test"}),
+					testCheckLabelMap("docker_container.foo", "labels", map[string]string{"env": "prod", "role": "test", "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>"}),
 				),
 			},
 		},
@@ -1548,10 +1556,16 @@ provider "docker" {
 	}
 }
 
+resource "docker_image" "foo" {
+	provider = "docker.private"
+	name  = "%s"
+	keep_locally = true
+}
+
 resource "docker_container" "foo" {
 	provider = "docker.private"
 	name  = "tf-test"
-	image = "%s"
+	image = docker_image.foo.latest
 }
 `
 
@@ -1686,6 +1700,10 @@ resource "docker_container" "foo" {
 		label = "role"
 		value = "test"
 	}
+	labels {
+		label = "maintainer"
+		value = "NGINX Docker Maintainers <docker-maint@nginx.com>"
+	}
 	log_driver = "json-file"
 	log_opts = {
 		max-size = "10m"
@@ -1784,6 +1802,7 @@ resource "docker_container" "foo" {
 	devices {
     	host_path = "/dev/zero"
     	container_path = "/dev/zero_test"
+      permissions = "rwm"
 	}
 }
 `
@@ -1920,7 +1939,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name     = "tf-test"
-  image    = "nginx:latest"
+  image    = docker_image.foo.latest
   start    = false
   must_run = false
 }

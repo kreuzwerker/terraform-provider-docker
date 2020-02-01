@@ -193,7 +193,7 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 						for _, rawTmpfsOptions := range value.([]interface{}) {
 							rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
 							if value, ok := rawTmpfsOptions["size_bytes"]; ok {
-								mountInstance.TmpfsOptions.SizeBytes = value.(int64)
+								mountInstance.TmpfsOptions.SizeBytes = (int64)(value.(int))
 							}
 							if value, ok := rawTmpfsOptions["mode"]; ok {
 								mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
@@ -580,9 +580,104 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 
 	// TODO all the other attributes
 	d.SetId(container.ID)
-	// d.Set("name", container.Name) // api prefixes with '/' ...
-	// d.Set("image", container.Image)
-	// d.Set("log_driver", container.HostConfig.LogConfig.Type)
+	d.Set("name", strings.TrimLeft(container.Name, "/")) // api prefixes with '/' ...
+	d.Set("rm", container.HostConfig.AutoRemove)
+	d.Set("read_only", container.HostConfig.ReadonlyRootfs)
+	// "start" can't be imported
+	// attach
+	// logs
+	// "must_run" can't be imported
+	// container_logs
+	d.Set("image", container.Image)
+	d.Set("hostname", container.Config.Hostname)
+	d.Set("domainname", container.Config.Domainname)
+	d.Set("command", container.Config.Cmd)
+	d.Set("entrypoint", container.Config.Entrypoint)
+	d.Set("user", container.Config.User)
+	d.Set("dns", container.HostConfig.DNS)
+	d.Set("dns_opts", container.HostConfig.DNSOptions)
+	d.Set("dns_search", container.HostConfig.DNSSearch)
+	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
+	d.Set("restart", container.HostConfig.RestartPolicy.Name)
+	d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
+	d.Set("working_dir", container.Config.WorkingDir)
+	if len(container.HostConfig.CapAdd) > 0 || len(container.HostConfig.CapDrop) > 0 {
+		// TODO implement DiffSuppressFunc
+		d.Set("capabilities", []interface{}{
+			map[string]interface{}{
+				"add":  container.HostConfig.CapAdd,
+				"drop": container.HostConfig.CapDrop,
+			},
+		})
+	}
+	d.Set("mounts", getDockerContainerMounts(container))
+	// volumes
+	d.Set("tmpfs", container.HostConfig.Tmpfs)
+	d.Set("host", container.HostConfig.ExtraHosts)
+	ulimits := make([]interface{}, len(container.HostConfig.Ulimits))
+	for i, ul := range container.HostConfig.Ulimits {
+		ulimits[i] = map[string]interface{}{
+			"name": ul.Name,
+			"soft": ul.Soft,
+			"hard": ul.Hard,
+		}
+	}
+	d.Set("ulimit", ulimits)
+	d.Set("env", container.Config.Env)
+	d.Set("links", container.HostConfig.Links)
+	d.Set("privileged", container.HostConfig.Privileged)
+	devices := make([]interface{}, len(container.HostConfig.Devices))
+	for i, device := range container.HostConfig.Devices {
+		devices[i] = map[string]interface{}{
+			"host_path":      device.PathOnHost,
+			"container_path": device.PathInContainer,
+			"permissions":    device.CgroupPermissions,
+		}
+	}
+	d.Set("devices", devices)
+	// "destroy_grace_seconds" can't be imported
+	labels := make([]interface{}, len(container.Config.Labels))
+	i := 0
+	for k, v := range container.Config.Labels {
+		labels[i] = map[string]interface{}{
+			"label": k,
+			"value": v,
+		}
+		i++
+	}
+	d.Set("labels", labels)
+	d.Set("memory", container.HostConfig.Memory/1024/1024)
+	if container.HostConfig.MemorySwap > 0 {
+		d.Set("memory_swap", container.HostConfig.MemorySwap/1024/1024)
+	} else {
+		d.Set("memory_swap", container.HostConfig.MemorySwap)
+	}
+	d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
+	d.Set("cpu_shares", container.HostConfig.CPUShares)
+	d.Set("cpu_set", container.HostConfig.CpusetCpus)
+	d.Set("log_driver", container.HostConfig.LogConfig.Type)
+	d.Set("log_opts", container.HostConfig.LogConfig.Config)
+	// "network_alias" is deprecated
+	d.Set("network_mode", container.HostConfig.NetworkMode)
+	// networks
+	// networks_advanced
+	d.Set("pid_mode", container.HostConfig.PidMode)
+	d.Set("userns_mode", container.HostConfig.UsernsMode)
+	// "upload" can't be imported
+	if container.Config.Healthcheck != nil {
+		d.Set("healthcheck", []interface{}{
+			map[string]interface{}{
+				"test":         container.Config.Healthcheck.Test,
+				"interval":     container.Config.Healthcheck.Interval.String(),
+				"timeout":      container.Config.Healthcheck.Timeout.String(),
+				"start_period": container.Config.Healthcheck.StartPeriod.String(),
+				"retries":      container.Config.Healthcheck.Retries,
+			},
+		})
+	}
+	d.Set("sysctls", container.HostConfig.Sysctls)
+	d.Set("ipc_mode", container.HostConfig.IpcMode)
+	d.Set("group_add", container.HostConfig.GroupAdd)
 	return nil
 }
 
@@ -872,4 +967,51 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 		retDevices = append(retDevices, device)
 	}
 	return retDevices
+}
+
+func getDockerContainerMounts(container types.ContainerJSON) []map[string]interface{} {
+	mounts := []map[string]interface{}{}
+	for _, mount := range container.HostConfig.Mounts {
+		m := map[string]interface{}{
+			"target":    mount.Target,
+			"source":    mount.Source,
+			"type":      mount.Type,
+			"read_only": mount.ReadOnly,
+		}
+		if mount.BindOptions != nil {
+			m["bind_options"] = []map[string]interface{}{
+				{
+					"propagation": mount.BindOptions.Propagation,
+				},
+			}
+		}
+		if mount.VolumeOptions != nil {
+			labels := []map[string]string{}
+			for k, v := range mount.VolumeOptions.Labels {
+				labels = append(labels, map[string]string{
+					"label":  k,
+					"volume": v,
+				})
+			}
+			m["volume_options"] = []map[string]interface{}{
+				{
+					"no_copy":        mount.VolumeOptions.NoCopy,
+					"labels":         labels,
+					"driver_name":    mount.VolumeOptions.DriverConfig.Name,
+					"driver_options": mount.VolumeOptions.DriverConfig.Options,
+				},
+			}
+		}
+		if mount.TmpfsOptions != nil {
+			m["tmpfs_options"] = []map[string]interface{}{
+				{
+					"size_bytes": mount.TmpfsOptions.SizeBytes,
+					"mode":       mount.TmpfsOptions.Mode,
+				},
+			}
+		}
+		mounts = append(mounts, m)
+	}
+
+	return mounts
 }
