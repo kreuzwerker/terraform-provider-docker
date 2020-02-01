@@ -98,7 +98,7 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for service: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
@@ -142,7 +142,7 @@ func resourceDockerServiceReadRefreshFunc(
 		log.Printf("[DEBUG] Docker service inspect: %s", jsonObj)
 
 		if service.Endpoint.Spec.Mode != service.Spec.EndpointSpec.Mode {
-			log.Printf("[DEBUG] endpoint spec of Service %s is not exposed", serviceID)
+			log.Printf("[DEBUG] endpoint.Spec of Service %s does not match Spec.EndpointSpec yet", serviceID)
 			return serviceID, "pending", nil
 		}
 
