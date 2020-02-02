@@ -25,20 +25,20 @@ matrix:
     ####################################
     - os: linux
       name: "Acceptance tests"
-      dist: xenial
+      dist: bionic
       go: "1.13.x"
       services:
         - docker
       sudo: required
       before_install:
-        # locally: docker run -it ubuntu:16.04 bash
-        # Install 18.09
+        # locally: docker run -it ubuntu:bionic bash (https://ubuntu.pkgs.org/18.04/docker-ce-stable-amd64/)
         - sudo apt-get update
         - sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
         - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
         - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
         - sudo apt-get update
-        - sudo apt-get -y install docker-ce=5:18.09.6~3-0~ubuntu-xenial
+        # apt-cache policy docker-ce 
+        - sudo apt-get -y install docker-ce=5:19.03.5~3-0~ubuntu-bionic
         - docker version
         # Allow local registry to be insecure
         - sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
@@ -50,14 +50,14 @@ matrix:
     # https://golang.org/doc/devel/release.html#policy
     - os: linux
       name: "Build (golang current amd64)"
-      dist: xenial
+      dist: bionic
       go: "1.13.x"
       script:
         - make compile
 
     - os: linux
       name: "Build (golang previous amd64)"
-      dist: xenial
+      dist: bionic
       go: "1.12.x"
       script:
         - make compile
@@ -67,7 +67,7 @@ matrix:
     ####################################
     - os: linux
       name: "Unit-tests, vet, and website"
-      dist: xenial
+      dist: bionic
       go: "1.13.x"
       script:
         - make vet
@@ -101,7 +101,7 @@ matrix:
     ####################################
     - os: linux
       name: "Build (golang future amd64)"
-      dist: xenial
+      dist: bionic
       go: tip
       script:
         - make compile
