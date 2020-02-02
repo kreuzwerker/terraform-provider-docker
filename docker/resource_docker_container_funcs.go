@@ -682,7 +682,49 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceDockerContainerUpdate(d *schema.ResourceData, meta interface{}) error {
-	// TODO call resourceDockerContainerRead here
+	attrs := []string{
+		"restart", "max_retry_count", "cpu_shares", "memory", "cpu_set", "memory_swap",
+	}
+	for _, attr := range attrs {
+		if d.HasChange(attr) {
+
+			// TODO update ulimits
+			// Updating ulimits seems not to work well.
+			// It succeeds to run `DockerClient.ContainerUpdate` with `ulimit` but actually `ulimit` aren't changed.
+			// https://github.com/terraform-providers/terraform-provider-docker/pull/236#discussion_r373819536
+			// ulimits := []*units.Ulimit{}
+			// if v, ok := d.GetOk("ulimit"); ok {
+			// 	ulimits = ulimitsToDockerUlimits(v.(*schema.Set))
+			// }
+
+			updateConfig := container.UpdateConfig{
+				RestartPolicy: container.RestartPolicy{
+					Name:              d.Get("restart").(string),
+					MaximumRetryCount: d.Get("max_retry_count").(int),
+				},
+				Resources: container.Resources{
+					CPUShares:  int64(d.Get("cpu_shares").(int)),
+					Memory:     int64(d.Get("memory").(int)) * 1024 * 1024,
+					CpusetCpus: d.Get("cpu_set").(string),
+					// Ulimits:    ulimits,
+				},
+			}
+
+			if ms, ok := d.GetOk("memory_swap"); ok {
+				a := int64(ms.(int))
+				if a > 0 {
+					a = a * 1024 * 1024
+				}
+				updateConfig.Resources.MemorySwap = a
+			}
+			client := meta.(*ProviderConfig).DockerClient
+			_, err := client.ContainerUpdate(context.Background(), d.Id(), updateConfig)
+			if err != nil {
+				return fmt.Errorf("Unable to update a container: %w", err)
+			}
+			break
+		}
+	}
 	return nil
 }
 
