@@ -220,8 +220,10 @@ files to upload to the container before starting it. Only one of `content` or `c
 one of them hast to be set.
 Each `upload` supports the following
 
-* `content` - (Optional, string, conflicts with `content_base64`) Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text.
-* `content_base64` - (Optional, string, conflicts with `content`) Base64-encoded data that will be decoded and uploaded as raw bytes for the object content. This allows safely uploading non-UTF8 binary data, but is recommended only for larger binary content such as the result of the `base64encode` interpolation function. See [here](https://github.com/terraform-providers/terraform-provider-docker/issues/48#issuecomment-374174588) for the reason.
+* `content` - (Optional, string, conflicts with `content_base64` & `source`) Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text.
+* `content_base64` - (Optional, string, conflicts with `content` & `source`) Base64-encoded data that will be decoded and uploaded as raw bytes for the object content. This allows safely uploading non-UTF8 binary data, but is recommended only for larger binary content such as the result of the `base64encode` interpolation function. See [here](https://github.com/terraform-providers/terraform-provider-docker/issues/48#issuecomment-374174588) for the reason.
+* `source` - (Optional, string, conflicts with `content` & `content_base64`) A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state.
+* `source_hash` - (Optional, string) If using `source`, this will force an update if the file content has updated but the filename has not. 
 * `file` - (Required, string) path to a file in the container.
 * `executable` - (Optional, bool) If true, the file will be uploaded with user
   executable permission.

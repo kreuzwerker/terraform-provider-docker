@@ -716,6 +716,16 @@ func resourceDockerContainer() *schema.Resource {
 							ForceNew: true,
 							Default:  false,
 						},
+						"source": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"source_hash": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
 					},
 				},
 			},
@@ -1472,6 +1482,16 @@ func resourceDockerContainerV1() *schema.Resource {
 							Optional: true,
 							ForceNew: true,
 							Default:  false,
+						},
+						"source": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"source_hash": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
 						},
 					},
 				},

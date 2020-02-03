@@ -4,6 +4,8 @@ set -e
 for p in $(docker container ls -f 'name=private_registry' -q); do docker stop $p; done
 echo "### stopped private registry ###"
 
+rm -f "$(pwd)/scripts/testing/testingFile"
+rm -f "$(pwd)/scripts/testing/testingFile.base64"
 rm -f "$(pwd)"/scripts/testing/auth/htpasswd
 rm -f "$(pwd)"/scripts/testing/certs/registry_auth.*
 echo "### removed auth and certs ###"

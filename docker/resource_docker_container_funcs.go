@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"sort"
@@ -385,12 +386,23 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		for _, upload := range v.(*schema.Set).List() {
 			content := upload.(map[string]interface{})["content"].(string)
 			contentBase64 := upload.(map[string]interface{})["content_base64"].(string)
-			if content == "" && contentBase64 == "" {
-				return fmt.Errorf("Error with upload content: neither 'content', nor 'content_base64' was set")
+			source := upload.(map[string]interface{})["source"].(string)
+
+			testParams := []string{content, contentBase64, source}
+			setParams := 0
+			for _, v := range testParams {
+				if v != "" {
+					setParams++
+				}
 			}
-			if content != "" && contentBase64 != "" {
-				return fmt.Errorf("Error with upload content: only one of 'content' or 'content_base64' can be specified")
+
+			if setParams == 0 {
+				return fmt.Errorf("error with upload content: one of 'content', 'content_base64', or 'source' must be set")
 			}
+			if setParams > 1 {
+				return fmt.Errorf("error with upload content: only one of 'content', 'content_base64', or 'source' can be set")
+			}
+
 			var contentToUpload string
 			if content != "" {
 				contentToUpload = content
@@ -398,6 +410,13 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			if contentBase64 != "" {
 				decoded, _ := base64.StdEncoding.DecodeString(contentBase64)
 				contentToUpload = string(decoded)
+			}
+			if source != "" {
+				sourceContent, err := ioutil.ReadFile(source)
+				if err != nil {
+					return fmt.Errorf("could not read file: %s", err)
+				}
+				contentToUpload = string(sourceContent)
 			}
 			file := upload.(map[string]interface{})["file"].(string)
 			executable := upload.(map[string]interface{})["executable"].(bool)

@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo -n "foo" > "$(pwd)/scripts/testing/testingFile"
+echo -n `base64 $(pwd)/scripts/testing/testingFile` > "$(pwd)/scripts/testing/testingFile.base64"
+
 # Create self signed certs
 mkdir -p "$(pwd)"/scripts/testing/certs
 openssl req \
