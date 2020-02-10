@@ -1,7 +1,7 @@
-## 2.7.0 (Unreleased)
+## 2.7.0 (February 10, 2020)
 
 IMPROVEMENTS:
-* support to import some docker_container's attributes [GH-234]
+* support to import some docker_container's attributes ([#234](https://github.com/terraform-providers/terraform-provider-docker/issues/234))
 * make UID, GID, & mode for Docker secrets and configs configurable ([#231](https://github.com/terraform-providers/
 terraform-provider-docker/pull/231))
 
@@ -10,8 +10,8 @@ BUG FIXES:
 terraform-provider-docker/pull/240))
 * Correct IPAM config read on the data provider ([#229](https://github.com/terraform-providers/
 terraform-provider-docker/pull/229))
-* `published_port` is not correctly populated on docker_service resource [GH-222]
-* Registry Config File MUST be a file reference [GH-224]
+* `published_port` is not correctly populated on docker_service resource ([#222](https://github.com/terraform-providers/terraform-provider-docker/issues/222))
+* Registry Config File MUST be a file reference ([#224](https://github.com/terraform-providers/terraform-provider-docker/issues/224))
 * Allow zero replicas ([#220](https://github.com/terraform-providers/
 terraform-provider-docker/pull/220))
 * fixing the label schema for HCL2 ([#217](https://github.com/terraform-providers/
