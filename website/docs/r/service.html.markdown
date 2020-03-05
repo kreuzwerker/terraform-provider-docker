@@ -108,8 +108,7 @@ resource "docker_service" "foo" {
 
       read_only = true
 
-      mounts = [
-        {
+      mounts {
           target    = "/mount/test"
           source    = "${docker_volume.test_volume.name}"
           type      = "volume"
@@ -118,8 +117,8 @@ resource "docker_service" "foo" {
           bind_options {
             propagation = "private"
           }
-        },
-      ]
+        }
+      
 
       stop_signal       = "SIGTERM"
       stop_grace_period = "10s"
