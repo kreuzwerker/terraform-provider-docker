@@ -26,6 +26,7 @@ docker run -d -p 15000:5000 --rm --name private_registry \
   -v "$(pwd)"/scripts/testing/certs:/certs \
   -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt" \
   -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key" \
+  -e "REGISTRY_STORAGE_DELETE_ENABLED=true" \
   registry:2
 # wait a bit for travis...
 sleep 5
