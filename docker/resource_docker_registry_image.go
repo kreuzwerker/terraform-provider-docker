@@ -268,10 +268,6 @@ func resourceDockerRegistryImage() *schema.Resource {
 							Optional: true,
 							ForceNew: true,
 						},
-						// "output": &schema.Schema{
-						// 	Type:     schema.TypeString,
-						// 	Optional: true,
-						// },
 					},
 				},
 			},
