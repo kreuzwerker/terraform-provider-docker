@@ -23,8 +23,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/docker/pkg/term"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -136,6 +134,37 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 
 func buildDockerImage(client *client.Client, buildOptions map[string]interface{}, fqName string) error {
 
+	type ErrorDetailMessage struct {
+		Code    int    `json:"code,omitempty"`
+		Message string `json:"message,omitempty"`
+	}
+
+	type BuildImageResponseMessage struct {
+		Error       string              `json:"error,omitempty"`
+		ErrorDetail *ErrorDetailMessage `json:"errorDetail,omitempty"`
+	}
+
+	getError := func(body io.ReadCloser) error {
+		dec := json.NewDecoder(body)
+		for {
+			message := BuildImageResponseMessage{}
+			if err := dec.Decode(&message); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return err
+			}
+			if message.ErrorDetail != nil {
+				detail := message.ErrorDetail
+				return fmt.Errorf("%v: %s", detail.Code, detail.Message)
+			}
+			if len(message.Error) > 0 {
+				return fmt.Errorf("%s", message.Error)
+			}
+		}
+		return nil
+	}
+
 	log.Printf("[DEBUG] Building docker image")
 	imageBuildOptions := createImageBuildOptions(buildOptions)
 	imageBuildOptions.Tags = []string{fqName}
@@ -156,8 +185,7 @@ func buildDockerImage(client *client.Client, buildOptions map[string]interface{}
 	}
 	defer buildResponse.Body.Close()
 
-	termFd, isTerm := term.GetFdInfo(os.Stderr)
-	err = jsonmessage.DisplayJSONMessagesStream(buildResponse.Body, os.Stderr, termFd, isTerm, nil)
+	err = getError(buildResponse.Body)
 	if err != nil {
 		return err
 	}
