@@ -175,6 +175,9 @@ func buildDockerImage(client *client.Client, buildOptions map[string]interface{}
 		buildContext = buildContext[:lastIndex]
 	}
 	dockerContextTarPath, err := buildDockerImageContextTar(buildContext)
+	if err != nil {
+		return fmt.Errorf("Unable to build context %v", err)
+	}
 	defer os.Remove(dockerContextTarPath)
 	dockerBuildContext, err := os.Open(dockerContextTarPath)
 	defer dockerBuildContext.Close()
