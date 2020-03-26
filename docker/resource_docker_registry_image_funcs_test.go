@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -11,45 +12,50 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"gotest.tools/assert"
-	"gotest.tools/assert/cmp"
 )
 
 func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
+
+	assert := func(condition bool, msg string) {
+		if !condition {
+			t.Errorf("assertion failed: wrong build parameter %s", msg)
+		}
+	}
+
 	dummyProvider := Provider().(*schema.Provider)
 	dummyResource := dummyProvider.ResourcesMap["docker_registry_image"]
 	dummyResource.Create = func(d *schema.ResourceData, meta interface{}) error {
 		build := d.Get("build").([]interface{})[0].(map[string]interface{})
 		options := createImageBuildOptions(build)
 
-		assert.Check(t, cmp.Equal(options.SuppressOutput, true))
-		assert.Check(t, cmp.Equal(options.RemoteContext, "fooRemoteContext"))
-		assert.Check(t, cmp.Equal(options.NoCache, true))
-		assert.Check(t, cmp.Equal(options.Remove, true))
-		assert.Check(t, cmp.Equal(options.ForceRemove, true))
-		assert.Check(t, cmp.Equal(options.PullParent, true))
-		assert.Check(t, cmp.Equal(options.Isolation, container.Isolation("hyperv")))
-		assert.Check(t, cmp.Equal(options.CPUSetCPUs, "fooCpuSetCpus"))
-		assert.Check(t, cmp.Equal(options.CPUSetMems, "fooCpuSetMems"))
-		assert.Check(t, cmp.Equal(options.CPUShares, int64(4)))
-		assert.Check(t, cmp.Equal(options.CPUQuota, int64(5)))
-		assert.Check(t, cmp.Equal(options.CPUPeriod, int64(6)))
-		assert.Check(t, cmp.Equal(options.Memory, int64(1)))
-		assert.Check(t, cmp.Equal(options.MemorySwap, int64(2)))
-		assert.Check(t, cmp.Equal(options.CgroupParent, "fooCgroupParent"))
-		assert.Check(t, cmp.Equal(options.NetworkMode, "fooNetworkMode"))
-		assert.Check(t, cmp.Equal(options.ShmSize, int64(3)))
-		assert.Check(t, cmp.Equal(options.Dockerfile, "fooDockerfile"))
-		assert.Check(t, cmp.Equal(len(options.Ulimits), 1))
-		assert.Check(t, cmp.DeepEqual(*options.Ulimits[0], units.Ulimit{
+		assert(options.SuppressOutput == true, "SuppressOutput")
+		assert(options.RemoteContext == "fooRemoteContext", "RemoteContext")
+		assert(options.NoCache == true, "NoCache")
+		assert(options.Remove == true, "Remove")
+		assert(options.ForceRemove == true, "ForceRemove")
+		assert(options.PullParent == true, "PullParent")
+		assert(options.Isolation == container.Isolation("hyperv"), "Isolation")
+		assert(options.CPUSetCPUs == "fooCpuSetCpus", "CPUSetCPUs")
+		assert(options.CPUSetMems == "fooCpuSetMems", "CPUSetMems")
+		assert(options.CPUShares == int64(4), "CPUShares")
+		assert(options.CPUQuota == int64(5), "CPUQuota")
+		assert(options.CPUPeriod == int64(6), "CPUPeriod")
+		assert(options.Memory == int64(1), "Memory")
+		assert(options.MemorySwap == int64(2), "MemorySwap")
+		assert(options.CgroupParent == "fooCgroupParent", "CgroupParent")
+		assert(options.NetworkMode == "fooNetworkMode", "NetworkMode")
+		assert(options.ShmSize == int64(3), "ShmSize")
+		assert(options.Dockerfile == "fooDockerfile", "Dockerfile")
+		assert(len(options.Ulimits) == 1, "Ulimits")
+		assert(reflect.DeepEqual(*options.Ulimits[0], units.Ulimit{
 			Name: "foo",
 			Hard: int64(1),
 			Soft: int64(2),
-		}))
-		assert.Check(t, cmp.Equal(len(options.BuildArgs), 1))
-		assert.Check(t, cmp.Equal(*options.BuildArgs["HTTP_PROXY"], "http://10.20.30.2:1234"))
-		assert.Check(t, cmp.Equal(len(options.AuthConfigs), 1))
-		assert.Check(t, cmp.DeepEqual(options.AuthConfigs["foo.host"], types.AuthConfig{
+		}), "Ulimits")
+		assert(len(options.BuildArgs) == 1, "BuildArgs")
+		assert(*options.BuildArgs["HTTP_PROXY"] == "http://10.20.30.2:1234", "BuildArgs")
+		assert(len(options.AuthConfigs) == 1, "AuthConfigs")
+		assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], types.AuthConfig{
 			Username:      "fooUserName",
 			Password:      "fooPassword",
 			Auth:          "fooAuth",
@@ -57,17 +63,17 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 			ServerAddress: "fooServerAddress",
 			IdentityToken: "fooIdentityToken",
 			RegistryToken: "fooRegistryToken",
-		}))
-		assert.Check(t, cmp.DeepEqual(options.Labels, map[string]string{"foo": "bar"}))
-		assert.Check(t, cmp.Equal(options.Squash, true))
-		assert.Check(t, cmp.DeepEqual(options.CacheFrom, []string{"fooCacheFrom", "barCacheFrom"}))
-		assert.Check(t, cmp.DeepEqual(options.SecurityOpt, []string{"fooSecurityOpt", "barSecurityOpt"}))
-		assert.Check(t, cmp.DeepEqual(options.ExtraHosts, []string{"fooExtraHost", "barExtraHost"}))
-		assert.Check(t, cmp.Equal(options.Target, "fooTarget"))
-		assert.Check(t, cmp.Equal(options.SessionID, "fooSessionId"))
-		assert.Check(t, cmp.Equal(options.Platform, "fooPlatform"))
-		assert.Check(t, cmp.Equal(options.Version, types.BuilderVersion("1")))
-		assert.Check(t, cmp.Equal(options.BuildID, "fooBuildId"))
+		}), "AuthConfigs")
+		assert(reflect.DeepEqual(options.Labels, map[string]string{"foo": "bar"}), "Labels")
+		assert(options.Squash == true, "Squash")
+		assert(reflect.DeepEqual(options.CacheFrom, []string{"fooCacheFrom", "barCacheFrom"}), "CacheFrom")
+		assert(reflect.DeepEqual(options.SecurityOpt, []string{"fooSecurityOpt", "barSecurityOpt"}), "SecurityOpt")
+		assert(reflect.DeepEqual(options.ExtraHosts, []string{"fooExtraHost", "barExtraHost"}), "ExtraHosts")
+		assert(options.Target == "fooTarget", "Target")
+		assert(options.SessionID == "fooSessionId", "SessionID")
+		assert(options.Platform == "fooPlatform", "Platform")
+		assert(options.Version == types.BuilderVersion("1"), "Version")
+		assert(options.BuildID == "fooBuildId", "BuildID")
 		// output
 		d.SetId("foo")
 		d.Set("sha256_digest", "bar")
