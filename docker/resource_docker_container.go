@@ -513,6 +513,18 @@ func resourceDockerContainer() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"global_ipv6_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"global_ipv6_prefix_length": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"ipv6_gateway": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -1288,6 +1300,18 @@ func resourceDockerContainerV1() *schema.Resource {
 							Computed: true,
 						},
 						"gateway": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"global_ipv6_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"global_ipv6_prefix_length": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"ipv6_gateway": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
