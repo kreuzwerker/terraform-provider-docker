@@ -1,7 +1,7 @@
-## 2.7.1 (Unreleased)
+## 2.7.1 (June 05, 2020)
 
 BUG FIXES
-* prevent force recreate of container about some attributes (GH-269)
+* prevent force recreate of container about some attributes ([#269](https://github.com/terraform-providers/terraform-provider-docker/issues/269))
 
 ## 2.7.0 (February 10, 2020)
 
