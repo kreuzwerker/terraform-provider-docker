@@ -1,4 +1,8 @@
-## 2.8.0 (Unreleased)
+## 2.7.1 (Unreleased)
+
+BUG FIXES
+* prevent force recreate of container about some attributes (GH-269)
+
 ## 2.7.0 (February 10, 2020)
 
 IMPROVEMENTS:
