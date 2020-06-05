@@ -642,7 +642,14 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 	d.Set("ulimit", ulimits)
-	d.Set("env", container.Config.Env)
+
+	// We decided not to set the environment variables and labels
+	// because they are taken over from the Docker image and aren't scalar
+	// so it's difficult to treat them well.
+	// For detail, please see the following URLs.
+	// https://github.com/terraform-providers/terraform-provider-docker/issues/242
+	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
+
 	d.Set("links", container.HostConfig.Links)
 	d.Set("privileged", container.HostConfig.Privileged)
 	devices := make([]interface{}, len(container.HostConfig.Devices))
@@ -655,16 +662,6 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 	}
 	d.Set("devices", devices)
 	// "destroy_grace_seconds" can't be imported
-	labels := make([]interface{}, len(container.Config.Labels))
-	i := 0
-	for k, v := range container.Config.Labels {
-		labels[i] = map[string]interface{}{
-			"label": k,
-			"value": v,
-		}
-		i++
-	}
-	d.Set("labels", labels)
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
 	if container.HostConfig.MemorySwap > 0 {
 		d.Set("memory_swap", container.HostConfig.MemorySwap/1024/1024)
