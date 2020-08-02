@@ -88,7 +88,7 @@ resource "docker_service" "foo" {
       args     = ["-las"]
       hostname = "my-fancy-service"
 
-      env {
+      env = {
         MYFOO = "BAR"
       }
 
@@ -108,18 +108,20 @@ resource "docker_service" "foo" {
 
       read_only = true
 
-      mounts = [
-        {
-          target    = "/mount/test"
-          source    = "${docker_volume.test_volume.name}"
-          type      = "volume"
-          read_only = true
+      mounts {
+	target    = "/mount/test"
+	source    = "${docker_volume.test_volume.name}"
+	type      = "volume"
+	read_only = true
 
-          bind_options {
-            propagation = "private"
-          }
-        },
-      ]
+	bind_options {
+	  propagation = "private"
+        }
+      }
+      
+      mounts {
+	# another mount
+      }
 
       stop_signal       = "SIGTERM"
       stop_grace_period = "10s"
@@ -142,24 +144,28 @@ resource "docker_service" "foo" {
         options     = ["timeout:3"]
       }
 
-      secrets = [
-        {
-          secret_id   = "${docker_secret.service_secret.id}"
-          secret_name = "${docker_secret.service_secret.name}"
-          file_name   = "/secrets.json"
-          file_uid    = "0"
-					file_gid    = "0"
-					file_mode   = 0777
-        },
-      ]
+      secrets {
+        secret_id   = "${docker_secret.service_secret.id}"
+        secret_name = "${docker_secret.service_secret.name}"
+        file_name   = "/secrets.json"
+        file_uid    = "0"
+	file_gid    = "0"
+	file_mode   = 0777
+      }
+      
+      secrets {
+        # another secret
+      }
 
-      configs = [
-        {
-          config_id   = "${docker_config.service_config.id}"
-          config_name = "${docker_config.service_config.name}"
-          file_name   = "/configs.json"
-        },
-      ]
+      configs {
+        config_id   = "${docker_config.service_config.id}"
+        config_name = "${docker_config.service_config.name}"
+        file_name   = "/configs.json"
+      }
+      
+      configs {
+        # another config
+      }
     }
 
     resources {
@@ -258,6 +264,10 @@ resource "docker_service" "foo" {
       target_port    = "8080"
       published_port = "8080"
       publish_mode   = "ingress"
+    }
+    
+    ports {
+      # another port
     }
   }
 }
