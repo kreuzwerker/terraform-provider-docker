@@ -229,8 +229,8 @@ Each `upload` supports the following
   executable permission.
   Defaults to false.
 
-<a id="networks_advanced"></a>
-### Network advanced
+<a id="networks_advanced-1"></a>
+### Networks advanced
 
 `networks_advanced` is a block within the configuration that can be repeated to specify
 advanced options for the container in a specific network.
