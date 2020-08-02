@@ -1,36 +1,12 @@
 package docker
 
-import (
-	"log"
+import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-)
-
-func resourceDockerContainer() *schema.Resource {
+func resourceDockerContainerV1() *schema.Resource {
 	return &schema.Resource{
-		Create:        resourceDockerContainerCreate,
-		Read:          resourceDockerContainerRead,
-		Update:        resourceDockerContainerUpdate,
-		Delete:        resourceDockerContainerDelete,
-		MigrateState:  resourceDockerContainerMigrateState,
-		SchemaVersion: 2,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
-		StateUpgraders: []schema.StateUpgrader{
-			{
-				Version: 1,
-				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					//TODO do the ohter V0-to-V1 migration, unless we're okay
-					//with breaking for users who straggled on their docker
-					//provider version
-
-					return migrateContainerLabels(rawState), nil
-				},
-			},
-		},
-
+		//This is only used for state migration, so the CRUD
+		//callbacks are no longer relevant
+		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -114,7 +90,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
 			},
 
 			"domainname": {
@@ -143,7 +118,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -169,6 +143,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
@@ -182,26 +157,37 @@ func resourceDockerContainer() *schema.Resource {
 			"restart": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				ForceNew:     true,
 				Default:      "no",
 				ValidateFunc: validateStringMatchesPattern(`^(no|on-failure|always|unless-stopped)$`),
+				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
+					// treat "" as "no", which is Docker's default value
+					if oldV == "" {
+						oldV = "no"
+					}
+					if newV == "" {
+						newV = "no"
+					}
+					return oldV == newV
+				},
 			},
 
 			"max_retry_count": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				ForceNew: true,
 			},
 			"working_dir": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Computed: true,
+				ForceNew: true,
 			},
 			"capabilities": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
 				MaxItems: 1,
-				// TODO implement DiffSuppressFunc
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"add": {
@@ -278,10 +264,9 @@ func resourceDockerContainer() *schema.Resource {
 										Optional:    true,
 									},
 									"labels": {
-										Type:        schema.TypeSet,
+										Type:        schema.TypeMap,
 										Description: "User-defined key/value metadata",
 										Optional:    true,
-										Elem:        labelSchema,
 									},
 									"driver_name": {
 										Type:        schema.TypeString,
@@ -301,7 +286,6 @@ func resourceDockerContainer() *schema.Resource {
 							Type:        schema.TypeList,
 							Description: "Optional configuration for the tmpfs type",
 							Optional:    true,
-							ForceNew:    true,
 							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -560,11 +544,10 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeMap,
 				Optional: true,
-				ForceNew: true,
 				Computed: true,
-				Elem:     labelSchema,
+				ForceNew: true,
 			},
 
 			"memory": {
@@ -576,6 +559,7 @@ func resourceDockerContainer() *schema.Resource {
 			"memory_swap": {
 				Type:         schema.TypeInt,
 				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: validateIntegerGeqThan(-1),
 			},
 
@@ -583,13 +567,13 @@ func resourceDockerContainer() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ForceNew:     true,
-				Computed:     true,
 				ValidateFunc: validateIntegerGeqThan(0),
 			},
 
 			"cpu_shares": {
 				Type:         schema.TypeInt,
 				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: validateIntegerGeqThan(0),
 			},
 
@@ -603,13 +587,12 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
+				Default:  "json-file",
 			},
 
 			"log_opts": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Computed: true,
 				ForceNew: true,
 			},
 
@@ -627,16 +610,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
-					// treat "" as "default", which is Docker's default value
-					if oldV == "" {
-						oldV = "default"
-					}
-					if newV == "" {
-						newV = "default"
-					}
-					return oldV == newV
-				},
 			},
 
 			"networks": {
@@ -790,7 +763,6 @@ func resourceDockerContainer() *schema.Resource {
 				Description: "IPC sharing mode for the container",
 				Optional:    true,
 				ForceNew:    true,
-				Computed:    true,
 			},
 			"group_add": {
 				Type:        schema.TypeSet,
@@ -801,55 +773,5 @@ func resourceDockerContainer() *schema.Resource {
 				Set:         schema.HashString,
 			},
 		},
-	}
-}
-
-func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFunc {
-	return func(k, old, new string, d *schema.ResourceData) bool {
-		if k == "ports.#" && old != new {
-			log.Printf("[DEBUG] suppress diff ports: old and new don't have the same length")
-			return false
-		}
-		portsOldRaw, portsNewRaw := d.GetChange("ports")
-		portsOld := portsOldRaw.([]interface{})
-		portsNew := portsNewRaw.([]interface{})
-		if len(portsOld) != len(portsNew) {
-			log.Printf("[DEBUG] suppress diff ports: old and new don't have the same length")
-			return false
-		}
-		log.Printf("[DEBUG] suppress diff ports: old and new have same length")
-
-		for _, portOld := range portsOld {
-			portOldMapped := portOld.(map[string]interface{})
-			oldInternalPort := portOldMapped["internal"]
-			portFound := false
-			for _, portNew := range portsNew {
-				portNewMapped := portNew.(map[string]interface{})
-				newInternalPort := portNewMapped["internal"]
-				// port is still there in new
-				if newInternalPort == oldInternalPort {
-					log.Printf("[DEBUG] suppress diff ports: comparing port '%v'", oldInternalPort)
-					portFound = true
-					if portNewMapped["external"] != portOldMapped["external"] {
-						log.Printf("[DEBUG] suppress diff ports: 'external' changed for '%v'", oldInternalPort)
-						return false
-					}
-					if portNewMapped["ip"] != portOldMapped["ip"] {
-						log.Printf("[DEBUG] suppress diff ports: 'ip' changed for '%v'", oldInternalPort)
-						return false
-					}
-					if portNewMapped["protocol"] != portOldMapped["protocol"] {
-						log.Printf("[DEBUG] suppress diff ports: 'protocol' changed for '%v'", oldInternalPort)
-						return false
-					}
-				}
-			}
-			// port was deleted or exchanges in new
-			if !portFound {
-				log.Printf("[DEBUG] suppress diff ports: port was deleted '%v'", oldInternalPort)
-				return false
-			}
-		}
-		return true
 	}
 }
