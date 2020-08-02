@@ -1,4 +1,17 @@
-## 2.8.0 (Unreleased)
+## 2.7.2 (Unreleased)
+
+BUG FIXES
+* Fix port objects with the same internal port but different protocol trigger recreation of container ([#274](https://github.com/terraform-providers/
+terraform-provider-docker/pull/274))
+* Fix panic to migrate schema of docker_container from v1 to v2 ([#271](https://github.com/terraform-providers/
+terraform-provider-docker/pull/271))
+* Set `Computed: true` and separate files of resourceDockerContainerV1 ([#272](https://github.com/terraform-providers/terraform-provider-docker/pull/272))
+* Prevent force recreate of container about some attributes ([#269](https://github.com/terraform-providers/terraform-provider-docker/pull/269))
+
+DOCS:
+* Typo in container.html.markdown ([#278](https://github.com/terraform-providers/terraform-provider-docker/pull/278))(
+* Update service.html.markdown ([#281](https://github.com/terraform-providers/terraform-provider-docker/pull/281))
+
 ## 2.7.1 (June 05, 2020)
 
 BUG FIXES
