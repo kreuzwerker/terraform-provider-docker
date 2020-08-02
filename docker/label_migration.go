@@ -15,7 +15,14 @@ func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[stri
 func migrateContainerLabels(rawState map[string]interface{}) map[string]interface{} {
 	replaceLabelsMapFieldWithSetField(rawState)
 
-	mounts := rawState["mounts"].([]interface{})
+	m, ok := rawState["mounts"]
+	if !ok || m == nil {
+		// https://github.com/terraform-providers/terraform-provider-docker/issues/264
+		rawState["mounts"] = []interface{}{}
+		return rawState
+	}
+
+	mounts := m.([]interface{})
 	newMounts := make([]interface{}, len(mounts))
 	for i, mountI := range mounts {
 		mount := mountI.(map[string]interface{})
