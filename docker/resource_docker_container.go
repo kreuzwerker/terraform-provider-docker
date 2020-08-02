@@ -827,7 +827,15 @@ func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFu
 				// port is still there in new
 				if newInternalPort == oldInternalPort {
 					log.Printf("[DEBUG] suppress diff ports: comparing port '%v'", oldInternalPort)
-					portFound = true
+					if portNewMapped["protocol"] != portOldMapped["protocol"] {
+						if containsPortWithProtocol(portsNew, portOldMapped["internal"], portOldMapped["protocol"]) {
+							log.Printf("[DEBUG] suppress diff ports: found another port in new list with the same protocol for '%v", oldInternalPort)
+							continue
+						}
+
+						log.Printf("[DEBUG] suppress diff ports: 'protocol' changed for '%v'", oldInternalPort)
+						return false
+					}
 					if portNewMapped["external"] != portOldMapped["external"] {
 						log.Printf("[DEBUG] suppress diff ports: 'external' changed for '%v'", oldInternalPort)
 						return false
@@ -836,10 +844,9 @@ func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFu
 						log.Printf("[DEBUG] suppress diff ports: 'ip' changed for '%v'", oldInternalPort)
 						return false
 					}
-					if portNewMapped["protocol"] != portOldMapped["protocol"] {
-						log.Printf("[DEBUG] suppress diff ports: 'protocol' changed for '%v'", oldInternalPort)
-						return false
-					}
+
+					portFound = true
+					break
 				}
 			}
 			// port was deleted or exchanges in new
@@ -850,4 +857,17 @@ func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFu
 		}
 		return true
 	}
+}
+
+func containsPortWithProtocol(ports []interface{}, searchInternalPort, searchProtocol interface{}) bool {
+	for _, port := range ports {
+		portMapped := port.(map[string]interface{})
+		internalPort := portMapped["internal"]
+		protocol := portMapped["protocol"]
+		if internalPort == searchInternalPort && protocol == searchProtocol {
+			return true
+		}
+	}
+
+	return false
 }
