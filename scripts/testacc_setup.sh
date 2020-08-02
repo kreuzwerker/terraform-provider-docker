@@ -17,7 +17,8 @@ openssl req \
 # Create auth
 mkdir -p "$(pwd)"/scripts/testing/auth
 # Start registry
-docker run --rm --entrypoint htpasswd registry:2 -Bbn testuser testpwd > "$(pwd)"/scripts/testing/auth/htpasswd
+# pinned to 2.7.0 due to https://github.com/docker/docker.github.io/issues/11060
+docker run --rm --entrypoint htpasswd registry:2.7.0 -Bbn testuser testpwd > "$(pwd)"/scripts/testing/auth/htpasswd
 docker run -d -p 15000:5000 --rm --name private_registry \
   -v "$(pwd)"/scripts/testing/auth:/auth \
   -e "REGISTRY_AUTH=htpasswd" \
@@ -26,7 +27,7 @@ docker run -d -p 15000:5000 --rm --name private_registry \
   -v "$(pwd)"/scripts/testing/certs:/certs \
   -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt" \
   -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key" \
-  registry:2
+  registry:2.7.0
 # wait a bit for travis...
 sleep 5
 # Login to private registry
