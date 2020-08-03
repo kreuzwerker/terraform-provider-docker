@@ -1,4 +1,4 @@
-## 2.7.2 (Unreleased)
+## 2.7.2 (August 03, 2020)
 
 BUG FIXES
 * Fix port objects with the same internal port but different protocol trigger recreation of container ([#274](https://github.com/terraform-providers/
