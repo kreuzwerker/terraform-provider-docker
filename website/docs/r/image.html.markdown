@@ -52,7 +52,23 @@ The following arguments are supported:
   registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html)
   to trigger an image update.
 * `pull_trigger` - **Deprecated**, use `pull_triggers` instead.
+* `build` - (Optional, block) See [Build](#build-1) below for details.
 
+<a id="build-1"></a>
+### Build
+Build image.
+
+The `build` block supports:
+
+* `path` - (Required, string)
+* `dockerfile` - (Optional, string) default Dockerfile
+* `tag` - (Optional, list of strings) 
+* `force_remove` - (Optional, boolean)
+* `remove` - (Optional, boolean) default true
+* `no_cache` - (Optional, boolean)
+* `target` - (Optional, string)
+* `build_arg` - (Optional, map of strings)
+* `label` - (Optional, map of strings)
 
 ## Attributes Reference
 

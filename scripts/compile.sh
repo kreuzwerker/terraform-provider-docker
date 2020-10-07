@@ -10,7 +10,7 @@ fi
 PROVIDER_NAME="docker"
 TARGET_DIR="$(pwd)/results"
 XC_ARCH=${XC_ARCH:-"386 amd64 arm"}
-XC_OS=${XC_OS:=linux darwin windows freebsd openbsd solaris}
+XC_OS=${XC_OS:=linux darwin windows openbsd solaris}
 XC_EXCLUDE_OSARCH="!darwin/arm !darwin/386 !solaris/amd64"
 LD_FLAGS="-s -w"
 export CGO_ENABLED=0
