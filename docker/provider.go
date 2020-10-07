@@ -1,21 +1,17 @@
 package docker
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/user"
-	"runtime"
 	"strings"
 
-	credhelper "github.com/docker/docker-credential-helpers/client"
+	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -161,20 +157,10 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	return &providerConfig, nil
 }
 
-// ErrCannotParseDockercfg is the error returned by NewAuthConfigurations when the dockercfg cannot be parsed.
-var ErrCannotParseDockercfg = errors.New("Failed to read authentication from dockercfg")
-
 // AuthConfigs represents authentication options to use for the
 // PushImage method accommodating the new X-Registry-Config header
 type AuthConfigs struct {
 	Configs map[string]types.AuthConfig `json:"configs"`
-}
-
-// dockerConfig represents a registry authentation configuration from the
-// .dockercfg file.
-type dockerConfig struct {
-	Auth  string `json:"auth"`
-	Email string `json:"email"`
 }
 
 // Take the given registry_auth schemas and return a map of registry auth configurations
@@ -187,6 +173,7 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 		auth := authInt.(map[string]interface{})
 		authConfig := types.AuthConfig{}
 		authConfig.ServerAddress = normalizeRegistryAddress(auth["address"].(string))
+		registryHostname := convertToHostname(authConfig.ServerAddress)
 
 		// For each registry_auth block, generate an AuthConfiguration using either
 		// username/password or the given config file
@@ -196,30 +183,22 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 			authConfig.Password = auth["password"].(string)
 
 			// Note: check for config_file_content first because config_file has a default which would be used
-			// neverthelesss config_file_content is set or not. The default has to be kept to check for the
+			// nevertheless config_file_content is set or not. The default has to be kept to check for the
 			// environment variable and to be backwards compatible
 		} else if configFileContent, ok := auth["config_file_content"]; ok && configFileContent.(string) != "" {
 			log.Println("[DEBUG] Parsing file content for registry auths:", configFileContent.(string))
 			r := strings.NewReader(configFileContent.(string))
 
-			// Parse and set the auth
-			auths, err := newAuthConfigurations(r)
+			c, err := loadConfigFile(r)
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing docker registry config json: %v", err)
 			}
-
-			foundRegistry := false
-			for registry, authFileConfig := range auths.Configs {
-				if authConfig.ServerAddress == normalizeRegistryAddress(registry) {
-					authConfig.Username = authFileConfig.Username
-					authConfig.Password = authFileConfig.Password
-					foundRegistry = true
-				}
+			authFileConfig, err := c.GetAuthConfig(registryHostname)
+			if err != nil {
+				return nil, fmt.Errorf("Couldn't find registry config for '%s' in file content", registryHostname)
 			}
-
-			if !foundRegistry {
-				return nil, fmt.Errorf("Couldn't find registry config for '%s' in file content", authConfig.ServerAddress)
-			}
+			authConfig.Username = authFileConfig.Username
+			authConfig.Password = authFileConfig.Password
 
 			// As last step we check if a config file path is given
 		} else if configFile, ok := auth["config_file"]; ok && configFile.(string) != "" {
@@ -241,25 +220,17 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 				return nil, fmt.Errorf("Error opening docker registry config file: %v", err)
 			}
 
-			// Parse and set the auth
-			auths, err := newAuthConfigurations(r)
+			c, err := loadConfigFile(r)
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing docker registry config json: %v", err)
 			}
-
-			foundRegistry := false
-			for registry, authFileConfig := range auths.Configs {
-				if authConfig.ServerAddress == normalizeRegistryAddress(registry) {
-					authConfig.Username = authFileConfig.Username
-					authConfig.Password = authFileConfig.Password
-					foundRegistry = true
-				}
-			}
-
-			if !foundRegistry {
+			authFileConfig, err := c.GetAuthConfig(registryHostname)
+			if err != nil {
 				return nil, fmt.Errorf("Couldn't find registry config for '%s' in file: %s",
-					authConfig.ServerAddress, filePath)
+					registryHostname, filePath)
 			}
+			authConfig.Username = authFileConfig.Username
+			authConfig.Password = authFileConfig.Password
 		}
 
 		authConfigs.Configs[authConfig.ServerAddress] = authConfig
@@ -268,99 +239,30 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 	return &authConfigs, nil
 }
 
-// newAuthConfigurations returns AuthConfigs from a JSON encoded string in the
-// same format as the .dockercfg/ ~/.docker/config.json file.
-func newAuthConfigurations(r io.Reader) (*AuthConfigs, error) {
-	var auth *AuthConfigs
-	log.Println("[DEBUG] Parsing Docker config file")
-	confs, credsStore, err := parseDockerConfig(r)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("[DEBUG] Found Docker configs '%v'", confs)
-	auth, err = convertDockerConfigToAuthConfigs(confs, credsStore)
-	if err != nil {
-		return nil, err
-	}
-	return auth, nil
-}
-
-// parseDockerConfig parses the docker config file for auths
-func parseDockerConfig(r io.Reader) (map[string]dockerConfig, string, error) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
-	byteData := buf.Bytes()
-
-	confsWrapper := struct {
-		Auths      map[string]dockerConfig `json:"auths"`
-		CredsStore string                  `json:"credsStore,omitempty"`
-	}{}
-	if err := json.Unmarshal(byteData, &confsWrapper); err == nil {
-		if len(confsWrapper.Auths) > 0 {
-			return confsWrapper.Auths, confsWrapper.CredsStore, nil
-		}
-	}
-
-	var confs map[string]dockerConfig
-	if err := json.Unmarshal(byteData, &confs); err != nil {
-		return nil, "", err
-	}
-	return confs, "", nil
-}
-
-// convertDockerConfigToAuthConfigs converts a dockerConfigs map to a AuthConfigs object.
-func convertDockerConfigToAuthConfigs(confs map[string]dockerConfig, credsStore string) (*AuthConfigs, error) {
-	c := &AuthConfigs{
-		Configs: make(map[string]types.AuthConfig),
-	}
-	for registryAddress, conf := range confs {
-		if conf.Auth == "" {
-			authFromKeyChain, err := getCredentialsFromOSKeychain(registryAddress, credsStore)
-			if err != nil {
-				return nil, err
-			}
-			c.Configs[registryAddress] = authFromKeyChain
-			continue
-		}
-		data, err := base64.StdEncoding.DecodeString(conf.Auth)
-		if err != nil {
+func loadConfigFile(configData io.Reader) (*configfile.ConfigFile, error) {
+	configFile := configfile.New("")
+	if err := configFile.LoadFromReader(configData); err != nil {
+		log.Println("[DEBUG] Error parsing registry config: ", err)
+		log.Println("[DEBUG] Will try parsing from legacy format")
+		if err := configFile.LegacyLoadFromReader(configData); err != nil {
 			return nil, err
 		}
-		userpass := strings.SplitN(string(data), ":", 2)
-		if len(userpass) != 2 {
-			return nil, ErrCannotParseDockercfg
-		}
-		c.Configs[registryAddress] = types.AuthConfig{
-			Email:         conf.Email,
-			Username:      userpass[0],
-			Password:      userpass[1],
-			ServerAddress: registryAddress,
-			Auth:          conf.Auth,
-		}
 	}
-	return c, nil
+	return configFile, nil
 }
 
-// getCredentialsFromOSKeychain get config from system specific keychains
-func getCredentialsFromOSKeychain(registryAddress string, credsStore string) (types.AuthConfig, error) {
-	authConfig := types.AuthConfig{}
-	log.Printf("[DEBUG] Getting auth for registry '%s' from credential store: '%s'", registryAddress, credsStore)
-	if credsStore == "" {
-		return authConfig, errors.New("No credential store configured")
+// ConvertToHostname converts a registry url which has http|https prepended
+// to just an hostname.
+// Copied from github.com/docker/docker/registry.ConvertToHostname to reduce dependencies.
+func convertToHostname(url string) string {
+	stripped := url
+	if strings.HasPrefix(url, "http://") {
+		stripped = strings.TrimPrefix(url, "http://")
+	} else if strings.HasPrefix(url, "https://") {
+		stripped = strings.TrimPrefix(url, "https://")
 	}
-	executable := "docker-credential-" + credsStore
-	if runtime.GOOS == "windows" {
-		executable = executable + ".exe"
-	}
-	p := credhelper.NewShellProgramFunc(executable)
-	credentials, err := credhelper.Get(p, registryAddress)
-	if err != nil {
-		return authConfig, err
-	}
-	authConfig.Username = credentials.Username
-	authConfig.Password = credentials.Secret
-	authConfig.ServerAddress = registryAddress
-	authConfig.Auth = base64.StdEncoding.EncodeToString([]byte(credentials.Username + ":" + credentials.Secret))
-	return authConfig, nil
+
+	nameParts := strings.SplitN(stripped, "/", 2)
+
+	return nameParts[0]
 }
