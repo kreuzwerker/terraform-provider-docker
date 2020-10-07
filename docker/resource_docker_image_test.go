@@ -3,7 +3,9 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"regexp"
 	"testing"
 
@@ -201,6 +203,26 @@ func testAccDockerImageDestroy(s *terraform.State) error {
 	return nil
 }
 
+func TestAccDockerImage_build(t *testing.T) {
+	wd, _ := os.Getwd()
+	dfPath := path.Join(wd, "Dockerfile")
+	ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0644)
+	defer os.Remove(dfPath)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDockerImageDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testCreateDockerImage,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.test", "name", contentDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 const testAccDockerImageConfig = `
 resource "docker_image" "foo" {
 	name = "alpine:3.1"
@@ -291,4 +313,34 @@ const testAddDockerImageWithSHA256RepoDigest = `
 resource "docker_image" "foobar" {
 	name = "stocard/gotthard@sha256:ed752380c07940c651b46c97ca2101034b3be112f4d86198900aa6141f37fe7b"
 }
+`
+
+const testCreateDockerImage = `
+resource "docker_image" "test" {
+	name = "ubuntu:11"
+	build {
+	  path = "."
+	  dockerfile = "Dockerfile"
+	  force_remove = true
+	  build_arg = {
+		test_arg = "kenobi"
+	  }
+	  label = {
+		test_label1 = "han"
+		test_label2 = "solo"
+	  }
+	}
+  }  
+`
+
+const testDockerFileExample = `
+FROM python:3-stretch
+
+WORKDIR /app
+
+ARG test_arg
+
+RUN echo ${test_arg} > test_arg.txt
+
+RUN apt-get update -qq
 `
