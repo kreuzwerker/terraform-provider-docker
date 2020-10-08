@@ -132,7 +132,7 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 	return buildImageOptions
 }
 
-func buildDockerImage(client *client.Client, buildOptions map[string]interface{}, fqName string) error {
+func buildDockerRegistryImage(client *client.Client, buildOptions map[string]interface{}, fqName string) error {
 
 	type ErrorDetailMessage struct {
 		Code    int    `json:"code,omitempty"`
@@ -460,7 +460,7 @@ func resourceDockerRegistryImageCreate(d *schema.ResourceData, meta interface{})
 
 	if buildOptions, ok := d.GetOk("build"); ok {
 		buildOptionsMap := buildOptions.([]interface{})[0].(map[string]interface{})
-		err := buildDockerImage(client, buildOptionsMap, pushOpts.FqName)
+		err := buildDockerRegistryImage(client, buildOptionsMap, pushOpts.FqName)
 		if err != nil {
 			return fmt.Errorf("Error building docker image: %s", err)
 		}
