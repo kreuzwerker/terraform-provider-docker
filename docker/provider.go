@@ -215,20 +215,17 @@ func providerSetToRegistryAuth(authSet *schema.Set) (*AuthConfigs, error) {
 				}
 				filePath = strings.Replace(filePath, "~", usr.HomeDir, 1)
 			}
-
 			r, err := os.Open(filePath)
 			if err != nil {
-				return nil, fmt.Errorf("Error opening docker registry config file: %v", err)
+				continue
 			}
-
 			c, err := loadConfigFile(r)
 			if err != nil {
-				return nil, fmt.Errorf("Error parsing docker registry config json: %v", err)
+				continue
 			}
 			authFileConfig, err := c.GetAuthConfig(registryHostname)
 			if err != nil {
-				return nil, fmt.Errorf("Couldn't find registry config for '%s' in file: %s",
-					registryHostname, filePath)
+				continue
 			}
 			authConfig.Username = authFileConfig.Username
 			authConfig.Password = authFileConfig.Password
