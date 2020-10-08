@@ -930,7 +930,9 @@ func portSetToDockerPorts(ports []interface{}) (map[nat.Port]struct{}, map[nat.P
 			portBinding.HostIP = ip
 		}
 
-		retPortBindings[exposedPort] = append(retPortBindings[exposedPort], portBinding)
+		if extOk || ipOk {
+			retPortBindings[exposedPort] = append(retPortBindings[exposedPort], portBinding)
+		}
 	}
 
 	return retExposedPorts, retPortBindings
