@@ -1449,6 +1449,9 @@ func TestAccDockerContainer_ipv6address(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "network_data.0.global_ipv6_address", "fd00:0:0:0::123"),
+					resource.TestCheckResourceAttr("docker_container.foo", "network_data.0.global_ipv6_prefix_length", "64"),
+					resource.TestCheckResourceAttr("docker_container.foo", "network_data.0.ipv6_gateway", "fd00:0:0:0::f"),
 				),
 			},
 		},
@@ -2138,6 +2141,7 @@ resource "docker_network" "test" {
 	ipv6 = true
 	ipam_config {
 		subnet = "fd00::1/64"
+		gateway = "fd00:0:0:0::f"
 	}
 }
 resource "docker_image" "foo" {

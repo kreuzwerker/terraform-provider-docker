@@ -143,7 +143,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -151,7 +150,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
@@ -160,7 +158,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
@@ -194,7 +191,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
 			},
 			"capabilities": {
 				Type:     schema.TypeSet,
@@ -459,6 +455,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
@@ -516,6 +513,18 @@ func resourceDockerContainer() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"global_ipv6_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"global_ipv6_prefix_length": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"ipv6_gateway": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -562,6 +571,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
+				Computed: true,
 				Elem:     labelSchema,
 			},
 
@@ -601,13 +611,12 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Computed: true,
+				Default:  "json-file",
 			},
 
 			"log_opts": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Computed: true,
 				ForceNew: true,
 			},
 
