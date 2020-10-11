@@ -88,6 +88,7 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
+					"remove_volumes",
 
 					// TODO mavogel: Will be done in #219
 					"volumes",
