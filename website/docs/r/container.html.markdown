@@ -56,7 +56,7 @@ The following arguments are supported:
 ~> **Warning** The --link flag is a legacy feature of Docker. It may eventually
 be removed. It exposes _all_ environment variables originating from Docker to
 any linked containers. This could have serious security implications if sensitive
-data is stored in them. See [the docker documentation][linkdoc] for more details.
+data is stored in them. See [the docker documentation](https://docs.docker.com/network/links/) for more details.
 
 * `hostname` - (Optional, string) Hostname of the container.
 * `domainname` - (Optional, string) Domain name of the container.
@@ -304,5 +304,3 @@ Docker containers can be imported using the long id, e.g. for a container named 
 ```sh
 $ terraform import docker_container.foo $(docker inspect -f {{.ID}} foo)
 ```
-
-[linkdoc] https://docs.docker.com/network/links/
