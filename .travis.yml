@@ -26,7 +26,7 @@ matrix:
     - os: linux
       name: "Acceptance tests"
       dist: bionic
-      go: "1.13.x"
+      go: "1.15.x"
       services:
         - docker
       sudo: required
@@ -51,7 +51,7 @@ matrix:
     - os: linux
       name: "Build (golang current amd64)"
       dist: bionic
-      go: "1.13.x"
+      go: "1.15.x"
       script:
         - make compile
 
@@ -68,7 +68,7 @@ matrix:
     - os: linux
       name: "Unit-tests, vet, and website"
       dist: bionic
-      go: "1.13.x"
+      go: "1.15.x"
       script:
         - make vet
         - make test
@@ -79,7 +79,7 @@ matrix:
     ####################################
     - os: osx
       name: "Build (golang current)"
-      go: "1.13.x"
+      go: "1.15.x"
       script:
         - XC_OS=darwin make compile
 
@@ -89,7 +89,7 @@ matrix:
     - os: windows
       name: "Build (golang current)"
       # name: "Acceptance tests"
-      go: "1.13.x"
+      go: "1.15.x"
       # services:
       #  - docker
       script:

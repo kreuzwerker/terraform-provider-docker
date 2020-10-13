@@ -18,4 +18,4 @@ require (
 	github.com/opencontainers/runc v0.1.1 // indirect
 )
 
-go 1.13
+go 1.15

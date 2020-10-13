@@ -10,8 +10,8 @@ Terraform Provider
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.13.x (to build the provider plugin)
+-	[Terraform](https://www.terraform.io/downloads.html) 0.12.x
+-	[Go](https://golang.org/doc/install) 1.15.x (to build the provider plugin)
 
 Building The Provider
 ---------------------
@@ -37,7 +37,7 @@ Using the provider
 Developing the Provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need the latest version of [Go](http://www.golang.org) installed on your machine (currently 1.13). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH` (note that we typically test older versions of golang as long as they are supported upstream, though we recommend new development to happen on the latest release).
+If you wish to work on the provider, you'll first need the latest version of [Go](http://www.golang.org) installed on your machine (currently 1.15). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH` (note that we typically test older versions of golang as long as they are supported upstream, though we recommend new development to happen on the latest release).
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
