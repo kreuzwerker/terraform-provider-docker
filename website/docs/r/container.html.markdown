@@ -217,7 +217,7 @@ One of `from_container`, `host_path` or `volume_name` must be set.
 
 `upload` is a block within the configuration that can be repeated to specify
 files to upload to the container before starting it. Only one of `content` or `content_base64` can be set and at least
-one of them hast to be set.
+one of them has to be set.
 Each `upload` supports the following
 
 * `content` - (Optional, string, conflicts with `content_base64` & `source`) Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text.
