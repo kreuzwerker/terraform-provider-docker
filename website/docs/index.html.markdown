@@ -90,7 +90,7 @@ used to retrieve the authentication credentials.
 
 You can still use the enviroment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
-An example content of the file `~/.docker/config.json` on OSX may look like follows:
+An example content of the file `~/.docker/config.json` on macOS may look like follows:
 
 ```json
 {

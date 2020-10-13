@@ -58,7 +58,7 @@ resource "docker_config" "foo_config" {
 ```
 
 #### Update config with no downtime
-To update a `config`, Terraform will destroy the existing resource and create a replacement. To effectively use a `docker_config` resource with a `docker_service` resource, it's recommended to specify `create_before_destroy` in a `lifecycle` block. Provide a uniqie `name` attribute, for example
+To update a `config`, Terraform will destroy the existing resource and create a replacement. To effectively use a `docker_config` resource with a `docker_service` resource, it's recommended to specify `create_before_destroy` in a `lifecycle` block. Provide a unique `name` attribute, for example
 with one of the interpolation functions `uuid` or `timestamp` as shown
 in the example below. The reason is [moby-35803](https://github.com/moby/moby/issues/35803).
 

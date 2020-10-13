@@ -65,14 +65,14 @@ data is stored in them. See [the docker documentation](https://docs.docker.com/n
 * `max_retry_count` - (Optional, int) The maximum amount of times to an attempt
   a restart when `restart` is set to "on-failure"
 * `working_dir`- (Optional, string) The working directory for commands to run in
-* `rm` - (Optional, bool) If true, then the container will be automatically removed after his execution. Terraform
+* `rm` - (Optional, boolean) If true, then the container will be automatically removed after his execution. Terraform
    won't check this container after creation.
-* `read_only` - (Optional, bool) If true, the container will be started as readonly.
-* `start` - (Optional, bool) If true, then the Docker container will be
+* `read_only` - (Optional, boolean) If true, the container will be started as readonly.
+* `start` - (Optional, boolean) If true, then the Docker container will be
   started after creation. If false, then the container is only created.
-* `attach` - (Optional, bool) If true attach to the container after its creation and waits the end of his execution.
-* `logs` - (Optional, bool) Save the container logs (`attach` must be enabled).
-* `must_run` - (Optional, bool) If true, then the Docker container will be
+* `attach` - (Optional, boolean) If true attach to the container after its creation and waits the end of his execution.
+* `logs` - (Optional, boolean) Save the container logs (`attach` must be enabled).
+* `must_run` - (Optional, boolean) If true, then the Docker container will be
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
 * `capabilities` - (Optional, block) See [Capabilities](#capabilities-1) below for details.
@@ -81,9 +81,9 @@ data is stored in them. See [the docker documentation](https://docs.docker.com/n
 * `ports` - (Optional, block) See [Ports](#ports-1) below for details.
 * `host` - (Optional, block) See [Extra Hosts](#extra_hosts-1) below for
   details.
-* `privileged` - (Optional, bool) Run container in privileged mode.
-* `devices` - (Optional, bool) See [Devices](#devices-1) below for details.
-* `publish_all_ports` - (Optional, bool) Publish all ports of the container.
+* `privileged` - (Optional, boolean) Run container in privileged mode.
+* `devices` - (Optional, boolean) See [Devices](#devices-1) below for details.
+* `publish_all_ports` - (Optional, boolean) Publish all ports of the container.
 * `volumes` - (Optional, block) See [Volumes](#volumes-1) below for details.
 * `memory` - (Optional, int) The memory limit for the container in MBs.
 * `memory_swap` - (Optional, int) The total memory limit (memory + swap) for the
@@ -225,7 +225,7 @@ Each `upload` supports the following
 * `source` - (Optional, string, conflicts with `content` & `content_base64`) A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state.
 * `source_hash` - (Optional, string) If using `source`, this will force an update if the file content has updated but the filename has not. 
 * `file` - (Required, string) path to a file in the container.
-* `executable` - (Optional, bool) If true, the file will be uploaded with user
+* `executable` - (Optional, boolean) If true, the file will be uploaded with user
   executable permission.
   Defaults to false.
 
