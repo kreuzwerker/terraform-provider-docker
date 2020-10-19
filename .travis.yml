@@ -7,6 +7,9 @@ install:
 # See: https://github.com/golang/go/issues/12933
 - bash scripts/gogetcookie.sh
 
+env:	
+  - GOPROXY=https://gocenter.io,https://proxy.golang.org,direct
+
 branches:
   only:
   - master
@@ -58,7 +61,7 @@ matrix:
     - os: linux
       name: "Build (golang previous amd64)"
       dist: bionic
-      go: "1.12.x"
+      go: "1.14.x"
       script:
         - make compile
 
@@ -105,6 +108,3 @@ matrix:
       go: tip
       script:
         - make compile
-
-env:
-  - GOFLAGS=-mod=vendor GO111MODULE=on
