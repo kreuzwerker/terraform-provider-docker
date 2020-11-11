@@ -15,10 +15,7 @@ DOCS
 * Fix typo ([#292](https://github.com/terraform-providers/terraform-provider-docker/pull/292))
 
 CI
-* Update to go 1.15 #284
-
-([]())
-
+* Update to go 1.15 ([#284](https://github.com/terraform-providers/terraform-provider-docker/pull/284))
 
 ## 2.7.2 (August 03, 2020)
 
