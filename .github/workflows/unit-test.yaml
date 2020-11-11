@@ -30,4 +30,6 @@ jobs:
       - run: bash scripts/gogetcookie.sh
       - run: make vet
       - run: make test
+      - run: make website-test
+
 
