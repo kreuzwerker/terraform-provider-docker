@@ -1,5 +1,5 @@
 ---
-name: Unit Tests
+name: Acc Tests
 on:
   push:
     branches:

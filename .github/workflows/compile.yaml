@@ -1,5 +1,5 @@
 ---
-name: Unit Tests
+name: Compile Tests
 on:
   push:
     branches:
