@@ -1,5 +1,5 @@
 ---
-name: Compile Tests
+name: Compile Binaries
 on:
   push:
     branches:
