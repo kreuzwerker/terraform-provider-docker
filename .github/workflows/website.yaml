@@ -29,9 +29,10 @@ jobs:
       - run: bash scripts/gogetcookie.sh
       - run: |
           cat /etc/issue
-          whoami
-          mkdir -p $HOME/go
-          echo $GOPATH
+          echo "whoami" && whoami
+          mkdir -p /go && ls -lash /
+          export GOPATH="/go"
+          echo "GOPATH: $GOPATH"
           make website-test
 
 

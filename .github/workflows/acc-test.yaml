@@ -1,58 +1,58 @@
----
-name: Acc Tests
-on:
-  push:
-    branches:
-      - master
-      - "release/**"
-  pull_request:
-    types: ['opened', 'synchronize']
-    paths:
-      - '**.go'
-      - 'vendor/**'
-      - '.github/workflows/**'
+# ---
+# name: Acc Tests
+# on:
+#   push:
+#     branches:
+#       - master
+#       - "release/**"
+#   pull_request:
+#     types: ['opened', 'synchronize']
+#     paths:
+#       - '**.go'
+#       - 'vendor/**'
+#       - '.github/workflows/**'
 
-env:
-  GO_VERSION: "1.15"
-  GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
+# env:
+#   GO_VERSION: "1.15"
+#   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.15'
-      - run: cat /etc/issue
-      - run: bash scripts/gogetcookie.sh
-      # locally: docker run -it ubuntu:bionic bash (https://ubuntu.pkgs.org/18.04/docker-ce-stable-amd64/)
-      - run: sudo apt-get update
-      - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-      - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-      - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-      - run: sudo apt-get update
-      # apt-cache policy docker-ce 
-      - run: sudo apt-get -y install docker-ce=5:19.03.5~3-0~ubuntu-bionic
-      - run: docker version
-      # Allow local registry to be insecure
-      - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
-      - run: sudo cat /etc/default/docker
-      - run: sudo service docker restart
-            # locally: docker run -it ubuntu:bionic bash (https://ubuntu.pkgs.org/18.04/docker-ce-stable-amd64/)
-      - run: sudo apt-get update
-      - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-      - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-      - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-      - run: sudo apt-get update
-      # apt-cache policy docker-ce 
-      - run: sudo apt-get -y install docker-ce=5:19.03.5~3-0~ubuntu-bionic
-      - run: docker version
-      # Allow local registry to be insecure
-      - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
-      - run: sudo cat /etc/default/docker
-      - run: sudo service docker restart
-      - run: make testacc
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: true
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-go@v2
+#         with:
+#           go-version: '1.15'
+#       - run: cat /etc/issue
+#       - run: bash scripts/gogetcookie.sh
+#       # locally: docker run -it ubuntu:bionic bash (https://ubuntu.pkgs.org/18.04/docker-ce-stable-amd64/)
+#       - run: sudo apt-get update
+#       - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+#       - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+#       - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+#       - run: sudo apt-get update
+#       # apt-cache policy docker-ce 
+#       - run: sudo apt-get -y install docker-ce=5:19.03.5~3-0~ubuntu-bionic
+#       - run: docker version
+#       # Allow local registry to be insecure
+#       - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
+#       - run: sudo cat /etc/default/docker
+#       - run: sudo service docker restart
+#             # locally: docker run -it ubuntu:bionic bash (https://ubuntu.pkgs.org/18.04/docker-ce-stable-amd64/)
+#       - run: sudo apt-get update
+#       - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+#       - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+#       - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+#       - run: sudo apt-get update
+#       # apt-cache policy docker-ce 
+#       - run: sudo apt-get -y install docker-ce=5:19.03.5~3-0~ubuntu-bionic
+#       - run: docker version
+#       # Allow local registry to be insecure
+#       - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
+#       - run: sudo cat /etc/default/docker
+#       - run: sudo service docker restart
+#       - run: make testacc
 

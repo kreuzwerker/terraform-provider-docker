@@ -1,34 +1,34 @@
----
-name: Unit Tests
-on:
-  push:
-    branches:
-      - master
-      - "release/**"
-  pull_request:
-    types: ['opened', 'synchronize']
-    paths:
-      - '**.go'
-      - 'vendor/**'
-      - '.github/workflows/**'
+# ---
+# name: Unit Tests
+# on:
+#   push:
+#     branches:
+#       - master
+#       - "release/**"
+#   pull_request:
+#     types: ['opened', 'synchronize']
+#     paths:
+#       - '**.go'
+#       - 'vendor/**'
+#       - '.github/workflows/**'
 
-env:
-  GO_VERSION: "1.15"
-  GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
+# env:
+#   GO_VERSION: "1.15"
+#   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.15'
-      - run: cat /etc/issue
-      - run: bash scripts/gogetcookie.sh
-      - run: make vet
-      - run: make test
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: true
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-go@v2
+#         with:
+#           go-version: '1.15'
+#       - run: cat /etc/issue
+#       - run: bash scripts/gogetcookie.sh
+#       - run: make vet
+#       - run: make test
 
 
