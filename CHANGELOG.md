@@ -1,4 +1,25 @@
 ## 2.8.0 (Unreleased)
+
+IMPROVEMENTS
+* Add new resource docker_registry_image ([#249](https://github.com/terraform-providers/terraform-provider-docker/pull/249))
+* Added complete support for Docker credential helpers ([#253](https://github.com/terraform-providers/terraform-provider-docker/pull/253))
+
+BUG FIXES
+* Prevent provider error if auth config is incomplete ([#251](https://github.com/terraform-providers/terraform-provider-docker/pull/))
+* Resolve ([#255](https://github.com/terraform-providers/terraform-provider-docker/pull/255) by conditionally adding port binding ([#293](https://github.com/terraform-providers/terraform-provider-docker/pull/293))
+
+DOCS
+* Update service.html.markdown ([#245](https://github.com/terraform-providers/terraform-provider-docker/pull/245))
+* Documentation updates ([#286](https://github.com/terraform-providers/terraform-provider-docker/pull/286))
+* Update link syntax ([#287](https://github.com/terraform-providers/terraform-provider-docker/pull/287))
+* Fix typo ([#292](https://github.com/terraform-providers/terraform-provider-docker/pull/292))
+
+CI
+* Update to go 1.15 #284
+
+([]())
+
+
 ## 2.7.2 (August 03, 2020)
 
 BUG FIXES
