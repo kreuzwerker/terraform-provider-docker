@@ -12,6 +12,10 @@ on:
       - 'vendor/**'
       - '.github/workflows/**'
 
+env:
+  GO_VERSION: "1.15"
+  GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
+
 jobs:
   test:
     runs-on: ubuntu-latest
