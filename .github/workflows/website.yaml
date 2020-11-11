@@ -30,8 +30,7 @@ jobs:
       - run: |
           cat /etc/issue
           echo "whoami" && whoami
-          echo "HOME: $HOME"
-          sudo mkdir -p /go && sudo chown -R $(whoami) /go && ls -lash /
+          sudo mkdir -p /go && sudo chown -R $(whoami) /go
           export GOPATH="/go"
           echo "GOPATH: $GOPATH"
           make website-test
