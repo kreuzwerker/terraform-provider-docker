@@ -110,6 +110,7 @@ data is stored in them. See [the docker documentation](https://docs.docker.com/n
 * `sysctls` - (Optional, map) A map of kernel parameters (sysctls) to set in the container.
 * `ipc_mode` - (Optional, string) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
 * `group_add` - (Optional, set of strings) Add additional groups to run as.
+* `init` - (Optional, bool) Configured whether an init process should be injected for this container. If unset this will default to the `dockerd` defaults.
 
 <a id="labels-1"></a>
 #### Labels
