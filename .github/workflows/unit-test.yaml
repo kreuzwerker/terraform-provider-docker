@@ -1,6 +1,10 @@
 ---
 name: Unit Tests
 on:
+  push:
+    branches:
+      - master
+      - "release/**"
   pull_request:
     types: ['opened', 'synchronize']
     paths:
@@ -18,6 +22,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.15'
+      - run: cat /etc/issue
       - run: bash scripts/gogetcookie.sh
       - run: make vet
       - run: make test
