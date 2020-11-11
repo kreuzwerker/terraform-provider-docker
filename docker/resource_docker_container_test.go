@@ -89,6 +89,7 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"destroy_grace_seconds",
 					"upload",
 					"remove_volumes",
+					"init",
 
 					// TODO mavogel: Will be done in #219
 					"volumes",
@@ -100,6 +101,48 @@ func TestAccDockerContainer_basic(t *testing.T) {
 		},
 	})
 }
+
+func TestAccDockerContainer_init(t *testing.T) {
+	resourceName := "docker_container.fooinit"
+	var c types.ContainerJSON
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerInitConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning(resourceName, &c),
+				),
+			},
+			{
+				ResourceName:      "docker_container.fooinit",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"attach",
+					"log_driver",
+					"logs",
+					"must_run",
+					"restart",
+					"rm",
+					"start",
+					"container_logs",
+					"destroy_grace_seconds",
+					"upload",
+					"remove_volumes",
+
+					// TODO mavogel: Will be done in #219
+					"volumes",
+					"network_alias",
+					"networks",
+					"network_advanced",
+				},
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_basic_network(t *testing.T) {
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
@@ -1694,6 +1737,18 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
+}
+`
+
+const testAccDockerContainerInitConfig = `
+resource "docker_image" "fooinit" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "fooinit" {
+	name = "tf-test"
+	image = "${docker_image.fooinit.latest}"
+	init = true
 }
 `
 

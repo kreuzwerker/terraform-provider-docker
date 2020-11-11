@@ -322,6 +322,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.GroupAdd = stringSetToStringSlice(v.(*schema.Set))
 	}
 
+	init := d.Get("init").(bool)
+	hostConfig.Init = &init
+
 	var retContainer container.ContainerCreateCreatedBody
 
 	if retContainer, err = client.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, d.Get("name").(string)); err != nil {
@@ -619,6 +622,15 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
 	d.Set("restart", container.HostConfig.RestartPolicy.Name)
 	d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
+	// From what I can tell Init being nullable is only for container creation to allow
+	// dockerd to default it to the daemons own default settings. So this != nil
+	// check is most likely not ever going to fail. In the event that it does the
+	// "init" value will be set to false as there isn't much else we can do about it.
+	if container.HostConfig.Init != nil {
+		d.Set("init", *container.HostConfig.Init)
+	} else {
+		d.Set("init", false)
+	}
 	d.Set("working_dir", container.Config.WorkingDir)
 	if len(container.HostConfig.CapAdd) > 0 || len(container.HostConfig.CapDrop) > 0 {
 		// TODO implement DiffSuppressFunc
