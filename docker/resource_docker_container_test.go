@@ -1379,6 +1379,22 @@ func TestAccDockerContainer_attach(t *testing.T) {
 			},
 		},
 	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerAttachConfigRace,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "must_run", "false"),
+				),
+			},
+		},
+	})
 }
 
 func TestAccDockerContainer_logs(t *testing.T) {
@@ -2273,6 +2289,19 @@ resource "docker_image" "foo" {
 	name = "tf-test"
 	image = "${docker_image.foo.latest}"
 	command = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1; done"]
+	attach = true
+	must_run = false
+}
+`
+const testAccDockerContainerAttachConfigRace = `
+resource "docker_image" "foo" {
+	name = "busybox:latest"
+	keep_locally = true
+}
+ resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	command = ["/bin/sh", "-c", "exit 0"]
 	attach = true
 	must_run = false
 }
