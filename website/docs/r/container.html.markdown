@@ -76,6 +76,7 @@ data is stored in them. See [the docker documentation](https://docs.docker.com/n
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
 * `capabilities` - (Optional, block) See [Capabilities](#capabilities-1) below for details.
+* `security_opts` - (Optional, set of strings) Set of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration.
 * `mounts` - (Optional, set of blocks) See [Mounts](#mounts-1) below for details.
 * `tmpfs` - (Optional, map) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
 * `ports` - (Optional, block) See [Ports](#ports-1) below for details.

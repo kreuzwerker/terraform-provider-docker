@@ -272,6 +272,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		hostConfig.Links = stringSetToStringSlice(v.(*schema.Set))
 	}
 
+	if v, ok := d.GetOk("security_opts"); ok {
+		hostConfig.SecurityOpt = stringSetToStringSlice(v.(*schema.Set))
+	}
+
 	if v, ok := d.GetOk("memory"); ok {
 		hostConfig.Memory = int64(v.(int)) * 1024 * 1024
 	}
@@ -618,6 +622,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("user", container.Config.User)
 	d.Set("dns", container.HostConfig.DNS)
 	d.Set("dns_opts", container.HostConfig.DNSOptions)
+	d.Set("security_opts", container.HostConfig.SecurityOpt)
 	d.Set("dns_search", container.HostConfig.DNSSearch)
 	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
 	d.Set("restart", container.HostConfig.RestartPolicy.Name)
