@@ -1379,6 +1379,10 @@ func TestAccDockerContainer_attach(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccDockerContainer_attach_race(t *testing.T) {
+	var c types.ContainerJSON
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
