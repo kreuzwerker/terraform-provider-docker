@@ -1879,6 +1879,8 @@ resource "docker_container" "foo" {
 		drop = ["SYS_ADMIN"]
 	}
 
+	security_opts = ["apparmor=unconfined", "label=disable"]
+
 	dns = ["8.8.8.8"]
 	dns_opts = ["rotate"]
 	dns_search = ["example.com"]
