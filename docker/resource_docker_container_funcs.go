@@ -501,7 +501,13 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 				if err != nil {
 					return fmt.Errorf("Unable to wait container end of execution: %s", err)
 				}
-			case <-attachCh:
+			case res := <-attachCh:
+				if res.Error != nil {
+					return fmt.Errorf("container exited with error code %v: %v", res.StatusCode, res.Error.Message)
+				}
+				if res.StatusCode != 0 {
+					return fmt.Errorf("container exited with non-zero code %v", res.StatusCode)
+				}
 				if d.Get("logs").(bool) {
 					d.Set("container_logs", b.String())
 				}
