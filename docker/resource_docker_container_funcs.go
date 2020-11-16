@@ -503,10 +503,10 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 				}
 			case res := <-attachCh:
 				if res.Error != nil {
-					return fmt.Errorf("container exited with error code %v: %v", res.StatusCode, res.Error.Message)
+					return fmt.Errorf("container %v exited with error code %v: %v", retContainer.ID, res.StatusCode, res.Error.Message)
 				}
 				if res.StatusCode != 0 {
-					return fmt.Errorf("container exited with non-zero code %v", res.StatusCode)
+					return fmt.Errorf("container %v exited with non-zero code %v", retContainer.ID, res.StatusCode)
 				}
 				if d.Get("logs").(bool) {
 					d.Set("container_logs", b.String())
