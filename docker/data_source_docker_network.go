@@ -2,15 +2,15 @@ package docker
 
 import (
 	"context"
-	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/docker/docker/api/types"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceDockerNetwork() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceDockerNetworkRead,
+		ReadContext: dataSourceDockerNetworkRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -80,21 +80,21 @@ func dataSourceDockerNetwork() *schema.Resource {
 
 type ipamMap map[string]interface{}
 
-func dataSourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	name, nameOk := d.GetOk("name")
 	_, idOk := d.GetOk("id")
 
 	if !nameOk && !idOk {
-		return fmt.Errorf("One of id or name must be assigned")
+		return diag.Errorf("One of id or name must be assigned")
 	}
 
 	client := meta.(*ProviderConfig).DockerClient
 
-	network, err := client.NetworkInspect(context.Background(), name.(string), types.NetworkInspectOptions{})
+	network, err := client.NetworkInspect(ctx, name.(string), types.NetworkInspectOptions{})
 
 	if err != nil {
-		return fmt.Errorf("Could not find docker network: %s", err)
+		return diag.Errorf("Could not find docker network: %s", err)
 	}
 
 	d.SetId(network.ID)

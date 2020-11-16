@@ -1,22 +1,23 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // resourceDockerService create a docker service
 // https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func resourceDockerService() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerServiceCreate,
-		Read:   resourceDockerServiceRead,
-		Update: resourceDockerServiceUpdate,
-		Delete: resourceDockerServiceDelete,
-		Exists: resourceDockerServiceExists,
+		CreateContext: resourceDockerServiceCreate,
+		ReadContext:   resourceDockerServiceRead,
+		UpdateContext: resourceDockerServiceUpdate,
+		DeleteContext: resourceDockerServiceDelete,
+		Exists:        resourceDockerServiceExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -948,7 +949,7 @@ func resourceDockerService() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerServiceV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return migrateServiceLabels(rawState), nil
 				},
 			},

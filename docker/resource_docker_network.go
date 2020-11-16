@@ -1,19 +1,20 @@
 package docker
 
 import (
+	"context"
 	"log"
 	"net"
 	"regexp"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerNetwork() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerNetworkCreate,
-		Read:   resourceDockerNetworkRead,
-		Delete: resourceDockerNetworkDelete,
+		CreateContext: resourceDockerNetworkCreate,
+		ReadContext:   resourceDockerNetworkRead,
+		DeleteContext: resourceDockerNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -129,7 +130,7 @@ func resourceDockerNetwork() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerNetworkV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return replaceLabelsMapFieldWithSetField(rawState), nil
 				},
 			},

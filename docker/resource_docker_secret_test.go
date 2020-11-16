@@ -6,15 +6,18 @@ import (
 
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerSecret_basic(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerSecretDestroy,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			return testCheckDockerSecretDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -33,10 +36,13 @@ func TestAccDockerSecret_basic(t *testing.T) {
 }
 
 func TestAccDockerSecret_basicUpdatable(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerSecretDestroy,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			return testCheckDockerSecretDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -75,10 +81,13 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 }
 
 func TestAccDockerSecret_labels(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerSecretDestroy,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			return testCheckDockerSecretDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -109,7 +118,7 @@ func TestAccDockerSecret_labels(t *testing.T) {
 /////////////
 // Helpers
 /////////////
-func testCheckDockerSecretDestroy(s *terraform.State) error {
+func testCheckDockerSecretDestroy(ctx context.Context, s *terraform.State) error {
 	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "secrets" {
@@ -117,7 +126,7 @@ func testCheckDockerSecretDestroy(s *terraform.State) error {
 		}
 
 		id := rs.Primary.Attributes["id"]
-		_, _, err := client.SecretInspectWithRaw(context.Background(), id)
+		_, _, err := client.SecretInspectWithRaw(ctx, id)
 
 		if err == nil {
 			return fmt.Errorf("Secret with id '%s' still exists", id)

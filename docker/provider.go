@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"io"
 	"log"
 	"os"
@@ -12,12 +13,11 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Provider creates the Docker provider
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"host": {
@@ -116,11 +116,11 @@ func Provider() terraform.ResourceProvider {
 			"docker_network":        dataSourceDockerNetwork(),
 		},
 
-		ConfigureFunc: providerConfigure,
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	config := Config{
 		Host:     d.Get("host").(string),
 		Ca:       d.Get("ca_material").(string),
@@ -131,13 +131,12 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	client, err := config.NewClient()
 	if err != nil {
-		return nil, fmt.Errorf("Error initializing Docker client: %s", err)
+		return nil, diag.Errorf("Error initializing Docker client: %s", err)
 	}
 
-	ctx := context.Background()
 	_, err = client.Ping(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Error pinging Docker server: %s", err)
+		return nil, diag.Errorf("Error pinging Docker server: %s", err)
 	}
 
 	authConfigs := &AuthConfigs{}
@@ -146,7 +145,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
 
 		if err != nil {
-			return nil, fmt.Errorf("Error loading registry auth config: %s", err)
+			return nil, diag.Errorf("Error loading registry auth config: %s", err)
 		}
 	}
 

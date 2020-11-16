@@ -3,15 +3,15 @@ package docker
 import (
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerRegistryImageCreate,
-		Read:   resourceDockerRegistryImageRead,
-		Delete: resourceDockerRegistryImageDelete,
-		Update: resourceDockerRegistryImageUpdate,
+		CreateContext: resourceDockerRegistryImageCreate,
+		ReadContext:   resourceDockerRegistryImageRead,
+		DeleteContext: resourceDockerRegistryImageDelete,
+		UpdateContext: resourceDockerRegistryImageUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"name": {

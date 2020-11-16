@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"github.com/docker/docker/api/types"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestMapTypeMapValsToStringSlice(t *testing.T) {
@@ -37,7 +37,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
-
+	ctx := context.TODO()
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -50,7 +50,9 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -635,7 +637,8 @@ func TestAccDockerContainer_customized(t *testing.T) {
 
 func testAccCheckSwapLimit(t *testing.T) {
 	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-	info, err := client.Info(context.Background())
+	ctx := context.TODO()
+	info, err := client.Info(ctx)
 	if err != nil {
 		t.Fatalf("Failed to check swap limit capability: %s", err)
 	}
@@ -652,7 +655,8 @@ func TestAccDockerContainer_upload(t *testing.T) {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
 		srcPath := "/terraform/test.txt"
-		r, _, err := client.CopyFromContainer(context.Background(), c.ID, srcPath)
+		ctx := context.TODO()
+		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
 		if err != nil {
 			return fmt.Errorf("Unable to download a file from container: %s", err)
 		}
@@ -714,7 +718,8 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
 		srcPath := "/terraform/test.txt"
-		r, _, err := client.CopyFromContainer(context.Background(), c.ID, srcPath)
+		ctx := context.TODO()
+		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
 		if err != nil {
 			return fmt.Errorf("Unable to download a file from container: %s", err)
 		}
@@ -816,7 +821,8 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 		return func(*terraform.State) error {
 			client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
-			r, _, err := client.CopyFromContainer(context.Background(), c.ID, srcPath)
+			ctx := context.TODO()
+			r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
 			if err != nil {
 				return fmt.Errorf("Unable to download a file from container: %s", err)
 			}
@@ -961,18 +967,19 @@ func TestAccDockerContainer_device(t *testing.T) {
 			Cmd: []string{"dd", "if=/dev/zero_test", "of=/tmp/test.txt", "count=10", "bs=1"},
 		}
 
-		exec, err := client.ContainerExecCreate(context.Background(), c.ID, createExecOpts)
+		ctx := context.TODO()
+		exec, err := client.ContainerExecCreate(ctx, c.ID, createExecOpts)
 		if err != nil {
 			return fmt.Errorf("Unable to create a exec instance on container: %s", err)
 		}
 
 		startExecOpts := types.ExecStartCheck{}
-		if err := client.ContainerExecStart(context.Background(), exec.ID, startExecOpts); err != nil {
+		if err := client.ContainerExecStart(ctx, exec.ID, startExecOpts); err != nil {
 			return fmt.Errorf("Unable to run exec a instance on container: %s", err)
 		}
 
 		srcPath := "/tmp/test.txt"
-		out, _, err := client.CopyFromContainer(context.Background(), c.ID, srcPath)
+		out, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
 		if err != nil {
 			return fmt.Errorf("Unable to download a file from container: %s", err)
 		}
@@ -1554,15 +1561,16 @@ func testAccContainerRunning(n string, container *types.ContainerJSON) resource.
 			return fmt.Errorf("No ID is set")
 		}
 
+		ctx := context.TODO()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
+		containers, err := client.ContainerList(ctx, types.ContainerListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, c := range containers {
 			if c.ID == rs.Primary.ID {
-				inspected, err := client.ContainerInspect(context.Background(), c.ID)
+				inspected, err := client.ContainerInspect(ctx, c.ID)
 				if err != nil {
 					return fmt.Errorf("Container could not be inspected: %s", err)
 				}
@@ -1586,8 +1594,9 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 			return fmt.Errorf("No ID is set")
 		}
 
+		ctx := context.TODO()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+		containers, err := client.ContainerList(ctx, types.ContainerListOptions{
 			All: true,
 		})
 		if err != nil {
@@ -1596,7 +1605,7 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 
 		for _, c := range containers {
 			if c.ID == rs.Primary.ID {
-				inspected, err := client.ContainerInspect(context.Background(), c.ID)
+				inspected, err := client.ContainerInspect(ctx, c.ID)
 				if err != nil {
 					return fmt.Errorf("Container could not be inspected: %s", err)
 				}
@@ -1623,8 +1632,9 @@ func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) 
 			return fmt.Errorf("No ID is set")
 		}
 
+		ctx := context.TODO()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
 		statusC, errC := client.ContainerWait(ctx, rs.Primary.ID, container.WaitConditionNotRunning)
@@ -1655,8 +1665,9 @@ func testAccContainerWaitConditionRemoved(n string, ct *types.ContainerJSON) res
 			return fmt.Errorf("No ID is set")
 		}
 
+		ctx := context.TODO()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
 		statusC, errC := client.ContainerWait(ctx, rs.Primary.ID, container.WaitConditionRemoved)

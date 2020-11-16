@@ -2,22 +2,22 @@ package docker
 
 import (
 	"context"
-	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerVolume() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerVolumeCreate,
-		Read:   resourceDockerVolumeRead,
-		Delete: resourceDockerVolumeDelete,
+		CreateContext: resourceDockerVolumeCreate,
+		ReadContext:   resourceDockerVolumeRead,
+		DeleteContext: resourceDockerVolumeDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -56,7 +56,7 @@ func resourceDockerVolume() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerVolumeV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return replaceLabelsMapFieldWithSetField(rawState), nil
 				},
 			},
@@ -99,9 +99,8 @@ func resourceDockerVolumeV0() *schema.Resource {
 	}
 }
 
-func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
 
 	createOpts := volume.VolumeCreateBody{}
 
@@ -123,23 +122,22 @@ func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
 	if err != nil {
-		return fmt.Errorf("Unable to create volume: %s", err)
+		return diag.Errorf("Unable to create volume: %s", err)
 	}
 
 	d.SetId(retVolume.Name)
-	return resourceDockerVolumeRead(d, meta)
+	return resourceDockerVolumeRead(nil, d, meta)
 }
 
-func resourceDockerVolumeRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
 
 	var err error
 	var retVolume types.Volume
 	retVolume, err = client.VolumeInspect(ctx, d.Id())
 
 	if err != nil {
-		return fmt.Errorf("Unable to inspect volume: %s", err)
+		return diag.Errorf("Unable to inspect volume: %s", err)
 	}
 
 	d.Set("name", retVolume.Name)
@@ -151,35 +149,34 @@ func resourceDockerVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerVolumeDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"in_use"},
 		Target:     []string{"removed"},
-		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta),
+		Refresh:    resourceDockerVolumeRemoveRefreshFunc(ctx, d.Id(), meta),
 		Timeout:    30 * time.Second,
 		MinTimeout: 5 * time.Second,
 		Delay:      2 * time.Second,
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
 	return nil
 }
 
-func resourceDockerVolumeRemoveRefreshFunc(
-	volumeID string, meta interface{}) resource.StateRefreshFunc {
+func resourceDockerVolumeRemoveRefreshFunc(ctx context.Context, volumeID string, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		forceDelete := true
 
-		if err := client.VolumeRemove(context.Background(), volumeID, forceDelete); err != nil {
+		if err := client.VolumeRemove(ctx, volumeID, forceDelete); err != nil {
 			if strings.Contains(err.Error(), "volume is in use") { // store.IsInUse(err)
 				log.Printf("[INFO] Volume with id '%v' is still in use", volumeID)
 				return volumeID, "in_use", nil

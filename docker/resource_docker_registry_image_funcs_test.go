@@ -9,9 +9,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-units"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
@@ -22,7 +22,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 		}
 	}
 
-	dummyProvider := Provider().(*schema.Provider)
+	dummyProvider := Provider()
 	dummyResource := dummyProvider.ResourcesMap["docker_registry_image"]
 	dummyResource.Create = func(d *schema.ResourceData, meta interface{}) error {
 		build := d.Get("build").([]interface{})[0].(map[string]interface{})
@@ -92,7 +92,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: map[string]terraform.ResourceProvider{"docker": dummyProvider},
+		Providers: map[string]*schema.Provider{"docker": dummyProvider},
 		Steps: []resource.TestStep{
 			{
 				Config: testBuildDockerRegistryImageMappingConfig,

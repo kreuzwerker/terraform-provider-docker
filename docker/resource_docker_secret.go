@@ -2,19 +2,20 @@ package docker
 
 import (
 	"encoding/base64"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"context"
 
 	"github.com/docker/docker/api/types/swarm"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerSecret() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerSecretCreate,
-		Read:   resourceDockerSecretRead,
-		Delete: resourceDockerSecretDelete,
+		CreateContext: resourceDockerSecretCreate,
+		ReadContext:   resourceDockerSecretRead,
+		DeleteContext: resourceDockerSecretDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -45,7 +46,7 @@ func resourceDockerSecret() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerSecretV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return replaceLabelsMapFieldWithSetField(rawState), nil
 				},
 			},
@@ -83,7 +84,7 @@ func resourceDockerSecretV0() *schema.Resource {
 	}
 }
 
-func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
@@ -98,19 +99,19 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
 	}
 
-	secret, err := client.SecretCreate(context.Background(), secretSpec)
+	secret, err := client.SecretCreate(ctx, secretSpec)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(secret.ID)
 
-	return resourceDockerSecretRead(d, meta)
+	return resourceDockerSecretRead(nil, d, meta)
 }
 
-func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	secret, _, err := client.SecretInspectWithRaw(context.Background(), d.Id())
+	secret, _, err := client.SecretInspectWithRaw(ctx, d.Id())
 
 	if err != nil {
 		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
@@ -125,12 +126,12 @@ func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerSecretDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	err := client.SecretRemove(context.Background(), d.Id())
+	err := client.SecretRemove(ctx, d.Id())
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

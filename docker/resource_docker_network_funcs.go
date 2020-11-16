@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	"context"
@@ -11,11 +11,11 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
 	createOpts := types.NetworkCreate{}
@@ -60,23 +60,23 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	retNetwork := types.NetworkCreateResponse{}
-	retNetwork, err := client.NetworkCreate(context.Background(), d.Get("name").(string), createOpts)
+	retNetwork, err := client.NetworkCreate(ctx, d.Get("name").(string), createOpts)
 	if err != nil {
-		return fmt.Errorf("Unable to create network: %s", err)
+		return diag.Errorf("Unable to create network: %s", err)
 	}
 
 	d.SetId(retNetwork.ID)
 	// d.Set("check_duplicate") TODO
-	return resourceDockerNetworkRead(d, meta)
+	return resourceDockerNetworkRead(nil, d, meta)
 }
 
-func resourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
-		Refresh:    resourceDockerNetworkReadRefreshFunc(d, meta),
+		Refresh:    resourceDockerNetworkReadRefreshFunc(ctx, d, meta),
 		Timeout:    30 * time.Second,
 		MinTimeout: 5 * time.Second,
 		Delay:      2 * time.Second,
@@ -85,19 +85,19 @@ func resourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	// Wait, catching any errors
 	_, err := stateConf.WaitForState()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourceDockerNetworkDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"removed"},
-		Refresh:    resourceDockerNetworkRemoveRefreshFunc(d, meta),
+		Refresh:    resourceDockerNetworkRemoveRefreshFunc(ctx, d, meta),
 		Timeout:    30 * time.Second,
 		MinTimeout: 5 * time.Second,
 		Delay:      2 * time.Second,
@@ -106,7 +106,7 @@ func resourceDockerNetworkDelete(d *schema.ResourceData, meta interface{}) error
 	// Wait, catching any errors
 	_, err := stateConf.WaitForState()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -136,13 +136,12 @@ func ipamConfigSetToIpamConfigs(ipamConfigSet *schema.Set) []network.IPAMConfig 
 	return ipamConfigs
 }
 
-func resourceDockerNetworkReadRefreshFunc(
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+func resourceDockerNetworkReadRefreshFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
-		retNetwork, _, err := client.NetworkInspectWithRaw(context.Background(), networkID, types.NetworkInspectOptions{})
+		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
 		if err != nil {
 			log.Printf("[WARN] Network (%s) not found, removing from state", networkID)
 			d.SetId("")
@@ -181,19 +180,18 @@ func resourceDockerNetworkReadRefreshFunc(
 	}
 }
 
-func resourceDockerNetworkRemoveRefreshFunc(
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
-		_, _, err := client.NetworkInspectWithRaw(context.Background(), networkID, types.NetworkInspectOptions{})
+		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
 		if err != nil {
 			log.Printf("[INFO] Network (%s) not found. Already removed", networkID)
 			return networkID, "removed", nil
 		}
 
-		if err := client.NetworkRemove(context.Background(), networkID); err != nil {
+		if err := client.NetworkRemove(ctx, networkID); err != nil {
 			if strings.Contains(err.Error(), "has active endpoints") {
 				return networkID, "pending", nil
 			}

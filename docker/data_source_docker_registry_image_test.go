@@ -2,13 +2,15 @@ package docker
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 var registryDigestRegexp = regexp.MustCompile(`\A[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)
@@ -46,6 +48,7 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 func TestAccDockerRegistryImage_auth(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -57,7 +60,9 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 

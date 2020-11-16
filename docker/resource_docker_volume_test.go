@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerVolume_basic(t *testing.T) {
 	var v types.Volume
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -20,7 +20,7 @@ func TestAccDockerVolume_basic(t *testing.T) {
 			{
 				Config: testAccDockerVolumeConfig,
 				Check: resource.ComposeTestCheckFunc(
-					checkDockerVolume("docker_volume.foo", &v),
+					checkDockerVolume(ctx, "docker_volume.foo", &v),
 					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_basic"),
 					resource.TestCheckResourceAttr("docker_volume.foo", "name", "testAccDockerVolume_basic"),
 				),
@@ -34,7 +34,7 @@ func TestAccDockerVolume_basic(t *testing.T) {
 	})
 }
 
-func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
+func checkDockerVolume(ctx context.Context, n string, volume *types.Volume) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -45,7 +45,6 @@ func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
 			return fmt.Errorf("No ID is set")
 		}
 
-		ctx := context.Background()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {
@@ -66,7 +65,7 @@ resource "docker_volume" "foo" {
 
 func TestAccDockerVolume_labels(t *testing.T) {
 	var v types.Volume
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -74,7 +73,7 @@ func TestAccDockerVolume_labels(t *testing.T) {
 			{
 				Config: testAccDockerVolumeLabelsConfig,
 				Check: resource.ComposeTestCheckFunc(
-					checkDockerVolume("docker_volume.foo", &v),
+					checkDockerVolume(ctx, "docker_volume.foo", &v),
 					testCheckLabelMap("docker_volume.foo", "labels",
 						map[string]string{
 							"com.docker.compose.project": "test",

@@ -1,17 +1,18 @@
 package docker
 
 import (
+	"context"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerContainer() *schema.Resource {
 	return &schema.Resource{
-		Create:        resourceDockerContainerCreate,
-		Read:          resourceDockerContainerRead,
-		Update:        resourceDockerContainerUpdate,
-		Delete:        resourceDockerContainerDelete,
+		CreateContext: resourceDockerContainerCreate,
+		ReadContext:   resourceDockerContainerRead,
+		UpdateContext: resourceDockerContainerUpdate,
+		DeleteContext: resourceDockerContainerDelete,
 		MigrateState:  resourceDockerContainerMigrateState,
 		SchemaVersion: 2,
 		Importer: &schema.ResourceImporter{
@@ -21,7 +22,7 @@ func resourceDockerContainer() *schema.Resource {
 			{
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					//TODO do the ohter V0-to-V1 migration, unless we're okay
 					//with breaking for users who straggled on their docker
 					//provider version

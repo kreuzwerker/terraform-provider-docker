@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestMigrateServiceLabelState_empty_labels(t *testing.T) {
@@ -32,17 +32,17 @@ func TestMigrateServiceLabelState_empty_labels(t *testing.T) {
 
 	//first validate that we build that correctly
 	v0Config := terraform.NewResourceConfigRaw(v0State)
-	warns, errs := resourceDockerServiceV0().Validate(v0Config)
-	if len(warns) > 0 || len(errs) > 0 {
+	diags := resourceDockerServiceV0().Validate(v0Config)
+	if len(diags) > 0 {
 		t.Error("test precondition failed - attempt to migrate an invalid v0 config")
 		return
 	}
 
 	v1State := migrateServiceLabels(v0State)
 	v1Config := terraform.NewResourceConfigRaw(v1State)
-	warns, errs = resourceDockerService().Validate(v1Config)
-	if len(warns) > 0 || len(errs) > 0 {
-		fmt.Println(warns, errs)
+	diags = resourceDockerService().Validate(v1Config)
+	if len(diags) > 0 {
+		fmt.Println(diags)
 		t.Error("migrated service config is invalid")
 		return
 	}
@@ -85,17 +85,17 @@ func TestMigrateServiceLabelState_with_labels(t *testing.T) {
 
 	//first validate that we build that correctly
 	v0Config := terraform.NewResourceConfigRaw(v0State)
-	warns, errs := resourceDockerServiceV0().Validate(v0Config)
-	if len(warns) > 0 || len(errs) > 0 {
+	diags := resourceDockerServiceV0().Validate(v0Config)
+	if len(diags) > 0 {
 		t.Error("test precondition failed - attempt to migrate an invalid v0 config")
 		return
 	}
 
 	v1State := migrateServiceLabels(v0State)
 	v1Config := terraform.NewResourceConfigRaw(v1State)
-	warns, errs = resourceDockerService().Validate(v1Config)
-	if len(warns) > 0 || len(errs) > 0 {
-		fmt.Println(warns, errs)
+	diags = resourceDockerService().Validate(v1Config)
+	if len(diags) > 0 {
+		fmt.Println(diags)
 		t.Error("migrated service config is invalid")
 		return
 	}

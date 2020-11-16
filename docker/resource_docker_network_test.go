@@ -7,14 +7,14 @@ import (
 	"context"
 
 	"github.com/docker/docker/api/types"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerNetwork_basic(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -22,7 +22,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 			{
 				Config: testAccDockerNetworkConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
+					testAccNetwork(ctx, resourceName, &n),
 				),
 			},
 			{
@@ -36,7 +36,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 
 // TODO mavogel: add full network config test in #219
 
-func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
+func testAccNetwork(ctx context.Context, n string, network *types.NetworkResource) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -48,14 +48,14 @@ func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheck
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		networks, err := client.NetworkList(context.Background(), types.NetworkListOptions{})
+		networks, err := client.NetworkList(ctx, types.NetworkListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, n := range networks {
 			if n.ID == rs.Primary.ID {
-				inspected, err := client.NetworkInspect(context.Background(), n.ID, types.NetworkInspectOptions{})
+				inspected, err := client.NetworkInspect(ctx, n.ID, types.NetworkInspectOptions{})
 				if err != nil {
 					return fmt.Errorf("Network could not be obtained: %s", err)
 				}
@@ -77,7 +77,7 @@ resource "docker_network" "foo" {
 func TestAccDockerNetwork_internal(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -85,7 +85,7 @@ func TestAccDockerNetwork_internal(t *testing.T) {
 			{
 				Config: testAccDockerNetworkInternalConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
+					testAccNetwork(ctx, resourceName, &n),
 					testAccNetworkInternal(&n, true),
 				),
 			},
@@ -117,7 +117,7 @@ resource "docker_network" "foo" {
 func TestAccDockerNetwork_attachable(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -125,7 +125,7 @@ func TestAccDockerNetwork_attachable(t *testing.T) {
 			{
 				Config: testAccDockerNetworkAttachableConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
+					testAccNetwork(ctx, resourceName, &n),
 					testAccNetworkAttachable(&n, true),
 				),
 			},
@@ -191,7 +191,7 @@ resource "docker_network" "foo" {
 func TestAccDockerNetwork_ipv4(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -199,7 +199,7 @@ func TestAccDockerNetwork_ipv4(t *testing.T) {
 			{
 				Config: testAccDockerNetworkIPv4Config,
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
+					testAccNetwork(ctx, resourceName, &n),
 					testAccNetworkIPv4(&n, true),
 				),
 			},
@@ -237,7 +237,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 	t.Skip("mavogel: need to fix ipv6 network state")
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -245,7 +245,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 			{
 				Config: testAccDockerNetworkIPv6Config,
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
+					testAccNetwork(ctx, resourceName, &n),
 					testAccNetworkIPv6(&n, true),
 				),
 			},
@@ -292,7 +292,7 @@ resource "docker_network" "foo" {
 func TestAccDockerNetwork_labels(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -300,7 +300,7 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 			{
 				Config: testAccDockerNetworkLabelsConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
+					testAccNetwork(ctx, resourceName, &n),
 					testCheckLabelMap(resourceName, "labels",
 						map[string]string{
 							"com.docker.compose.network": "foo",

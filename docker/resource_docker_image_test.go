@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var contentDigestRegexp = regexp.MustCompile(`\A[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)
@@ -48,6 +48,7 @@ func TestAccDockerImage_private(t *testing.T) {
 }
 
 func TestAccDockerImage_destroy(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -58,7 +59,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 				}
 
 				client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-				_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["latest"])
+				_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["latest"])
 				if err != nil {
 					return err
 				}
@@ -111,7 +112,7 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 func TestAccDockerImage_data_private(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
 		Providers:                 testAccProviders,
@@ -124,7 +125,9 @@ func TestAccDockerImage_data_private(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -133,7 +136,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
 		Providers:                 testAccProviders,
@@ -146,7 +149,9 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -155,7 +160,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
-
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
 		Providers:                 testAccProviders,
@@ -168,7 +173,9 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -189,13 +196,14 @@ func TestAccDockerImage_sha265(t *testing.T) {
 }
 
 func testAccDockerImageDestroy(s *terraform.State) error {
+	ctx := context.TODO()
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "docker_image" {
 			continue
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["latest"])
+		_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["latest"])
 		if err == nil {
 			return fmt.Errorf("Image still exists")
 		}

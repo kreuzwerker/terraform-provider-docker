@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerConfig_basic(t *testing.T) {
@@ -91,9 +91,9 @@ func testCheckDockerConfigDestroy(s *terraform.State) error {
 		if rs.Type != "configs" {
 			continue
 		}
-
+		ctx := context.TODO()
 		id := rs.Primary.Attributes["id"]
-		_, _, err := client.ConfigInspectWithRaw(context.Background(), id)
+		_, _, err := client.ConfigInspectWithRaw(ctx, id)
 
 		if err == nil {
 			return fmt.Errorf("Config with id '%s' still exists", id)
