@@ -775,6 +775,7 @@ func resourceDockerContainer() *schema.Resource {
 				Description: "A test to perform to check that the container is healthy",
 				MaxItems:    1,
 				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"test": {
