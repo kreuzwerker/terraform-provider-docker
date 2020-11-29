@@ -144,6 +144,13 @@ func resourceDockerContainer() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
+					// treat "" as a no-op, which is Docker's default value
+					if newV == "" {
+						newV = oldV
+					}
+					return oldV == newV
+				},
 			},
 
 			"dns": {
