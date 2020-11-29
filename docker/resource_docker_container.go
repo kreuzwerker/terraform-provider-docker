@@ -144,6 +144,13 @@ func resourceDockerContainer() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
+					// treat "" as a no-op, which is Docker's default value
+					if newV == "" {
+						newV = oldV
+					}
+					return oldV == newV
+				},
 			},
 
 			"dns": {
@@ -191,6 +198,13 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
+					// treat "" as a no-op, which is Docker's default behavior
+					if newV == "" {
+						newV = oldV
+					}
+					return oldV == newV
+				},
 			},
 			"remove_volumes": {
 				Type:     schema.TypeBool,
@@ -761,6 +775,7 @@ func resourceDockerContainer() *schema.Resource {
 				Description: "A test to perform to check that the container is healthy",
 				MaxItems:    1,
 				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"test": {
