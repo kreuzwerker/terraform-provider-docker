@@ -250,6 +250,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:        schema.TypeSet,
 				Description: "Specification for mounts to be added to containers created as part of the service",
 				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"target": {
