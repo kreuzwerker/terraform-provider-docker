@@ -221,7 +221,11 @@ func flattenIpamConfigSpec(in []network.IPAMConfig) *schema.Set { // []interface
 			m["gateway"] = v.Gateway
 		}
 		if len(v.AuxAddress) > 0 {
-			m["aux_address"] = v.AuxAddress
+			aux := make(map[string]interface{}, len(v.AuxAddress))
+			for ka, va := range v.AuxAddress {
+				aux[ka] = va
+			}
+			m["aux_address"] = aux
 		}
 		out[i] = m
 	}
