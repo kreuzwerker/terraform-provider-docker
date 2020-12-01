@@ -104,8 +104,12 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 		req.SetBasicAuth(username, password)
 	}
 
-	// Set this header so that we get the v2 manifest back from the registry.
-	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	// We accept schema v2 manifests and manifest lists, and also OCI types
+	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
+
 	if fallback {
 		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
 		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
