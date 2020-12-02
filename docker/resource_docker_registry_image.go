@@ -26,119 +26,119 @@ func resourceDockerRegistryImage() *schema.Resource {
 				Default:  false,
 			},
 
-			"build": &schema.Schema{
+			"build": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"suppress_output": &schema.Schema{
+						"suppress_output": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"remote_context": &schema.Schema{
+						"remote_context": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"no_cache": &schema.Schema{
+						"no_cache": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"remove": &schema.Schema{
+						"remove": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"force_remove": &schema.Schema{
+						"force_remove": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"pull_parent": &schema.Schema{
+						"pull_parent": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"isolation": &schema.Schema{
+						"isolation": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cpu_set_cpus": &schema.Schema{
+						"cpu_set_cpus": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cpu_set_mems": &schema.Schema{
+						"cpu_set_mems": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cpu_shares": &schema.Schema{
+						"cpu_shares": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cpu_quota": &schema.Schema{
+						"cpu_quota": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cpu_period": &schema.Schema{
+						"cpu_period": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							ForceNew: true,
 						},
-						"memory": &schema.Schema{
+						"memory": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							ForceNew: true,
 						},
-						"memory_swap": &schema.Schema{
+						"memory_swap": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cgroup_parent": &schema.Schema{
+						"cgroup_parent": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"network_mode": &schema.Schema{
+						"network_mode": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"shm_size": &schema.Schema{
+						"shm_size": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							ForceNew: true,
 						},
-						"dockerfile": &schema.Schema{
+						"dockerfile": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "Dockerfile",
 							ForceNew: true,
 						},
-						"ulimit": &schema.Schema{
+						"ulimit": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"name": &schema.Schema{
+									"name": {
 										Type:     schema.TypeString,
 										Required: true,
 										ForceNew: true,
 									},
-									"hard": &schema.Schema{
+									"hard": {
 										Type:     schema.TypeInt,
 										Required: true,
 										ForceNew: true,
 									},
-									"soft": &schema.Schema{
+									"soft": {
 										Type:     schema.TypeInt,
 										Required: true,
 										ForceNew: true,
@@ -146,7 +146,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 								},
 							},
 						},
-						"build_args": &schema.Schema{
+						"build_args": {
 							Type:     schema.TypeMap,
 							Optional: true,
 							ForceNew: true,
@@ -154,47 +154,47 @@ func resourceDockerRegistryImage() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"auth_config": &schema.Schema{
+						"auth_config": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"host_name": &schema.Schema{
+									"host_name": {
 										Type:     schema.TypeString,
 										Required: true,
 									},
-									"user_name": &schema.Schema{
+									"user_name": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"password": &schema.Schema{
+									"password": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"auth": &schema.Schema{
+									"auth": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"email": &schema.Schema{
+									"email": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"server_address": &schema.Schema{
+									"server_address": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"identity_token": &schema.Schema{
+									"identity_token": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
-									"registry_token": &schema.Schema{
+									"registry_token": {
 										Type:     schema.TypeString,
 										Optional: true,
 									},
 								},
 							},
 						},
-						"context": &schema.Schema{
+						"context": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: true,
@@ -206,7 +206,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 								return val.(string) + ":" + contextTarHash
 							},
 						},
-						"labels": &schema.Schema{
+						"labels": {
 							Type:     schema.TypeMap,
 							Optional: true,
 							ForceNew: true,
@@ -214,12 +214,12 @@ func resourceDockerRegistryImage() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"squash": &schema.Schema{
+						"squash": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"cache_from": &schema.Schema{
+						"cache_from": {
 							Type:     schema.TypeList,
 							Optional: true,
 							ForceNew: true,
@@ -227,7 +227,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"security_opt": &schema.Schema{
+						"security_opt": {
 							Type:     schema.TypeList,
 							Optional: true,
 							ForceNew: true,
@@ -235,7 +235,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"extra_hosts": &schema.Schema{
+						"extra_hosts": {
 							Type:     schema.TypeList,
 							Optional: true,
 							ForceNew: true,
@@ -243,27 +243,27 @@ func resourceDockerRegistryImage() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"target": &schema.Schema{
+						"target": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"session_id": &schema.Schema{
+						"session_id": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"platform": &schema.Schema{
+						"platform": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"version": &schema.Schema{
+						"version": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"build_id": &schema.Schema{
+						"build_id": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,

@@ -1,15 +1,14 @@
 package docker
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"strings"
-
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
 
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"

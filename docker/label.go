@@ -57,12 +57,12 @@ func mapToLabelSet(labels map[string]string) *schema.Set {
 
 var labelSchema = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"label": &schema.Schema{
+		"label": {
 			Type:        schema.TypeString,
 			Description: "Name of the label",
 			Required:    true,
 		},
-		"value": &schema.Schema{
+		"value": {
 			Type:        schema.TypeString,
 			Description: "Value of the label",
 			Required:    true,
@@ -70,11 +70,11 @@ var labelSchema = &schema.Resource{
 	},
 }
 
-//gatherImmediateSubkeys given an incomplete attribute identifier, find all
-//the strings (if any) that appear after this one in the various dot-separated
-//identifiers.
+// gatherImmediateSubkeys given an incomplete attribute identifier, find all
+// the strings (if any) that appear after this one in the various dot-separated
+// identifiers.
 func gatherImmediateSubkeys(attrs map[string]string, partialKey string) []string {
-	var immediateSubkeys = []string{}
+	immediateSubkeys := []string{}
 	for k := range attrs {
 		prefix := partialKey + "."
 		if strings.HasPrefix(k, prefix) {
@@ -90,7 +90,7 @@ func gatherImmediateSubkeys(attrs map[string]string, partialKey string) []string
 func getLabelMapForPartialKey(attrs map[string]string, partialKey string) map[string]string {
 	setIDs := gatherImmediateSubkeys(attrs, partialKey)
 
-	var labelMap = map[string]string{}
+	labelMap := map[string]string{}
 	for _, id := range setIDs {
 		if id == "#" {
 			continue

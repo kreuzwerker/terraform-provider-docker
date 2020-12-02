@@ -1,10 +1,9 @@
 package docker
 
 import (
+	"context"
 	"encoding/base64"
 	"log"
-
-	"context"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -62,7 +61,6 @@ func resourceDockerConfigCreate(d *schema.ResourceData, meta interface{}) error 
 func resourceDockerConfigRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 	config, _, err := client.ConfigInspectWithRaw(context.Background(), d.Id())
-
 	if err != nil {
 		log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
 		d.SetId("")

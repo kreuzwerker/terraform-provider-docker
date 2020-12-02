@@ -3,6 +3,7 @@ package docker
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-
-	"context"
 
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -2071,6 +2070,7 @@ resource "docker_container" "foo" {
 	}
 }
 `
+
 const testAccDockerContainerPortConfig = `
 resource "docker_image" "foo" {
 	name = "nginx:latest"
@@ -2087,6 +2087,7 @@ resource "docker_container" "foo" {
 	}
 }
 `
+
 const testAccDockerContainerMultiplePortConfig = `
 resource "docker_image" "foo" {
 	name = "nginx:latest"
@@ -2160,6 +2161,7 @@ resource "docker_container" "foo" {
   }
 }
 `
+
 const testAccDockerContainerNoStartConfig = `
 resource "docker_image" "foo" {
   name         = "nginx:latest"
@@ -2173,6 +2175,7 @@ resource "docker_container" "foo" {
   must_run = false
 }
 `
+
 const testAccDockerContainerNetworksIPv4AddressConfig = `
 resource "docker_network" "test" {
 	name = "tf-test"
@@ -2193,6 +2196,7 @@ resource "docker_container" "foo" {
 	}
 }
 `
+
 const testAccDockerContainerNetworksIPv6AddressConfig = `
 resource "docker_network" "test" {
 	name = "tf-test"
@@ -2215,6 +2219,7 @@ resource "docker_container" "foo" {
 	}
 }
 `
+
 const testAccDockerContainerNetworksDualStackAddressConfig = `
 resource "docker_network" "test" {
 	name = "tf-test"
@@ -2242,6 +2247,7 @@ resource "docker_container" "foo" {
 	}
 }
 `
+
 const testAccDockerContainerRmConfig = `
 resource "docker_image" "foo" {
 	name = "busybox:latest"
@@ -2254,6 +2260,7 @@ resource "docker_image" "foo" {
 	rm = true
 }
 `
+
 const testAccDockerContainerReadOnlyConfig = `
 resource "docker_image" "foo" {
 	name = "busybox:latest"
@@ -2266,6 +2273,7 @@ resource "docker_image" "foo" {
 	read_only = true
 }
 `
+
 const testAccDockerContainerAttachConfig = `
 resource "docker_image" "foo" {
 	name = "busybox:latest"
@@ -2279,6 +2287,7 @@ resource "docker_image" "foo" {
 	must_run = false
 }
 `
+
 const testAccDockerContainerLogsConfig = `
 resource "docker_image" "foo" {
   name         = "busybox:latest"
@@ -2294,6 +2303,7 @@ resource "docker_container" "foo" {
   must_run = false
 }
 `
+
 const testAccDockerContainerExitCodeConfig = `
 resource "docker_image" "foo" {
 name = "busybox:latest"

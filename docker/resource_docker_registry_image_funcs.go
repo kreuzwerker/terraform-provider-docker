@@ -37,7 +37,6 @@ type internalPushImageOptions struct {
 }
 
 func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBuildOptions {
-
 	mapOfInterfacesToMapOfStrings := func(mapOfInterfaces map[string]interface{}) map[string]string {
 		mapOfStrings := make(map[string]string, len(mapOfInterfaces))
 		for k, v := range mapOfInterfaces {
@@ -133,7 +132,6 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 }
 
 func buildDockerRegistryImage(client *client.Client, buildOptions map[string]interface{}, fqName string) error {
-
 	type ErrorDetailMessage struct {
 		Code    int    `json:"code,omitempty"`
 		Message string `json:"message,omitempty"`
@@ -213,7 +211,6 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 	defer tw.Close()
 
 	err = filepath.Walk(buildContext, func(file string, info os.FileInfo, err error) error {
-
 		// return on any error
 		if err != nil {
 			return err
@@ -254,7 +251,6 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		f.Close()
 
 		return nil
-
 	})
 
 	return tmpFile.Name(), nil
@@ -358,7 +354,6 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 	}
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return fmt.Errorf("Error during registry request: %s", err)
 	}
@@ -376,7 +371,6 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 			params.Set("service", auth["service"])
 			params.Set("scope", auth["scope"])
 			tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-
 			if err != nil {
 				return fmt.Errorf("Error creating registry request: %s", err)
 			}
@@ -386,7 +380,6 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 			}
 
 			tokenResponse, err := client.Do(tokenRequest)
-
 			if err != nil {
 				return fmt.Errorf("Error during registry request: %s", err)
 			}

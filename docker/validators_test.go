@@ -50,6 +50,7 @@ func TestValidateFloatRatio(t *testing.T) {
 		t.Fatalf("%v should be an invalid float greater than 1.0", v)
 	}
 }
+
 func TestValidateStringIsFloatRatio(t *testing.T) {
 	v := "0.9"
 	if _, error := validateStringIsFloatRatio()(v, "name"); error != nil {
@@ -86,6 +87,7 @@ func TestValidateStringIsFloatRatio(t *testing.T) {
 		t.Fatalf("%v should be an invalid float because it is an int out of range", v)
 	}
 }
+
 func TestValidateDurationGeq0(t *testing.T) {
 	v := "1ms"
 	if _, error := validateDurationGeq0()(v, "name"); error != nil {
