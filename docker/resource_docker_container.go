@@ -198,6 +198,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Computed: true, // https://github.com/kreuzwerker/terraform-provider-docker/issues/14
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
 					// treat "" as a no-op, which is Docker's default behavior
 					if newV == "" {
