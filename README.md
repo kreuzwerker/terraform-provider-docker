@@ -16,17 +16,17 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-docker`
+Clone repository to: `$GOPATH/src/github.com/kreuzwerker/terraform-provider-docker`
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-docker
+$ mkdir -p $GOPATH/src/github.com/kreuzwerker; cd $GOPATH/src/github.com/kreuzwerker
+$ git clone git@github.com:kreuzwerker/terraform-provider-docker
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-docker
+$ cd $GOPATH/src/github.com/kreuzwerker/terraform-provider-docker
 $ make build
 ```
 
