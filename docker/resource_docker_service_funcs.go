@@ -61,7 +61,6 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 	marshalledAuth := retrieveAndMarshalAuth(d, meta, "create")
 	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
 	serviceOptions.QueryRegistry = true
-	log.Printf("[DEBUG] Dummy log\n")
 	log.Printf("[DEBUG] Passing registry auth '%s'", serviceOptions.EncodedRegistryAuth)
 
 	service, err := client.ServiceCreate(context.Background(), serviceSpec, serviceOptions)
