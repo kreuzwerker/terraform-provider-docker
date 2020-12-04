@@ -8,8 +8,7 @@ on:
   pull_request:
     types: ['opened', 'synchronize']
     paths:
-      - '**.go'
-      - 'vendor/**'
+      - 'website/**'
       - '.github/workflows/**'
 
 env:
