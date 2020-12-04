@@ -1,38 +1,40 @@
----
-name: Website
+## These checks will be superseded by documentation.yml
+## when the provider documentation layout is moved to
+## the Terraform Registry layout.
+name: Website Checks
 on:
   push:
     branches:
       - master
-      - "release/**"
+      - 'release/**'
   pull_request:
-    types: ['opened', 'synchronize']
     paths:
-      - '**.go'
-      - 'vendor/**'
-      - '.github/workflows/**'
-
-env:
-  GO_VERSION: "1.15"
-  GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
+      - .github/workflows/website.yaml
+      - website/docs/**
 
 jobs:
-  test:
+  markdown-link-check:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        name: markdown-link-check website/docs/**/*.markdown
         with:
-          go-version: '1.15'
-      - run: bash scripts/gogetcookie.sh
-      - run: |
-          cat /etc/issue
-          echo "whoami" && whoami
-          sudo mkdir -p /go && sudo chown -R $(whoami) /go
-          export GOPATH="/go"
-          echo "GOPATH: $GOPATH"
-          make website-test
-
-
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          folder-path: 'website/docs'
+          file-extension: '.markdown'
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        name: markdown-link-check website/docs/**/*.md
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          folder-path: 'website/docs'
+          file-extension: '.md'
+  markdown-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: avto-dev/markdown-lint@v1
+        with:
+          args: 'website/docs'
