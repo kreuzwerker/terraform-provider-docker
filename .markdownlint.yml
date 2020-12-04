@@ -2,10 +2,6 @@
 # https://github.com/DavidAnson/markdownlint#configuration
 
 default: true
-MD007:
-  indent: 4
-MD010:
-  code_blocks: false
 
 # Disabled Rules
 # https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md
