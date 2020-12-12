@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"encoding/base64"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -252,7 +251,6 @@ func resourceDockerServiceDelete(d *schema.ResourceData, meta interface{}) error
 // fetchDockerService fetches a service by its name or id
 func fetchDockerService(ID string, name string, client *client.Client) (*swarm.Service, error) {
 	apiServices, err := client.ServiceList(context.Background(), types.ServiceListOptions{})
-
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching service information from Docker: %s", err)
 	}
@@ -599,7 +597,6 @@ func terminalState(state swarm.TaskState) bool {
 //////// Mappers
 // createServiceSpec creates the service spec: https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
-
 	serviceSpec := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name: d.Get("name").(string),

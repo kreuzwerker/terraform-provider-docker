@@ -22,9 +22,9 @@ func resourceDockerContainer() *schema.Resource {
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
 				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					//TODO do the ohter V0-to-V1 migration, unless we're okay
-					//with breaking for users who straggled on their docker
-					//provider version
+					// TODO do the ohter V0-to-V1 migration, unless we're okay
+					// with breaking for users who straggled on their docker
+					// provider version
 
 					return migrateContainerLabels(rawState), nil
 				},

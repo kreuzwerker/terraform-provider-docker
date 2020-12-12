@@ -206,7 +206,7 @@ func testAccDockerImageDestroy(s *terraform.State) error {
 func TestAccDockerImage_build(t *testing.T) {
 	wd, _ := os.Getwd()
 	dfPath := path.Join(wd, "Dockerfile")
-	ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0644)
+	ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644)
 	defer os.Remove(dfPath)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

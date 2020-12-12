@@ -1,10 +1,9 @@
 package docker
 
 import (
+	"context"
 	"encoding/base64"
 	"log"
-
-	"context"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -55,8 +54,8 @@ func resourceDockerSecret() *schema.Resource {
 
 func resourceDockerSecretV0() *schema.Resource {
 	return &schema.Resource{
-		//This is only used for state migration, so the CRUD
-		//callbacks are no longer relevant
+		// This is only used for state migration, so the CRUD
+		// callbacks are no longer relevant
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -111,7 +110,6 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 	secret, _, err := client.SecretInspectWithRaw(context.Background(), d.Id())
-
 	if err != nil {
 		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
 		d.SetId("")
@@ -128,7 +126,6 @@ func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 func resourceDockerSecretDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 	err := client.SecretRemove(context.Background(), d.Id())
-
 	if err != nil {
 		return err
 	}

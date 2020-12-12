@@ -30,7 +30,7 @@ func TestMigrateServiceLabelState_empty_labels(t *testing.T) {
 		},
 	}
 
-	//first validate that we build that correctly
+	// first validate that we build that correctly
 	v0Config := terraform.NewResourceConfigRaw(v0State)
 	warns, errs := resourceDockerServiceV0().Validate(v0Config)
 	if len(warns) > 0 || len(errs) > 0 {
@@ -83,7 +83,7 @@ func TestMigrateServiceLabelState_with_labels(t *testing.T) {
 		},
 	}
 
-	//first validate that we build that correctly
+	// first validate that we build that correctly
 	v0Config := terraform.NewResourceConfigRaw(v0State)
 	warns, errs := resourceDockerServiceV0().Validate(v0Config)
 	if len(warns) > 0 || len(errs) > 0 {

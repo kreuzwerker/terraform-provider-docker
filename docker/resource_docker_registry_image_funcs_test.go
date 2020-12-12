@@ -15,7 +15,6 @@ import (
 )
 
 func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
-
 	assert := func(condition bool, msg string) {
 		if !condition {
 			t.Errorf("assertion failed: wrong build parameter %s", msg)
@@ -102,7 +101,6 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 			},
 		},
 	})
-
 }
 
 func TestAccDockerRegistryImageResource_build(t *testing.T) {

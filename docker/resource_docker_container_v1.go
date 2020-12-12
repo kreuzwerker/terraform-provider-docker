@@ -4,8 +4,8 @@ import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
 func resourceDockerContainerV1() *schema.Resource {
 	return &schema.Resource{
-		//This is only used for state migration, so the CRUD
-		//callbacks are no longer relevant
+		// This is only used for state migration, so the CRUD
+		// callbacks are no longer relevant
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
 			"name": {

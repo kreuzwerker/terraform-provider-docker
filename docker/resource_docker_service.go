@@ -439,7 +439,7 @@ func resourceDockerService() *schema.Resource {
 													Type:         schema.TypeInt,
 													Description:  "Represents represents the FileMode of the file",
 													Optional:     true,
-													Default:      0444,
+													Default:      0o444,
 													ValidateFunc: validateIntegerGeqThan(0),
 												},
 											},
@@ -482,7 +482,7 @@ func resourceDockerService() *schema.Resource {
 													Type:         schema.TypeInt,
 													Description:  "Represents represents the FileMode of the file",
 													Optional:     true,
-													Default:      0444,
+													Default:      0o444,
 													ValidateFunc: validateIntegerGeqThan(0),
 												},
 											},
@@ -958,8 +958,8 @@ func resourceDockerService() *schema.Resource {
 
 func resourceDockerServiceV0() *schema.Resource {
 	return &schema.Resource{
-		//This is only used for state migration, so the CRUD
-		//callbacks are no longer relevant
+		// This is only used for state migration, so the CRUD
+		// callbacks are no longer relevant
 		Schema: map[string]*schema.Schema{
 			"auth": {
 				Type:     schema.TypeMap,

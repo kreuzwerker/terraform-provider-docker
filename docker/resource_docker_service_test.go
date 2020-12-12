@@ -1,14 +1,13 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-
-	"context"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"

@@ -13,55 +13,55 @@ func dataSourceDockerNetwork() *schema.Resource {
 		Read: dataSourceDockerNetworkRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"id": &schema.Schema{
+			"id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"driver": &schema.Schema{
+			"driver": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"options": &schema.Schema{
+			"options": {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
 
-			"internal": &schema.Schema{
+			"internal": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
 
-			"ipam_config": &schema.Schema{
+			"ipam_config": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"subnet": &schema.Schema{
+						"subnet": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
 
-						"ip_range": &schema.Schema{
+						"ip_range": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
 
-						"gateway": &schema.Schema{
+						"gateway": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
 
-						"aux_address": &schema.Schema{
+						"aux_address": {
 							Type:     schema.TypeMap,
 							Optional: true,
 							ForceNew: true,
@@ -70,7 +70,7 @@ func dataSourceDockerNetwork() *schema.Resource {
 				},
 			},
 
-			"scope": &schema.Schema{
+			"scope": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -81,7 +81,6 @@ func dataSourceDockerNetwork() *schema.Resource {
 type ipamMap map[string]interface{}
 
 func dataSourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error {
-
 	name, nameOk := d.GetOk("name")
 	_, idOk := d.GetOk("id")
 
@@ -92,7 +91,6 @@ func dataSourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error
 	client := meta.(*ProviderConfig).DockerClient
 
 	network, err := client.NetworkInspect(context.Background(), name.(string), types.NetworkInspectOptions{})
-
 	if err != nil {
 		return fmt.Errorf("Could not find docker network: %s", err)
 	}

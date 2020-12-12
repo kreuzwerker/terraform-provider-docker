@@ -47,9 +47,11 @@ type byPort []mappedPort
 func (s byPort) Len() int {
 	return len(s)
 }
+
 func (s byPort) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
+
 func (s byPort) Less(i, j int) bool {
 	return s[i].internal < s[j].internal
 }

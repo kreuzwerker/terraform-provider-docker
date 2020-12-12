@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -16,8 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"context"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -28,9 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-var (
-	creationTime time.Time
-)
+var creationTime time.Time
 
 func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) error {
 	var err error
@@ -431,9 +428,9 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 			buf := new(bytes.Buffer)
 			tw := tar.NewWriter(buf)
 			if executable {
-				mode = 0744
+				mode = 0o744
 			} else {
-				mode = 0644
+				mode = 0o644
 			}
 			hdr := &tar.Header{
 				Name: file,
@@ -809,9 +806,11 @@ type byPortAndProtocol []string
 func (s byPortAndProtocol) Len() int {
 	return len(s)
 }
+
 func (s byPortAndProtocol) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
+
 func (s byPortAndProtocol) Less(i, j int) bool {
 	iSplit := strings.Split(string(s[i]), "/")
 	iPort, _ := strconv.Atoi(iSplit[0])
@@ -821,7 +820,7 @@ func (s byPortAndProtocol) Less(i, j int) bool {
 }
 
 func flattenContainerPorts(in nat.PortMap) []interface{} {
-	var out = make([]interface{}, 0)
+	out := make([]interface{}, 0)
 
 	var internalPortKeys []string
 	for portAndProtocolKeys := range in {
@@ -846,8 +845,9 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	}
 	return out
 }
+
 func flattenContainerNetworks(in *types.NetworkSettings) []interface{} {
-	var out = make([]interface{}, 0)
+	out := make([]interface{}, 0)
 	if in == nil || in.Networks == nil || len(in.Networks) == 0 {
 		return out
 	}
@@ -912,7 +912,6 @@ func mapTypeMapValsToStringSlice(typeMap map[string]interface{}) []string {
 
 func fetchDockerContainer(ID string, client *client.Client) (*types.Container, error) {
 	apiContainers, err := client.ContainerList(context.Background(), types.ContainerListOptions{All: true})
-
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching container information from Docker: %s\n", err)
 	}
@@ -973,6 +972,7 @@ func ulimitsToDockerUlimits(extraUlimits *schema.Set) []*units.Ulimit {
 
 	return retExtraUlimits
 }
+
 func extraHostsSetToDockerExtraHosts(extraHosts *schema.Set) []string {
 	retExtraHosts := []string{}
 

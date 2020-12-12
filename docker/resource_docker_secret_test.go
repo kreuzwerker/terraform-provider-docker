@@ -1,10 +1,9 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"testing"
-
-	"context"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"

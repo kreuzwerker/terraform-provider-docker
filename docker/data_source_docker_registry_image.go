@@ -65,7 +65,6 @@ func dataSourceDockerRegistryImageRead(d *schema.ResourceData, meta interface{})
 	}
 
 	digest, err := getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, false)
-
 	if err != nil {
 		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, true)
 		if err != nil {
@@ -116,7 +115,6 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 	}
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return "", fmt.Errorf("Error during registry request: %s", err)
 	}
@@ -134,7 +132,6 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 			params.Set("service", auth["service"])
 			params.Set("scope", auth["scope"])
 			tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-
 			if err != nil {
 				return "", fmt.Errorf("Error creating registry request: %s", err)
 			}
@@ -144,7 +141,6 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 			}
 
 			tokenResponse, err := client.Do(tokenRequest)
-
 			if err != nil {
 				return "", fmt.Errorf("Error during registry request: %s", err)
 			}
@@ -166,7 +162,6 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 
 			req.Header.Set("Authorization", "Bearer "+token.Token)
 			digestResponse, err := client.Do(req)
-
 			if err != nil {
 				return "", fmt.Errorf("Error during registry request: %s", err)
 			}
