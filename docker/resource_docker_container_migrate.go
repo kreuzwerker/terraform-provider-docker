@@ -97,7 +97,7 @@ func updateV0ToV1PortsOrder(is *terraform.InstanceState, meta interface{}) error
 	// map the sorted ports to an output structure tf can write
 	outputPorts := make([]interface{}, 0)
 	for _, mappedPort := range portsMapped {
-		outputPort := make(map[string]interface{}, 0)
+		outputPort := make(map[string]interface{})
 		outputPort["internal"] = mappedPort.internal
 		outputPort["external"] = mappedPort.external
 		outputPort["ip"] = mappedPort.ip

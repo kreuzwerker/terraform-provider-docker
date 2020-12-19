@@ -206,7 +206,7 @@ func resourceDockerNetworkRemoveRefreshFunc(
 // TODO mavogel: separate structure file
 // TODO 2: seems like we can replace the set hash generation with plain lists -> #219
 func flattenIpamConfigSpec(in []network.IPAMConfig) *schema.Set { // []interface{} {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		log.Printf("[DEBUG] flatten ipam %d: %#v", i, v)
 		m := make(map[string]interface{})

@@ -110,7 +110,7 @@ func dataSourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error
 			"ip_range":    config.IPRange,
 		}
 	}
-	err = d.Set("ipam_config", ipam)
+	d.Set("ipam_config", ipam)
 
 	return nil
 }
