@@ -83,7 +83,7 @@ data is stored in them. See [the docker documentation](https://docs.docker.com/n
 * `host` - (Optional, block) See [Extra Hosts](#extra_hosts-1) below for
   details.
 * `privileged` - (Optional, boolean) Run container in privileged mode.
-* `devices` - (Optional, boolean) See [Devices](#devices-1) below for details.
+* `devices` - (Optional, block) See [Devices](#devices-1) below for details.
 * `publish_all_ports` - (Optional, boolean) Publish all ports of the container.
 * `volumes` - (Optional, block) See [Volumes](#volumes-1) below for details.
 * `memory` - (Optional, int) The memory limit for the container in MBs.
