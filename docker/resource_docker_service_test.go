@@ -63,12 +63,10 @@ func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
 	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "")
 }
 
-func checkAttribute(t *testing.T, name, actual, expected string) error {
+func checkAttribute(t *testing.T, name, actual, expected string) {
 	if actual != expected {
 		t.Fatalf("bad authconfig attribute for '%q'\nExpected: %s\n     Got: %s", name, expected, actual)
 	}
-
-	return nil
 }
 
 func TestDockerImageNameSuppress(t *testing.T) {

@@ -249,7 +249,7 @@ func resourceDockerNetworkV0() *schema.Resource {
 	}
 }
 
-func suppressIfIPAMConfigWithIpv6Changes() schema.SchemaDiffSuppressFunc {
+func suppressIfIPAMConfigWithIpv6Changes() schema.SchemaDiffSuppressFunc { //nolint:deadcode,unused
 	return func(k, old, new string, d *schema.ResourceData) bool {
 		// the initial case when the resource is created
 		if old == "" && new != "" {

@@ -259,7 +259,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 	})
 }
 
-func testAccNetworkIPv6(network *types.NetworkResource, internal bool) resource.TestCheckFunc {
+func testAccNetworkIPv6(network *types.NetworkResource, internal bool) resource.TestCheckFunc { //nolint:unused
 	return func(s *terraform.State) error {
 		if !network.EnableIPv6 {
 			return fmt.Errorf("Bad value for attribute 'ipv6': %t", network.EnableIPv6)
@@ -317,7 +317,7 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 	})
 }
 
-func testAccNetworkLabel(network *types.NetworkResource, name string, value string) resource.TestCheckFunc {
+func testAccNetworkLabel(network *types.NetworkResource, name string, value string) resource.TestCheckFunc { //nolint:deadcode,unused
 	return func(s *terraform.State) error {
 		if network.Labels[name] != value {
 			return fmt.Errorf("Bad value for label '%s': %s", name, network.Labels[name])

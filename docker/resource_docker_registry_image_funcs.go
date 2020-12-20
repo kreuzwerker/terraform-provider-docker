@@ -178,6 +178,9 @@ func buildDockerRegistryImage(client *client.Client, buildOptions map[string]int
 	}
 	defer os.Remove(dockerContextTarPath)
 	dockerBuildContext, err := os.Open(dockerContextTarPath)
+	if err != nil {
+		return err
+	}
 	defer dockerBuildContext.Close()
 
 	buildResponse, err := client.ImageBuild(context.Background(), dockerBuildContext, imageBuildOptions)
@@ -210,7 +213,7 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 	tw := tar.NewWriter(tmpFile)
 	defer tw.Close()
 
-	err = filepath.Walk(buildContext, func(file string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(buildContext, func(file string, info os.FileInfo, err error) error {
 		// return on any error
 		if err != nil {
 			return err
@@ -251,7 +254,9 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		f.Close()
 
 		return nil
-	})
+	}); err != nil {
+		return "", err
+	}
 
 	return tmpFile.Name(), nil
 }
@@ -262,7 +267,9 @@ func getDockerImageContextTarHash(dockerContextTarPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	hasher.Write(s)
+	if _, err := hasher.Write(s); err != nil {
+		return "", err
+	}
 	contextHash := hex.EncodeToString(hasher.Sum(nil))
 	return contextHash, nil
 }
@@ -295,7 +302,9 @@ func pushDockerRegistryImage(client *client.Client, pushOpts internalPushImageOp
 		if err == io.EOF {
 			break
 		}
-		json.Unmarshal(streamBytes, &errorMessage)
+		if err := json.Unmarshal(streamBytes, &errorMessage); err != nil {
+			return err
+		}
 		if errorMessage.Error != "" {
 			return fmt.Errorf("Error pushing image: %s", errorMessage.Error)
 		}
@@ -401,6 +410,9 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 
 			req.Header.Set("Authorization", "Bearer "+token.Token)
 			oauthResp, err := client.Do(req)
+			if err != nil {
+				return err
+			}
 			switch oauthResp.StatusCode {
 			case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
 				return nil

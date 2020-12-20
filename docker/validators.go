@@ -49,9 +49,9 @@ func validateFloatRatio() schema.SchemaValidateFunc {
 
 func validateStringIsFloatRatio() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
-		switch v.(type) {
+		switch t := v.(type) {
 		case string:
-			stringValue := v.(string)
+			stringValue := t
 			value, err := strconv.ParseFloat(stringValue, 64)
 			if err != nil {
 				errors = append(errors, fmt.Errorf(
@@ -62,7 +62,7 @@ func validateStringIsFloatRatio() schema.SchemaValidateFunc {
 					"%q has to be between 0.0 and 1.0", k))
 			}
 		case int:
-			value := float64(v.(int))
+			value := float64(t)
 			if value < 0.0 || value > 1.0 {
 				errors = append(errors, fmt.Errorf(
 					"%q has to be between 0.0 and 1.0", k))

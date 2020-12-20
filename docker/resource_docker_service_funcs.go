@@ -1135,7 +1135,8 @@ func createLogDriver(v interface{}) (*swarm.Driver, error) {
 			if rawOptions, ok := rawLogging["options"]; ok {
 				logDriver.Options = mapTypeMapValsToString(rawOptions.(map[string]interface{}))
 			}
-			return &logDriver, nil
+			// TODO SA4004: the surrounding loop is unconditionally terminated (staticcheck)
+			return &logDriver, nil //nolint:staticcheck
 		}
 	}
 	return nil, nil
@@ -1329,7 +1330,7 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 
 // retrieveAndMarshalAuth retrieves and marshals the service registry auth
 func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType string) []byte {
-	auth := types.AuthConfig{}
+	var auth types.AuthConfig
 	if v, ok := d.GetOk("auth"); ok {
 		auth = authToServiceAuth(v.(map[string]interface{}))
 	} else {
@@ -1407,8 +1408,6 @@ var (
 		swarm.TaskStateFailed:   12,
 		swarm.TaskStateRejected: 13,
 	}
-
-	longestState int
 )
 
 // serviceCreatePendingStates are the pending states for the creation of a service

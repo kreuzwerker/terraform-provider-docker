@@ -25,9 +25,7 @@ func flattenTaskSpec(in swarm.TaskSpec) []interface{} {
 	if in.Placement != nil {
 		m["placement"] = flattenTaskPlacement(in.Placement)
 	}
-	if in.ForceUpdate >= 0 {
-		m["force_update"] = in.ForceUpdate
-	}
+	m["force_update"] = in.ForceUpdate
 	if len(in.Runtime) > 0 {
 		m["runtime"] = in.Runtime
 	}
@@ -56,7 +54,7 @@ func flattenServiceMode(in swarm.ServiceMode) []interface{} {
 }
 
 func flattenReplicated(in *swarm.ReplicatedService) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
 	if in != nil {
 		if in.Replicas != nil {
@@ -69,7 +67,7 @@ func flattenReplicated(in *swarm.ReplicatedService) []interface{} {
 }
 
 func flattenServiceUpdateOrRollbackConfig(in *swarm.UpdateConfig) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	if in == nil {
 		return out
 	}
@@ -86,7 +84,7 @@ func flattenServiceUpdateOrRollbackConfig(in *swarm.UpdateConfig) []interface{} 
 }
 
 func flattenServiceEndpoint(in swarm.Endpoint) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
 	m["mode"] = string(in.Spec.Mode)
 	m["ports"] = flattenServicePorts(in.Ports)
@@ -96,7 +94,7 @@ func flattenServiceEndpoint(in swarm.Endpoint) []interface{} {
 }
 
 func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
 	m["mode"] = string(in.Mode)
 	m["ports"] = flattenServicePorts(in.Ports)
@@ -107,7 +105,7 @@ func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
 
 ///// start TaskSpec
 func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
 	if len(in.Image) > 0 {
 		m["image"] = in.Image
@@ -175,14 +173,14 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 
 func flattenPrivileges(in *swarm.Privileges) []interface{} {
 	if in == nil {
-		return make([]interface{}, 0, 0)
+		return make([]interface{}, 0)
 	}
 
-	out := make([]interface{}, 1, 1)
+	out := make([]interface{}, 1)
 	m := make(map[string]interface{})
 
 	if in.CredentialSpec != nil {
-		credSpec := make([]interface{}, 1, 1)
+		credSpec := make([]interface{}, 1)
 		internal := make(map[string]interface{})
 		internal["file"] = in.CredentialSpec.File
 		internal["registry"] = in.CredentialSpec.Registry
@@ -190,7 +188,7 @@ func flattenPrivileges(in *swarm.Privileges) []interface{} {
 		m["credential_spec"] = credSpec
 	}
 	if in.SELinuxContext != nil {
-		seLinuxContext := make([]interface{}, 1, 1)
+		seLinuxContext := make([]interface{}, 1)
 		internal := make(map[string]interface{})
 		internal["disable"] = in.SELinuxContext.Disable
 		internal["user"] = in.SELinuxContext.User
@@ -205,7 +203,7 @@ func flattenPrivileges(in *swarm.Privileges) []interface{} {
 }
 
 func flattenServiceMounts(in []mount.Mount) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
 		m["target"] = v.Target
@@ -213,8 +211,8 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 		m["type"] = string(v.Type)
 		m["read_only"] = v.ReadOnly
 		if v.BindOptions != nil {
-			bindOptions := make([]interface{}, 0, 0)
-			bindOptionsItem := make(map[string]interface{}, 0)
+			bindOptions := make([]interface{}, 0)
+			bindOptionsItem := make(map[string]interface{})
 
 			if len(v.BindOptions.Propagation) > 0 {
 				bindOptionsItem["propagation"] = string(v.BindOptions.Propagation)
@@ -225,8 +223,8 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 		}
 
 		if v.VolumeOptions != nil {
-			volumeOptions := make([]interface{}, 0, 0)
-			volumeOptionsItem := make(map[string]interface{}, 0)
+			volumeOptions := make([]interface{}, 0)
+			volumeOptionsItem := make(map[string]interface{})
 
 			volumeOptionsItem["no_copy"] = v.VolumeOptions.NoCopy
 			volumeOptionsItem["labels"] = mapToLabelSet(v.VolumeOptions.Labels)
@@ -242,8 +240,8 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 		}
 
 		if v.TmpfsOptions != nil {
-			tmpfsOptions := make([]interface{}, 0, 0)
-			tmpfsOptionsItem := make(map[string]interface{}, 0)
+			tmpfsOptions := make([]interface{}, 0)
+			tmpfsOptionsItem := make(map[string]interface{})
 
 			tmpfsOptionsItem["size_bytes"] = int(v.TmpfsOptions.SizeBytes)
 			tmpfsOptionsItem["mode"] = v.TmpfsOptions.Mode.Perm
@@ -263,10 +261,10 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 
 func flattenServiceHealthcheck(in *container.HealthConfig) []interface{} {
 	if in == nil {
-		return make([]interface{}, 0, 0)
+		return make([]interface{}, 0)
 	}
 
-	out := make([]interface{}, 1, 1)
+	out := make([]interface{}, 1)
 	m := make(map[string]interface{})
 	if len(in.Test) > 0 {
 		m["test"] = in.Test
@@ -280,7 +278,7 @@ func flattenServiceHealthcheck(in *container.HealthConfig) []interface{} {
 }
 
 func flattenServiceHosts(in []string) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
 		split := strings.Split(v, ":")
@@ -297,10 +295,10 @@ func flattenServiceHosts(in []string) *schema.Set {
 
 func flattenServiceDNSConfig(in *swarm.DNSConfig) []interface{} {
 	if in == nil {
-		return make([]interface{}, 0, 0)
+		return make([]interface{}, 0)
 	}
 
-	out := make([]interface{}, 1, 1)
+	out := make([]interface{}, 1)
 	m := make(map[string]interface{})
 	if len(in.Nameservers) > 0 {
 		m["nameservers"] = in.Nameservers
@@ -316,7 +314,7 @@ func flattenServiceDNSConfig(in *swarm.DNSConfig) []interface{} {
 }
 
 func flattenServiceSecrets(in []*swarm.SecretReference) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
 		m["secret_id"] = v.SecretID
@@ -343,7 +341,7 @@ func flattenServiceSecrets(in []*swarm.SecretReference) *schema.Set {
 }
 
 func flattenServiceConfigs(in []*swarm.ConfigReference) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
 		m["config_id"] = v.ConfigID
@@ -370,7 +368,7 @@ func flattenServiceConfigs(in []*swarm.ConfigReference) *schema.Set {
 }
 
 func flattenTaskResources(in *swarm.ResourceRequirements) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	if in != nil {
 		m := make(map[string]interface{})
 		m["limits"] = flattenResourceLimitsOrReservations(in.Limits)
@@ -381,7 +379,7 @@ func flattenTaskResources(in *swarm.ResourceRequirements) []interface{} {
 }
 
 func flattenResourceLimitsOrReservations(in *swarm.Resources) []interface{} {
-	out := make([]interface{}, 0, 0)
+	out := make([]interface{}, 0)
 	if in != nil {
 		m := make(map[string]interface{})
 		m["nano_cpus"] = in.NanoCPUs
@@ -393,8 +391,8 @@ func flattenResourceLimitsOrReservations(in *swarm.Resources) []interface{} {
 }
 
 func flattenResourceGenericResource(in []swarm.GenericResource) []interface{} {
-	out := make([]interface{}, 0, 0)
-	if in != nil && len(in) > 0 {
+	out := make([]interface{}, 0)
+	if len(in) > 0 {
 		m := make(map[string]interface{})
 		named := make([]string, 0)
 		discrete := make([]string, 0)
@@ -433,9 +431,9 @@ func flattenTaskRestartPolicy(in *swarm.RestartPolicy) map[string]interface{} {
 
 func flattenTaskPlacement(in *swarm.Placement) []interface{} {
 	if in == nil {
-		return make([]interface{}, 0, 0)
+		return make([]interface{}, 0)
 	}
-	out := make([]interface{}, 1, 1)
+	out := make([]interface{}, 1)
 	m := make(map[string]interface{})
 	if len(in.Constraints) > 0 {
 		m["constraints"] = newStringSet(schema.HashString, in.Constraints)
@@ -451,11 +449,11 @@ func flattenTaskPlacement(in *swarm.Placement) []interface{} {
 }
 
 func flattenPlacementPrefs(in []swarm.PlacementPreference) *schema.Set {
-	if in == nil || len(in) == 0 {
-		return schema.NewSet(schema.HashString, make([]interface{}, 0, 0))
+	if len(in) == 0 {
+		return schema.NewSet(schema.HashString, make([]interface{}, 0))
 	}
 
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		out[i] = v.Spread.SpreadDescriptor
 	}
@@ -463,7 +461,7 @@ func flattenPlacementPrefs(in []swarm.PlacementPreference) *schema.Set {
 }
 
 func flattenPlacementPlatforms(in []swarm.Platform) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
 		m["architecture"] = v.Architecture
@@ -477,7 +475,7 @@ func flattenPlacementPlatforms(in []swarm.Platform) *schema.Set {
 }
 
 func flattenTaskNetworks(in []swarm.NetworkAttachmentConfig) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		out[i] = v.Target
 	}
@@ -486,10 +484,10 @@ func flattenTaskNetworks(in []swarm.NetworkAttachmentConfig) *schema.Set {
 
 func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 	if in == nil {
-		return make([]interface{}, 0, 0)
+		return make([]interface{}, 0)
 	}
 
-	out := make([]interface{}, 1, 1)
+	out := make([]interface{}, 1)
 	m := make(map[string]interface{})
 	m["name"] = in.Name
 	if len(in.Options) > 0 {
@@ -502,7 +500,7 @@ func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 ///// end TaskSpec
 ///// start EndpointSpec
 func flattenServicePorts(in []swarm.PortConfig) []interface{} {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
 		m["name"] = v.Name
@@ -530,7 +528,7 @@ func shortDur(d time.Duration) string {
 }
 
 func newStringSet(f schema.SchemaSetFunc, in []string) *schema.Set {
-	out := make([]interface{}, len(in), len(in))
+	out := make([]interface{}, len(in))
 	for i, v := range in {
 		out[i] = v
 	}
@@ -555,8 +553,8 @@ func mapStringSliceToMap(in []string) map[string]string {
 
 // mapStringStringToMapStringInterface maps a string string map to a string interface map
 func mapStringStringToMapStringInterface(in map[string]string) map[string]interface{} {
-	if in == nil || len(in) == 0 {
-		return make(map[string]interface{}, 0)
+	if len(in) == 0 {
+		return make(map[string]interface{})
 	}
 
 	mapped := make(map[string]interface{}, len(in))

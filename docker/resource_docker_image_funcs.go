@@ -39,7 +39,9 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 			return buf.String(), fmt.Errorf("Problem decoding message from docker daemon: %s", err)
 		}
 
-		m.Display(buf, false)
+		if err := m.Display(buf, false); err != nil {
+			return "", err
+		}
 
 		if m.Error != nil {
 			buildErr = fmt.Errorf("Unable to build image")
@@ -126,7 +128,6 @@ func searchLocalImages(data Data, imageName string) *types.ImageSummary {
 	}
 	if apiImage, ok := data.DockerImages[imageName+":latest"]; ok {
 		log.Printf("[DEBUG] found local image via imageName + latest: %v", imageName)
-		imageName = imageName + ":latest"
 		return apiImage
 	}
 	return nil
@@ -218,7 +219,9 @@ func pullImage(data *Data, client *client.Client, authConfig *AuthConfigs, image
 	defer out.Close()
 
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(out)
+	if _, err := buf.ReadFrom(out); err != nil {
+		return err
+	}
 	s := buf.String()
 	log.Printf("[DEBUG] pulled image %v: %v", image, s)
 

@@ -667,7 +667,9 @@ func TestAccDockerContainer_upload(t *testing.T) {
 		}
 
 		fbuf := new(bytes.Buffer)
-		fbuf.ReadFrom(tr)
+		if _, err := fbuf.ReadFrom(tr); err != nil {
+			return err
+		}
 		content := fbuf.String()
 
 		if content != "foo" {
@@ -729,7 +731,9 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 		}
 
 		fbuf := new(bytes.Buffer)
-		fbuf.ReadFrom(tr)
+		if _, err := fbuf.ReadFrom(tr); err != nil {
+			return err
+		}
 		content := fbuf.String()
 		if content != string(testFileContent) {
 			return fmt.Errorf("file content is invalid")
@@ -831,7 +835,9 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 			}
 
 			fbuf := new(bytes.Buffer)
-			fbuf.ReadFrom(tr)
+			if _, err := fbuf.ReadFrom(tr); err != nil {
+				return err
+			}
 			gotContent := fbuf.String()
 
 			if wantedContent != gotContent {
@@ -982,7 +988,9 @@ func TestAccDockerContainer_device(t *testing.T) {
 		}
 
 		fbuf := new(bytes.Buffer)
-		fbuf.ReadFrom(tr)
+		if _, err := fbuf.ReadFrom(tr); err != nil {
+			return err
+		}
 		content := fbuf.Bytes()
 
 		if len(content) != 10 {

@@ -38,7 +38,7 @@ func buildHTTPClientFromBytes(caPEMCert, certPEMBlock, keyPEMBlock []byte) (*htt
 		tlsConfig.Certificates = []tls.Certificate{tlsCert}
 	}
 
-	if caPEMCert == nil || len(caPEMCert) == 0 {
+	if len(caPEMCert) == 0 {
 		tlsConfig.InsecureSkipVerify = true
 	} else {
 		caPool := x509.NewCertPool()

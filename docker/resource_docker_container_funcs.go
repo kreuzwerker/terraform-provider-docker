@@ -559,7 +559,9 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 		if finishTime.After(creationTime) {
 			// It exited immediately, so error out so dependent containers
 			// aren't started
-			resourceDockerContainerDelete(d, meta)
+			if err := resourceDockerContainerDelete(d, meta); err != nil {
+				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+			}
 			return fmt.Errorf("Container %s exited after creation, error was: %s", apiContainer.ID, container.State.Error)
 		}
 
@@ -568,7 +570,9 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 
 	// Handle the case of the for loop above running its course
 	if !container.State.Running && d.Get("must_run").(bool) {
-		resourceDockerContainerDelete(d, meta)
+		if err := resourceDockerContainerDelete(d, meta); err != nil {
+			log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+		}
 		return fmt.Errorf("Container %s failed to be in running state", apiContainer.ID)
 	}
 
