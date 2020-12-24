@@ -74,7 +74,7 @@ To obtain the debug output, see the [Terraform documentation on debugging](https
 
 ### Important Factoids
 
-<!--- Are there anything atypical about your accounts that we should know? For example: Running in a Azure China/Germany/Government? --->
+<!--- Are there anything atypical about your setup that we should know? For example: Running the docker daemon with TLS? --->
 
 ### References
 
