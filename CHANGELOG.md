@@ -1,4 +1,4 @@
-## 2.8.0 (Unreleased)
+## 2.8.0 (November 11, 2020)
 
 IMPROVEMENTS
 * Add new resource docker_registry_image ([#249](https://github.com/terraform-providers/terraform-provider-docker/pull/249))
