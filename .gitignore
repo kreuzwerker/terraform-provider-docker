@@ -35,3 +35,7 @@ scripts/testing/certs
 
 # build outputs
 results
+
+# testing
+testing
+testing-mirror/registry.terraform.io/kreuzwerker/docker
