@@ -15,7 +15,7 @@ on:
 
 jobs:
   markdown-link-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: gaurav-nelson/github-action-markdown-link-check@v1
@@ -27,7 +27,7 @@ jobs:
           folder-path: 'website/docs'
           file-extension: '.markdown'
   markdown-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: avto-dev/markdown-lint@v1
