@@ -19,7 +19,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu:20.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
     steps:
@@ -29,7 +29,7 @@ jobs:
           go-version: '1.15'
       - run: cat /etc/issue
       - run: bash scripts/gogetcookie.sh
-      # locally: docker run -it ubuntu:20.04 bash (https://ubuntu.pkgs.org/20.04/docker-ce-stable-amd64/)
+      # locally: docker run -it ubuntu-20.04 bash (https://ubuntu.pkgs.org/20.04/docker-ce-stable-amd64/)
       - run: sudo apt-get update
       - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
       - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
