@@ -1,3 +1,14 @@
+## 2.9.0 (December 25, 2020)
+
+IMPROVEMENTS
+* Introduces golangci-lint (#13)
+
+BUG FIXES
+* docs: devices is a block, not a boolean (#33)
+* style: format with gofumpt (#11)
+* ci: fix website ci (#26)
+* fix: AuxAddress is not read from network and trigger a re-apply every time (#10)
+
 ## 2.8.0 (November 11, 2020)
 
 IMPROVEMENTS
