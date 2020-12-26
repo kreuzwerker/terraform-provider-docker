@@ -51,5 +51,8 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile
+website-link-check:
+	@scripts/markdown-link-check.sh
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check
 
