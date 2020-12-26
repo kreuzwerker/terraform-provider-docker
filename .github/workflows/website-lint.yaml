@@ -16,7 +16,7 @@ env:
   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
 
 jobs:
-  test:
+  website-lint-and-spellcheck:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
