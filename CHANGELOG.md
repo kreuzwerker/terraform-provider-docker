@@ -1,13 +1,13 @@
 ## 2.9.0 (December 25, 2020)
 
 IMPROVEMENTS
-* Introduces golangci-lint (#13)
+* Introduces golangci-lint ([#13](https://github.com/kreuzwerker/terraform-provider-docker/13))
 
 BUG FIXES
-* docs: devices is a block, not a boolean (#33)
-* style: format with gofumpt (#11)
-* ci: fix website ci (#26)
-* fix: AuxAddress is not read from network and trigger a re-apply every time (#10)
+* docs: devices is a block, not a boolean ([#33](https://github.com/kreuzwerker/terraform-provider-docker/33))
+* style: format with gofumpt ([#11](https://github.com/kreuzwerker/terraform-provider-docker/11))
+* ci: fix website ci ([#26](https://github.com/kreuzwerker/terraform-provider-docker/26))
+* fix: AuxAddress is not read from network and trigger a re-apply every time ([#10](https://github.com/kreuzwerker/terraform-provider-docker/10))
 
 ## 2.8.0 (November 11, 2020)
 
@@ -16,7 +16,7 @@ IMPROVEMENTS
 * Added complete support for Docker credential helpers ([#253](https://github.com/terraform-providers/terraform-provider-docker/pull/253))
 
 BUG FIXES
-* Prevent provider error if auth config is incomplete ([#251](https://github.com/terraform-providers/terraform-provider-docker/pull/))
+* Prevent provider error if auth config is incomplete ([#251](https://github.com/terraform-providers/terraform-provider-docker/pull/251))
 * Resolve ([#255](https://github.com/terraform-providers/terraform-provider-docker/pull/255) by conditionally adding port binding ([#293](https://github.com/terraform-providers/terraform-provider-docker/pull/293))
 
 DOCS
@@ -31,10 +31,8 @@ CI
 ## 2.7.2 (August 03, 2020)
 
 BUG FIXES
-* Fix port objects with the same internal port but different protocol trigger recreation of container ([#274](https://github.com/terraform-providers/
-terraform-provider-docker/pull/274))
-* Fix panic to migrate schema of docker_container from v1 to v2 ([#271](https://github.com/terraform-providers/
-terraform-provider-docker/pull/271))
+* Fix port objects with the same internal port but different protocol trigger recreation of container ([#274](https://github.com/terraform-providers/terraform-provider-docker/pull/274))
+* Fix panic to migrate schema of docker_container from v1 to v2 ([#271](https://github.com/terraform-providers/terraform-provider-docker/pull/271))
 * Set `Computed: true` and separate files of resourceDockerContainerV1 ([#272](https://github.com/terraform-providers/terraform-provider-docker/pull/272))
 * Prevent force recreate of container about some attributes ([#269](https://github.com/terraform-providers/terraform-provider-docker/pull/269))
 
