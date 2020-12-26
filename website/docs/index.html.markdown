@@ -88,7 +88,7 @@ When passing in a config file either the corresponding `auth` string of the repo
 credential helpers (see [here](https://github.com/docker/docker-credential-helpers#available-programs)) are
 used to retrieve the authentication credentials.
 
-You can still use the enviroment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
+You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
 An example content of the file `~/.docker/config.json` on macOS may look like follows:
 
@@ -113,15 +113,15 @@ directly with the content of the files for connecting to the Docker host via TLS
 
 ```hcl
 provider "docker" {
-  host    = "tcp://your-host-ip:2376/"
+  host = "tcp://your-host-ip:2376/"
 
   # -> specify either
   cert_path = "${pathexpand("~/.docker")}"
 
   # -> or the following
-  ca_material = "${file(pathexpand("~/.docker/ca.pem"))}" # this can be omitted
+  ca_material   = "${file(pathexpand("~/.docker/ca.pem"))}" # this can be omitted
   cert_material = "${file(pathexpand("~/.docker/cert.pem"))}"
-  key_material = "${file(pathexpand("~/.docker/key.pem"))}"
+  key_material  = "${file(pathexpand("~/.docker/key.pem"))}"
 }
 ```
 
