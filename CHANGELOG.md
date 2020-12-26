@@ -1,13 +1,13 @@
 ## 2.9.0 (December 25, 2020)
 
 IMPROVEMENTS
-* Introduces golangci-lint ([#13](https://github.com/kreuzwerker/terraform-provider-docker/13))
+* Introduces golangci-lint ([#13](https://github.com/kreuzwerker/terraform-provider-docker/issues/13))
 
 BUG FIXES
-* docs: devices is a block, not a boolean ([#33](https://github.com/kreuzwerker/terraform-provider-docker/33))
-* style: format with gofumpt ([#11](https://github.com/kreuzwerker/terraform-provider-docker/11))
-* ci: fix website ci ([#26](https://github.com/kreuzwerker/terraform-provider-docker/26))
-* fix: AuxAddress is not read from network and trigger a re-apply every time ([#10](https://github.com/kreuzwerker/terraform-provider-docker/10))
+* docs: devices is a block, not a boolean ([#33](https://github.com/kreuzwerker/terraform-provider-docker/issues/33))
+* style: format with gofumpt ([#11](https://github.com/kreuzwerker/terraform-provider-docker/issues/11))
+* ci: fix website ci ([#26](https://github.com/kreuzwerker/terraform-provider-docker/issues/26))
+* fix: AuxAddress is not read from network and trigger a re-apply every time ([#10](https://github.com/kreuzwerker/terraform-provider-docker/issues/10))
 
 ## 2.8.0 (November 11, 2020)
 
