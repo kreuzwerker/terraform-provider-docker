@@ -16,7 +16,7 @@ env:
   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
 
 jobs:
-  website-lint-and-spellcheck:
+  website-lint-spellcheck-tffmt:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
@@ -38,5 +38,12 @@ jobs:
       - run: docker version
       - run: make setup
       - run: make website-lint
-
+  markdown-lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: avto-dev/markdown-lint@v1
+        with:
+          args: 'website/docs'
+          config: '.markdownlint.yml'
 

@@ -26,11 +26,3 @@ jobs:
           config-file: '.markdownlinkcheck.json'
           folder-path: 'website/docs'
           file-extension: '.markdown'
-  markdown-lint:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: avto-dev/markdown-lint@v1
-        with:
-          args: 'website/docs'
-          config: '.markdownlint.yml'
