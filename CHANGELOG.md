@@ -53,24 +53,18 @@ IMPROVEMENTS:
 terraform-provider-docker/pull/231))
 
 BUG FIXES:
-* Allow use of `source` file instead of content / content_base64 ([#240](https://github.com/terraform-providers/
-terraform-provider-docker/pull/240))
-* Correct IPAM config read on the data provider ([#229](https://github.com/terraform-providers/
-terraform-provider-docker/pull/229))
+* Allow use of `source` file instead of content / content_base64 ([#240](https://github.com/terraform-providers/terraform-provider-docker/pull/240))
+* Correct IPAM config read on the data provider ([#229](https://github.com/terraform-providers/terraform-provider-docker/pull/229))
 * `published_port` is not correctly populated on docker_service resource ([#222](https://github.com/terraform-providers/terraform-provider-docker/issues/222))
 * Registry Config File MUST be a file reference ([#224](https://github.com/terraform-providers/terraform-provider-docker/issues/224))
-* Allow zero replicas ([#220](https://github.com/terraform-providers/
-terraform-provider-docker/pull/220))
-* fixing the label schema for HCL2 ([#217](https://github.com/terraform-providers/
-terraform-provider-docker/pull/217))
+* Allow zero replicas ([#220](https://github.com/terraform-providers/terraform-provider-docker/pull/220))
+* fixing the label schema for HCL2 ([#217](https://github.com/terraform-providers/terraform-provider-docker/pull/217))
 
 DOCS:
-* Update documentation to reflect changes in TF v12 ([#228](https://github.com/terraform-providers/
-terraform-provider-docker/pull/228))
+* Update documentation to reflect changes in TF v12 ([#228](https://github.com/terraform-providers/terraform-provider-docker/pull/228))
 
 CI:
-* bumps docker `19.03` and ubuntu `bionic` ([#241](https://github.com/terraform-providers/
-terraform-provider-docker/pull/241))
+* bumps docker `19.03` and ubuntu `bionic` ([#241](https://github.com/terraform-providers/terraform-provider-docker/pull/241))
 
 ## 2.6.0 (November 25, 2019)
 
