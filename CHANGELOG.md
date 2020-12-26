@@ -37,7 +37,7 @@ BUG FIXES
 * Prevent force recreate of container about some attributes ([#269](https://github.com/terraform-providers/terraform-provider-docker/pull/269))
 
 DOCS:
-* Typo in container.html.markdown ([#278](https://github.com/terraform-providers/terraform-provider-docker/pull/278))(
+* Typo in container.html.markdown ([#278](https://github.com/terraform-providers/terraform-provider-docker/pull/278))
 * Update service.html.markdown ([#281](https://github.com/terraform-providers/terraform-provider-docker/pull/281))
 
 ## 2.7.1 (June 05, 2020)
@@ -49,8 +49,7 @@ BUG FIXES
 
 IMPROVEMENTS:
 * support to import some docker_container's attributes ([#234](https://github.com/terraform-providers/terraform-provider-docker/issues/234))
-* make UID, GID, & mode for Docker secrets and configs configurable ([#231](https://github.com/terraform-providers/
-terraform-provider-docker/pull/231))
+* make UID, GID, & mode for Docker secrets and configs configurable ([#231](https://github.com/terraform-providers/terraform-provider-docker/pull/231))
 
 BUG FIXES:
 * Allow use of `source` file instead of content / content_base64 ([#240](https://github.com/terraform-providers/terraform-provider-docker/pull/240))
