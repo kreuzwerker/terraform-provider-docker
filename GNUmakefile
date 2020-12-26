@@ -11,6 +11,10 @@ setup:
 	go mod download
 	cd tools && GO111MODULE=on go install github.com/client9/misspell/cmd/misspell
 	cd tools && GO111MODULE=on go install github.com/katbyte/terrafmt
+	cd tools && GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+golangci-lint:
+	@golangci-lint run ./$(PKG_NAME)/...
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
