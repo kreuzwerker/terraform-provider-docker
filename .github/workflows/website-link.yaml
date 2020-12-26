@@ -9,7 +9,7 @@ on:
       - 'release/**'
   pull_request:
     paths:
-      - .github/workflows/website.yaml
+      - .github/workflows/website-link.yaml
       - website/docs/**
       - .markdownlint.yml
 
