@@ -20,9 +20,10 @@ Clone `terraform-provider-docker` anywhere:
 git clone git@github.com:kreuzwerker/terraform-provider-docker.git
 ```
 
-Install the build dependencies:
+Install the build dependencies, tools and commit message validation:
 
 ```sh
+make setup
 make build
 ```
 
