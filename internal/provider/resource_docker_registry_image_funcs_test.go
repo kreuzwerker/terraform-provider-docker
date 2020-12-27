@@ -21,7 +21,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 		}
 	}
 
-	dummyProvider := Provider().(*schema.Provider)
+	dummyProvider := New("dev")()
 	dummyResource := dummyProvider.ResourcesMap["docker_registry_image"]
 	dummyResource.Create = func(d *schema.ResourceData, meta interface{}) error {
 		build := d.Get("build").([]interface{})[0].(map[string]interface{})
@@ -90,8 +90,12 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: map[string]terraform.ResourceProvider{"docker": dummyProvider},
+		PreCheck: func() { testAccPreCheck(t) },
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"docker": func() (*schema.Provider, error) {
+				return dummyProvider, nil
+			},
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: testBuildDockerRegistryImageMappingConfig,
