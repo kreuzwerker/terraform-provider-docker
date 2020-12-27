@@ -1,19 +1,6 @@
 #!/usr/bin/env bash
 
 # Local script runner for recursive markdown-link-check
-# Based on: https://github.com/gaurav-nelson/github-action-markdown-link-check/blob/master/entrypoint.sh
-
-if [ -z "$(docker image list -q markdown-link-check)" ]; then
-  echo "This script requires the markdown-link-check Docker image."
-  echo ""
-  echo "More information: https://github.com/tcort/markdown-link-check"
-  echo ""
-  echo "Steps: "
-  echo "git clone git@github.com:tcort/markdown-link-check.git"
-  echo "cd markdown-link-check"
-  echo "docker build -t markdown-link-check ."
-  exit 1
-fi
 
 echo "==> Checking Markdown links..."
 
@@ -23,18 +10,18 @@ output_file="markdown-link-check-output.txt"
 rm -f "$error_file" "$output_file"
 
 docker run --rm -i -t \
-  -v $(pwd):/github/workspace:ro \
+  -v "$(pwd)":/github/workspace:ro \
   -w /github/workspace \
   --entrypoint /usr/bin/find \
-  markdown-link-check \
+  ghcr.io/tcort/markdown-link-check:stable \
   docs -type f -name "*.md" -exec /src/markdown-link-check --config .markdownlinkcheck.json --quiet --verbose {} \; \
   | tee -a "${output_file}"
 
 docker run --rm -i -t \
-  -v $(pwd):/github/workspace:ro \
+  -v "$(pwd)":/github/workspace:ro \
   -w /github/workspace \
   --entrypoint /usr/bin/find \
-  markdown-link-check \
+  ghcr.io/tcort/markdown-link-check:stable \
   website \( -type f -name "*.md" -or -name "*.markdown" \) -exec /src/markdown-link-check --config .markdownlinkcheck.json --quiet --verbose {} \; \
   | tee -a "${output_file}"
 
