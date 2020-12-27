@@ -150,8 +150,8 @@ var serviceIDRegex = regexp.MustCompile(`[A-Za-z0-9_\+\.-]+`)
 
 func TestAccDockerService_minimalSpec(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -188,8 +188,8 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 
 func TestAccDockerService_fullSpec(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -491,8 +491,8 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 
 func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -587,8 +587,8 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 
 func TestAccDockerService_globalReplicationMode(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -629,8 +629,8 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 
 func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -658,8 +658,8 @@ func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
 
 func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -698,8 +698,8 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -866,8 +866,8 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	portsSpec3 := portsSpec2
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(updateMultiplePropertiesConfigConverge, configData, secretData, image, mounts, hosts, healthcheckInterval, healthcheckTimeout, logging, replicas, portsSpec),
@@ -1018,8 +1018,8 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 
 func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1054,8 +1054,8 @@ func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
 
 func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1090,8 +1090,8 @@ func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 
 func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1154,8 +1154,8 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 	imageFail := "127.0.0.1:15000/tftest-service:v3"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(updateFailsAndRollbackConvergeConfig, image),

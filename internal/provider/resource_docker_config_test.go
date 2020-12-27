@@ -11,9 +11,9 @@ import (
 
 func TestAccDockerConfig_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerConfigDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testCheckDockerConfigDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -38,9 +38,9 @@ func TestAccDockerConfig_basic(t *testing.T) {
 
 func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerConfigDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testCheckDockerConfigDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `

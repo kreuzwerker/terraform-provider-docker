@@ -15,8 +15,8 @@ var registryDigestRegexp = regexp.MustCompile(`\A[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+
 
 func TestAccDockerRegistryImage_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerImageDataSourceConfig,
@@ -30,8 +30,8 @@ func TestAccDockerRegistryImage_basic(t *testing.T) {
 
 func TestAccDockerRegistryImage_private(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerImageDataSourcePrivateConfig,
@@ -47,8 +47,8 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testAccDockerImageDataSourceAuthConfig, registry, image),

@@ -39,8 +39,8 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testAccDockerContainerPrivateImage, registry, dockerConfig, image),
@@ -57,8 +57,8 @@ func TestAccDockerContainer_basic(t *testing.T) {
 	resourceName := "docker_container.foo"
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerConfig,
@@ -105,8 +105,8 @@ func TestAccDockerContainer_init(t *testing.T) {
 	resourceName := "docker_container.fooinit"
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerInitConfig,
@@ -145,8 +145,8 @@ func TestAccDockerContainer_init(t *testing.T) {
 func TestAccDockerContainer_basic_network(t *testing.T) {
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerWith2BridgeNetworkConfig,
@@ -174,8 +174,8 @@ func TestAccDockerContainer_basic_network(t *testing.T) {
 func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainer2NetworksConfig,
@@ -261,8 +261,8 @@ func TestAccDockerContainer_volume(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerVolumeConfig,
@@ -293,8 +293,8 @@ func TestAccDockerContainer_mounts(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerMountsConfig,
@@ -325,8 +325,8 @@ func TestAccDockerContainer_tmpfs(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerTmpfsConfig,
@@ -359,8 +359,8 @@ func TestAccDockerContainer_sysctls(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerSysctlsConfig,
@@ -384,8 +384,8 @@ func TestAccDockerContainer_groupadd_id(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerGroupAddIdConfig,
@@ -409,8 +409,8 @@ func TestAccDockerContainer_groupadd_name(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerGroupAddNameConfig,
@@ -434,8 +434,8 @@ func TestAccDockerContainer_groupadd_multiple(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerGroupAddMultipleConfig,
@@ -667,8 +667,8 @@ func TestAccDockerContainer_customized(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t); testAccCheckSwapLimit(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t); testAccCheckSwapLimit(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerCustomizedConfig,
@@ -730,8 +730,8 @@ func TestAccDockerContainer_upload(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerUploadConfig,
@@ -793,8 +793,8 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testAccDockerContainerUploadSourceConfig, testFile),
@@ -837,8 +837,8 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testAccDockerContainerUploadSourceHashConfig, testFile, string(hash)),
@@ -899,8 +899,8 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerUploadBase64Config,
@@ -948,8 +948,8 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 
 func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -979,8 +979,8 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 
 func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1056,8 +1056,8 @@ func TestAccDockerContainer_device(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerDeviceConfig,
@@ -1097,8 +1097,8 @@ func TestAccDockerContainer_port_internal(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerInternalPortConfig,
@@ -1162,8 +1162,8 @@ func TestAccDockerContainer_port_multiple_internal(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerMultipleInternalPortConfig,
@@ -1213,8 +1213,8 @@ func TestAccDockerContainer_port(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerPortConfig,
@@ -1286,8 +1286,8 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerMultiplePortConfig,
@@ -1322,9 +1322,9 @@ func TestAccDockerContainer_rm(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccContainerWaitConditionRemoved("docker_container.foo", &c),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testAccContainerWaitConditionRemoved("docker_container.foo", &c),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerRmConfig,
@@ -1351,8 +1351,8 @@ func TestAccDockerContainer_readonly(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerReadOnlyConfig,
@@ -1388,8 +1388,8 @@ func TestAccDockerContainer_healthcheck(t *testing.T) {
 		return nil
 	}
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerHealthcheckConfig,
@@ -1405,8 +1405,8 @@ func TestAccDockerContainer_healthcheck(t *testing.T) {
 func TestAccDockerContainer_nostart(t *testing.T) {
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerNoStartConfig,
@@ -1422,8 +1422,8 @@ func TestAccDockerContainer_attach(t *testing.T) {
 	var c types.ContainerJSON
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerAttachConfig,
@@ -1442,8 +1442,8 @@ func TestAccDockerContainer_logs(t *testing.T) {
 	var c types.ContainerJSON
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerLogsConfig,
@@ -1464,8 +1464,8 @@ func TestAccDockerContainer_exitcode(t *testing.T) {
 	var c types.ContainerJSON
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerExitCodeConfig,
@@ -1502,8 +1502,8 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerNetworksIPv4AddressConfig,
@@ -1541,8 +1541,8 @@ func TestAccDockerContainer_ipv6address(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerNetworksIPv6AddressConfig,
@@ -1585,8 +1585,8 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerContainerNetworksDualStackAddressConfig,

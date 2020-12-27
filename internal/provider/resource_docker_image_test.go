@@ -30,9 +30,9 @@ func TestAccDockerImage_basic(t *testing.T) {
 		}
 	}()
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccDockerImageDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerImageConfig,
@@ -52,9 +52,9 @@ func TestAccDockerImage_basic(t *testing.T) {
 
 func TestAccDockerImage_private(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccDockerImageDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAddDockerPrivateImageConfig,
@@ -68,8 +68,8 @@ func TestAccDockerImage_private(t *testing.T) {
 
 func TestAccDockerImage_destroy(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		CheckDestroy: func(s *terraform.State) error {
 			for _, rs := range s.RootModule().Resources {
 				if rs.Type != "docker_image" {
@@ -98,7 +98,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 func TestAccDockerImage_data(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
-		Providers:                 testAccProviders,
+		ProviderFactories:         providerFactories,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
 			{
@@ -114,7 +114,7 @@ func TestAccDockerImage_data(t *testing.T) {
 func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
-		Providers:                 testAccProviders,
+		ProviderFactories:         providerFactories,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
 			{
@@ -133,7 +133,7 @@ func TestAccDockerImage_data_private(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
-		Providers:                 testAccProviders,
+		ProviderFactories:         providerFactories,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
 			{
@@ -155,7 +155,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
-		Providers:                 testAccProviders,
+		ProviderFactories:         providerFactories,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
 			{
@@ -177,7 +177,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
-		Providers:                 testAccProviders,
+		ProviderFactories:         providerFactories,
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
 			{
@@ -193,9 +193,9 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 
 func TestAccDockerImage_sha265(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccDockerImageDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAddDockerImageWithSHA256RepoDigest,
@@ -230,9 +230,9 @@ func TestAccDockerImage_build(t *testing.T) {
 	}
 	defer os.Remove(dfPath)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccDockerImageDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testAccDockerImageDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testCreateDockerImage,

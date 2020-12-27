@@ -11,9 +11,9 @@ import (
 
 func TestAccDockerSecret_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerSecretDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testCheckDockerSecretDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -33,9 +33,9 @@ func TestAccDockerSecret_basic(t *testing.T) {
 
 func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerSecretDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testCheckDockerSecretDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -75,9 +75,9 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 
 func TestAccDockerSecret_labels(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testCheckDockerSecretDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testCheckDockerSecretDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `

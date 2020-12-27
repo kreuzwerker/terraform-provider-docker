@@ -15,8 +15,8 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerNetworkConfig,
@@ -78,8 +78,8 @@ func TestAccDockerNetwork_internal(t *testing.T) {
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerNetworkInternalConfig,
@@ -118,8 +118,8 @@ func TestAccDockerNetwork_attachable(t *testing.T) {
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerNetworkAttachableConfig,
@@ -158,7 +158,7 @@ resource "docker_network" "foo" {
 //
 //	resource.Test(t, resource.TestCase{
 //		PreCheck:  func() { testAccPreCheck(t) },
-//		Providers: testAccProviders,
+//		ProviderFactories: providerFactories,
 //		Steps: []resource.TestStep{
 //			resource.TestStep{
 //				Config: testAccDockerNetworkIngressConfig,
@@ -192,8 +192,8 @@ func TestAccDockerNetwork_ipv4(t *testing.T) {
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerNetworkIPv4Config,
@@ -238,8 +238,8 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerNetworkIPv6Config,
@@ -293,8 +293,8 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerNetworkLabelsConfig,

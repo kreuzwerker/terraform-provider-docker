@@ -107,9 +107,9 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
 	context := "../scripts/testing/docker_registry_image_context"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDockerRegistryImageNotInRegistry(pushOptions),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testDockerRegistryImageNotInRegistry(pushOptions),
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testBuildDockerRegistryImageNoKeepConfig, pushOptions.Registry, pushOptions.Name, context),
@@ -125,9 +125,9 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
 	context := "../scripts/testing/docker_registry_image_context"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDockerRegistryImageInRegistry(pushOptions, true),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy:      testDockerRegistryImageInRegistry(pushOptions, true),
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testBuildDockerRegistryImageKeepConfig, pushOptions.Registry, pushOptions.Name, context),
@@ -141,8 +141,8 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 
 func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testDockerRegistryImagePushMissingConfig,

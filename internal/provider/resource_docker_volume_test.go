@@ -14,8 +14,8 @@ func TestAccDockerVolume_basic(t *testing.T) {
 	var v types.Volume
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerVolumeConfig,
@@ -68,8 +68,8 @@ func TestAccDockerVolume_labels(t *testing.T) {
 	var v types.Volume
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerVolumeLabelsConfig,
