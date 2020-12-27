@@ -29,7 +29,7 @@ in the example below. The reason is [moby-35803](https://github.com/moby/moby/is
 
 ```hcl
 resource "docker_secret" "service_secret" {
-  name = "${var.service_name}-secret-${replace(timestamp(),":", ".")}"
+  name = "${var.service_name}-secret-${replace(timestamp(), ":", ".")}"
   data = "${base64encode(data.template_file.service_secret_tpl.rendered)}"
 
   lifecycle {

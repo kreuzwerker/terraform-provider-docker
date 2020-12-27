@@ -109,18 +109,18 @@ resource "docker_service" "foo" {
       read_only = true
 
       mounts {
-	       target    = "/mount/test"
-	       source    = "${docker_volume.test_volume.name}"
-	       type      = "volume"
-	       read_only = true
+        target    = "/mount/test"
+        source    = "${docker_volume.test_volume.name}"
+        type      = "volume"
+        read_only = true
 
-	        bind_options {
-	          propagation = "private"
+        bind_options {
+          propagation = "private"
         }
       }
-      
+
       mounts {
-	      # another mount
+        # another mount
       }
 
       stop_signal       = "SIGTERM"
@@ -149,10 +149,10 @@ resource "docker_service" "foo" {
         secret_name = "${docker_secret.service_secret.name}"
         file_name   = "/secrets.json"
         file_uid    = "0"
-	file_gid    = "0"
-	file_mode   = 0777
+        file_gid    = "0"
+        file_mode   = 0777
       }
-      
+
       secrets {
         # another secret
       }
@@ -162,7 +162,7 @@ resource "docker_service" "foo" {
         config_name = "${docker_config.service_config.name}"
         file_name   = "/configs.json"
       }
-      
+
       configs {
         # another config
       }
@@ -265,7 +265,7 @@ resource "docker_service" "foo" {
       published_port = "8080"
       publish_mode   = "ingress"
     }
-    
+
     ports {
       # another port
     }
@@ -514,24 +514,24 @@ options {
 
 ```hcl
 resource "docker_service" "foo" {
-  ...
+  // ...
   mode {
     global = true
   }
-  ...
+  // ...
 }
 ```
 * `replicated` - (Optional, map), which contains atm only the amount of `replicas`
 
 ```hcl
 resource "docker_service" "foo" {
-  ...
+  // ...
   mode {
     replicated {
       replicas = 2
     }
   }
-  ...
+  // ...
 }
 ```
 

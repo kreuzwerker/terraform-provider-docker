@@ -1,5 +1,5 @@
 ---
-name: Acc Tests
+name: Docs and Website Lint
 on:
   push:
     branches:
@@ -8,17 +8,15 @@ on:
   pull_request:
     types: ['opened', 'synchronize']
     paths:
-      - '**.go'
-      - 'vendor/**'
-      - '.github/workflows/**'
+      - .github/workflows/website-lint.yaml
+      - website/docs/**
 
 env:
   GO_VERSION: "1.15"
   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
-  DEBIAN_FRONTEND: noninteractive
 
 jobs:
-  acc-test:
+  website-lint-spellcheck-tffmt:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
@@ -38,9 +36,14 @@ jobs:
       # list available docker versions: apt-cache policy docker-ce 
       - run: sudo apt-get -y install docker-ce=5:20.10.1~3-0~ubuntu-focal
       - run: docker version
-      # Allow local registry to be insecure
-      - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
-      - run: sudo cat /etc/default/docker
-      - run: sudo service docker restart
-      - run: make testacc
+      - run: make setup
+      - run: make website-lint
+  markdown-lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: avto-dev/markdown-lint@v1
+        with:
+          args: 'website/docs'
+          config: '.markdownlint.yml'
 

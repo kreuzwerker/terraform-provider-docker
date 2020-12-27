@@ -52,6 +52,18 @@ TF_LOG=INFO TF_ACC=1 go test -v ./docker -run ^TestAccDockerImage_data_private_c
 make testacc_cleanup
 ```
 
+Furthermore, we recommened running the linters for the code and the documentation:
+
+```sh
+# install all the dependencies
+make setup
+make golangci-lint
+make website-link-check
+make website-lint
+# you can also use this command to fix most errors automatically
+make website-lint-fix
+```
+
 ### Test against current terraform IaC descriptions
 In order to extend the provider and test it with `terraform`, build the provider as mentioned above with:
 
