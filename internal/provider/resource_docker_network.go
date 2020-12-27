@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"log"
 	"net"
 	"regexp"
@@ -129,7 +130,7 @@ func resourceDockerNetwork() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerNetworkV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return replaceLabelsMapFieldWithSetField(rawState), nil
 				},
 			},

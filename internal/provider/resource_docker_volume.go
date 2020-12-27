@@ -56,7 +56,7 @@ func resourceDockerVolume() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerVolumeV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return replaceLabelsMapFieldWithSetField(rawState), nil
 				},
 			},

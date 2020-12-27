@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -930,7 +931,7 @@ func resourceDockerService() *schema.Resource {
 			{
 				Version: 0,
 				Type:    resourceDockerServiceV0().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return migrateServiceLabels(rawState), nil
 				},
 			},

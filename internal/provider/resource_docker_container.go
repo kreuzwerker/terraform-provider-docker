@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -21,7 +22,7 @@ func resourceDockerContainer() *schema.Resource {
 			{
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
-				Upgrade: func(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					// TODO do the ohter V0-to-V1 migration, unless we're okay
 					// with breaking for users who straggled on their docker
 					// provider version
