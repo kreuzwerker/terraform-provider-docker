@@ -1,4 +1,4 @@
-package docker
+package provider
 
 func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[string]interface{} {
 	labelMapIFace := rawState["labels"]
