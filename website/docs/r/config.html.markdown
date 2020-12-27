@@ -64,7 +64,7 @@ in the example below. The reason is [moby-35803](https://github.com/moby/moby/is
 
 ```hcl
 resource "docker_config" "service_config" {
-  name = "${var.service_name}-config-${replace(timestamp(),":", ".")}"
+  name = "${var.service_name}-config-${replace(timestamp(), ":", ".")}"
   data = "${base64encode(data.template_file.service_config_tpl.rendered)}"
 
   lifecycle {
