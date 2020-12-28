@@ -57,7 +57,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		stateConf := &resource.StateChangeConf{
 			Pending:    serviceCreatePendingStates,
 			Target:     []string{"running", "complete"},
-			Refresh:    resourceDockerServiceCreateRefreshFunc(service.ID, meta),
+			Refresh:    resourceDockerServiceCreateRefreshFunc(ctx, service.ID, meta),
 			Timeout:    timeout,
 			MinTimeout: 5 * time.Second,
 			Delay:      convergeConfig.delay,
@@ -67,7 +67,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		_, err := stateConf.WaitForState()
 		if err != nil {
 			// the service will be deleted in case it cannot be converged
-			if deleteErr := deleteService(service.ID, d, client); deleteErr != nil {
+			if deleteErr := deleteService(ctx, service.ID, d, client); deleteErr != nil {
 				return diag.FromErr(deleteErr)
 			}
 			if strings.Contains(err.Error(), "timeout while waiting for state") {
@@ -108,7 +108,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 		client := meta.(*ProviderConfig).DockerClient
 		serviceID := d.Id()
 
-		apiService, err := fetchDockerService(serviceID, d.Get("name").(string), client)
+		apiService, err := fetchDockerService(ctx, serviceID, d.Get("name").(string), client)
 		if err != nil {
 			return nil, "", err
 		}
@@ -198,7 +198,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		stateConf := &resource.StateChangeConf{
 			Pending:    serviceUpdatePendingStates,
 			Target:     []string{"completed"},
-			Refresh:    resourceDockerServiceUpdateRefreshFunc(service.ID, meta),
+			Refresh:    resourceDockerServiceUpdateRefreshFunc(ctx, service.ID, meta),
 			Timeout:    timeout,
 			MinTimeout: 5 * time.Second,
 			Delay:      7 * time.Second,
@@ -221,7 +221,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	if err := deleteService(d.Id(), d, client); err != nil {
+	if err := deleteService(ctx, d.Id(), d, client); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -249,7 +249,7 @@ func fetchDockerService(ctx context.Context, ID string, name string, client *cli
 }
 
 // deleteService deletes the service with the given id
-func deleteService(serviceID string, d *schema.ResourceData, client *client.Client) error {
+func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData, client *client.Client) error {
 	// get containerIDs of the running service because they do not exist after the service is deleted
 	serviceContainerIds := make([]string, 0)
 	if _, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok {
@@ -327,11 +327,10 @@ func (err *DidNotConvergeError) Error() string {
 }
 
 // resourceDockerServiceCreateRefreshFunc refreshes the state of a service when it is created and needs to converge
-func resourceDockerServiceCreateRefreshFunc(
+func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
 	serviceID string, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
-		ctx := ctx
 
 		var updater progressUpdater
 
@@ -378,11 +377,10 @@ func resourceDockerServiceCreateRefreshFunc(
 }
 
 // resourceDockerServiceUpdateRefreshFunc refreshes the state of a service when it is updated and needs to converge
-func resourceDockerServiceUpdateRefreshFunc(
+func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
 	serviceID string, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
-		ctx := ctx
 
 		var (
 			updater  progressUpdater

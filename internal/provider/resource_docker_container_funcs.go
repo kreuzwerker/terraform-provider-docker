@@ -35,7 +35,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*ProviderConfig).DockerClient
 	authConfigs := meta.(*ProviderConfig).AuthConfigs
 	image := d.Get("image").(string)
-	_, err = findImage(image, client, authConfigs)
+	_, err = findImage(ctx, image, client, authConfigs)
 	if err != nil {
 		return diag.Errorf("Unable to create container with image %s: %s", image, err)
 	}
@@ -759,7 +759,7 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 			client := meta.(*ProviderConfig).DockerClient
 			_, err := client.ContainerUpdate(ctx, d.Id(), updateConfig)
 			if err != nil {
-				return diag.Errorf("Unable to update a container: %w", err)
+				return diag.Errorf("Unable to update a container: %v", err)
 			}
 			break
 		}
