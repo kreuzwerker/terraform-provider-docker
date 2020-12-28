@@ -64,7 +64,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		}
 
 		// Wait, catching any errors
-		_, err := stateConf.WaitForState()
+		_, err := stateConf.WaitForStateContext(ctx)
 		if err != nil {
 			// the service will be deleted in case it cannot be converged
 			if deleteErr := deleteService(ctx, service.ID, d, client); deleteErr != nil {
@@ -94,7 +94,7 @@ func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -205,7 +205,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		}
 
 		// Wait, catching any errors
-		state, err := stateConf.WaitForState()
+		state, err := stateConf.WaitForStateContext(ctx)
 		log.Printf("[INFO] State awaited: %v with error: %v", state, err)
 		if err != nil {
 			if strings.Contains(err.Error(), "timeout while waiting for state") {

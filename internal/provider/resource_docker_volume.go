@@ -162,7 +162,7 @@ func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}

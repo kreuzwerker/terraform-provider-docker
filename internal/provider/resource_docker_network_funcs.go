@@ -82,7 +82,7 @@ func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +103,7 @@ func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
