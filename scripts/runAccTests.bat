@@ -61,7 +61,7 @@ exit /b %outcome%
 
 :run
   call:log "run"
-  call go test ./docker -v -timeout 120m
+  call go test ./internal/provider -v -timeout 120m
   exit /b %ErrorLevel%
 
 
