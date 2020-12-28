@@ -51,6 +51,12 @@ func resourceDockerImage() *schema.Resource {
 				},
 			},
 
+			"force_remove": {
+				Type:        schema.TypeBool,
+				Description: "Force remove the image when the resource is destroyed",
+				Optional:    true,
+			},
+
 			"build": {
 				Type:          schema.TypeSet,
 				Optional:      true,
