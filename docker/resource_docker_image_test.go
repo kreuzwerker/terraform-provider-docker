@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"regexp"
 	"testing"
@@ -15,7 +16,19 @@ import (
 
 var contentDigestRegexp = regexp.MustCompile(`\A[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)
 
+const testForceRemoveDockerImageName = "alpine:3.11.5"
+
 func TestAccDockerImage_basic(t *testing.T) {
+	// run a Docker container which refers the Docker image to test "force_remove" option
+	containerName := "test-docker-image-force-remove"
+	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, testForceRemoveDockerImageName, "tail", "-f", "/dev/null").Run(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := exec.Command("docker", "stop", containerName).Run(); err != nil {
+			t.Logf("failed to stop the Docker container %s: %v", containerName, err)
+		}
+	}()
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -25,6 +38,12 @@ func TestAccDockerImage_basic(t *testing.T) {
 				Config: testAccDockerImageConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foo", "latest", contentDigestRegexp),
+				),
+			},
+			{
+				Config: testAccForceRemoveDockerImage,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.test", "latest", contentDigestRegexp),
 				),
 			},
 		},
@@ -195,7 +214,7 @@ func testAccDockerImageDestroy(s *terraform.State) error {
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["latest"])
+		_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["name"])
 		if err == nil {
 			return fmt.Errorf("Image still exists")
 		}
@@ -228,6 +247,13 @@ func TestAccDockerImage_build(t *testing.T) {
 const testAccDockerImageConfig = `
 resource "docker_image" "foo" {
 	name = "alpine:3.1"
+}
+`
+
+const testAccForceRemoveDockerImage = `
+resource "docker_image" "test" {
+	name         = "` + testForceRemoveDockerImageName + `"
+	force_remove = true
 }
 `
 
