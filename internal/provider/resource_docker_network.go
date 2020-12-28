@@ -16,7 +16,7 @@ func resourceDockerNetwork() *schema.Resource {
 		ReadContext:   resourceDockerNetworkRead,
 		DeleteContext: resourceDockerNetworkDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Schema: map[string]*schema.Schema{

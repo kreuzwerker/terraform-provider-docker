@@ -16,7 +16,7 @@ func resourceDockerContainer() *schema.Resource {
 		MigrateState:  resourceDockerContainerMigrateState,
 		SchemaVersion: 2,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		StateUpgraders: []schema.StateUpgrader{
 			{
