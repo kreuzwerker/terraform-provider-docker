@@ -38,8 +38,8 @@ resource "docker_plugin" "sample-volume-plugin" {
 
 The following arguments are supported:
 
-* `plugin_reference` - (Required, string) The plugin reference. The registry path and image tag should not be omitted.
-* `alias` - (Optional, string) The alias of the Docker plugin. The image tag should not be omitted.
+* `plugin_reference` - (Required, string, Forces new resource) The plugin reference. The registry path and image tag should not be omitted.
+* `alias` - (Optional, string, Forces new resource) The alias of the Docker plugin. The image tag should not be omitted.
 * `disabled` - (Optional, boolean) If true, the plugin is disabled.
 * `grant_all_permissions` - (Optional, boolean) If true, grant all permissions necessary to run the plugin.
 * `disable_when_set` - (Optional, boolean) If true, the plugin becomes disabled temporarily when the plugin setting is updated.

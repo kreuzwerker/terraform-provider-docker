@@ -24,6 +24,7 @@ func resourceDockerPlugin() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Docker Plugin alias.",
 			},
 			"disabled": {
@@ -35,6 +36,12 @@ func resourceDockerPlugin() *schema.Resource {
 				Optional:    true,
 				Description: "If true, grant all permissions necessary to run the plugin",
 			},
+			"env": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
 			"disable_when_set": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -43,11 +50,6 @@ func resourceDockerPlugin() *schema.Resource {
 			"force_destroy": {
 				Type:     schema.TypeBool,
 				Optional: true,
-			},
-			"env": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"enable_timeout": {
 				Type:        schema.TypeInt,
