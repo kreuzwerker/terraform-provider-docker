@@ -281,6 +281,7 @@ The following arguments are supported:
 
 * `auth` - (Optional, block) See [Auth](#auth-1) below for details.
 * `name` - (Required, string) The name of the Docker service.
+* `labels` - (Optional, block) See [Labels](#labels-1) below for details.
 * `task_spec` - (Required, block) See [TaskSpec](#task-spec-1) below for details.
 * `mode` - (Optional, block) See [Mode](#mode-1) below for details.
 * `update_config` - (Optional, block) See [UpdateConfig](#update-rollback-config-1) below for details.
