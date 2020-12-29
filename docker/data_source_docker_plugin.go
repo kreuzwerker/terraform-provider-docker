@@ -46,22 +46,27 @@ func dataSourceDockerPlugin() *schema.Resource {
 	}
 }
 
-func getDataSourcePluginKey(d *schema.ResourceData) string {
-	if id, ok := d.GetOk("id"); ok {
-		return id.(string)
-	}
-	if alias, ok := d.GetOk("alias"); ok {
-		return alias.(string)
-	}
-	return ""
-}
-
 var errDataSourceKeyIsMissing = errors.New("One of id or alias must be assigned")
 
+func getDataSourcePluginKey(d *schema.ResourceData) (string, error) {
+	id, idOK := d.GetOk("id")
+	alias, aliasOK := d.GetOk("alias")
+	if idOK {
+		if aliasOK {
+			return "", errDataSourceKeyIsMissing
+		}
+		return id.(string), nil
+	}
+	if aliasOK {
+		return alias.(string), nil
+	}
+	return "", errDataSourceKeyIsMissing
+}
+
 func dataSourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
-	key := getDataSourcePluginKey(d)
-	if key == "" {
-		return errDataSourceKeyIsMissing
+	key, err := getDataSourcePluginKey(d)
+	if err != nil {
+		return err
 	}
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
