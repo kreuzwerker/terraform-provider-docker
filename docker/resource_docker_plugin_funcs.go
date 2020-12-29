@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -63,7 +64,9 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 	pluginID := d.Id()
 	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
 	if err != nil {
-		return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
+		log.Printf("[DEBUG] Inspect a Docker plugin "+pluginID+": %w", err)
+		d.SetId("")
+		return nil
 	}
 	setDockerPlugin(d, plugin)
 	// TODO set values
