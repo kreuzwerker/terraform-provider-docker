@@ -11,18 +11,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-// providerFactories are used to instantiate a provider during acceptance testing.
-// The factory function will be invoked for every Terraform CLI command executed
-// to create a provider server to which the CLI can reattach.
-var providerFactories = map[string]func() (*schema.Provider, error){
-	"docker": func() (*schema.Provider, error) {
-		return New("dev")(), nil
-	},
-}
+var (
+	// testAccProvider is the "main" provider instance
+	//
+	// This Provider can be used in testing code for API calls without requiring
+	// the use of saving and referencing specific ProviderFactories instances.
+	//
+	// testAccPreCheck(t) must be called before using this provider instance.
+	testAccProvider *schema.Provider
+	// providerFactories are used to instantiate a provider during acceptance testing.
+	// The factory function will be invoked for every Terraform CLI command executed
+	// to create a provider server to which the CLI can reattach.
+	providerFactories map[string]func() (*schema.Provider, error)
+)
 
-// TODO mavogel: can't we just use the factory?
-// how is this variable used in tests?
-var testAccProvider *schema.Provider
+func init() {
+	testAccProvider = New("dev")()
+	providerFactories = map[string]func() (*schema.Provider, error){
+		"docker": func() (*schema.Provider, error) {
+			return New("dev")(), nil
+		},
+	}
+}
 
 func TestProvider_impl(t *testing.T) {
 	var _ *schema.Provider = New("dev")()
@@ -61,9 +71,7 @@ func testAccPreCheck(t *testing.T) {
 		}
 	}
 
-	// TODO mvogel: how to implement this properly
-	ctx := context.TODO()
-	err := testAccProvider.Configure(ctx, terraform.NewResourceConfigRaw(nil))
+	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
