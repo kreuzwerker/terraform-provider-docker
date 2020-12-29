@@ -54,6 +54,6 @@ The following arguments are supported:
 
 Docker plugins can be imported using the long id, e.g. for a plugin `tiborvass/sample-volume-plugin:latest`:
 
-```
+```sh
 $ terraform import docker_plugin.sample-volume-plugin $(docker plugin inspect -f "{{.ID}}" tiborvass/sample-volume-plugin:latest)
 ```
