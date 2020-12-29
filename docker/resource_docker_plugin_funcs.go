@@ -78,11 +78,32 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.Client) error {
+func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.Client, disabled bool) (gErr error) {
 	if !d.HasChange("args") {
 		return nil
 	}
 	pluginID := d.Id()
+	if disabled {
+		// temporarily disable the plugin before updating the plugin settings
+		log.Printf("[DEBUG] Disable a Docker plugin " + pluginID + " temporarily before updating teh pugin settings")
+		if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
+			Force: d.Get("force_disable").(bool),
+		}); err != nil {
+			return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
+		}
+		defer func() {
+			log.Print("[DEBUG] Enable a Docker plugin " + pluginID)
+			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
+				Timeout: d.Get("enable_timeout").(int),
+			}); err != nil {
+				if gErr == nil {
+					gErr = fmt.Errorf("enable the Docker plugin "+pluginID+": %w", err)
+					return
+				}
+				log.Printf("[ERROR] enable the Docker plugin "+pluginID+": %w", err)
+			}
+		}()
+	}
 	log.Printf("[DEBUG] Update settings of a Docker plugin " + pluginID)
 	if err := client.PluginSet(ctx, pluginID, getDockerPluginArgs(d.Get("args"))); err != nil {
 		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
@@ -104,7 +125,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 				return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
 			}
 		} else {
-			if err := setPluginArgs(ctx, d, client); err != nil {
+			if err := setPluginArgs(ctx, d, client, false); err != nil {
 				return err
 			}
 			skipArgs = true
@@ -121,27 +142,8 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 		if err != nil {
 			return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
 		}
-		f := false
-		if plugin.Enabled && d.Get("disable_when_set").(bool) {
-			// temporarily disable the plugin before updating the plugin settings
-			log.Printf("[DEBUG] Disable a Docker plugin " + pluginID + " temporarily before updating teh pugin settings")
-			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
-				Force: d.Get("force_disable").(bool),
-			}); err != nil {
-				return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
-			}
-			f = true
-		}
-		if err := setPluginArgs(ctx, d, client); err != nil {
+		if err := setPluginArgs(ctx, d, client, plugin.Enabled && d.Get("disable_when_set").(bool)); err != nil {
 			return err
-		}
-		if f {
-			log.Printf("[DEBUG] Enable a Docker plugin " + pluginID)
-			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
-				Timeout: d.Get("enable_timeout").(int),
-			}); err != nil {
-				return fmt.Errorf("enable the Docker plugin "+pluginID+": %w", err)
-			}
 		}
 	}
 	// call the read function to update the resource's state.
