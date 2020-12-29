@@ -45,7 +45,7 @@ func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
 			return fmt.Errorf("No ID is set")
 		}
 
-		ctx := context.Background()
+		ctx := context.TODO()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {

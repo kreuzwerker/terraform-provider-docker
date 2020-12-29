@@ -37,6 +37,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 
 func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		ctx := context.TODO()
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -47,14 +48,14 @@ func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheck
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		networks, err := client.NetworkList(context.Background(), types.NetworkListOptions{})
+		networks, err := client.NetworkList(ctx, types.NetworkListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, n := range networks {
 			if n.ID == rs.Primary.ID {
-				inspected, err := client.NetworkInspect(context.Background(), n.ID, types.NetworkInspectOptions{})
+				inspected, err := client.NetworkInspect(ctx, n.ID, types.NetworkInspectOptions{})
 				if err != nil {
 					return fmt.Errorf("Network could not be obtained: %s", err)
 				}

@@ -21,6 +21,7 @@ const testForceRemoveDockerImageName = "alpine:3.11.5"
 func TestAccDockerImage_basic(t *testing.T) {
 	// run a Docker container which refers the Docker image to test "force_remove" option
 	containerName := "test-docker-image-force-remove"
+	ctx := context.TODO()
 	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, testForceRemoveDockerImageName, "tail", "-f", "/dev/null").Run(); err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +33,9 @@ func TestAccDockerImage_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testAccDockerImageDestroy,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDockerImageConfig,
@@ -51,10 +54,13 @@ func TestAccDockerImage_basic(t *testing.T) {
 }
 
 func TestAccDockerImage_private(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testAccDockerImageDestroy,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: testAddDockerPrivateImageConfig,
@@ -67,6 +73,7 @@ func TestAccDockerImage_private(t *testing.T) {
 }
 
 func TestAccDockerImage_destroy(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -77,7 +84,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 				}
 
 				client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-				_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["name"])
+				_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["name"])
 				if err != nil {
 					return err
 				}
@@ -130,6 +137,7 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 func TestAccDockerImage_data_private(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
+	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -143,7 +151,9 @@ func TestAccDockerImage_data_private(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -152,6 +162,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -165,7 +176,9 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -174,6 +187,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -187,15 +201,20 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerImage_sha265(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testAccDockerImageDestroy,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: testAddDockerImageWithSHA256RepoDigest,
@@ -207,14 +226,14 @@ func TestAccDockerImage_sha265(t *testing.T) {
 	})
 }
 
-func testAccDockerImageDestroy(s *terraform.State) error {
+func testAccDockerImageDestroy(ctx context.Context, s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "docker_image" {
 			continue
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["name"])
+		_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["name"])
 		if err == nil {
 			return fmt.Errorf("Image still exists")
 		}
@@ -223,6 +242,7 @@ func testAccDockerImageDestroy(s *terraform.State) error {
 }
 
 func TestAccDockerImage_build(t *testing.T) {
+	ctx := context.TODO()
 	wd, _ := os.Getwd()
 	dfPath := path.Join(wd, "Dockerfile")
 	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
@@ -232,7 +252,9 @@ func TestAccDockerImage_build(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testAccDockerImageDestroy,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: testCreateDockerImage,

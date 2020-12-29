@@ -149,6 +149,7 @@ func TestDockerImageNameSuppress(t *testing.T) {
 var serviceIDRegex = regexp.MustCompile(`[A-Za-z0-9_\+\.-]+`)
 
 func TestAccDockerService_minimalSpec(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -182,11 +183,14 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 				ImportStateVerify: true,
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerService_fullSpec(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -485,11 +489,14 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 				ImportStateVerify: true,
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerService_partialReplicationConfig(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -581,11 +588,14 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 				ImportStateVerify: true,
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerService_globalReplicationMode(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -623,11 +633,14 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 				ImportStateVerify: true,
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -652,11 +665,14 @@ func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
 				ExpectError: regexp.MustCompile(`.*conflicts with.*`),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -688,7 +704,9 @@ func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 				ExpectError: regexp.MustCompile(`.*conflicts with.*`),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -696,6 +714,7 @@ func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 func TestAccDockerService_privateImageConverge(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
+	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -735,7 +754,9 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -745,6 +766,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	configData := "ewogICJwcmVmaXgiOiAiMTIzIgp9"
 	secretData := "ewogICJrZXkiOiAiUVdFUlRZIgp9"
 	image := "127.0.0.1:15000/tftest-service:v1"
+	ctx := context.TODO()
 	mounts := `
 	mounts {
 		source = docker_volume.foo.name
@@ -1012,7 +1034,9 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -1089,6 +1113,7 @@ func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 }
 
 func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -1145,13 +1170,16 @@ func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
 func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	imageFail := "127.0.0.1:15000/tftest-service:v3"
+	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -1177,7 +1205,9 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 				),
 			},
 		},
-		CheckDestroy: checkAndRemoveImages,
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
 	})
 }
 
@@ -1355,10 +1385,11 @@ resource "docker_service" "foo" {
 // isServiceRemoved checks if a service was removed successfully
 func isServiceRemoved(serviceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		ctx := context.TODO()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		filters := filters.NewArgs()
 		filters.Add("name", serviceName)
-		services, err := client.ServiceList(context.Background(), types.ServiceListOptions{
+		services, err := client.ServiceList(ctx, types.ServiceListOptions{
 			Filters: filters,
 		})
 		if err != nil {
@@ -1376,7 +1407,7 @@ func isServiceRemoved(serviceName string) resource.TestCheckFunc {
 // checkAndRemoveImages checks and removes all private images with
 // the given pattern. This ensures that the image are not kept on the swarm nodes
 // and the tests are independent of each other
-func checkAndRemoveImages(s *terraform.State) error {
+func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 	retrySleepSeconds := 3
 	maxRetryDeleteCount := 6
 	imagePattern := "127.0.0.1:15000/tftest-service*"
@@ -1385,7 +1416,7 @@ func checkAndRemoveImages(s *terraform.State) error {
 
 	filters := filters.NewArgs()
 	filters.Add("reference", imagePattern)
-	images, err := client.ImageList(context.Background(), types.ImageListOptions{
+	images, err := client.ImageList(ctx, types.ImageListOptions{
 		Filters: filters,
 	})
 	if err != nil {
@@ -1395,7 +1426,7 @@ func checkAndRemoveImages(s *terraform.State) error {
 	retryDeleteCount := 0
 	for i := 0; i < len(images); {
 		image := images[i]
-		_, err := client.ImageRemove(context.Background(), image.ID, types.ImageRemoveOptions{
+		_, err := client.ImageRemove(ctx, image.ID, types.ImageRemoveOptions{
 			Force: true,
 		})
 		if err != nil {
@@ -1412,7 +1443,7 @@ func checkAndRemoveImages(s *terraform.State) error {
 		i++
 	}
 
-	imagesAfterDelete, err := client.ImageList(context.Background(), types.ImageListOptions{
+	imagesAfterDelete, err := client.ImageList(ctx, types.ImageListOptions{
 		Filters: filters,
 	})
 	if err != nil {

@@ -10,10 +10,13 @@ import (
 )
 
 func TestAccDockerConfig_basic(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testCheckDockerConfigDestroy,
+		CheckDestroy: func(state *terraform.State) error {
+			return testCheckDockerConfigDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -37,10 +40,13 @@ func TestAccDockerConfig_basic(t *testing.T) {
 }
 
 func TestAccDockerConfig_basicUpdatable(t *testing.T) {
+	ctx := context.TODO()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testCheckDockerConfigDestroy,
+		CheckDestroy: func(state *terraform.State) error {
+			return testCheckDockerConfigDestroy(ctx, state)
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -86,7 +92,7 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 /////////////
 // Helpers
 /////////////
-func testCheckDockerConfigDestroy(s *terraform.State) error {
+func testCheckDockerConfigDestroy(ctx context.Context, s *terraform.State) error {
 	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "configs" {
@@ -94,7 +100,7 @@ func testCheckDockerConfigDestroy(s *terraform.State) error {
 		}
 
 		id := rs.Primary.Attributes["id"]
-		_, _, err := client.ConfigInspectWithRaw(context.Background(), id)
+		_, _, err := client.ConfigInspectWithRaw(ctx, id)
 
 		if err == nil {
 			return fmt.Errorf("Config with id '%s' still exists", id)
