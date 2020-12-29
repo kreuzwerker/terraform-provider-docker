@@ -11,16 +11,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func getDockerPluginEnv(src interface{}) []string {
+func getDockerPluginArgs(src interface{}) []string {
 	if src == nil {
 		return nil
 	}
 	b := src.(*schema.Set)
-	env := make([]string, b.Len())
+	args := make([]string, b.Len())
 	for i, a := range b.List() {
-		env[i] = a.(string)
+		args[i] = a.(string)
 	}
-	return env
+	return args
 }
 
 func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
@@ -32,7 +32,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 		RemoteRef:            pluginRef,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
 		Disabled:             d.Get("disabled").(bool),
-		Args:                 getDockerPluginEnv(d.Get("env")),
+		Args:                 getDockerPluginArgs(d.Get("args")),
 	})
 	if err != nil {
 		return fmt.Errorf("install a Docker plugin "+pluginRef+": %w", err)
@@ -55,7 +55,12 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	d.Set("plugin_reference", plugin.PluginReference)
 	d.Set("alias", plugin.Name)
 	d.Set("disabled", !plugin.Enabled)
-	d.Set("env", plugin.Settings.Env)
+	// TODO support other settings
+	// https://docs.docker.com/engine/reference/commandline/plugin_set/#extended-description
+	// source of mounts .Settings.Mounts
+	// path of devices .Settings.Devices
+	// args .Settings.Args
+	d.Set("args", plugin.Settings.Env)
 }
 
 func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
@@ -72,12 +77,12 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func setPluginEnv(ctx context.Context, d *schema.ResourceData, client *client.Client) error {
-	if !d.HasChange("env") {
+func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.Client) error {
+	if !d.HasChange("args") {
 		return nil
 	}
 	pluginID := d.Id()
-	if err := client.PluginSet(ctx, pluginID, getDockerPluginEnv(d.Get("env"))); err != nil {
+	if err := client.PluginSet(ctx, pluginID, getDockerPluginArgs(d.Get("args"))); err != nil {
 		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
 	}
 	return nil
@@ -87,7 +92,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
 	pluginID := d.Id()
-	skipEnv := false
+	skipArgs := false
 	if d.HasChange("disabled") {
 		if d.Get("disabled").(bool) {
 			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
@@ -96,10 +101,10 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 				return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
 			}
 		} else {
-			if err := setPluginEnv(ctx, d, client); err != nil {
+			if err := setPluginArgs(ctx, d, client); err != nil {
 				return err
 			}
-			skipEnv = true
+			skipArgs = true
 			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
 				Timeout: d.Get("enable_timeout").(int),
 			}); err != nil {
@@ -107,7 +112,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 	}
-	if !skipEnv {
+	if !skipArgs {
 		plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
 		if err != nil {
 			return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
@@ -122,7 +127,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 			}
 			f = true
 		}
-		if err := setPluginEnv(ctx, d, client); err != nil {
+		if err := setPluginArgs(ctx, d, client); err != nil {
 			return err
 		}
 		if f {
