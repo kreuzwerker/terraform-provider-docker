@@ -14,7 +14,7 @@ Manages the lifecycle of a Docker plugin.
 
 ```hcl
 resource "docker_plugin" "sample-volume-plugin" {
-  plugin_reference  = "docker.io/tiborvass/sample-volume-plugin:latest"
+  plugin_reference = "docker.io/tiborvass/sample-volume-plugin:latest"
 }
 ```
 
