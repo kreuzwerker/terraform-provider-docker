@@ -14,27 +14,50 @@ func resourceDockerPlugin() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"plugin_reference": {
+				Type:        schema.TypeString,
+				Description: "Docker Plugin Reference.",
+				Required:    true,
+				ForceNew:    true,
+			},
+			"alias": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: "Docker Plugin alias.",
 			},
 			"disabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"destroy_option": {
-				Type:     schema.TypeList,
+			"grant_all_permissions": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If true, grant all permissions necessary to run the plugin",
+			},
+			"disable_when_set": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If true, the plugin becomes disabled temporarily when the plugin setting is updated",
+			},
+			"force_destroy": {
+				Type:     schema.TypeBool,
 				Optional: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"force": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
-					},
-				},
+			},
+			"env": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"enable_timeout": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "HTTP client timeout to enable the plugin",
+			},
+			"force_disable": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If true, then the plugin is disabled forcely when the plugin is disabled.",
 			},
 		},
 	}
