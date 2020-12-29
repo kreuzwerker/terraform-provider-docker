@@ -66,9 +66,9 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 	}
-	if err := client.PluginSet(ctx, pluginID, nil); err != nil {
-		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
-	}
+	// if err := client.PluginSet(ctx, pluginID, nil); err != nil {
+	// 	return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
+	// }
 	// call the read function to update the resource's state.
 	// https://learn.hashicorp.com/tutorials/terraform/provider-update?in=terraform/providers#implement-update
 	return resourceDockerPluginRead(d, meta)
@@ -78,17 +78,18 @@ func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
 	pluginID := d.Id()
-	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
-	if err != nil {
-		return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
-	}
-	if plugin.Enabled {
-		// disable the plugin before removing
-		if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{}); err != nil {
-			return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
+	destroyOptions := d.Get("destroy_option").([]interface{})
+	force := false
+	if len(destroyOptions) == 1 {
+		destroyOption := destroyOptions[0].(map[string]interface{})
+		f, ok := destroyOption["force"]
+		if ok {
+			force = f.(bool)
 		}
 	}
-	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{}); err != nil {
+	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
+		Force: force,
+	}); err != nil {
 		return fmt.Errorf("remove the Docker plugin "+pluginID+": %w", err)
 	}
 	return nil
