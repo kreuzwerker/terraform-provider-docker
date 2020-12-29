@@ -60,7 +60,7 @@ func resourceDockerPlugin() *schema.Resource {
 			"force_disable": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "If true, then the plugin is disabled forcely when the plugin is disabled.",
+				Description: "If true, then the plugin is disabled forcibly when the plugin is disabled.",
 			},
 		},
 	}

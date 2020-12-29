@@ -52,7 +52,7 @@ The following arguments are supported:
   registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html)
   to trigger an image update.
 * `pull_trigger` - **Deprecated**, use `pull_triggers` instead.
-* `force_remove` - (Optional, boolean) If true, then the image is removed Forcely when the resource is destroyed.
+* `force_remove` - (Optional, boolean) If true, then the image is removed forcibly when the resource is destroyed.
 * `build` - (Optional, block) See [Build](#build-1) below for details.
 
 <a id="build-1"></a>
