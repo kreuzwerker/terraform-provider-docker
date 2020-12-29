@@ -28,6 +28,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	ctx := context.Background()
 	pluginRef := d.Get("plugin_reference").(string)
 	alias := d.Get("alias").(string)
+	log.Printf("[DEBUG] Install a Docker plugin " + pluginRef)
 	body, err := client.PluginInstall(ctx, alias, types.PluginInstallOptions{
 		RemoteRef:            pluginRef,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
@@ -82,6 +83,7 @@ func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.C
 		return nil
 	}
 	pluginID := d.Id()
+	log.Printf("[DEBUG] Update settings of a Docker plugin " + pluginID)
 	if err := client.PluginSet(ctx, pluginID, getDockerPluginArgs(d.Get("args"))); err != nil {
 		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
 	}
@@ -95,6 +97,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 	skipArgs := false
 	if d.HasChange("disabled") {
 		if d.Get("disabled").(bool) {
+			log.Printf("[DEBUG] Disable a Docker plugin " + pluginID)
 			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
 				Force: d.Get("force_disable").(bool),
 			}); err != nil {
@@ -105,6 +108,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 				return err
 			}
 			skipArgs = true
+			log.Printf("[DEBUG] Enable a Docker plugin " + pluginID)
 			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
 				Timeout: d.Get("enable_timeout").(int),
 			}); err != nil {
@@ -119,7 +123,8 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 		}
 		f := false
 		if plugin.Enabled && d.Get("disable_when_set").(bool) {
-			// temporarily disable the plugin before updating the plugin setting
+			// temporarily disable the plugin before updating the plugin settings
+			log.Printf("[DEBUG] Disable a Docker plugin " + pluginID + " temporarily before updating teh pugin settings")
 			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
 				Force: d.Get("force_disable").(bool),
 			}); err != nil {
@@ -131,6 +136,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 			return err
 		}
 		if f {
+			log.Printf("[DEBUG] Enable a Docker plugin " + pluginID)
 			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
 				Timeout: d.Get("enable_timeout").(int),
 			}); err != nil {
@@ -147,6 +153,7 @@ func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
 	pluginID := d.Id()
+	log.Printf("[DEBUG] Remove a Docker plugin " + pluginID)
 	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
 		Force: d.Get("force_destroy").(bool),
 	}); err != nil {
