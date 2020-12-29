@@ -32,7 +32,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	body, err := client.PluginInstall(ctx, alias, types.PluginInstallOptions{
 		RemoteRef:            pluginRef,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
-		Disabled:             d.Get("disabled").(bool),
+		Disabled:             !d.Get("enabled").(bool),
 		Args:                 getDockerPluginArgs(d.Get("args")),
 	})
 	if err != nil {
@@ -55,7 +55,7 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	d.SetId(plugin.ID)
 	d.Set("plugin_reference", plugin.PluginReference)
 	d.Set("alias", plugin.Name)
-	d.Set("disabled", !plugin.Enabled)
+	d.Set("enabled", plugin.Enabled)
 	// TODO support other settings
 	// https://docs.docker.com/engine/reference/commandline/plugin_set/#extended-description
 	// source of mounts .Settings.Mounts
@@ -116,15 +116,8 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 	ctx := context.Background()
 	pluginID := d.Id()
 	skipArgs := false
-	if d.HasChange("disabled") {
-		if d.Get("disabled").(bool) {
-			log.Printf("[DEBUG] Disable a Docker plugin " + pluginID)
-			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
-				Force: d.Get("force_disable").(bool),
-			}); err != nil {
-				return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
-			}
-		} else {
+	if d.HasChange("enabled") {
+		if d.Get("enabled").(bool) {
 			if err := setPluginArgs(ctx, d, client, false); err != nil {
 				return err
 			}
@@ -134,6 +127,13 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 				Timeout: d.Get("enable_timeout").(int),
 			}); err != nil {
 				return fmt.Errorf("enable the Docker plugin "+pluginID+": %w", err)
+			}
+		} else {
+			log.Printf("[DEBUG] Disable a Docker plugin " + pluginID)
+			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
+				Force: d.Get("force_disable").(bool),
+			}); err != nil {
+				return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
 			}
 		}
 	}

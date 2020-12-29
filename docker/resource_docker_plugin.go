@@ -27,9 +27,10 @@ func resourceDockerPlugin() *schema.Resource {
 				ForceNew:    true,
 				Description: "Docker Plugin alias.",
 			},
-			"disabled": {
+			"enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  true,
 			},
 			"grant_all_permissions": {
 				Type:        schema.TypeBool,

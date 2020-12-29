@@ -28,7 +28,7 @@ func dataSourceDockerPlugin() *schema.Resource {
 				Description: "Docker Plugin Reference.",
 				Optional:    true,
 			},
-			"disabled": {
+			"enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},

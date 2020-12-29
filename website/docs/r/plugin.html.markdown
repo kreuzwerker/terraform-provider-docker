@@ -22,7 +22,7 @@ resource "docker_plugin" "sample-volume-plugin" {
 resource "docker_plugin" "sample-volume-plugin" {
   plugin_reference      = "docker.io/tiborvass/sample-volume-plugin:latest"
   alias                 = "sample-volume-plugin:latest"
-  disabled              = true
+  enabled               = false
   grant_all_permissions = true
   disable_when_set      = true
   force_destroy         = true
@@ -40,7 +40,7 @@ The following arguments are supported:
 
 * `plugin_reference` - (Required, string, Forces new resource) The plugin reference. The registry path and image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
 * `alias` - (Optional, string, Forces new resource) The alias of the Docker plugin. The image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
-* `disabled` - (Optional, boolean) If true, the plugin is disabled.
+* `enabled` - (Optional, boolean) If true, the plugin is enabled. The default value is `true`.
 * `grant_all_permissions` - (Optional, boolean) If true, grant all permissions necessary to run the plugin.
 * `args` - (Optional, set of string). Currently, only environment variables are supported.
 * `disable_when_set` - (Optional, boolean) If true, the plugin becomes disabled temporarily when the plugin setting is updated. See [disable_when_set](#disable-when-set-1) below for details.
@@ -78,7 +78,7 @@ Terraform will perform the following actions:
   # docker_plugin.sample-volume-plugin must be replaced
 -/+ resource "docker_plugin" "sample-volume-plugin" {
       ~ alias            = "sample:latest" -> "sample" # forces replacement
-      - disabled         = false -> null
+      - enabled          = false -> null
       ~ env              = [
           - "DEBUG=0",
         ] -> (known after apply)

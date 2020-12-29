@@ -18,7 +18,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "tiborvass/sample-volume-plugin:latest"),
-					resource.TestCheckResourceAttr(resourceName, "disabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 				),
 			},
 			{
@@ -27,7 +27,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
-					resource.TestCheckResourceAttr(resourceName, "disabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 				),
 			},
 			{
@@ -36,7 +36,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
-					resource.TestCheckResourceAttr(resourceName, "disabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
 					resource.TestCheckResourceAttr(resourceName, "disable_when_set", "true"),
 					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
@@ -49,7 +49,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
-					resource.TestCheckResourceAttr(resourceName, "disabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
 					resource.TestCheckResourceAttr(resourceName, "disable_when_set", "true"),
 					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
@@ -95,7 +95,7 @@ const testAccDockerPluginDisabled = `
 resource "docker_plugin" "test" {
   plugin_reference              = "docker.io/tiborvass/sample-volume-plugin:latest"
   alias                         = "sample:latest"
-  disabled                      = true
+  enabled                       = false
   grant_all_permissions         = true
   disable_when_set              = true
   force_destroy                 = true
