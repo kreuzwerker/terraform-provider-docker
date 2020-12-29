@@ -77,7 +77,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 				}
 
 				client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-				_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["latest"])
+				_, _, err := client.ImageInspectWithRaw(context.Background(), rs.Primary.Attributes["name"])
 				if err != nil {
 					return err
 				}
