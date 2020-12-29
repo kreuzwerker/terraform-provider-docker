@@ -14,9 +14,47 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginConfig,
+				Config:       testAccDockerPluginMinimum,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "alias", "tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "disabled", "false"),
+				),
+			},
+			{
+				ResourceName: resourceName,
+				Config:       testAccDockerPluginAlias,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
+					resource.TestCheckResourceAttr(resourceName, "disabled", "false"),
+				),
+			},
+			{
+				ResourceName: resourceName,
+				Config:       testAccDockerPluginDisableWhenSet,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
+					resource.TestCheckResourceAttr(resourceName, "disabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
+					resource.TestCheckResourceAttr(resourceName, "disable_when_set", "true"),
+					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
+					resource.TestCheckResourceAttr(resourceName, "enable_timeout", "60"),
+				),
+			},
+			{
+				ResourceName: resourceName,
+				Config:       testAccDockerPluginDisabled,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
+					resource.TestCheckResourceAttr(resourceName, "disabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
+					resource.TestCheckResourceAttr(resourceName, "disable_when_set", "true"),
+					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
+					resource.TestCheckResourceAttr(resourceName, "enable_timeout", "60"),
+					resource.TestCheckResourceAttr(resourceName, "force_disable", "true"),
 				),
 			},
 			{
@@ -27,8 +65,43 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 	})
 }
 
-const testAccDockerPluginConfig = `
+const testAccDockerPluginMinimum = `
 resource "docker_plugin" "test" {
   plugin_reference = "docker.io/tiborvass/sample-volume-plugin:latest"
-	force_destroy    = true
+  force_destroy    = true
+}`
+
+const testAccDockerPluginAlias = `
+resource "docker_plugin" "test" {
+  plugin_reference = "docker.io/tiborvass/sample-volume-plugin:latest"
+  alias            = "sample:latest"
+  force_destroy    = true
+}`
+
+const testAccDockerPluginDisableWhenSet = `
+resource "docker_plugin" "test" {
+  plugin_reference              = "docker.io/tiborvass/sample-volume-plugin:latest"
+  alias                         = "sample:latest"
+  grant_all_permissions         = true
+  disable_when_set              = true
+  force_destroy                 = true
+  enable_timeout                = 60
+  env = [
+    "DEBUG=1"
+  ]
+}`
+
+const testAccDockerPluginDisabled = `
+resource "docker_plugin" "test" {
+  plugin_reference              = "docker.io/tiborvass/sample-volume-plugin:latest"
+  alias                         = "sample:latest"
+  disabled                      = true
+  grant_all_permissions         = true
+  disable_when_set              = true
+  force_destroy                 = true
+  force_disable                 = true
+  enable_timeout                = 60
+  env = [
+    "DEBUG=1"
+  ]
 }`
