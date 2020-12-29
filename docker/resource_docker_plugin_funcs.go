@@ -69,7 +69,6 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	setDockerPlugin(d, plugin)
-	// TODO set values
 	return nil
 }
 
