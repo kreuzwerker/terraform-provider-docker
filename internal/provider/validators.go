@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+//nolint:staticcheck
 func validateIntegerInRange(min, max int) schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		value := v.(int)
@@ -25,6 +26,7 @@ func validateIntegerInRange(min, max int) schema.SchemaValidateFunc {
 	}
 }
 
+//nolint:staticcheck
 func validateIntegerGeqThan(threshold int) schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		value := v.(int)
@@ -36,6 +38,7 @@ func validateIntegerGeqThan(threshold int) schema.SchemaValidateFunc {
 	}
 }
 
+//nolint:staticcheck
 func validateFloatRatio() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		value := v.(float64)
@@ -47,6 +50,7 @@ func validateFloatRatio() schema.SchemaValidateFunc {
 	}
 }
 
+//nolint:staticcheck
 func validateStringIsFloatRatio() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		switch t := v.(type) {
@@ -75,6 +79,7 @@ func validateStringIsFloatRatio() schema.SchemaValidateFunc {
 	}
 }
 
+//nolint:staticcheck
 func validateDurationGeq0() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		value := v.(string)
@@ -91,6 +96,7 @@ func validateDurationGeq0() schema.SchemaValidateFunc {
 	}
 }
 
+//nolint:staticcheck
 func validateStringMatchesPattern(pattern string) schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		compiledRegex, err := regexp.Compile(pattern)
@@ -111,6 +117,7 @@ func validateStringMatchesPattern(pattern string) schema.SchemaValidateFunc {
 	}
 }
 
+//nolint:staticcheck
 func validateStringIsBase64Encoded() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		value := v.(string)
