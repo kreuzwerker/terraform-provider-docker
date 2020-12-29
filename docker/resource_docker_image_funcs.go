@@ -152,7 +152,9 @@ func removeImage(d *schema.ResourceData, client *client.Client) error {
 	foundImage := searchLocalImages(data, imageName)
 
 	if foundImage != nil {
-		imageDeleteResponseItems, err := client.ImageRemove(context.Background(), foundImage.ID, types.ImageRemoveOptions{})
+		imageDeleteResponseItems, err := client.ImageRemove(context.Background(), imageName, types.ImageRemoveOptions{
+			Force: d.Get("force_remove").(bool),
+		})
 		if err != nil {
 			return err
 		}
