@@ -37,7 +37,7 @@ func resourceDockerPlugin() *schema.Resource {
 				Optional:    true,
 				Description: "If true, grant all permissions necessary to run the plugin",
 			},
-			"args": {
+			"env": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,

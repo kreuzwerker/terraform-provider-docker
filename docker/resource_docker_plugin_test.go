@@ -109,7 +109,7 @@ resource "docker_plugin" "test" {
   disable_when_set              = true
   force_destroy                 = true
   enable_timeout                = 60
-  args = [
+  env = [
     "DEBUG=1"
   ]
 }`
@@ -124,7 +124,7 @@ resource "docker_plugin" "test" {
   force_destroy                 = true
   force_disable                 = true
   enable_timeout                = 60
-  args = [
+  env = [
     "DEBUG=1"
   ]
 }`

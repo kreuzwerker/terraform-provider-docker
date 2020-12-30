@@ -11,16 +11,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func getDockerPluginArgs(src interface{}) []string {
+func getDockerPluginEnv(src interface{}) []string {
 	if src == nil {
 		return nil
 	}
 	b := src.(*schema.Set)
-	args := make([]string, b.Len())
+	envs := make([]string, b.Len())
 	for i, a := range b.List() {
-		args[i] = a.(string)
+		envs[i] = a.(string)
 	}
-	return args
+	return envs
 }
 
 func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
@@ -33,7 +33,8 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 		RemoteRef:            pluginRef,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
 		Disabled:             !d.Get("enabled").(bool),
-		Args:                 getDockerPluginArgs(d.Get("args")),
+		// TODO support other settings
+		Args: getDockerPluginEnv(d.Get("env")),
 	})
 	if err != nil {
 		return fmt.Errorf("install a Docker plugin "+pluginRef+": %w", err)
@@ -61,7 +62,7 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	// source of mounts .Settings.Mounts
 	// path of devices .Settings.Devices
 	// args .Settings.Args
-	d.Set("args", plugin.Settings.Env)
+	d.Set("env", plugin.Settings.Env)
 }
 
 func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
@@ -79,7 +80,7 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.Client, disabled bool) (gErr error) {
-	if !d.HasChange("args") {
+	if !d.HasChange("env") {
 		return nil
 	}
 	pluginID := d.Id()
@@ -105,7 +106,13 @@ func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.C
 		}()
 	}
 	log.Printf("[DEBUG] Update settings of a Docker plugin " + pluginID)
-	if err := client.PluginSet(ctx, pluginID, getDockerPluginArgs(d.Get("args"))); err != nil {
+	// currently, only environment variables are supported.
+	// TODO support other args
+	// https://docs.docker.com/engine/reference/commandline/plugin_set/#extended-description
+	// source of mounts .Settings.Mounts
+	// path of devices .Settings.Devices
+	// args .Settings.Args
+	if err := client.PluginSet(ctx, pluginID, getDockerPluginEnv(d.Get("env"))); err != nil {
 		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
 	}
 	return nil

@@ -28,7 +28,7 @@ resource "docker_plugin" "sample-volume-plugin" {
   force_destroy         = true
   enable_timeout        = 60
   force_disable         = true
-  args = [
+  env = [
     "DEBUG=1"
   ]
 }
@@ -42,7 +42,7 @@ The following arguments are supported:
 * `alias` - (Optional, string, Forces new resource) The alias of the Docker plugin. The image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
 * `enabled` - (Optional, boolean) If true, the plugin is enabled. The default value is `true`.
 * `grant_all_permissions` - (Optional, boolean) If true, grant all permissions necessary to run the plugin.
-* `args` - (Optional, set of string). Currently, only environment variables are supported.
+* `env` - (Optional, set of string). The environment variables.
 * `disable_when_set` - (Optional, boolean) If true, the plugin becomes disabled temporarily when the plugin setting is updated. See [disable_when_set](#disable-when-set-1) below for details.
 * `force_destroy` - (Optional, boolean) If true, the plugin is removed forcibly when the plugin is removed.
 * `enable_timeout` - (Optional, int) HTTP client timeout to enable the plugin.
@@ -100,7 +100,7 @@ $ docker plugin set tiborvass/sample-volume-plugin:latest DEBUG=2
 Error response from daemon: cannot set on an active plugin, disable plugin before setting
 ```
 
-If `disable_when_set` is true, then the plugin becomes disabled temporarily before the attribute `args` is updated and after `args` is updated the plugin becomes enabled again.
+If `disable_when_set` is true, then the plugin becomes disabled temporarily before the attribute `env` is updated and after `env` is updated the plugin becomes enabled again.
 
 ## Attributes Reference
 

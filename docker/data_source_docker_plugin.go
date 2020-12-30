@@ -37,7 +37,7 @@ func dataSourceDockerPlugin() *schema.Resource {
 				Computed:    true,
 				Description: "If true, grant all permissions necessary to run the plugin",
 			},
-			"args": {
+			"env": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
