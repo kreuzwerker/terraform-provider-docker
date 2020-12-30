@@ -33,9 +33,33 @@ func resourceDockerPlugin() *schema.Resource {
 				Default:  true,
 			},
 			"grant_all_permissions": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "If true, grant all permissions necessary to run the plugin",
+				Type:          schema.TypeBool,
+				Optional:      true,
+				Description:   "If true, grant all permissions necessary to run the plugin",
+				ConflictsWith: []string{"grant_permissions"},
+			},
+			"grant_permissions": {
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"grant_all_permissions"},
+				Set: func(v interface{}) int {
+					return schema.HashString(v.(map[string]interface{})["name"].(string))
+				},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeSet,
+							Required: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
 			},
 			"env": {
 				Type:     schema.TypeSet,

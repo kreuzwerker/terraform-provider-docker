@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -23,19 +24,54 @@ func getDockerPluginEnv(src interface{}) []string {
 	return envs
 }
 
+func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivileges) (bool, error) {
+	grantPermissionsSet := src.(*schema.Set)
+	grantPermissions := make(map[string]map[string]struct{}, grantPermissionsSet.Len())
+	for _, b := range grantPermissionsSet.List() {
+		c := b.(map[string]interface{})
+		name := c["name"].(string)
+		values := c["value"].(*schema.Set)
+		grantPermission := make(map[string]struct{}, values.Len())
+		for _, value := range values.List() {
+			grantPermission[value.(string)] = struct{}{}
+		}
+		grantPermissions[name] = grantPermission
+	}
+	return func(privileges types.PluginPrivileges) (bool, error) {
+		for _, privilege := range privileges {
+			grantPermission, nameOK := grantPermissions[privilege.Name]
+			if !nameOK {
+				log.Print("[DEBUG] to install the plugin, the following permissions are required: " + privilege.Name + " [" + strings.Join(privilege.Value, ", ") + "]")
+				return false, nil
+			}
+			for _, value := range privilege.Value {
+				if _, ok := grantPermission[value]; !ok {
+					log.Print("[DEBUG] to install the plugin, the following permissions are required: " + privilege.Name + " [" + strings.Join(privilege.Value, ", ") + "]")
+					return false, nil
+				}
+			}
+		}
+		return true, nil
+	}
+}
+
 func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
 	pluginRef := d.Get("plugin_reference").(string)
 	alias := d.Get("alias").(string)
 	log.Printf("[DEBUG] Install a Docker plugin " + pluginRef)
-	body, err := client.PluginInstall(ctx, alias, types.PluginInstallOptions{
+	opts := types.PluginInstallOptions{
 		RemoteRef:            pluginRef,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
 		Disabled:             !d.Get("enabled").(bool),
 		// TODO support other settings
 		Args: getDockerPluginEnv(d.Get("env")),
-	})
+	}
+	if v, ok := d.GetOk("grant_permissions"); ok {
+		opts.AcceptPermissionsFunc = getDockerPluginGrantPermissions(v)
+	}
+	body, err := client.PluginInstall(ctx, alias, opts)
 	if err != nil {
 		return fmt.Errorf("install a Docker plugin "+pluginRef+": %w", err)
 	}
