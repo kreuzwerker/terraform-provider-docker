@@ -115,13 +115,11 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
 	pluginID := d.Id()
-	skipArgs := false
 	if d.HasChange("enabled") {
 		if d.Get("enabled").(bool) {
 			if err := setPluginArgs(ctx, d, client, false); err != nil {
 				return err
 			}
-			skipArgs = true
 			log.Printf("[DEBUG] Enable a Docker plugin " + pluginID)
 			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
 				Timeout: d.Get("enable_timeout").(int),
@@ -137,7 +135,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 	}
-	if !skipArgs {
+	if !(d.HasChange("enabled") && d.Get("enabled").(bool)) {
 		plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
 		if err != nil {
 			return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
