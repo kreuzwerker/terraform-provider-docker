@@ -41,7 +41,8 @@ The following arguments are supported:
 * `plugin_reference` - (Required, string, Forces new resource) The plugin reference. The registry path and image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
 * `alias` - (Optional, string, Forces new resource) The alias of the Docker plugin. The image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
 * `enabled` - (Optional, boolean) If true, the plugin is enabled. The default value is `true`.
-* `grant_all_permissions` - (Optional, boolean) If true, grant all permissions necessary to run the plugin.
+* `grant_all_permissions` - (Optional, boolean) If true, grant all permissions necessary to run the plugin. This attribute conflicts with `grant_permissions`.
+* `grant_permissions` - (Optional, block) grant permissions necessary to run the plugin. This attribute conflicts with `grant_all_permissions`. See [grant_permissions](#grant-permissions-1) below for details.
 * `env` - (Optional, set of string). The environment variables.
 * `disable_when_set` - (Optional, boolean) If true, the plugin becomes disabled temporarily when the plugin setting is updated. See [disable_when_set](#disable-when-set-1) below for details.
 * `force_destroy` - (Optional, boolean) If true, the plugin is removed forcibly when the plugin is removed.
@@ -87,6 +88,48 @@ Terraform will perform the following actions:
     }
 
 Plan: 1 to add, 0 to change, 1 to destroy.
+```
+
+<a id="grant-permissions-1"></a>
+## grant_permissions
+
+`grant_permissions` is a block within the configuration that can be repeated to grant permissions to install the plugin. Each `grant_permissions` block supports
+the following:
+
+* `name` - (Required, string)
+* `value` - (Required, list of string)
+
+Example:
+
+```hcl
+resource "docker_plugin" "sshfs" {
+  plugin_reference = "docker.io/vieux/sshfs:latest"
+  grant_permissions {
+    name = "network"
+    value = [
+      "host"
+    ]
+  }
+  grant_permissions {
+    name = "mount"
+    value = [
+      "",
+      "/var/lib/docker/plugins/"
+    ]
+  }
+  grant_permissions {
+    name = "device"
+    value = [
+      "/dev/fuse"
+    ]
+  }
+  grant_permissions {
+    name = "capabilities"
+    value = [
+      "CAP_SYS_ADMIN"
+    ]
+  }
+}
 ```
 
 <a id="disable-when-set-1"></a>
