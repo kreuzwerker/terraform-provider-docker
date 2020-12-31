@@ -1,10 +1,40 @@
 package docker
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
+
+func Test_getDockerPluginEnv(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		title string
+		src   interface{}
+		exp   []string
+	}{
+		{
+			title: "nil",
+		},
+		{
+			title: "basic",
+			src:   schema.NewSet(schema.HashString, []interface{}{"DEBUG=1"}),
+			exp:   []string{"DEBUG=1"},
+		},
+	}
+	for _, d := range data {
+		d := d
+		t.Run(d.title, func(t *testing.T) {
+			t.Parallel()
+			envs := getDockerPluginEnv(d.src)
+			if !reflect.DeepEqual(d.exp, envs) {
+				t.Fatalf("want %v, got %v", d.exp, envs)
+			}
+		})
+	}
+}
 
 func TestAccDockerPlugin_basic(t *testing.T) {
 	const resourceName = "docker_plugin.test"
