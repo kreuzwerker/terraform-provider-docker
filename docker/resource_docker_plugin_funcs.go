@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -22,6 +21,10 @@ func getDockerPluginEnv(src interface{}) []string {
 		envs[i] = a.(string)
 	}
 	return envs
+}
+
+func dockerPluginGrantPermissionsSetFunc(v interface{}) int {
+	return schema.HashString(v.(map[string]interface{})["name"].(string))
 }
 
 func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivileges) (bool, error) {
@@ -41,12 +44,12 @@ func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivilege
 		for _, privilege := range privileges {
 			grantPermission, nameOK := grantPermissions[privilege.Name]
 			if !nameOK {
-				log.Print("[DEBUG] to install the plugin, the following permissions are required: " + privilege.Name + " [" + strings.Join(privilege.Value, ", ") + "]")
+				log.Print("[DEBUG] to install the plugin, the following permissions are required: " + privilege.Name)
 				return false, nil
 			}
 			for _, value := range privilege.Value {
 				if _, ok := grantPermission[value]; !ok {
-					log.Print("[DEBUG] to install the plugin, the following permissions are required: " + privilege.Name + " [" + strings.Join(privilege.Value, ", ") + "]")
+					log.Print("[DEBUG] to install the plugin, the following permissions are required: " + privilege.Name + " " + value)
 					return false, nil
 				}
 			}

@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -31,6 +32,110 @@ func Test_getDockerPluginEnv(t *testing.T) {
 			envs := getDockerPluginEnv(d.src)
 			if !reflect.DeepEqual(d.exp, envs) {
 				t.Fatalf("want %v, got %v", d.exp, envs)
+			}
+		})
+	}
+}
+
+func Test_getDockerPluginGrantPermissions(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		title      string
+		src        interface{}
+		privileges types.PluginPrivileges
+		exp        bool
+		isErr      bool
+	}{
+		{
+			title: "no privilege",
+			src: schema.NewSet(dockerPluginGrantPermissionsSetFunc, []interface{}{
+				map[string]interface{}{
+					"name":  "network",
+					"value": schema.NewSet(schema.HashString, []interface{}{"host"}),
+				},
+			}),
+			exp: true,
+		},
+		{
+			title: "basic",
+			src: schema.NewSet(dockerPluginGrantPermissionsSetFunc, []interface{}{
+				map[string]interface{}{
+					"name":  "network",
+					"value": schema.NewSet(schema.HashString, []interface{}{"host"}),
+				},
+			}),
+			privileges: types.PluginPrivileges{
+				{
+					Name:  "network",
+					Value: []string{"host"},
+				},
+			},
+			exp: true,
+		},
+		{
+			title: "permission denied 1",
+			src: schema.NewSet(dockerPluginGrantPermissionsSetFunc, []interface{}{
+				map[string]interface{}{
+					"name": "network",
+					"value": schema.NewSet(schema.HashString, []interface{}{
+						"host",
+					}),
+				},
+			}),
+			privileges: types.PluginPrivileges{
+				{
+					Name:  "device",
+					Value: []string{"/dev/fuse"},
+				},
+			},
+			exp: false,
+		},
+		{
+			title: "permission denied 2",
+			src: schema.NewSet(dockerPluginGrantPermissionsSetFunc, []interface{}{
+				map[string]interface{}{
+					"name": "network",
+					"value": schema.NewSet(schema.HashString, []interface{}{
+						"host",
+					}),
+				},
+				map[string]interface{}{
+					"name": "mount",
+					"value": schema.NewSet(schema.HashString, []interface{}{
+						"/var/lib/docker/plugins/",
+					}),
+				},
+			}),
+			privileges: types.PluginPrivileges{
+				{
+					Name:  "network",
+					Value: []string{"host"},
+				},
+				{
+					Name:  "mount",
+					Value: []string{"", "/var/lib/docker/plugins/"},
+				},
+			},
+			exp: false,
+		},
+	}
+	for _, d := range data {
+		d := d
+		t.Run(d.title, func(t *testing.T) {
+			t.Parallel()
+			f := getDockerPluginGrantPermissions(d.src)
+			b, err := f(d.privileges)
+			if d.isErr {
+				if err == nil {
+					t.Fatal("error must be returned")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(d.exp, b) {
+				t.Fatalf("want %v, got %v", d.exp, b)
 			}
 		})
 	}

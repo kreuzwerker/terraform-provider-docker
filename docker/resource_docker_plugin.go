@@ -42,9 +42,7 @@ func resourceDockerPlugin() *schema.Resource {
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"grant_all_permissions"},
-				Set: func(v interface{}) int {
-					return schema.HashString(v.(map[string]interface{})["name"].(string))
-				},
+				Set:           dockerPluginGrantPermissionsSetFunc,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
