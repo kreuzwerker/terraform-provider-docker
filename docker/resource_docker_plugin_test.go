@@ -88,6 +88,28 @@ func TestAccDockerPlugin_grantAllPermissions(t *testing.T) {
 	})
 }
 
+func TestAccDockerPlugin_grantPermissions(t *testing.T) {
+	const resourceName = "docker_plugin.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				ResourceName: resourceName,
+				Config:       testAccDockerPluginGrantPermissions,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/vieux/sshfs:latest"),
+					resource.TestCheckResourceAttr(resourceName, "alias", "vieux/sshfs:latest"),
+				),
+			},
+			{
+				ResourceName: resourceName,
+				ImportState:  true,
+			},
+		},
+	})
+}
+
 const testAccDockerPluginMinimum = `
 resource "docker_plugin" "test" {
   plugin_reference = "docker.io/tiborvass/sample-volume-plugin:latest"
@@ -135,4 +157,36 @@ resource "docker_plugin" "test" {
   plugin_reference      = "docker.io/vieux/sshfs:latest"
   grant_all_permissions = true
   force_destroy         = true
+}`
+
+// To install this plugin, it is required to grant required permissions.
+const testAccDockerPluginGrantPermissions = `
+resource "docker_plugin" "test" {
+  plugin_reference      = "docker.io/vieux/sshfs:latest"
+  force_destroy         = true
+  grant_permissions {
+    name = "network"
+    value = [
+      "host"
+    ]
+  }
+  grant_permissions {
+    name = "mount"
+    value = [
+      "",
+      "/var/lib/docker/plugins/"
+    ]
+  }
+  grant_permissions {
+    name = "device"
+    value = [
+      "/dev/fuse"
+    ]
+  }
+  grant_permissions {
+    name = "capabilities"
+    value = [
+      "CAP_SYS_ADMIN"
+    ]
+  }
 }`
