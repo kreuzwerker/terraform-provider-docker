@@ -444,6 +444,7 @@ func flattenTaskPlacement(in *swarm.Placement) []interface{} {
 	if len(in.Platforms) > 0 {
 		m["platforms"] = flattenPlacementPlatforms(in.Platforms)
 	}
+	m["max_replicas"] = in.MaxReplicas
 	out[0] = m
 	return out
 }
