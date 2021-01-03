@@ -1102,6 +1102,9 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 				if v, ok := rawPlacement["platforms"]; ok {
 					placement.Platforms = mapSetToPlacementPlatforms(v.(*schema.Set))
 				}
+				if v, ok := rawPlacement["max_replicas"]; ok {
+					placement.MaxReplicas = uint64(v.(int))
+				}
 			}
 		}
 	}

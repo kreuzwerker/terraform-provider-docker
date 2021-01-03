@@ -651,6 +651,12 @@ func resourceDockerService() *schema.Resource {
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Set:         schema.HashString,
 									},
+									"max_replicas": {
+										Type:         schema.TypeInt,
+										Description:  "Maximum number of replicas for per node (default value is 0, which is unlimited)",
+										Optional:     true,
+										ValidateFunc: validateIntegerGeqThan(0),
+									},
 									"platforms": {
 										Type:        schema.TypeSet,
 										Description: "Platforms stores all the platforms that the service's image can run on",

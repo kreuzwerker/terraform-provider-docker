@@ -215,6 +215,8 @@ resource "docker_service" "foo" {
       prefs = [
         "spread=node.role.manager",
       ]
+
+      max_replicas = 1
     }
 
     force_update = 0
@@ -486,6 +488,7 @@ the extra mount mappings for the container. Each `configs` is a reference to a s
 * `platforms` (Optional, set of) Platforms stores all the platforms that the service's image can run on
   * `architecture` (Required, string) The architecture, e.g., `amd64`
   * `os` (Required, string) The operation system, e.g., `linux`
+* `max_replicas` (Optional, int) Maximum number of replicas for per node (default value is 0, which is unlimited)
 
 <!-- end task-placement-spec -->
 <!-- end log-driver-spec -->
