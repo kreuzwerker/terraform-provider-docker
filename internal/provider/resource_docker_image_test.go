@@ -161,7 +161,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
-	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
 	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
@@ -186,7 +186,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
-	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
 	ctx := context.TODO()
 
 	resource.Test(t, resource.TestCase{
