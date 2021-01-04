@@ -186,7 +186,7 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 		if err != nil {
 			return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
 		}
-		if err := setPluginArgs(ctx, d, client, plugin.Enabled && d.Get("disable_when_set").(bool)); err != nil {
+		if err := setPluginArgs(ctx, d, client, plugin.Enabled); err != nil {
 			return err
 		}
 	}

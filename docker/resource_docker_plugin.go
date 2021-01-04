@@ -66,11 +66,6 @@ func resourceDockerPlugin() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
-			"disable_when_set": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "If true, the plugin becomes disabled temporarily when the plugin setting is updated",
-			},
 			"force_destroy": {
 				Type:     schema.TypeBool,
 				Optional: true,

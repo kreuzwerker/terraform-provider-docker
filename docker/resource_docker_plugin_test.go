@@ -173,7 +173,6 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
-					resource.TestCheckResourceAttr(resourceName, "disable_when_set", "true"),
 					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
 					resource.TestCheckResourceAttr(resourceName, "enable_timeout", "60"),
 				),
@@ -186,7 +185,6 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
-					resource.TestCheckResourceAttr(resourceName, "disable_when_set", "true"),
 					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
 					resource.TestCheckResourceAttr(resourceName, "enable_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceName, "force_disable", "true"),
@@ -263,7 +261,6 @@ resource "docker_plugin" "test" {
   plugin_reference              = "docker.io/tiborvass/sample-volume-plugin:latest"
   alias                         = "sample:latest"
   grant_all_permissions         = true
-  disable_when_set              = true
   force_destroy                 = true
   enable_timeout                = 60
   env = [
@@ -277,7 +274,6 @@ resource "docker_plugin" "test" {
   alias                         = "sample:latest"
   enabled                       = false
   grant_all_permissions         = true
-  disable_when_set              = true
   force_destroy                 = true
   force_disable                 = true
   enable_timeout                = 60
