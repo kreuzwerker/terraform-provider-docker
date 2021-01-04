@@ -425,7 +425,11 @@ func flattenResourceGenericResource(in []swarm.GenericResource) []interface{} {
 	return out
 }
 
-func flattenTaskRestartPolicy(in *swarm.RestartPolicy) map[string]interface{} {
+func flattenTaskRestartPolicy(in *swarm.RestartPolicy) []interface{} {
+	if in == nil {
+		return make([]interface{}, 0)
+	}
+	out := make([]interface{}, 1)
 	m := make(map[string]interface{})
 	if len(in.Condition) > 0 {
 		m["condition"] = string(in.Condition)
@@ -435,12 +439,13 @@ func flattenTaskRestartPolicy(in *swarm.RestartPolicy) map[string]interface{} {
 	}
 	if in.MaxAttempts != nil {
 		mapped := *in.MaxAttempts
-		m["max_attempts"] = strconv.Itoa(int(mapped))
+		m["max_attempts"] = int(mapped)
 	}
 	if in.Window != nil {
 		m["window"] = shortDur(*in.Window)
 	}
-	return m
+	out[0] = m
+	return out
 }
 
 func flattenTaskPlacement(in *swarm.Placement) []interface{} {

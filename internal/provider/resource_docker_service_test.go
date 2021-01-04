@@ -327,7 +327,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 							}
 						}
 
-						restart_policy = {
+						restart_policy {
 							condition    = "on-failure"
 							delay        = "3s"
 							max_attempts = 4
@@ -424,14 +424,14 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.type", "type-label"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.level", "level-label"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.read_only", "true"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.target", "/mount/test"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.source", "tftest-volume"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.type", "volume"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.read_only", "true"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.volume_options.0.no_copy", "true"),
-					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.volume_options.0.labels", map[string]string{"foo": "bar"}),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.volume_options.0.driver_name", "random-driver"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.2817186635.volume_options.0.driver_options.op1", "val1"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.target", "/mount/test"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.source", "tftest-volume"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.type", "volume"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.read_only", "true"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.no_copy", "true"),
+					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.labels", map[string]string{"foo": "bar"}),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.driver_name", "random-driver"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.driver_options.op1", "val1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_signal", "SIGTERM"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_grace_period", "10s"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.test.0", "CMD"),
@@ -441,8 +441,8 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.interval", "5s"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.timeout", "2s"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "4"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.1878413705.host", "testhost"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.1878413705.ip", "10.0.1.0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.host", "testhost"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.ip", "10.0.1.0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.dns_config.0.nameservers.0", "8.8.8.8"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.dns_config.0.search.0", "example.org"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.dns_config.0.options.0", "timeout:3"),
@@ -450,12 +450,12 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.secrets.#", "1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.resources.0.limits.0.nano_cpus", "1000000"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.resources.0.limits.0.memory_bytes", "536870912"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.condition", "on-failure"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.delay", "3s"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.max_attempts", "4"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.window", "10s"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.constraints.4248571116", "node.role==manager"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.prefs.1751004438", "spread=node.role.manager"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.0.condition", "on-failure"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.0.delay", "3s"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.0.max_attempts", "4"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.restart_policy.0.window", "10s"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.constraints.0", "node.role==manager"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.prefs.0", "spread=node.role.manager"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.max_replicas", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.force_update", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "1"),

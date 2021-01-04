@@ -577,6 +577,7 @@ func resourceDockerService() *schema.Resource {
 							Description: "Specification for the restart policy which applies to containers created as part of this service.",
 							Optional:    true,
 							Computed:    true,
+							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"condition": {
