@@ -1045,6 +1045,9 @@ func createGenericResources(value interface{}) ([]swarm.GenericResource, error) 
 func createRestartPolicy(v interface{}) (*swarm.RestartPolicy, error) {
 	restartPolicy := swarm.RestartPolicy{}
 	rawRestartPolicySingleItem := v.([]interface{})
+	if len(rawRestartPolicySingleItem) == 0 {
+		return &restartPolicy, nil
+	}
 	// because it's a list with MaxItems=1
 	rawRestartPolicy := rawRestartPolicySingleItem[0].(map[string]interface{})
 
