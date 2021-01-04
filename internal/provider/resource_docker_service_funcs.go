@@ -1281,7 +1281,12 @@ func createConvergeConfig(config []interface{}) *convergeConfig {
 }
 
 // authToServiceAuth maps the auth to AuthConfiguration
-func authToServiceAuth(auth map[string]interface{}) types.AuthConfig {
+func authToServiceAuth(auths []interface{}) types.AuthConfig {
+	if len(auths) == 0 {
+		return types.AuthConfig{}
+	}
+	// it's maxItems = 1
+	auth := auths[0].(map[string]interface{})
 	if auth["username"] != nil && len(auth["username"].(string)) > 0 && auth["password"] != nil && len(auth["password"].(string)) > 0 {
 		return types.AuthConfig{
 			Username:      auth["username"].(string),
@@ -1314,7 +1319,7 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType string) []byte {
 	var auth types.AuthConfig
 	if v, ok := d.GetOk("auth"); ok {
-		auth = authToServiceAuth(v.(map[string]interface{}))
+		auth = authToServiceAuth(v.([]interface{}))
 	} else {
 		authConfigs := meta.(*ProviderConfig).AuthConfigs.Configs
 		if len(authConfigs) == 0 {

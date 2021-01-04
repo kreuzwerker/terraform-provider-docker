@@ -26,6 +26,7 @@ func resourceDockerService() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"server_address": {
