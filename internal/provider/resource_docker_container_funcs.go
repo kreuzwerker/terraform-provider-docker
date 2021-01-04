@@ -653,7 +653,16 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
-	d.Set("host", container.HostConfig.ExtraHosts)
+	// TODO mavogel: move all fatteners to structures_container.go
+	extraHosts := make([]interface{}, len(container.HostConfig.ExtraHosts))
+	for i, extraHost := range container.HostConfig.ExtraHosts {
+		extraHostSplit := strings.Split(extraHost, ":")
+		extraHosts[i] = map[string]interface{}{
+			"host": extraHostSplit[0],
+			"ip":   extraHostSplit[1],
+		}
+	}
+	d.Set("host", extraHosts)
 	ulimits := make([]interface{}, len(container.HostConfig.Ulimits))
 	for i, ul := range container.HostConfig.Ulimits {
 		ulimits[i] = map[string]interface{}{
