@@ -118,32 +118,30 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.Client, disabled bool) (gErr error) {
-	if !d.HasChange("env") {
-		return nil
-	}
+func disablePlugin(ctx context.Context, d *schema.ResourceData, cl *client.Client) error {
 	pluginID := d.Id()
-	if disabled {
-		// temporarily disable the plugin before updating the plugin settings
-		log.Printf("[DEBUG] Disable a Docker plugin " + pluginID + " temporarily before updating teh pugin settings")
-		if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
-			Force: d.Get("force_disable").(bool),
-		}); err != nil {
-			return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
-		}
-		defer func() {
-			log.Print("[DEBUG] Enable a Docker plugin " + pluginID)
-			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
-				Timeout: d.Get("enable_timeout").(int),
-			}); err != nil {
-				if gErr == nil {
-					gErr = fmt.Errorf("enable the Docker plugin "+pluginID+": %w", err)
-					return
-				}
-				log.Printf("[ERROR] enable the Docker plugin "+pluginID+": %w", err)
-			}
-		}()
+	log.Printf("[DEBUG] Disable a Docker plugin " + pluginID)
+	if err := cl.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
+		Force: d.Get("force_disable").(bool),
+	}); err != nil {
+		return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
 	}
+	return nil
+}
+
+func enablePlugin(ctx context.Context, d *schema.ResourceData, cl *client.Client) error {
+	pluginID := d.Id()
+	log.Print("[DEBUG] Enable a Docker plugin " + pluginID)
+	if err := cl.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
+		Timeout: d.Get("enable_timeout").(int),
+	}); err != nil {
+		return fmt.Errorf("enable the Docker plugin "+pluginID+": %w", err)
+	}
+	return nil
+}
+
+func pluginSet(ctx context.Context, d *schema.ResourceData, cl *client.Client) error {
+	pluginID := d.Id()
 	log.Printf("[DEBUG] Update settings of a Docker plugin " + pluginID)
 	// currently, only environment variables are supported.
 	// TODO support other args
@@ -151,44 +149,62 @@ func setPluginArgs(ctx context.Context, d *schema.ResourceData, client *client.C
 	// source of mounts .Settings.Mounts
 	// path of devices .Settings.Devices
 	// args .Settings.Args
-	if err := client.PluginSet(ctx, pluginID, getDockerPluginEnv(d.Get("env"))); err != nil {
+	if err := cl.PluginSet(ctx, pluginID, getDockerPluginEnv(d.Get("env"))); err != nil {
 		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
 	}
 	return nil
 }
 
-func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
-	pluginID := d.Id()
-	if d.HasChange("enabled") {
-		if d.Get("enabled").(bool) {
-			if err := setPluginArgs(ctx, d, client, false); err != nil {
+func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) (gErr error) {
+	cl := meta.(*ProviderConfig).DockerClient
+	o, n := d.GetChange("enabled")
+	oldEnabled, newEnabled := o.(bool), n.(bool)
+	if d.HasChange("env") {
+		if oldEnabled {
+			// To update the plugin setttings, the plugin must be disabled
+			if err := disablePlugin(ctx, d, cl); err != nil {
 				return err
 			}
-			log.Printf("[DEBUG] Enable a Docker plugin " + pluginID)
-			if err := client.PluginEnable(ctx, pluginID, types.PluginEnableOptions{
-				Timeout: d.Get("enable_timeout").(int),
-			}); err != nil {
-				return fmt.Errorf("enable the Docker plugin "+pluginID+": %w", err)
+			if newEnabled {
+				defer func() {
+					if err := enablePlugin(ctx, d, cl); err != nil {
+						if gErr == nil {
+							gErr = err
+							return
+						}
+					}
+				}()
+			}
+		}
+		if err := pluginSet(ctx, d, cl); err != nil {
+			return err
+		}
+		if !oldEnabled && newEnabled {
+			if err := enablePlugin(ctx, d, cl); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	// update only "enabled"
+	if d.HasChange("enabled") {
+		if newEnabled {
+			if err := enablePlugin(ctx, d, cl); err != nil {
+				return err
 			}
 		} else {
-			log.Printf("[DEBUG] Disable a Docker plugin " + pluginID)
-			if err := client.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
-				Force: d.Get("force_disable").(bool),
-			}); err != nil {
-				return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
+			if err := disablePlugin(ctx, d, cl); err != nil {
+				return err
 			}
 		}
 	}
-	if !(d.HasChange("enabled") && d.Get("enabled").(bool)) {
-		plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
-		if err != nil {
-			return fmt.Errorf("inspect a Docker plugin "+pluginID+": %w", err)
-		}
-		if err := setPluginArgs(ctx, d, client, plugin.Enabled); err != nil {
-			return err
-		}
+	return nil
+}
+
+func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error {
+	ctx := context.Background()
+	if err := pluginUpdate(ctx, d, meta); err != nil {
+		return err
 	}
 	// call the read function to update the resource's state.
 	// https://learn.hashicorp.com/tutorials/terraform/provider-update?in=terraform/providers#implement-update
