@@ -264,6 +264,10 @@ func parseImageOptions(image string) internalPullImageOptions {
 		pullOpts.Tag = image[prefixLength+tagIndex+1:]
 	}
 
+	if pullOpts.Tag == "" {
+		pullOpts.Tag = "latest"
+	}
+
 	return pullOpts
 }
 
