@@ -372,19 +372,21 @@ func flattenTaskResources(in *swarm.ResourceRequirements) []interface{} {
 	if in != nil {
 		m := make(map[string]interface{})
 		m["limits"] = flattenResourceLimitsOrReservations(in.Limits)
-		m["reservation"] = flattenResourceLimitsOrReservations(in.Reservations)
+		// TODO mavogel
+		// m["reservation"] = flattenResourceLimitsOrReservations(in.Reservations)
 		out = append(out, m)
 	}
 	return out
 }
 
-func flattenResourceLimitsOrReservations(in *swarm.Resources) []interface{} {
+func flattenResourceLimitsOrReservations(in *swarm.Limit) []interface{} {
 	out := make([]interface{}, 0)
 	if in != nil {
 		m := make(map[string]interface{})
 		m["nano_cpus"] = in.NanoCPUs
 		m["memory_bytes"] = in.MemoryBytes
-		m["generic_resources"] = flattenResourceGenericResource(in.GenericResources)
+		// TODO mavogel
+		// m["generic_resources"] = flattenResourceGenericResource(in.GenericResources)
 		out = append(out, m)
 	}
 	return out

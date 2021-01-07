@@ -988,7 +988,8 @@ func createResources(v interface{}) (*swarm.ResourceRequirements, error) {
 				rawResourcesSpec := rawResourcesSpec.(map[string]interface{})
 				if value, ok := rawResourcesSpec["limits"]; ok {
 					if len(value.([]interface{})) > 0 {
-						resources.Limits = &swarm.Resources{}
+						// TODO mavogel
+						resources.Limits = &swarm.Limit{}
 						for _, rawLimitsSpec := range value.([]interface{}) {
 							rawLimitsSpec := rawLimitsSpec.(map[string]interface{})
 							if value, ok := rawLimitsSpec["nano_cpus"]; ok {
@@ -997,9 +998,10 @@ func createResources(v interface{}) (*swarm.ResourceRequirements, error) {
 							if value, ok := rawLimitsSpec["memory_bytes"]; ok {
 								resources.Limits.MemoryBytes = int64(value.(int))
 							}
-							if value, ok := rawLimitsSpec["generic_resources"]; ok {
-								resources.Limits.GenericResources, _ = createGenericResources(value)
-							}
+							// TODO mavogel
+							// if value, ok := rawLimitsSpec["generic_resources"]; ok {
+							// 	resources.Limits.GenericResources, _ = createGenericResources(value)
+							// }
 						}
 					}
 				}

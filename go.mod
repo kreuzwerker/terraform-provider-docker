@@ -12,6 +12,7 @@ require (
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/moby/sys/symlink v0.1.0 // indirect
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
+	github.com/opencontainers/image-spec v1.0.1
 	gotest.tools/v3 v3.0.3 // indirect
 )
 
