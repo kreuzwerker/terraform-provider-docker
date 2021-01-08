@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -33,6 +34,33 @@ func complementTag(image string) string {
 		return image
 	}
 	return image + ":latest"
+}
+
+func normalizePluginName(name string) (string, error) {
+	ref, err := reference.ParseAnyReference(name)
+	if err != nil {
+		return "", fmt.Errorf("parse the plugin name: %w", err)
+	}
+	return complementTag(ref.String()), nil
+}
+
+func diffSuppressFuncPluginName(k, oldV, newV string, d *schema.ResourceData) bool {
+	o, err := normalizePluginName(oldV)
+	if err != nil {
+		return false
+	}
+	n, err := normalizePluginName(newV)
+	if err != nil {
+		return false
+	}
+	return o == n
+}
+
+func validateFuncPluginName(val interface{}, key string) (warns []string, errs []error) {
+	if _, err := normalizePluginName(val.(string)); err != nil {
+		return warns, append(errs, fmt.Errorf("%s is invalid: %w", key, err))
+	}
+	return
 }
 
 func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivileges) (bool, error) {
@@ -69,11 +97,11 @@ func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivilege
 func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
-	pluginRef := d.Get("plugin_reference").(string)
+	pluginName := d.Get("name").(string)
 	alias := d.Get("alias").(string)
-	log.Printf("[DEBUG] Install a Docker plugin " + pluginRef)
+	log.Printf("[DEBUG] Install a Docker plugin " + pluginName)
 	opts := types.PluginInstallOptions{
-		RemoteRef:            pluginRef,
+		RemoteRef:            pluginName,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
 		Disabled:             !d.Get("enabled").(bool),
 		// TODO support other settings
@@ -84,10 +112,10 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	body, err := client.PluginInstall(ctx, alias, opts)
 	if err != nil {
-		return fmt.Errorf("install a Docker plugin "+pluginRef+": %w", err)
+		return fmt.Errorf("install a Docker plugin "+pluginName+": %w", err)
 	}
 	_, _ = ioutil.ReadAll(body)
-	key := pluginRef
+	key := pluginName
 	if alias != "" {
 		key = alias
 	}
@@ -103,6 +131,7 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	d.SetId(plugin.ID)
 	d.Set("plugin_reference", plugin.PluginReference)
 	d.Set("alias", plugin.Name)
+	d.Set("name", plugin.PluginReference)
 	d.Set("enabled", plugin.Enabled)
 	// TODO support other settings
 	// https://docs.docker.com/engine/reference/commandline/plugin_set/#extended-description

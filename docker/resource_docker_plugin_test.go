@@ -151,6 +151,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				ResourceName: resourceName,
 				Config:       testAccDockerPluginMinimum,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
@@ -160,6 +161,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				ResourceName: resourceName,
 				Config:       testAccDockerPluginAlias,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
@@ -169,6 +171,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				ResourceName: resourceName,
 				Config:       testAccDockerPluginDisableWhenSet,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
@@ -181,6 +184,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 				ResourceName: resourceName,
 				Config:       testAccDockerPluginDisabled,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
@@ -208,6 +212,7 @@ func TestAccDockerPlugin_grantAllPermissions(t *testing.T) {
 				ResourceName: resourceName,
 				Config:       testAccDockerPluginGrantAllPermissions,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "grant_all_permissions", "true"),
@@ -231,6 +236,7 @@ func TestAccDockerPlugin_grantPermissions(t *testing.T) {
 				ResourceName: resourceName,
 				Config:       testAccDockerPluginGrantPermissions,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "alias", "vieux/sshfs:latest"),
 				),
@@ -245,24 +251,24 @@ func TestAccDockerPlugin_grantPermissions(t *testing.T) {
 
 const testAccDockerPluginMinimum = `
 resource "docker_plugin" "test" {
-  plugin_reference = "docker.io/tiborvass/sample-volume-plugin:latest"
-  force_destroy    = true
+  name          = "docker.io/tiborvass/sample-volume-plugin:latest"
+  force_destroy = true
 }`
 
 const testAccDockerPluginAlias = `
 resource "docker_plugin" "test" {
-  plugin_reference = "docker.io/tiborvass/sample-volume-plugin:latest"
+  name             = "docker.io/tiborvass/sample-volume-plugin:latest"
   alias            = "sample:latest"
   force_destroy    = true
 }`
 
 const testAccDockerPluginDisableWhenSet = `
 resource "docker_plugin" "test" {
-  plugin_reference              = "docker.io/tiborvass/sample-volume-plugin:latest"
-  alias                         = "sample:latest"
-  grant_all_permissions         = true
-  force_destroy                 = true
-  enable_timeout                = 60
+  name                  = "docker.io/tiborvass/sample-volume-plugin:latest"
+  alias                 = "sample:latest"
+  grant_all_permissions = true
+  force_destroy         = true
+  enable_timeout        = 60
   env = [
     "DEBUG=1"
   ]
@@ -270,13 +276,13 @@ resource "docker_plugin" "test" {
 
 const testAccDockerPluginDisabled = `
 resource "docker_plugin" "test" {
-  plugin_reference              = "docker.io/tiborvass/sample-volume-plugin:latest"
-  alias                         = "sample:latest"
-  enabled                       = false
-  grant_all_permissions         = true
-  force_destroy                 = true
-  force_disable                 = true
-  enable_timeout                = 60
+  name                  = "docker.io/tiborvass/sample-volume-plugin:latest"
+  alias                 = "sample:latest"
+  enabled               = false
+  grant_all_permissions = true
+  force_destroy         = true
+  force_disable         = true
+  enable_timeout        = 60
   env = [
     "DEBUG=1"
   ]
@@ -285,7 +291,7 @@ resource "docker_plugin" "test" {
 // To install this plugin, it is required to grant required permissions.
 const testAccDockerPluginGrantAllPermissions = `
 resource "docker_plugin" "test" {
-  plugin_reference      = "docker.io/vieux/sshfs:latest"
+  name                  = "docker.io/vieux/sshfs:latest"
   grant_all_permissions = true
   force_destroy         = true
 }`
@@ -293,8 +299,8 @@ resource "docker_plugin" "test" {
 // To install this plugin, it is required to grant required permissions.
 const testAccDockerPluginGrantPermissions = `
 resource "docker_plugin" "test" {
-  plugin_reference      = "docker.io/vieux/sshfs:latest"
-  force_destroy         = true
+  name          = "vieux/sshfs"
+  force_destroy = true
   grant_permissions {
     name = "network"
     value = [

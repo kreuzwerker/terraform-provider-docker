@@ -14,11 +14,13 @@ func resourceDockerPlugin() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 		Schema: map[string]*schema.Schema{
-			"plugin_reference": {
-				Type:        schema.TypeString,
-				Description: "Docker Plugin Reference",
-				Required:    true,
-				ForceNew:    true,
+			"name": {
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				Description:      "Docker Plugin name",
+				DiffSuppressFunc: diffSuppressFuncPluginName,
+				ValidateFunc:     validateFuncPluginName,
 			},
 			"alias": {
 				Type:        schema.TypeString,
@@ -67,6 +69,11 @@ func resourceDockerPlugin() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"plugin_reference": {
+				Type:        schema.TypeString,
+				Description: "Docker Plugin Reference",
+				Computed:    true,
 			},
 
 			"force_destroy": {
