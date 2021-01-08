@@ -37,6 +37,91 @@ func Test_getDockerPluginEnv(t *testing.T) {
 	}
 }
 
+func Test_complementTag(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		title string
+		image string
+		exp   string
+	}{
+		{
+			title: "alpine:3.11.6",
+			image: "alpine:3.11.6",
+			exp:   "alpine:3.11.6",
+		},
+		{
+			title: "alpine",
+			image: "alpine",
+			exp:   "alpine:latest",
+		},
+	}
+	for _, d := range data {
+		d := d
+		t.Run(d.title, func(t *testing.T) {
+			t.Parallel()
+			image := complementTag(d.image)
+			if image != d.exp {
+				t.Fatalf("want %v, got %v", d.exp, image)
+			}
+		})
+	}
+}
+
+func Test_normalizePluginName(t *testing.T) {
+	t.Parallel()
+	data := []struct {
+		title string
+		image string
+		isErr bool
+		exp   string
+	}{
+		{
+			title: "alpine:3.11.6",
+			image: "alpine:3.11.6",
+			exp:   "docker.io/library/alpine:3.11.6",
+		},
+		{
+			title: "alpine",
+			image: "alpine",
+			exp:   "docker.io/library/alpine:latest",
+		},
+		{
+			title: "vieux/sshfs",
+			image: "vieux/sshfs",
+			exp:   "docker.io/vieux/sshfs:latest",
+		},
+		{
+			title: "docker.io/vieux/sshfs:latest",
+			image: "docker.io/vieux/sshfs:latest",
+			exp:   "docker.io/vieux/sshfs:latest",
+		},
+		{
+			title: "docker.io/vieux/sshfs",
+			image: "docker.io/vieux/sshfs",
+			exp:   "docker.io/vieux/sshfs:latest",
+		},
+	}
+	for _, d := range data {
+		d := d
+		t.Run(d.title, func(t *testing.T) {
+			t.Parallel()
+			image, err := normalizePluginName(d.image)
+			if d.isErr {
+				if err == nil {
+					t.Fatal("error should be returned")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if image != d.exp {
+				t.Fatalf("want %v, got %v", d.exp, image)
+			}
+		})
+	}
+}
+
 func Test_getDockerPluginGrantPermissions(t *testing.T) {
 	t.Parallel()
 	data := []struct {
