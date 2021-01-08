@@ -275,7 +275,7 @@ func resourceDockerContainerV1() *schema.Resource {
 									},
 									"driver_name": {
 										Type:        schema.TypeString,
-										Description: "Name of the driver to use to create the volume.",
+										Description: "Name of the driver to use to create the volume",
 										Optional:    true,
 									},
 									"driver_options": {
