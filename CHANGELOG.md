@@ -1,3 +1,26 @@
+## 2.10.0 (January 08, 2020)
+
+IMPROVEMENTS:
+- add ability to lint/check of links in documentation locally ([#98](https://github.com/kreuzwerker/terraform-provider-docker/pull/98))
+- add local semantic commit validation ([#99](https://github.com/kreuzwerker/terraform-provider-docker/pull/99))
+- add force_remove option to `r/image` ([#104](https://github.com/kreuzwerker/terraform-provider-docker/pull/104))
+- support max replicas of Docker Service Task Spec ([#112](https://github.com/kreuzwerker/terraform-provider-docker/pull/112))
+- supports Docker plugin ([#35](https://github.com/kreuzwerker/terraform-provider-docker/pull/35))
+
+DOCS:
+- updates docs like gh templates, contribution guideline and readme ([#36](https://github.com/kreuzwerker/terraform-provider-docker/pull/36))
+- updates links to provider and slack
+- docs(changelog): fixes broken links
+- style(changelog): aligns braces
+- add labels to arguments of docker_service ([#105](https://github.com/kreuzwerker/terraform-provider-docker/pull/105))
+
+BUG FIXES
+- image label for workflows
+- set "latest" to tag when tag isn't specified ([#117](https://github.com/kreuzwerker/terraform-provider-docker/pull/117))
+
+CI 
+- ci: update ubuntu images and docker version ([#38](https://github.com/kreuzwerker/terraform-provider-docker/pull/38))
+
 ## 2.9.0 (December 25, 2020)
 
 IMPROVEMENTS
