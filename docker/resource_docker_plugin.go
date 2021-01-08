@@ -16,7 +16,7 @@ func resourceDockerPlugin() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"plugin_reference": {
 				Type:        schema.TypeString,
-				Description: "Docker Plugin Reference.",
+				Description: "Docker Plugin Reference",
 				Required:    true,
 				ForceNew:    true,
 			},
@@ -25,7 +25,7 @@ func resourceDockerPlugin() *schema.Resource {
 				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Docker Plugin alias.",
+				Description: "Docker Plugin alias",
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
@@ -78,7 +78,7 @@ func resourceDockerPlugin() *schema.Resource {
 			"force_disable": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "If true, then the plugin is disabled forcibly when the plugin is disabled.",
+				Description: "If true, then the plugin is disabled forcibly when the plugin is disabled",
 			},
 		},
 	}

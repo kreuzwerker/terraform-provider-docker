@@ -260,7 +260,7 @@ func resourceDockerService() *schema.Resource {
 															},
 															"driver_name": {
 																Type:        schema.TypeString,
-																Description: "Name of the driver to use to create the volume.",
+																Description: "Name of the driver to use to create the volume",
 																Optional:    true,
 															},
 															"driver_options": {
@@ -354,7 +354,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"hosts": {
 										Type:        schema.TypeSet,
-										Description: "A list of hostname/IP mappings to add to the container's hosts file.",
+										Description: "A list of hostname/IP mappings to add to the container's hosts file",
 										Optional:    true,
 										ForceNew:    true,
 										Elem: &schema.Resource{
@@ -597,7 +597,7 @@ func resourceDockerService() *schema.Resource {
 						},
 						"restart_policy": {
 							Type:        schema.TypeMap,
-							Description: "Specification for the restart policy which applies to containers created as part of this service.",
+							Description: "Specification for the restart policy which applies to containers created as part of this service",
 							Optional:    true,
 							Computed:    true,
 							Elem: &schema.Resource{
@@ -689,7 +689,7 @@ func resourceDockerService() *schema.Resource {
 						},
 						"networks": {
 							Type:        schema.TypeSet,
-							Description: "Ids of the networks in which the  container will be put in.",
+							Description: "Ids of the networks in which the  container will be put in",
 							Optional:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Set:         schema.HashString,
@@ -877,7 +877,7 @@ func resourceDockerService() *schema.Resource {
 						},
 						"ports": {
 							Type:        schema.TypeList,
-							Description: "List of exposed ports that this service is accessible on from the outside. Ports can only be provided if 'vip' resolution mode is used.",
+							Description: "List of exposed ports that this service is accessible on from the outside. Ports can only be provided if 'vip' resolution mode is used",
 							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -900,7 +900,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"published_port": {
 										Type:        schema.TypeInt,
-										Description: "The port on the swarm hosts.",
+										Description: "The port on the swarm hosts",
 										Optional:    true,
 										Computed:    true,
 									},
@@ -1199,7 +1199,7 @@ func resourceDockerServiceV0() *schema.Resource {
 															},
 															"driver_name": {
 																Type:        schema.TypeString,
-																Description: "Name of the driver to use to create the volume.",
+																Description: "Name of the driver to use to create the volume",
 																Optional:    true,
 															},
 															"driver_options": {
@@ -1293,7 +1293,7 @@ func resourceDockerServiceV0() *schema.Resource {
 									},
 									"hosts": {
 										Type:        schema.TypeSet,
-										Description: "A list of hostname/IP mappings to add to the container's hosts file.",
+										Description: "A list of hostname/IP mappings to add to the container's hosts file",
 										Optional:    true,
 										ForceNew:    true,
 										Elem: &schema.Resource{
@@ -1498,7 +1498,7 @@ func resourceDockerServiceV0() *schema.Resource {
 						},
 						"restart_policy": {
 							Type:        schema.TypeMap,
-							Description: "Specification for the restart policy which applies to containers created as part of this service.",
+							Description: "Specification for the restart policy which applies to containers created as part of this service",
 							Optional:    true,
 							Computed:    true,
 							Elem: &schema.Resource{
@@ -1590,7 +1590,7 @@ func resourceDockerServiceV0() *schema.Resource {
 						},
 						"networks": {
 							Type:        schema.TypeSet,
-							Description: "Ids of the networks in which the  container will be put in.",
+							Description: "Ids of the networks in which the  container will be put in",
 							Optional:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Set:         schema.HashString,
@@ -1778,7 +1778,7 @@ func resourceDockerServiceV0() *schema.Resource {
 						},
 						"ports": {
 							Type:        schema.TypeSet,
-							Description: "List of exposed ports that this service is accessible on from the outside. Ports can only be provided if 'vip' resolution mode is used.",
+							Description: "List of exposed ports that this service is accessible on from the outside. Ports can only be provided if 'vip' resolution mode is used",
 							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -1801,7 +1801,7 @@ func resourceDockerServiceV0() *schema.Resource {
 									},
 									"published_port": {
 										Type:        schema.TypeInt,
-										Description: "The port on the swarm hosts.",
+										Description: "The port on the swarm hosts",
 										Optional:    true,
 									},
 									"publish_mode": {
