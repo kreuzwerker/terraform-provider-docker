@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -25,6 +26,13 @@ func getDockerPluginEnv(src interface{}) []string {
 
 func dockerPluginGrantPermissionsSetFunc(v interface{}) int {
 	return schema.HashString(v.(map[string]interface{})["name"].(string))
+}
+
+func complementTag(image string) string {
+	if strings.Contains(image, ":") {
+		return image
+	}
+	return image + ":latest"
 }
 
 func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivileges) (bool, error) {

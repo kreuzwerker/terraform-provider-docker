@@ -26,6 +26,9 @@ func resourceDockerPlugin() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Docker Plugin alias",
+				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
+					return complementTag(oldV) == complementTag(newV)
+				},
 			},
 			"enabled": {
 				Type:     schema.TypeBool,

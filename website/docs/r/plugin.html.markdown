@@ -38,7 +38,7 @@ resource "docker_plugin" "sample-volume-plugin" {
 The following arguments are supported:
 
 * `plugin_reference` - (Required, string, Forces new resource) The plugin reference. The registry path and image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
-* `alias` - (Optional, string, Forces new resource) The alias of the Docker plugin. The image tag should not be omitted. See [plugin_references, alias](#plugin-references-alias-1) below for details.
+* `alias` - (Optional, string, Forces new resource) The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.
 * `enabled` - (Optional, boolean) If true, the plugin is enabled. The default value is `true`.
 * `grant_all_permissions` - (Optional, boolean) If true, grant all permissions necessary to run the plugin. This attribute conflicts with `grant_permissions`.
 * `grant_permissions` - (Optional, block) grant permissions necessary to run the plugin. This attribute conflicts with `grant_all_permissions`. See [grant_permissions](#grant-permissions-1) below for details.
@@ -48,16 +48,16 @@ The following arguments are supported:
 * `force_disable` - (Optional, boolean) If true, then the plugin is disabled forcibly when the plugin is disabled.
 
 <a id="plugin-references-alias-1"></a>
-## plugin_reference, alias
+## plugin_reference
 
-`plugin_reference` and `alias` must be full path. Otherwise, after `terraform apply` is run, there would be diffs of them.
+`plugin_reference` must be full path. Otherwise, after `terraform apply` is run, there would be diffs of them.
 
 For example,
 
 ```hcl
 resource "docker_plugin" "sample-volume-plugin" {
   plugin_reference = "tiborvass/sample-volume-plugin" # must be "docker.io/tiborvass/sample-volume-plugin:latest"
-  alias            = "sample"                         # must be "sample:latest"
+  alias            = "sample"
 }
 ```
 
@@ -76,7 +76,7 @@ Terraform will perform the following actions:
 
   # docker_plugin.sample-volume-plugin must be replaced
 -/+ resource "docker_plugin" "sample-volume-plugin" {
-      ~ alias            = "sample:latest" -> "sample" # forces replacement
+      ~ alias            = "sample:latest" -> "sample:latest"
       - enabled          = false -> null
       ~ env              = [
           - "DEBUG=0",
