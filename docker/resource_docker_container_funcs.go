@@ -43,17 +43,15 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		Image:      image,
 		Hostname:   d.Get("hostname").(string),
 		Domainname: d.Get("domainname").(string),
-		Tty:        d.Get("tty").(bool),
-		OpenStdin:  d.Get("stdin_open").(bool),
 	}
 
-	// if value, ok := d["tty"]; ok {
-	// 	config.Tty = value.(bool)
-	// }
+	if value, ok := d.GetOk("tty"); ok {
+		config.Tty = value.(bool)
+	}
 
-	// if value, ok := d["stdin_open"]; ok {
-	// 	config.OpenStdin = d.Get("stdin_open").(bool)
-	// }
+	if value, ok := d.GetOk("stdin_open"); ok {
+		config.OpenStdin = value.(bool)
+	}
 
 	if v, ok := d.GetOk("env"); ok {
 		config.Env = stringSetToStringSlice(v.(*schema.Set))
