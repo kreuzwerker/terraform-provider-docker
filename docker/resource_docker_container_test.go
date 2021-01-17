@@ -448,6 +448,56 @@ func TestAccDockerContainer_groupadd_multiple(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_tty(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if !c.Config.Tty {
+			return fmt.Errorf("Tty not enabled")
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerTTYConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_STDIN_Enabled(t *testing.T) {
+	var c types.ContainerJSON
+
+	testCheck := func(*terraform.State) error {
+		if !c.Config.OpenStdin {
+			return fmt.Errorf("STDIN not enabled")
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDockerContainerSTDIN_Config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_customized(t *testing.T) {
 	var c types.ContainerJSON
 
@@ -2385,5 +2435,29 @@ resource "docker_container" "foo" {
 		2,
 		3,
 	]
+}
+`
+
+const testAccDockerContainerTTYConfig = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	tty = true
+}
+`
+
+const testAccDockerContainerSTDIN_Config = `
+resource "docker_image" "foo" {
+	name = "nginx:latest"
+}
+
+resource "docker_container" "foo" {
+	name = "tf-test"
+	image = "${docker_image.foo.latest}"
+	stdin_open = true
 }
 `

@@ -167,6 +167,12 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Isolation) > 0 {
 		m["isolation"] = string(in.Isolation)
 	}
+	if in.TTY {
+		m["tty"] = in.TTY
+	}
+	if in.OpenStdin {
+		m["stdin_open"] = in.OpenStdin
+	}
 	out = append(out, m)
 	return out
 }

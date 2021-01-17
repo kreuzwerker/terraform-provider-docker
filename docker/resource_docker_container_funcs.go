@@ -43,7 +43,17 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 		Image:      image,
 		Hostname:   d.Get("hostname").(string),
 		Domainname: d.Get("domainname").(string),
+		Tty:        d.Get("tty").(bool),
+		OpenStdin:  d.Get("stdin_open").(bool),
 	}
+
+	// if value, ok := d["tty"]; ok {
+	// 	config.Tty = value.(bool)
+	// }
+
+	// if value, ok := d["stdin_open"]; ok {
+	// 	config.OpenStdin = d.Get("stdin_open").(bool)
+	// }
 
 	if v, ok := d.GetOk("env"); ok {
 		config.Env = stringSetToStringSlice(v.(*schema.Set))
@@ -628,6 +638,7 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
 	d.Set("restart", container.HostConfig.RestartPolicy.Name)
 	d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
+
 	// From what I can tell Init being nullable is only for container creation to allow
 	// dockerd to default it to the daemons own default settings. So this != nil
 	// check is most likely not ever going to fail. In the event that it does the
@@ -712,6 +723,8 @@ func resourceDockerContainerRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("sysctls", container.HostConfig.Sysctls)
 	d.Set("ipc_mode", container.HostConfig.IpcMode)
 	d.Set("group_add", container.HostConfig.GroupAdd)
+	d.Set("tty", container.Config.Tty)
+	d.Set("stdin_open", container.Config.OpenStdin)
 	return nil
 }
 

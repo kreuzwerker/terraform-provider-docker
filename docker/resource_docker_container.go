@@ -842,6 +842,18 @@ func resourceDockerContainer() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"tty": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Default:  false,
+			},
+			"stdin_open": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Default:  false,
+			},
 		},
 	}
 }

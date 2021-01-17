@@ -789,6 +789,16 @@ func resourceDockerContainerV1() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
 			},
+			"tty": {
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+			},
+			"stdin_open": {
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+			},
 		},
 	}
 }
