@@ -9,7 +9,7 @@ call openssl req ^
   -x509 ^
   -days 365 ^
   -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=127.0.0.1" ^
-  -keyout %~dp0certs\registry_authssss.key ^
+  -keyout %~dp0certs\registry_auth.key ^
   -out %~dp0certs\registry_auth.crt
 if %ErrorLevel% neq 0 (
   call:print "Failed to generate self-signed certificate."
@@ -42,7 +42,7 @@ call docker run ^
   -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" ^
   -v %~dp0certs:/certs ^
   -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt" ^
-  -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_authssss.key" ^
+  -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key" ^
   registry:2.7.0
 if %ErrorLevel% neq 0 (
   call:print "Failed to create ephemeral Docker registry."
