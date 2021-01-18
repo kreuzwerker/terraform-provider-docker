@@ -75,6 +75,8 @@ data is stored in them. See [the docker documentation](https://docs.docker.com/n
 * `must_run` - (Optional, boolean) If true, then the Docker container will be
   kept running. If false, then as long as the container exists, Terraform
   assumes it is successful.
+* `tty` - (Optional, boolean) if true, allocate a pseudo-tty (docker run -t)
+* `stdin_open` - (Optional, boolean) if true, keep STDIN open even if not attached (docker run -i)
 * `capabilities` - (Optional, block) See [Capabilities](#capabilities-1) below for details.
 * `security_opts` - (Optional, set of strings) Set of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration.
 * `mounts` - (Optional, set of blocks) See [Mounts](#mounts-1) below for details.

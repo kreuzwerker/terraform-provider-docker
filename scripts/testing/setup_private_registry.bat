@@ -21,7 +21,7 @@ call:mkdirp %~dp0auth
 call docker run ^
   --rm ^
   --entrypoint htpasswd ^
-  registry:2 ^
+  registry:2.7.0 ^
   -Bbn testuser testpwd ^
   > %~dp0auth\htpasswd
 if %ErrorLevel% neq 0 (
@@ -43,7 +43,7 @@ call docker run ^
   -v %~dp0certs:/certs ^
   -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt" ^
   -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key" ^
-  registry:2
+  registry:2.7.0
 if %ErrorLevel% neq 0 (
   call:print "Failed to create ephemeral Docker registry."
   exit /b %ErrorLevel%
