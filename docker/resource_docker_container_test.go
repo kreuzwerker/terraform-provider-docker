@@ -960,12 +960,12 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 				
 				resource "docker_container" "foo" {
 					name     = "tf-test"
-					image    = "${docker_image.foo.latest}"
+					image    = docker_image.foo.latest
 					must_run = "false"
 				
 					upload {
 						content        = "foobar"
-						content_base64 = "${base64encode("barbaz")}"
+						content_base64 = base64encode("barbaz")
 						file           = "/terraform/test1.txt"
 						executable     = true
 					}
@@ -991,7 +991,7 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 				
 				resource "docker_container" "foo" {
 					name     = "tf-test"
-					image    = "${docker_image.foo.latest}"
+					image    = docker_image.foo.latest
 					must_run = "false"
 				
 					upload {
@@ -1793,7 +1793,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 }
 `
 
@@ -1804,7 +1804,7 @@ resource "docker_image" "fooinit" {
 
 resource "docker_container" "fooinit" {
 	name = "tf-test"
-	image = "${docker_image.fooinit.latest}"
+	image = docker_image.fooinit.latest
 	init = true
 }
 `
@@ -1816,7 +1816,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	restart = "on-failure"
 	max_retry_count = 5
@@ -1842,10 +1842,10 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name  	 = "tf-test"
-	image 	 = "${docker_image.foo.latest}"
+	image 	 = docker_image.foo.latest
 	networks = [
-		"${docker_network.tftest.name}",
-		"${docker_network.tftest_2.name}"
+		docker_network.tftest.name,
+		docker_network.tftest_2.name
 	]
 }
 `
@@ -1861,10 +1861,10 @@ resource "docker_volume" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
     volumes {
-        volume_name = "${docker_volume.foo.name}"
+        volume_name = docker_volume.foo.name
         container_path = "/tmp/volume"
         read_only = false
     }
@@ -1882,11 +1882,11 @@ resource "docker_volume" "foo_mounts" {
 
 resource "docker_container" "foo_mounts" {
 	name = "tf-test"
-	image = "${docker_image.foo_mounts.latest}"
+	image = docker_image.foo_mounts.latest
 
 	mounts {
 		target      = "/mount/test"
-		source      = "${docker_volume.foo_mounts.name}"
+		source      = docker_volume.foo_mounts.name
 		type        = "volume"
 		read_only   = true
 	}
@@ -1904,7 +1904,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	tmpfs = {
 		"/mount/tmpfs" = "rw,noexec,nosuid"
@@ -1919,7 +1919,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	entrypoint = ["/bin/bash", "-c", "ping localhost"]
 	user = "root:root"
 	restart = "on-failure"
@@ -1961,7 +1961,7 @@ resource "docker_container" "foo" {
 	network_mode = "bridge"
 
 	networks_advanced {
-		name = "${docker_network.test_network.name}"
+		name = docker_network.test_network.name
 		aliases = ["tftest"]
 	}
 
@@ -2006,7 +2006,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	upload {
 		content = "foo"
@@ -2024,7 +2024,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	upload {
 		source = "%s"
@@ -2042,7 +2042,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	upload {
 		source = "%s"
@@ -2061,10 +2061,10 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name  = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	upload {
-		content_base64 = "${base64encode("894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8")}"
+		content_base64 = base64encode("894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8")
 		file           = "/terraform/test1.txt"
 		executable     = true
 	}
@@ -2083,7 +2083,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	devices {
     	host_path = "/dev/zero"
@@ -2101,7 +2101,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	ports {
 		internal = 80
@@ -2117,7 +2117,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	ports {
 		internal = 80
@@ -2137,7 +2137,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	ports {
 		internal = 80
@@ -2154,7 +2154,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	ports {
 		internal = 80
@@ -2185,17 +2185,17 @@ resource "docker_network" "test_network_2" {
 
 resource "docker_container" "foo" {
   name          = "tf-test"
-  image         = "${docker_image.foo.latest}"
-  network_mode  = "${docker_network.test_network_1.name}"
-  networks      = ["${docker_network.test_network_2.name}"]
+  image         = docker_image.foo.latest
+  network_mode  = docker_network.test_network_1.name
+  networks      = [docker_network.test_network_2.name]
   network_alias = ["tftest-container"]
 }
 
 resource "docker_container" "bar" {
   name          = "tf-test-bar"
-  image         = "${docker_image.foo.latest}"
+  image         = docker_image.foo.latest
   network_mode  = "bridge"
-  networks      = ["${docker_network.test_network_2.name}"]
+  networks      = [docker_network.test_network_2.name]
   network_alias = ["tftest-container-foo"]
 }
 `
@@ -2208,7 +2208,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name  = "tf-test"
-  image = "${docker_image.foo.latest}"
+  image = docker_image.foo.latest
 
   healthcheck {
     test         = ["CMD", "/bin/true"]
@@ -2247,9 +2247,9 @@ resource "docker_image" "foo" {
 }
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	networks_advanced {
-		name = "${docker_network.test.name}"
+		name = docker_network.test.name
 		ipv4_address = "10.0.1.123"
 	}
 }
@@ -2270,9 +2270,9 @@ resource "docker_image" "foo" {
 }
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	networks_advanced {
-		name = "${docker_network.test.name}"
+		name = docker_network.test.name
 		ipv6_address = "fd00:0:0:0::123"
 	}
 }
@@ -2297,9 +2297,9 @@ resource "docker_image" "foo" {
 }
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	networks_advanced {
-		name = "${docker_network.test.name}"
+		name = docker_network.test.name
 		ipv4_address = "10.0.1.123"
 		ipv6_address = "fd00:0:0:0::123"
 	}
@@ -2313,7 +2313,7 @@ resource "docker_image" "foo" {
 }
  resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	command = ["/bin/sleep", "15"]
 	rm = true
 }
@@ -2326,7 +2326,7 @@ resource "docker_image" "foo" {
 }
  resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	command = ["/bin/sleep", "15"]
 	read_only = true
 }
@@ -2339,7 +2339,7 @@ resource "docker_image" "foo" {
 }
  resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	command = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1; done"]
 	attach = true
 	must_run = false
@@ -2354,7 +2354,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name     = "tf-test"
-  image    = "${docker_image.foo.latest}"
+  image    = docker_image.foo.latest
   command  = ["/bin/sh", "-c", "for i in $(seq 1 10); do echo \"$i\"; done"]
   attach   = true
   logs     = true
@@ -2369,7 +2369,7 @@ keep_locally = true
 }
  resource "docker_container" "foo" {
 name = "tf-test"
-image = "${docker_image.foo.latest}"
+image = docker_image.foo.latest
 command = ["/bin/sh", "-c", "exit 123"]
 attach = true
 must_run = false
@@ -2383,7 +2383,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	sysctls = {
 		"net.ipv4.ip_forward" = "1"
@@ -2398,7 +2398,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	group_add = [
 		"users"
@@ -2413,7 +2413,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	group_add = [
 		100
@@ -2428,7 +2428,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 
 	group_add = [
 		1,
@@ -2445,7 +2445,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	tty = true
 }
 `
@@ -2457,7 +2457,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
 	name = "tf-test"
-	image = "${docker_image.foo.latest}"
+	image = docker_image.foo.latest
 	stdin_open = true
 }
 `
