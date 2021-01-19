@@ -262,7 +262,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 
 							mounts {
 								target      = "/mount/test"
-								source      = "${docker_volume.test_volume.name}"
+								source      = docker_volume.test_volume.name
 								type        = "volume"
 								read_only   = true
 
@@ -301,8 +301,8 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 							}
 
 							secrets {
-								secret_id   = "${docker_secret.service_secret.id}"
-								secret_name = "${docker_secret.service_secret.name}"
+								secret_id   = docker_secret.service_secret.id
+								secret_name = docker_secret.service_secret.name
 								file_name   = "/secrets.json"
 								file_uid    = "0"
 								file_gid    = "0"
@@ -310,8 +310,8 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 							}
 
 							configs {
-								config_id   = "${docker_config.service_config.id}"
-								config_name = "${docker_config.service_config.name}"
+								config_id   = docker_config.service_config.id
+								config_name = docker_config.service_config.name
 								file_name = "/configs.json"
 							}
 						}
@@ -349,7 +349,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 
 						force_update = 0
 						runtime      = "container"
-						networks     = ["${docker_network.test_network.id}"]
+						networks     = [docker_network.test_network.id]
 
 						log_driver {
 							name = "json-file"
@@ -747,7 +747,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	mounts := `
 	mounts {
-		source = "${docker_volume.foo.name}"
+		source = docker_volume.foo.name
 		target = "/mount/test"
 		type   = "volume"
 		read_only = true
@@ -794,7 +794,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	healthcheckInterval2 := "2s"
 	mounts2 := `
 	mounts {
-		source = "${docker_volume.foo.name}"
+		source = docker_volume.foo.name
 		target = "/mount/test"
 		type   = "volume"
 		read_only = true
@@ -810,7 +810,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 		}
 	}
 	mounts {
-		source = "${docker_volume.foo2.name}"
+		source = docker_volume.foo2.name
 		target = "/mount/test2"
 		type   = "volume"
 		read_only = true
@@ -1230,14 +1230,14 @@ resource "docker_service" "foo" {
 			%s
 
 			configs {
-				config_id   = "${docker_config.service_config.id}"
-				config_name = "${docker_config.service_config.name}"
+				config_id   = docker_config.service_config.id
+				config_name = docker_config.service_config.name
 				file_name   = "/configs.json"
 			}
 
 			secrets {
-				secret_id   = "${docker_secret.service_secret.id}"
-				secret_name = "${docker_secret.service_secret.name}"
+				secret_id   = docker_secret.service_secret.id
+				secret_name = docker_secret.service_secret.name
 				file_name   = "/secrets.json"
 			}
 

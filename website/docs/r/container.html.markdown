@@ -16,7 +16,7 @@ Manages the lifecycle of a Docker container.
 # Start a container
 resource "docker_container" "ubuntu" {
   name  = "foo"
-  image = "${docker_image.ubuntu.latest}"
+  image = docker_image.ubuntu.latest
 }
 
 # Find the latest Ubuntu precise image.
@@ -140,7 +140,7 @@ Example:
 ```hcl
 resource "docker_container" "ubuntu" {
   name  = "foo"
-  image = "${docker_image.ubuntu.latest}"
+  image = docker_image.ubuntu.latest
 
   capabilities {
     add  = ["ALL"]

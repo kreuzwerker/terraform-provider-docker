@@ -110,7 +110,7 @@ resource "docker_service" "foo" {
 
       mounts {
         target    = "/mount/test"
-        source    = "${docker_volume.test_volume.name}"
+        source    = docker_volume.test_volume.name
         type      = "volume"
         read_only = true
 
@@ -145,8 +145,8 @@ resource "docker_service" "foo" {
       }
 
       secrets {
-        secret_id   = "${docker_secret.service_secret.id}"
-        secret_name = "${docker_secret.service_secret.name}"
+        secret_id   = docker_secret.service_secret.id
+        secret_name = docker_secret.service_secret.name
         file_name   = "/secrets.json"
         file_uid    = "0"
         file_gid    = "0"
@@ -158,8 +158,8 @@ resource "docker_service" "foo" {
       }
 
       configs {
-        config_id   = "${docker_config.service_config.id}"
-        config_name = "${docker_config.service_config.name}"
+        config_id   = docker_config.service_config.id
+        config_name = docker_config.service_config.name
         file_name   = "/configs.json"
       }
 
@@ -221,7 +221,7 @@ resource "docker_service" "foo" {
 
     force_update = 0
     runtime      = "container"
-    networks     = ["${docker_network.test_network.id}"]
+    networks     = [docker_network.test_network.id]
 
     log_driver {
       name = "json-file"

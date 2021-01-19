@@ -275,8 +275,8 @@ data "docker_registry_image" "foobarbaz" {
 	name = "alpine:3.1"
 }
 resource "docker_image" "foobarbaz" {
-	name = "${data.docker_registry_image.foobarbaz.name}"
-	pull_triggers = ["${data.docker_registry_image.foobarbaz.sha256_digest}"]
+	name = data.docker_registry_image.foobarbaz.name
+	pull_triggers = [data.docker_registry_image.foobarbaz.sha256_digest]
 }
 `
 
@@ -285,8 +285,8 @@ data "docker_registry_image" "foobarbazoo" {
 	name = "alpine:3.1"
 }
 resource "docker_image" "foobarbazoo" {
-	name = "${data.docker_registry_image.foobarbazoo.name}"
-	pull_trigger = "${data.docker_registry_image.foobarbazoo.sha256_digest}"
+	name = data.docker_registry_image.foobarbazoo.name
+	pull_trigger = data.docker_registry_image.foobarbazoo.sha256_digest
 }
 `
 
@@ -303,9 +303,9 @@ data "docker_registry_image" "foo_private" {
 }
 resource "docker_image" "foo_private" {
 	provider = "docker.private"
-	name = "${data.docker_registry_image.foo_private.name}"
+	name = data.docker_registry_image.foo_private.name
 	keep_locally = true
-	pull_triggers = ["${data.docker_registry_image.foo_private.sha256_digest}"]
+	pull_triggers = [data.docker_registry_image.foo_private.sha256_digest]
 }
 `
 
@@ -328,7 +328,7 @@ provider "docker" {
 	alias = "private"
 	registry_auth {
 		address = "%s"
-		config_file_content = "${file("%s")}"
+		config_file_content = file("%s")
 	}
 }
 resource "docker_image" "foo_private" {
