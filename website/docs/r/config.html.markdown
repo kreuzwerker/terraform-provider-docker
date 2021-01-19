@@ -43,17 +43,17 @@ File `main.tf`
 ```hcl
 # Creates the template in renders the variable
 data "template_file" "foo_config_tpl" {
-  template = "${file("foo.config.json.tpl")}"
+  template = file("foo.config.json.tpl")
 
   vars {
-    port = "${var.foo_port}"
+    port = var.foo_port
   }
 }
 
 # Creates the config
 resource "docker_config" "foo_config" {
   name = "foo_config"
-  data = "${base64encode(data.template_file.foo_config_tpl.rendered)}"
+  data = base64encode(data.template_file.foo_config_tpl.rendered)
 }
 ```
 
@@ -65,7 +65,7 @@ in the example below. The reason is [moby-35803](https://github.com/moby/moby/is
 ```hcl
 resource "docker_config" "service_config" {
   name = "${var.service_name}-config-${replace(timestamp(), ":", ".")}"
-  data = "${base64encode(data.template_file.service_config_tpl.rendered)}"
+  data = base64encode(data.template_file.service_config_tpl.rendered)
 
   lifecycle {
     ignore_changes        = ["name"]
@@ -77,8 +77,8 @@ resource "docker_service" "service" {
   # ...
   configs = [
     {
-      config_id   = "${docker_config.service_config.id}"
-      config_name = "${docker_config.service_config.name}"
+      config_id   = docker_config.service_config.id
+      config_name = docker_config.service_config.name
       file_name   = "/root/configs/configs.json"
     },
   ]

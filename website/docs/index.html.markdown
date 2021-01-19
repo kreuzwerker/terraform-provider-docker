@@ -26,7 +26,7 @@ provider "docker" {
 
 # Create a container
 resource "docker_container" "foo" {
-  image = "${docker_image.ubuntu.latest}"
+  image = docker_image.ubuntu.latest
   name  = "foo"
 }
 
@@ -59,12 +59,12 @@ provider "docker" {
 
   registry_auth {
     address = "registry.hub.docker.com"
-    config_file = "${pathexpand("~/.docker/config.json")}"
+    config_file = pathexpand("~/.docker/config.json")
   }
 
   registry_auth {
     address = "registry.my.company.com"
-    config_file_content = "${var.plain_content_of_config_file}"
+    config_file_content = var.plain_content_of_config_file
   }
 
   registry_auth {
@@ -116,12 +116,12 @@ provider "docker" {
   host = "tcp://your-host-ip:2376/"
 
   # -> specify either
-  cert_path = "${pathexpand("~/.docker")}"
+  cert_path = pathexpand("~/.docker")
 
   # -> or the following
-  ca_material   = "${file(pathexpand("~/.docker/ca.pem"))}" # this can be omitted
-  cert_material = "${file(pathexpand("~/.docker/cert.pem"))}"
-  key_material  = "${file(pathexpand("~/.docker/key.pem"))}"
+  ca_material   = file(pathexpand("~/.docker/ca.pem")) # this can be omitted
+  cert_material = file(pathexpand("~/.docker/cert.pem"))
+  key_material  = file(pathexpand("~/.docker/key.pem"))
 }
 ```
 
