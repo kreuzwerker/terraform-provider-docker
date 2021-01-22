@@ -1,3 +1,11 @@
+## 2.11.0 (January 22, 2021)
+
+IMPROVEMENTS:
+- add properties -it (tty and stdin_opn) to docker container ([#120](https://github.com/kreuzwerker/terraform-provider-docker/issues/120))
+
+DOCS
+-  fix legacy configuration style ([#126](https://github.com/kreuzwerker/terraform-provider-docker/pull/126))
+
 ## 2.10.0 (January 08, 2021)
 
 IMPROVEMENTS:
