@@ -12,7 +12,7 @@
 ## Building The Provider
 
 ```sh
-$ git clone git@github.com:terraform-providers/terraform-provider-docker
+$ git clone git@github.com:kreuzwerker/terraform-provider-docker
 $ make build
 ```
 
