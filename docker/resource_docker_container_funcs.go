@@ -25,7 +25,6 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 var creationTime time.Time
@@ -331,12 +330,8 @@ func resourceDockerContainerCreate(d *schema.ResourceData, meta interface{}) err
 
 	var retContainer container.ContainerCreateCreatedBody
 
-	// TODO mavogel
-	platform := &v1.Platform{
-		Architecture: "amd64",
-		OS:           "linux",
-	}
-	if retContainer, err = client.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, platform, d.Get("name").(string)); err != nil {
+	// TODO mavogel add platform later which comes from API v1.41. Currently we pass nil
+	if retContainer, err = client.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
 		return fmt.Errorf("Unable to create container: %s", err)
 	}
 
