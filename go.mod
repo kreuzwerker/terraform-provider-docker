@@ -1,7 +1,7 @@
 module github.com/terraform-providers/terraform-provider-docker
 
 require (
-	github.com/docker/cli v20.10.0-beta1.0.20201029214301-1d20b15adc38+incompatible // v19.03.8
+	github.com/docker/cli v20.10.5+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.5+incompatible
 	github.com/docker/go-connections v0.4.0
