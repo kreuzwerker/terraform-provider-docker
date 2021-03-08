@@ -26,7 +26,6 @@ import (
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 var creationTime time.Time

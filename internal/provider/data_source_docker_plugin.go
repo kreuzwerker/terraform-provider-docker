@@ -1,11 +1,11 @@
-package docker
+package provider
 
 import (
 	"context"
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceDockerPlugin() *schema.Resource {

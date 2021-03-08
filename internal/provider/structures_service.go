@@ -398,8 +398,7 @@ func flattenResourceReservations(in *swarm.Resources) []interface{} {
 		m := make(map[string]interface{})
 		m["nano_cpus"] = in.NanoCPUs
 		m["memory_bytes"] = in.MemoryBytes
-		// TODO mavogel: see #102
-		// m["generic_resources"] = flattenResourceGenericResource(in.GenericResources)
+		m["generic_resources"] = flattenResourceGenericResource(in.GenericResources)
 		out = append(out, m)
 	}
 	return out

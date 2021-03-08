@@ -1,4 +1,4 @@
-package docker
+package provider
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func getDockerPluginEnv(src interface{}) []string {

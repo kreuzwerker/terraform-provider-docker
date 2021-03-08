@@ -1,12 +1,12 @@
-package docker
+package provider
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/docker/docker/api/types"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func Test_getDockerPluginEnv(t *testing.T) {
@@ -229,8 +229,8 @@ func Test_getDockerPluginGrantPermissions(t *testing.T) {
 func TestAccDockerPlugin_basic(t *testing.T) {
 	const resourceName = "docker_plugin.test"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
@@ -290,8 +290,8 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 func TestAccDockerPlugin_grantAllPermissions(t *testing.T) {
 	const resourceName = "docker_plugin.test"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
@@ -314,8 +314,8 @@ func TestAccDockerPlugin_grantAllPermissions(t *testing.T) {
 func TestAccDockerPlugin_grantPermissions(t *testing.T) {
 	const resourceName = "docker_plugin.test"
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
