@@ -172,16 +172,6 @@ resource "docker_service" "foo" {
       limits {
         nano_cpus    = 1000000
         memory_bytes = 536870912
-
-        generic_resources {
-          named_resources_spec = [
-            "GPU=UUID1",
-          ]
-
-          discrete_resources_spec = [
-            "SSD=3",
-          ]
-        }
       }
 
       reservation {
@@ -454,9 +444,6 @@ the extra mount mappings for the container. Each `configs` is a reference to a s
 * `limits` - (Optional, list of strings) Describes the resources which can be advertised by a node and requested by a task.
   * `nano_cpus` (Optional, int) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000
   * `memory_bytes` (Optional, int) The amount of memory in bytes the container allocates
-  * `generic_resources` (Optional, map) User-defined resources can be either Integer resources (e.g, SSD=3) or String resources (e.g, GPU=UUID1)
-    * `named_resources_spec` (Optional, set of string) The String resources, delimited by `=`
-    * `discrete_resources_spec` (Optional, set of string) The Integer resources, delimited by `=`
 * `reservation` - (Optional, list of strings) An object describing the resources which can be advertised by a node and requested by a task.
   * `nano_cpus` (Optional, int) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000
   * `memory_bytes` (Optional, int) The amount of memory in bytes the container allocates

@@ -523,30 +523,6 @@ func resourceDockerService() *schema.Resource {
 													Description: "The amounf of memory in bytes the container allocates",
 													Optional:    true,
 												},
-												"generic_resources": {
-													Type:        schema.TypeList,
-													Description: "User-defined resources can be either Integer resources (e.g, SSD=3) or String resources (e.g, GPU=UUID1)",
-													MaxItems:    1,
-													Optional:    true,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"named_resources_spec": {
-																Type:        schema.TypeSet,
-																Description: "The String resources",
-																Optional:    true,
-																Elem:        &schema.Schema{Type: schema.TypeString},
-																Set:         schema.HashString,
-															},
-															"discrete_resources_spec": {
-																Type:        schema.TypeSet,
-																Description: "The Integer resources",
-																Optional:    true,
-																Elem:        &schema.Schema{Type: schema.TypeString},
-																Set:         schema.HashString,
-															},
-														},
-													},
-												},
 											},
 										},
 									},
@@ -1429,30 +1405,6 @@ func resourceDockerServiceV0() *schema.Resource {
 													Type:        schema.TypeInt,
 													Description: "The amounf of memory in bytes the container allocates",
 													Optional:    true,
-												},
-												"generic_resources": {
-													Type:        schema.TypeList,
-													Description: "User-defined resources can be either Integer resources (e.g, SSD=3) or String resources (e.g, GPU=UUID1)",
-													MaxItems:    1,
-													Optional:    true,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"named_resources_spec": {
-																Type:        schema.TypeSet,
-																Description: "The String resources",
-																Optional:    true,
-																Elem:        &schema.Schema{Type: schema.TypeString},
-																Set:         schema.HashString,
-															},
-															"discrete_resources_spec": {
-																Type:        schema.TypeSet,
-																Description: "The Integer resources",
-																Optional:    true,
-																Elem:        &schema.Schema{Type: schema.TypeString},
-																Set:         schema.HashString,
-															},
-														},
-													},
 												},
 											},
 										},
