@@ -979,6 +979,10 @@ func createResources(v interface{}) (*swarm.ResourceRequirements, error) {
 							if value, ok := rawLimitsSpec["memory_bytes"]; ok {
 								resources.Limits.MemoryBytes = int64(value.(int))
 							}
+							// TODO mavogel: see #102
+							// if value, ok := rawLimitsSpec["generic_resources"]; ok {
+							// 	resources.Limits.GenericResources, _ = createGenericResources(value)
+							// }
 						}
 					}
 				}
