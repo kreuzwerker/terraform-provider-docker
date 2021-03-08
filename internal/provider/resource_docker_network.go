@@ -12,9 +12,9 @@ import (
 
 func resourceDockerNetwork() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerNetworkCreate,
-		Read:   resourceDockerNetworkRead,
-		Delete: resourceDockerNetworkDelete,
+		CreateContext: resourceDockerNetworkCreate,
+		ReadContext:   resourceDockerNetworkRead,
+		DeleteContext: resourceDockerNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

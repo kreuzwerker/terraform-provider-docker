@@ -13,11 +13,11 @@ import (
 // https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func resourceDockerService() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerServiceCreate,
-		Read:   resourceDockerServiceRead,
-		Update: resourceDockerServiceUpdate,
-		Delete: resourceDockerServiceDelete,
-		Exists: resourceDockerServiceExists,
+		CreateContext: resourceDockerServiceCreate,
+		ReadContext:   resourceDockerServiceRead,
+		UpdateContext: resourceDockerServiceUpdate,
+		DeleteContext: resourceDockerServiceDelete,
+		Exists:        resourceDockerServiceExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

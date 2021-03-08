@@ -6,14 +6,15 @@ import (
 	"log"
 
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerConfig() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerConfigCreate,
-		Read:   resourceDockerConfigRead,
-		Delete: resourceDockerConfigDelete,
+		CreateContext: resourceDockerConfigCreate,
+		ReadContext:   resourceDockerConfigRead,
+		DeleteContext: resourceDockerConfigDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -38,7 +39,7 @@ func resourceDockerConfig() *schema.Resource {
 	}
 }
 
-func resourceDockerConfigCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
@@ -51,14 +52,14 @@ func resourceDockerConfigCreate(d *schema.ResourceData, meta interface{}) error 
 
 	config, err := client.ConfigCreate(context.Background(), configSpec)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId(config.ID)
 
-	return resourceDockerConfigRead(d, meta)
+	return resourceDockerConfigRead(ctx, d, meta)
 }
 
-func resourceDockerConfigRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	config, _, err := client.ConfigInspectWithRaw(context.Background(), d.Id())
 	if err != nil {
@@ -72,11 +73,11 @@ func resourceDockerConfigRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerConfigDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	err := client.ConfigRemove(context.Background(), d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-units"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -23,7 +25,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 
 	dummyProvider := New("dev")()
 	dummyResource := dummyProvider.ResourcesMap["docker_registry_image"]
-	dummyResource.Create = func(d *schema.ResourceData, meta interface{}) error {
+	dummyResource.CreateContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		build := d.Get("build").([]interface{})[0].(map[string]interface{})
 		options := createImageBuildOptions(build)
 
@@ -78,13 +80,13 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 		d.Set("sha256_digest", "bar")
 		return nil
 	}
-	dummyResource.Update = func(d *schema.ResourceData, meta interface{}) error {
+	dummyResource.UpdateContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		return nil
 	}
-	dummyResource.Delete = func(d *schema.ResourceData, meta interface{}) error {
+	dummyResource.DeleteContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		return nil
 	}
-	dummyResource.Read = func(d *schema.ResourceData, meta interface{}) error {
+	dummyResource.ReadContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		d.Set("sha256_digest", "bar")
 		return nil
 	}

@@ -2,22 +2,22 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerVolume() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerVolumeCreate,
-		Read:   resourceDockerVolumeRead,
-		Delete: resourceDockerVolumeDelete,
+		CreateContext: resourceDockerVolumeCreate,
+		ReadContext:   resourceDockerVolumeRead,
+		DeleteContext: resourceDockerVolumeDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -99,9 +99,8 @@ func resourceDockerVolumeV0() *schema.Resource {
 	}
 }
 
-func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
 
 	createOpts := volume.VolumeCreateBody{}
 
@@ -123,23 +122,22 @@ func resourceDockerVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
 	if err != nil {
-		return fmt.Errorf("Unable to create volume: %s", err)
+		return diag.Errorf("Unable to create volume: %s", err)
 	}
 
 	d.SetId(retVolume.Name)
-	return resourceDockerVolumeRead(d, meta)
+	return resourceDockerVolumeRead(ctx, d, meta)
 }
 
-func resourceDockerVolumeRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
 
 	var err error
 	var retVolume types.Volume
 	retVolume, err = client.VolumeInspect(ctx, d.Id())
 
 	if err != nil {
-		return fmt.Errorf("Unable to inspect volume: %s", err)
+		return diag.Errorf("Unable to inspect volume: %s", err)
 	}
 
 	d.Set("name", retVolume.Name)
@@ -151,7 +149,7 @@ func resourceDockerVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerVolumeDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
@@ -166,7 +164,7 @@ func resourceDockerVolumeDelete(d *schema.ResourceData, meta interface{}) error 
 	// Wait, catching any errors
 	_, err := stateConf.WaitForState()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

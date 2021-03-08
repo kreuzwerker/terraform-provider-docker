@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 )
@@ -52,7 +53,7 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 	return buf.String(), buildErr
 }
 
-func resourceDockerImageCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
 
@@ -62,24 +63,24 @@ func resourceDockerImageCreate(d *schema.ResourceData, meta interface{}) error {
 
 			err := buildDockerImage(rawBuild, imageName, client)
 			if err != nil {
-				return err
+				return diag.FromErr(err)
 			}
 		}
 	}
 	apiImage, err := findImage(imageName, client, meta.(*ProviderConfig).AuthConfigs)
 	if err != nil {
-		return fmt.Errorf("Unable to read Docker image into resource: %s", err)
+		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
 
 	d.SetId(apiImage.ID + d.Get("name").(string))
-	return resourceDockerImageRead(d, meta)
+	return resourceDockerImageRead(ctx, d, meta)
 }
 
-func resourceDockerImageRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	var data Data
 	if err := fetchLocalImages(&data, client); err != nil {
-		return fmt.Errorf("Error reading docker image list: %s", err)
+		return diag.Errorf("Error reading docker image list: %s", err)
 	}
 	for id := range data.DockerImages {
 		log.Printf("[DEBUG] local images data: %v", id)
@@ -96,26 +97,26 @@ func resourceDockerImageRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerImageUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// We need to re-read in case switching parameters affects
 	// the value of "latest" or others
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
 	apiImage, err := findImage(imageName, client, meta.(*ProviderConfig).AuthConfigs)
 	if err != nil {
-		return fmt.Errorf("Unable to read Docker image into resource: %s", err)
+		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
 
 	d.Set("latest", apiImage.ID)
 
-	return resourceDockerImageRead(d, meta)
+	return resourceDockerImageRead(ctx, d, meta)
 }
 
-func resourceDockerImageDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	err := removeImage(d, client)
 	if err != nil {
-		return fmt.Errorf("Unable to remove Docker image: %s", err)
+		return diag.Errorf("Unable to remove Docker image: %s", err)
 	}
 	d.SetId("")
 	return nil

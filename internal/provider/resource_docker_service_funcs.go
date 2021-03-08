@@ -17,6 +17,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -47,13 +48,13 @@ func resourceDockerServiceExists(d *schema.ResourceData, meta interface{}) (bool
 	return true, nil
 }
 
-func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var err error
 	client := meta.(*ProviderConfig).DockerClient
 
 	serviceSpec, err := createServiceSpec(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	serviceOptions := types.ServiceCreateOptions{}
@@ -64,7 +65,7 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 
 	service, err := client.ServiceCreate(context.Background(), serviceSpec, serviceOptions)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if v, ok := d.GetOk("converge_config"); ok {
 		convergeConfig := createConvergeConfig(v.([]interface{}))
@@ -84,20 +85,20 @@ func resourceDockerServiceCreate(d *schema.ResourceData, meta interface{}) error
 		if err != nil {
 			// the service will be deleted in case it cannot be converged
 			if deleteErr := deleteService(service.ID, d, client); deleteErr != nil {
-				return deleteErr
+				return diag.FromErr(deleteErr)
 			}
 			if strings.Contains(err.Error(), "timeout while waiting for state") {
-				return &DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout}
+				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout})
 			}
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	d.SetId(service.ID)
-	return resourceDockerServiceRead(d, meta)
+	return resourceDockerServiceRead(ctx, d, meta)
 }
 
-func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for service: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
@@ -112,7 +113,7 @@ func resourceDockerServiceRead(d *schema.ResourceData, meta interface{}) error {
 	// Wait, catching any errors
 	_, err := stateConf.WaitForState()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
@@ -179,29 +180,29 @@ func resourceDockerServiceReadRefreshFunc(
 	}
 }
 
-func resourceDockerServiceUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
 	service, _, err := client.ServiceInspectWithRaw(context.Background(), d.Id(), types.ServiceInspectOptions{})
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	serviceSpec, err := createServiceSpec(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	updateOptions := types.ServiceUpdateOptions{}
 	marshalledAuth := retrieveAndMarshalAuth(d, meta, "update")
 	if err != nil {
-		return fmt.Errorf("error creating auth config: %s", err)
+		return diag.Errorf("error creating auth config: %s", err)
 	}
 	updateOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
 
 	updateResponse, err := client.ServiceUpdate(context.Background(), d.Id(), service.Version, serviceSpec, updateOptions)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	if len(updateResponse.Warnings) > 0 {
 		log.Printf("[INFO] Warninig while updating Service '%s': %v", service.ID, updateResponse.Warnings)
@@ -225,20 +226,20 @@ func resourceDockerServiceUpdate(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[INFO] State awaited: %v with error: %v", state, err)
 		if err != nil {
 			if strings.Contains(err.Error(), "timeout while waiting for state") {
-				return &DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout}
+				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout})
 			}
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
-	return resourceDockerServiceRead(d, meta)
+	return resourceDockerServiceRead(ctx, d, meta)
 }
 
-func resourceDockerServiceDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
 	if err := deleteService(d.Id(), d, client); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

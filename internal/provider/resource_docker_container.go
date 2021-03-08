@@ -9,10 +9,10 @@ import (
 
 func resourceDockerContainer() *schema.Resource {
 	return &schema.Resource{
-		Create:        resourceDockerContainerCreate,
-		Read:          resourceDockerContainerRead,
-		Update:        resourceDockerContainerUpdate,
-		Delete:        resourceDockerContainerDelete,
+		CreateContext: resourceDockerContainerCreate,
+		ReadContext:   resourceDockerContainerRead,
+		UpdateContext: resourceDockerContainerUpdate,
+		DeleteContext: resourceDockerContainerDelete,
 		MigrateState:  resourceDockerContainerMigrateState,
 		SchemaVersion: 2,
 		Importer: &schema.ResourceImporter{

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
@@ -12,12 +13,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceDockerRegistryImageRead,
+		ReadContext: dataSourceDockerRegistryImageRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -33,7 +35,7 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 	}
 }
 
-func dataSourceDockerRegistryImageRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	pullOpts := parseImageOptions(d.Get("name").(string))
 	authConfig := meta.(*ProviderConfig).AuthConfigs
 
@@ -68,7 +70,7 @@ func dataSourceDockerRegistryImageRead(d *schema.ResourceData, meta interface{})
 	if err != nil {
 		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, true)
 		if err != nil {
-			return fmt.Errorf("Got error when attempting to fetch image version from registry: %s", err)
+			return diag.Errorf("Got error when attempting to fetch image version from registry: %s", err)
 		}
 	}
 

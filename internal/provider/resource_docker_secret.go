@@ -6,14 +6,15 @@ import (
 	"log"
 
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDockerSecret() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerSecretCreate,
-		Read:   resourceDockerSecretRead,
-		Delete: resourceDockerSecretDelete,
+		CreateContext: resourceDockerSecretCreate,
+		ReadContext:   resourceDockerSecretRead,
+		DeleteContext: resourceDockerSecretDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -82,7 +83,7 @@ func resourceDockerSecretV0() *schema.Resource {
 	}
 }
 
-func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
@@ -99,15 +100,15 @@ func resourceDockerSecretCreate(d *schema.ResourceData, meta interface{}) error 
 
 	secret, err := client.SecretCreate(context.Background(), secretSpec)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(secret.ID)
 
-	return resourceDockerSecretRead(d, meta)
+	return resourceDockerSecretRead(ctx, d, meta)
 }
 
-func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	secret, _, err := client.SecretInspectWithRaw(context.Background(), d.Id())
 	if err != nil {
@@ -123,11 +124,11 @@ func resourceDockerSecretRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerSecretDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	err := client.SecretRemove(context.Background(), d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

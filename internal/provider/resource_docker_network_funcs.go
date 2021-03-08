@@ -3,18 +3,18 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
 	createOpts := types.NetworkCreate{}
@@ -61,15 +61,15 @@ func resourceDockerNetworkCreate(d *schema.ResourceData, meta interface{}) error
 	retNetwork := types.NetworkCreateResponse{}
 	retNetwork, err := client.NetworkCreate(context.Background(), d.Get("name").(string), createOpts)
 	if err != nil {
-		return fmt.Errorf("Unable to create network: %s", err)
+		return diag.Errorf("Unable to create network: %s", err)
 	}
 
 	d.SetId(retNetwork.ID)
 	// d.Set("check_duplicate") TODO
-	return resourceDockerNetworkRead(d, meta)
+	return resourceDockerNetworkRead(ctx, d, meta)
 }
 
-func resourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
@@ -84,13 +84,13 @@ func resourceDockerNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	// Wait, catching any errors
 	_, err := stateConf.WaitForState()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourceDockerNetworkDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), 30)
 
 	stateConf := &resource.StateChangeConf{
@@ -105,7 +105,7 @@ func resourceDockerNetworkDelete(d *schema.ResourceData, meta interface{}) error
 	// Wait, catching any errors
 	_, err := stateConf.WaitForState()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")

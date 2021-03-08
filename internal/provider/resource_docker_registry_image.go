@@ -8,10 +8,10 @@ import (
 
 func resourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDockerRegistryImageCreate,
-		Read:   resourceDockerRegistryImageRead,
-		Delete: resourceDockerRegistryImageDelete,
-		Update: resourceDockerRegistryImageUpdate,
+		CreateContext: resourceDockerRegistryImageCreate,
+		ReadContext:   resourceDockerRegistryImageRead,
+		DeleteContext: resourceDockerRegistryImageDelete,
+		UpdateContext: resourceDockerRegistryImageUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
