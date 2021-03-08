@@ -12,8 +12,8 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // Provider creates the Docker provider

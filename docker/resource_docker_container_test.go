@@ -17,8 +17,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 
 	"github.com/docker/docker/api/types"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestMapTypeMapValsToStringSlice(t *testing.T) {
