@@ -23,7 +23,7 @@ func resourceDockerService() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"auth": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
@@ -572,8 +572,8 @@ func resourceDockerService() *schema.Resource {
 							},
 						},
 						"restart_policy": {
-							Type:        schema.TypeMap,
-							Description: "Specification for the restart policy which applies to containers created as part of this service",
+							Type:        schema.TypeList,
+							Description: "Specification for the restart policy which applies to containers created as part of this service.",
 							Optional:    true,
 							Computed:    true,
 							Elem: &schema.Resource{
@@ -944,7 +944,7 @@ func resourceDockerServiceV0() *schema.Resource {
 		// callbacks are no longer relevant
 		Schema: map[string]*schema.Schema{
 			"auth": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
