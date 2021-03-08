@@ -12,152 +12,155 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-// Provider creates the Docker provider
-func Provider() terraform.ResourceProvider {
-	return &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"host": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DOCKER_HOST", "unix:///var/run/docker.sock"),
-				Description: "The Docker daemon address",
-			},
+// New creates the Docker provider
+func New(version string) func() *schema.Provider {
+	return func() *schema.Provider {
+		p := &schema.Provider{
+			Schema: map[string]*schema.Schema{
+				"host": {
+					Type:        schema.TypeString,
+					Required:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_HOST", "unix:///var/run/docker.sock"),
+					Description: "The Docker daemon address",
+				},
 
-			"ca_material": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DOCKER_CA_MATERIAL", ""),
-				Description: "PEM-encoded content of Docker host CA certificate",
-			},
-			"cert_material": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_MATERIAL", ""),
-				Description: "PEM-encoded content of Docker client certificate",
-			},
-			"key_material": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DOCKER_KEY_MATERIAL", ""),
-				Description: "PEM-encoded content of Docker client private key",
-			},
+				"ca_material": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CA_MATERIAL", ""),
+					Description: "PEM-encoded content of Docker host CA certificate",
+				},
+				"cert_material": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_MATERIAL", ""),
+					Description: "PEM-encoded content of Docker client certificate",
+				},
+				"key_material": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_KEY_MATERIAL", ""),
+					Description: "PEM-encoded content of Docker client private key",
+				},
 
-			"cert_path": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_PATH", ""),
-				Description: "Path to directory with Docker TLS config",
-			},
+				"cert_path": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_PATH", ""),
+					Description: "Path to directory with Docker TLS config",
+				},
 
-			"registry_auth": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"address": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Address of the registry",
-						},
+				"registry_auth": {
+					Type:     schema.TypeSet,
+					Optional: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"address": {
+								Type:        schema.TypeString,
+								Required:    true,
+								Description: "Address of the registry",
+							},
 
-						"username": {
-							Type:          schema.TypeString,
-							Optional:      true,
-							ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
-							DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
-							Description:   "Username for the registry",
-						},
+							"username": {
+								Type:          schema.TypeString,
+								Optional:      true,
+								ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
+								DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
+								Description:   "Username for the registry",
+							},
 
-						"password": {
-							Type:          schema.TypeString,
-							Optional:      true,
-							Sensitive:     true,
-							ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
-							DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
-							Description:   "Password for the registry",
-						},
+							"password": {
+								Type:          schema.TypeString,
+								Optional:      true,
+								Sensitive:     true,
+								ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
+								DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
+								Description:   "Password for the registry",
+							},
 
-						"config_file": {
-							Type:          schema.TypeString,
-							Optional:      true,
-							ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file_content"},
-							DefaultFunc:   schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
-							Description:   "Path to docker json file for registry auth",
-						},
+							"config_file": {
+								Type:          schema.TypeString,
+								Optional:      true,
+								ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file_content"},
+								DefaultFunc:   schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
+								Description:   "Path to docker json file for registry auth",
+							},
 
-						"config_file_content": {
-							Type:          schema.TypeString,
-							Optional:      true,
-							ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file"},
-							Description:   "Plain content of the docker json file for registry auth",
+							"config_file_content": {
+								Type:          schema.TypeString,
+								Optional:      true,
+								ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file"},
+								Description:   "Plain content of the docker json file for registry auth",
+							},
 						},
 					},
 				},
 			},
-		},
 
-		ResourcesMap: map[string]*schema.Resource{
-			"docker_container":      resourceDockerContainer(),
-			"docker_image":          resourceDockerImage(),
-			"docker_registry_image": resourceDockerRegistryImage(),
-			"docker_network":        resourceDockerNetwork(),
-			"docker_volume":         resourceDockerVolume(),
-			"docker_config":         resourceDockerConfig(),
-			"docker_secret":         resourceDockerSecret(),
-			"docker_service":        resourceDockerService(),
-			"docker_plugin":         resourceDockerPlugin(),
-		},
+			ResourcesMap: map[string]*schema.Resource{
+				"docker_container":      resourceDockerContainer(),
+				"docker_image":          resourceDockerImage(),
+				"docker_registry_image": resourceDockerRegistryImage(),
+				"docker_network":        resourceDockerNetwork(),
+				"docker_volume":         resourceDockerVolume(),
+				"docker_config":         resourceDockerConfig(),
+				"docker_secret":         resourceDockerSecret(),
+				"docker_service":        resourceDockerService(),
+			},
 
-		DataSourcesMap: map[string]*schema.Resource{
-			"docker_registry_image": dataSourceDockerRegistryImage(),
-			"docker_network":        dataSourceDockerNetwork(),
-			"docker_plugin":         dataSourceDockerPlugin(),
-		},
+			DataSourcesMap: map[string]*schema.Resource{
+				"docker_registry_image": dataSourceDockerRegistryImage(),
+				"docker_network":        dataSourceDockerNetwork(),
+			},
+		}
 
-		ConfigureFunc: providerConfigure,
+		p.ConfigureContextFunc = configure(version, p)
+
+		return p
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	config := Config{
-		Host:     d.Get("host").(string),
-		Ca:       d.Get("ca_material").(string),
-		Cert:     d.Get("cert_material").(string),
-		Key:      d.Get("key_material").(string),
-		CertPath: d.Get("cert_path").(string),
-	}
-
-	client, err := config.NewClient()
-	if err != nil {
-		return nil, fmt.Errorf("Error initializing Docker client: %s", err)
-	}
-
-	ctx := context.Background()
-	_, err = client.Ping(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Error pinging Docker server: %s", err)
-	}
-
-	authConfigs := &AuthConfigs{}
-
-	if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
-		authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
-
-		if err != nil {
-			return nil, fmt.Errorf("Error loading registry auth config: %s", err)
+func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		config := Config{
+			Host:     d.Get("host").(string),
+			Ca:       d.Get("ca_material").(string),
+			Cert:     d.Get("cert_material").(string),
+			Key:      d.Get("key_material").(string),
+			CertPath: d.Get("cert_path").(string),
 		}
-	}
 
-	providerConfig := ProviderConfig{
-		DockerClient: client,
-		AuthConfigs:  authConfigs,
-	}
+		client, err := config.NewClient()
+		if err != nil {
+			return nil, diag.Errorf("Error initializing Docker client: %s", err)
+		}
 
-	return &providerConfig, nil
+		_, err = client.Ping(ctx)
+		if err != nil {
+			return nil, diag.Errorf("Error pinging Docker server: %s", err)
+		}
+
+		authConfigs := &AuthConfigs{}
+
+		if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
+			authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
+
+			if err != nil {
+				return nil, diag.Errorf("Error loading registry auth config: %s", err)
+			}
+		}
+
+		providerConfig := ProviderConfig{
+			DockerClient: client,
+			AuthConfigs:  authConfigs,
+		}
+
+		return &providerConfig, nil
+	}
 }
 
 // AuthConfigs represents authentication options to use for the

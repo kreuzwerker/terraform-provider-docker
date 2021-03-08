@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"os/exec"
 	"regexp"
 	"testing"
@@ -10,28 +11,33 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var (
-	testAccProviders map[string]terraform.ResourceProvider
-	testAccProvider  *schema.Provider
-)
+// providerFactories are used to instantiate a provider during acceptance testing.
+// The factory function will be invoked for every Terraform CLI command executed
+// to create a provider server to which the CLI can reattach.
+var providerFactories = map[string]func() (*schema.Provider, error){
+	"docker": func() (*schema.Provider, error) {
+		return New("dev")(), nil
+	},
+}
 
-func init() {
-	testAccProvider = Provider().(*schema.Provider)
-	testAccProviders = map[string]terraform.ResourceProvider{
-		"docker": testAccProvider,
-	}
+// TODO mavogel: can't we just use the factory?
+// how is this variable used in tests?
+var testAccProvider *schema.Provider
+
+func TestProvider_impl(t *testing.T) {
+	var _ *schema.Provider = New("dev")()
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
+	if err := New("dev")().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestAccDockerProvider_WithIncompleteRegistryAuth(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDockerProviderWithIncompleteAuthConfig,
@@ -39,10 +45,6 @@ func TestAccDockerProvider_WithIncompleteRegistryAuth(t *testing.T) {
 			},
 		},
 	})
-}
-
-func TestProvider_impl(t *testing.T) {
-	var _ terraform.ResourceProvider = Provider()
 }
 
 func testAccPreCheck(t *testing.T) {
@@ -59,7 +61,9 @@ func testAccPreCheck(t *testing.T) {
 		}
 	}
 
-	err := testAccProvider.Configure(terraform.NewResourceConfigRaw(nil))
+	// TODO mvogel: how to implement this properly
+	ctx := context.TODO()
+	err := testAccProvider.Configure(ctx, terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
