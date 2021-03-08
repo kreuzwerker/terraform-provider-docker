@@ -61,13 +61,13 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 		for _, rawBuild := range value.(*schema.Set).List() {
 			rawBuild := rawBuild.(map[string]interface{})
 
-			err := buildDockerImage(rawBuild, imageName, client)
+			err := buildDockerImage(ctx, rawBuild, imageName, client)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 		}
 	}
-	apiImage, err := findImage(imageName, client, meta.(*ProviderConfig).AuthConfigs)
+	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -79,7 +79,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	var data Data
-	if err := fetchLocalImages(&data, client); err != nil {
+	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return diag.Errorf("Error reading docker image list: %s", err)
 	}
 	for id := range data.DockerImages {
@@ -102,7 +102,7 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 	// the value of "latest" or others
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
-	apiImage, err := findImage(imageName, client, meta.(*ProviderConfig).AuthConfigs)
+	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -114,7 +114,7 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	err := removeImage(d, client)
+	err := removeImage(ctx, d, client)
 	if err != nil {
 		return diag.Errorf("Unable to remove Docker image: %s", err)
 	}
@@ -134,14 +134,14 @@ func searchLocalImages(data Data, imageName string) *types.ImageSummary {
 	return nil
 }
 
-func removeImage(d *schema.ResourceData, client *client.Client) error {
+func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Client) error {
 	var data Data
 
 	if keepLocally := d.Get("keep_locally").(bool); keepLocally {
 		return nil
 	}
 
-	if err := fetchLocalImages(&data, client); err != nil {
+	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return err
 	}
 
@@ -153,7 +153,7 @@ func removeImage(d *schema.ResourceData, client *client.Client) error {
 	foundImage := searchLocalImages(data, imageName)
 
 	if foundImage != nil {
-		imageDeleteResponseItems, err := client.ImageRemove(context.Background(), imageName, types.ImageRemoveOptions{
+		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
 			Force: d.Get("force_remove").(bool),
 		})
 		if err != nil {
@@ -165,8 +165,8 @@ func removeImage(d *schema.ResourceData, client *client.Client) error {
 	return nil
 }
 
-func fetchLocalImages(data *Data, client *client.Client) error {
-	images, err := client.ImageList(context.Background(), types.ImageListOptions{All: false})
+func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) error {
+	images, err := client.ImageList(ctx, types.ImageListOptions{All: false})
 	if err != nil {
 		return fmt.Errorf("Unable to list Docker images: %s", err)
 	}
@@ -192,7 +192,7 @@ func fetchLocalImages(data *Data, client *client.Client) error {
 	return nil
 }
 
-func pullImage(data *Data, client *client.Client, authConfig *AuthConfigs, image string) error {
+func pullImage(ctx context.Context, data *Data, client *client.Client, authConfig *AuthConfigs, image string) error {
 	pullOpts := parseImageOptions(image)
 
 	// If a registry was specified in the image name, try to find auth for it
@@ -213,7 +213,7 @@ func pullImage(data *Data, client *client.Client, authConfig *AuthConfigs, image
 		return fmt.Errorf("error creating auth config: %s", err)
 	}
 
-	out, err := client.ImagePull(context.Background(), image, types.ImagePullOptions{
+	out, err := client.ImagePull(ctx, image, types.ImagePullOptions{
 		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
 	})
 	if err != nil {
@@ -272,14 +272,14 @@ func parseImageOptions(image string) internalPullImageOptions {
 	return pullOpts
 }
 
-func findImage(imageName string, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
+func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
 	if imageName == "" {
 		return nil, fmt.Errorf("Empty image name is not allowed")
 	}
 
 	var data Data
 	// load local images into the data structure
-	if err := fetchLocalImages(&data, client); err != nil {
+	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return nil, err
 	}
 
@@ -288,12 +288,12 @@ func findImage(imageName string, client *client.Client, authConfig *AuthConfigs)
 		return foundImage, nil
 	}
 
-	if err := pullImage(&data, client, authConfig, imageName); err != nil {
+	if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
 		return nil, fmt.Errorf("Unable to pull image %s: %s", imageName, err)
 	}
 
 	// update the data structure of the images
-	if err := fetchLocalImages(&data, client); err != nil {
+	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return nil, err
 	}
 
@@ -305,7 +305,7 @@ func findImage(imageName string, client *client.Client, authConfig *AuthConfigs)
 	return nil, fmt.Errorf("Unable to find or pull image %s", imageName)
 }
 
-func buildDockerImage(rawBuild map[string]interface{}, imageName string, client *client.Client) error {
+func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
 	buildOptions := types.ImageBuildOptions{}
 
 	buildOptions.Version = types.BuilderV1
@@ -345,7 +345,7 @@ func buildDockerImage(rawBuild map[string]interface{}, imageName string, client 
 	excludes = build.TrimBuildFilesFromExcludes(excludes, buildOptions.Dockerfile, false)
 
 	var response types.ImageBuildResponse
-	response, err = client.ImageBuild(context.Background(), getBuildContext(contextDir, excludes), buildOptions)
+	response, err = client.ImageBuild(ctx, getBuildContext(contextDir, excludes), buildOptions)
 	if err != nil {
 		return err
 	}

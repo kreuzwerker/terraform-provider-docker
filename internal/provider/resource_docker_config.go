@@ -50,7 +50,7 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 		Data: data,
 	}
 
-	config, err := client.ConfigCreate(context.Background(), configSpec)
+	config, err := client.ConfigCreate(ctx, configSpec)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -61,7 +61,7 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	config, _, err := client.ConfigInspectWithRaw(context.Background(), d.Id())
+	config, _, err := client.ConfigInspectWithRaw(ctx, d.Id())
 	if err != nil {
 		log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
 		d.SetId("")
@@ -75,7 +75,7 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	err := client.ConfigRemove(context.Background(), d.Id())
+	err := client.ConfigRemove(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

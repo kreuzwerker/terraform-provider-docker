@@ -98,7 +98,7 @@ func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, met
 		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
 	}
 
-	secret, err := client.SecretCreate(context.Background(), secretSpec)
+	secret, err := client.SecretCreate(ctx, secretSpec)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -110,7 +110,7 @@ func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	secret, _, err := client.SecretInspectWithRaw(context.Background(), d.Id())
+	secret, _, err := client.SecretInspectWithRaw(ctx, d.Id())
 	if err != nil {
 		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
 		d.SetId("")
@@ -126,7 +126,7 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceDockerSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
-	err := client.SecretRemove(context.Background(), d.Id())
+	err := client.SecretRemove(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

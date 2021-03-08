@@ -132,7 +132,7 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 	return buildImageOptions
 }
 
-func buildDockerRegistryImage(client *client.Client, buildOptions map[string]interface{}, fqName string) error {
+func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildOptions map[string]interface{}, fqName string) error {
 	type ErrorDetailMessage struct {
 		Code    int    `json:"code,omitempty"`
 		Message string `json:"message,omitempty"`
@@ -184,7 +184,7 @@ func buildDockerRegistryImage(client *client.Client, buildOptions map[string]int
 	}
 	defer dockerBuildContext.Close()
 
-	buildResponse, err := client.ImageBuild(context.Background(), dockerBuildContext, imageBuildOptions)
+	buildResponse, err := client.ImageBuild(ctx, dockerBuildContext, imageBuildOptions)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func getDockerImageContextTarHash(dockerContextTarPath string) (string, error) {
 	return contextHash, nil
 }
 
-func pushDockerRegistryImage(client *client.Client, pushOpts internalPushImageOptions, username string, password string) error {
+func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpts internalPushImageOptions, username string, password string) error {
 	pushOptions := types.ImagePushOptions{}
 	if username != "" {
 		auth := types.AuthConfig{Username: username, Password: password}
@@ -287,7 +287,7 @@ func pushDockerRegistryImage(client *client.Client, pushOpts internalPushImageOp
 		pushOptions.RegistryAuth = authBase64
 	}
 
-	out, err := client.ImagePush(context.Background(), pushOpts.FqName, pushOptions)
+	out, err := client.ImagePush(ctx, pushOpts.FqName, pushOptions)
 	if err != nil {
 		return err
 	}
@@ -470,14 +470,14 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 
 	if buildOptions, ok := d.GetOk("build"); ok {
 		buildOptionsMap := buildOptions.([]interface{})[0].(map[string]interface{})
-		err := buildDockerRegistryImage(client, buildOptionsMap, pushOpts.FqName)
+		err := buildDockerRegistryImage(ctx, client, buildOptionsMap, pushOpts.FqName)
 		if err != nil {
 			return diag.Errorf("Error building docker image: %s", err)
 		}
 	}
 
 	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	if err := pushDockerRegistryImage(client, pushOpts, username, password); err != nil {
+	if err := pushDockerRegistryImage(ctx, client, pushOpts, username, password); err != nil {
 		return diag.Errorf("Error pushing docker image: %s", err)
 	}
 

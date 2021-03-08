@@ -17,7 +17,6 @@ func resourceDockerService() *schema.Resource {
 		ReadContext:   resourceDockerServiceRead,
 		UpdateContext: resourceDockerServiceUpdate,
 		DeleteContext: resourceDockerServiceDelete,
-		Exists:        resourceDockerServiceExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

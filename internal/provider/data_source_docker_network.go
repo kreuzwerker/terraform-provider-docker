@@ -90,7 +90,7 @@ func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, me
 
 	client := meta.(*ProviderConfig).DockerClient
 
-	network, err := client.NetworkInspect(context.Background(), name.(string), types.NetworkInspectOptions{})
+	network, err := client.NetworkInspect(ctx, name.(string), types.NetworkInspectOptions{})
 	if err != nil {
 		return diag.Errorf("Could not find docker network: %s", err)
 	}
