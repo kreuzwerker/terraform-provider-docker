@@ -11,7 +11,7 @@ func resourceDockerPlugin() *schema.Resource {
 		Update: resourceDockerPluginUpdate,
 		Delete: resourceDockerPluginDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {

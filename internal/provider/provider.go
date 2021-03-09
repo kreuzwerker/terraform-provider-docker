@@ -111,11 +111,13 @@ func New(version string) func() *schema.Provider {
 				"docker_config":         resourceDockerConfig(),
 				"docker_secret":         resourceDockerSecret(),
 				"docker_service":        resourceDockerService(),
+				"docker_plugin":         resourceDockerPlugin(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
 				"docker_registry_image": dataSourceDockerRegistryImage(),
 				"docker_network":        dataSourceDockerNetwork(),
+				"docker_plugin":         dataSourceDockerPlugin(),
 			},
 		}
 
