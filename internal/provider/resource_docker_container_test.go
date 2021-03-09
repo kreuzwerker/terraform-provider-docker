@@ -35,7 +35,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
-	dockerConfig := wd + "/../scripts/testing/dockerconfig.json"
+	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
 	ctx := context.TODO()
 
 	var c types.ContainerJSON
@@ -764,7 +764,7 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	ctx := context.TODO()
 
 	wd, _ := os.Getwd()
-	testFile := wd + "/../scripts/testing/testingFile"
+	testFile := wd + "/../../scripts/testing/testingFile"
 	testFileContent, _ := ioutil.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
@@ -829,7 +829,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 	var firstRunId string
 
 	wd, _ := os.Getwd()
-	testFile := wd + "/../scripts/testing/testingFile"
+	testFile := wd + "/../../scripts/testing/testingFile"
 	hash, _ := ioutil.ReadFile(testFile + ".base64")
 	grabFirstCheck := func(*terraform.State) error {
 		firstRunId = c.ID
