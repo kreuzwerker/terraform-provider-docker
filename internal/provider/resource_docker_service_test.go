@@ -166,7 +166,8 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
-							image = "127.0.0.1:15000/tftest-service:v1"
+							image 			  = "127.0.0.1:15000/tftest-service:v1"
+							stop_grace_period = "10s"
 						}
 					}
 				}
@@ -513,7 +514,8 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
+							image             = "127.0.0.1:15000/tftest-service:v1"
+							stop_grace_period = "10s"
 						}
 					}
 					mode {}
@@ -538,7 +540,8 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
+							image             = "127.0.0.1:15000/tftest-service:v1"
+							stop_grace_period = "10s"
 						}
 					}
 					mode {
@@ -565,7 +568,8 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
+							image             = "127.0.0.1:15000/tftest-service:v1"
+							stop_grace_period = "10s"
 						}
 					}
 					mode {
@@ -612,7 +616,8 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 					name     = "tftest-service-basic"
 					task_spec {
 						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
+							image             = "127.0.0.1:15000/tftest-service:v1"
+							stop_grace_period = "10s"
 						}
 					}
 					mode {
@@ -733,6 +738,7 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 						task_spec {
 							container_spec {
 								image    = "%s"
+								
 							}
 						}
 						mode {
@@ -1327,7 +1333,8 @@ resource "docker_service" "foo" {
 	name     = "tftest-service-updateFailsAndRollbackConverge"
 	task_spec {
 		container_spec {
-			image    = "%s"
+			image             = "%s"
+			stop_grace_period = "10s"
 
 			healthcheck {
 				test     = ["CMD", "curl", "-f", "localhost:8080/health"]
