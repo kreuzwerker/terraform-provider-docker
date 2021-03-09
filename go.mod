@@ -8,7 +8,7 @@ require (
 	github.com/docker/docker v20.10.0+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/buildkit v0.8.2 // indirect
 	github.com/moby/sys/mount v0.2.0 // indirect
