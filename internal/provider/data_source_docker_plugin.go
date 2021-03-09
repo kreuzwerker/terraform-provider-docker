@@ -17,12 +17,15 @@ func dataSourceDockerPlugin() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"alias": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Docker Plugin alias",
 			},
-
 			"plugin_reference": {
 				Type:        schema.TypeString,
 				Description: "Docker Plugin Reference",
