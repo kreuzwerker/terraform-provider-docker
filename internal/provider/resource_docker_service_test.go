@@ -737,7 +737,8 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 						name     = "tftest-service-foo"
 						task_spec {
 							container_spec {
-								image    = "%s"
+								image             = "%s"
+								stop_grace_period = "10s"
 								
 							}
 						}
