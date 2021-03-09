@@ -171,6 +171,8 @@ func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) res
 	}
 }
 
+// TODO mavogel
+//nolint:unused
 func testDockerRegistryImageInRegistry(pushOpts internalPushImageOptions, cleanup bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)
