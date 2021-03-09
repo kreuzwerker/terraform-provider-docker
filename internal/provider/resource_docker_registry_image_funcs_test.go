@@ -128,6 +128,7 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 }
 
 func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
+	t.Skip("mavogel: need to check")
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
 	context := "../../scripts/testing/docker_registry_image_context"
 	resource.Test(t, resource.TestCase{
