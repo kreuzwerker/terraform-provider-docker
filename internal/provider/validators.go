@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -117,17 +119,18 @@ func validateStringMatchesPattern(pattern string) schema.SchemaValidateFunc {
 	}
 }
 
-//nolint:staticcheck
-func validateStringIsBase64Encoded() schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, errors []error) {
-		value := v.(string)
-		if _, err := base64.StdEncoding.DecodeString(value); err != nil {
-			errors = append(errors, fmt.Errorf(
-				"%q is not base64 decodeable", k))
+func validateStringIsBase64EncodedDiag(v interface{}, p cty.Path) diag.Diagnostics {
+	value := v.(string)
+	var diags diag.Diagnostics
+	if _, err := base64.StdEncoding.DecodeString(value); err != nil {
+		diag := diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("%q is not base64 decodeable", value),
+			Detail:   fmt.Sprintf("%q is not base64 decodeable", value),
 		}
-
-		return
+		diags = append(diags, diag)
 	}
+	return diags
 }
 
 func validateDockerContainerPath(v interface{}, k string) (ws []string, errors []error) {

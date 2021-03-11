@@ -25,12 +25,12 @@ func resourceDockerSecret() *schema.Resource {
 			},
 
 			"data": {
-				Type:         schema.TypeString,
-				Description:  "Base64-url-safe-encoded secret data",
-				Required:     true,
-				Sensitive:    true,
-				ForceNew:     true,
-				ValidateFunc: validateStringIsBase64Encoded(),
+				Type:             schema.TypeString,
+				Description:      "Base64-url-safe-encoded secret data",
+				Required:         true,
+				Sensitive:        true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateStringIsBase64EncodedDiag,
 			},
 
 			"labels": {
@@ -66,12 +66,12 @@ func resourceDockerSecretV0() *schema.Resource {
 			},
 
 			"data": {
-				Type:         schema.TypeString,
-				Description:  "User-defined name of the secret",
-				Required:     true,
-				Sensitive:    true,
-				ForceNew:     true,
-				ValidateFunc: validateStringIsBase64Encoded(),
+				Type:             schema.TypeString,
+				Description:      "User-defined name of the secret",
+				Required:         true,
+				Sensitive:        true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateStringIsBase64EncodedDiag,
 			},
 
 			"labels": {

@@ -1,6 +1,10 @@
 package provider
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/hashicorp/go-cty/cty"
+)
 
 func TestValidateIntegerInRange(t *testing.T) {
 	validIntegers := []int{-259, 0, 1, 5, 999}
@@ -116,14 +120,14 @@ func TestValidateStringMatchesPattern(t *testing.T) {
 	}
 }
 
-func TestValidateStringShouldBeBase64Encoded(t *testing.T) {
+func TestValidateStringShouldBeBase64EncodedDiag(t *testing.T) {
 	v := `YmtzbGRrc2xka3NkMjM4MQ==`
-	if _, error := validateStringIsBase64Encoded()(v, "name"); error != nil {
+	if diags := validateStringIsBase64EncodedDiag(v, *new(cty.Path)); len(diags) != 0 {
 		t.Fatalf("%q should be base64 decodeable", v)
 	}
 
 	v = `%&df#3NkMjM4MQ==`
-	if _, error := validateStringIsBase64Encoded()(v, "name"); error == nil {
+	if diags := validateStringIsBase64EncodedDiag(v, *new(cty.Path)); len(diags) == 0 {
 		t.Fatalf("%q should NOT be base64 decodeable", v)
 	}
 }

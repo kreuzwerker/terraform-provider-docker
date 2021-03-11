@@ -28,12 +28,12 @@ func resourceDockerConfig() *schema.Resource {
 			},
 
 			"data": {
-				Type:         schema.TypeString,
-				Description:  "Base64-url-safe-encoded config data",
-				Required:     true,
-				Sensitive:    true,
-				ForceNew:     true,
-				ValidateFunc: validateStringIsBase64Encoded(),
+				Type:             schema.TypeString,
+				Description:      "Base64-url-safe-encoded config data",
+				Required:         true,
+				Sensitive:        true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateStringIsBase64EncodedDiag,
 			},
 		},
 	}
