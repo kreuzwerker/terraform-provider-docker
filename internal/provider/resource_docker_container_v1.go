@@ -329,10 +329,10 @@ func resourceDockerContainerV1() *schema.Resource {
 						},
 
 						"host_path": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ForceNew:     true,
-							ValidateFunc: validateDockerContainerPath,
+							Type:             schema.TypeString,
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateDockerContainerPath(),
 						},
 
 						"volume_name": {

@@ -94,3 +94,28 @@ func TestValidateStringShouldBeBase64EncodedDiag(t *testing.T) {
 		t.Fatalf("%q should NOT be base64 decodeable", v)
 	}
 }
+
+func TestValidateStringShouldBeAValidDockerContainerPath(t *testing.T) {
+	cases := []struct {
+		Value    string
+		ErrCount int
+	}{
+		{Value: "/abc", ErrCount: 0},
+		{Value: "/var/log", ErrCount: 0},
+		{Value: "/tmp", ErrCount: 0},
+		{Value: "C:\\Windows\\System32", ErrCount: 0},
+		{Value: "C:\\Program Files\\MSBuild", ErrCount: 0},
+		{Value: "test", ErrCount: 1},
+		{Value: "C:Test", ErrCount: 1},
+		{Value: "", ErrCount: 1},
+		{Value: "~/kinda-relative-path", ErrCount: 1},
+	}
+
+	for _, tc := range cases {
+		diags := validateDockerContainerPath()(tc.Value, *new(cty.Path))
+
+		if len(diags) != tc.ErrCount {
+			t.Fatalf("Expected the Docker Container Path '%s' to trigger a validation error", tc.Value)
+		}
+	}
+}
