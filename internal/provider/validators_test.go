@@ -6,24 +6,6 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 )
 
-func TestValidateIntegerInRange(t *testing.T) {
-	validIntegers := []int{-259, 0, 1, 5, 999}
-	min := -259
-	max := 999
-	for _, v := range validIntegers {
-		if diags := validateIntegerInRange(min, max)(v, *new(cty.Path)); len(diags) != 0 {
-			t.Fatalf("%q should be an integer in range (%d, %d): %q", v, min, max, diags)
-		}
-	}
-
-	invalidIntegers := []int{-260, -99999, 1000, 25678}
-	for _, v := range invalidIntegers {
-		if diags := validateIntegerInRange(min, max)(v, *new(cty.Path)); len(diags) == 0 {
-			t.Fatalf("%q should be an integer in range (%d, %d)", v, min, max)
-		}
-	}
-}
-
 func TestValidateIntegerGeqThan0(t *testing.T) {
 	v := 1
 	if diags := validateIntegerGeqThan(0)(v, *new(cty.Path)); len(diags) != 0 {
