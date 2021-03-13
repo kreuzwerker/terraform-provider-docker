@@ -83,7 +83,7 @@ func TestValidateStringMatchesPattern(t *testing.T) {
 	}
 }
 
-func TestValidateStringShouldBeBase64EncodedDiag(t *testing.T) {
+func TestValidateStringShouldBeBase64Encoded(t *testing.T) {
 	v := `YmtzbGRrc2xka3NkMjM4MQ==`
 	if diags := validateStringIsBase64Encoded()(v, *new(cty.Path)); len(diags) != 0 {
 		t.Fatalf("%q should be base64 decodeable", v)

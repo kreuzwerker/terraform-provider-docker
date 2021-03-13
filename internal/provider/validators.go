@@ -20,8 +20,8 @@ func validateIntegerGeqThan(threshold int) schema.SchemaValidateDiagFunc {
 		if value < threshold {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%q cannot be lower than %d", value, threshold),
-				Detail:   fmt.Sprintf("%q cannot be lower than %d", value, threshold),
+				Summary:  fmt.Sprintf("'%v' cannot be lower than %d", value, threshold),
+				Detail:   fmt.Sprintf("'%v' cannot be lower than %d", value, threshold),
 			}
 			diags = append(diags, diag)
 		}
@@ -40,16 +40,16 @@ func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 			if err != nil {
 				diag := diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  fmt.Sprintf("%v is not a float", v),
-					Detail:   fmt.Sprintf("%v is not a float", v),
+					Summary:  fmt.Sprintf("'%v' is not a float", v),
+					Detail:   fmt.Sprintf("'%v' is not a float", v),
 				}
 				diags = append(diags, diag)
 			}
 			if value < 0.0 || value > 1.0 {
 				diag := diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
-					Detail:   fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
+					Summary:  fmt.Sprintf("'%v' has to be between 0.0 and 1.0", v),
+					Detail:   fmt.Sprintf("'%v' has to be between 0.0 and 1.0", v),
 				}
 				diags = append(diags, diag)
 			}
@@ -58,16 +58,16 @@ func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 			if value < 0.0 || value > 1.0 {
 				diag := diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
-					Detail:   fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
+					Summary:  fmt.Sprintf("'%v' has to be between 0.0 and 1.0", v),
+					Detail:   fmt.Sprintf("'%v' has to be between 0.0 and 1.0", v),
 				}
 				diags = append(diags, diag)
 			}
 		default:
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%v is not a string", v),
-				Detail:   fmt.Sprintf("%v is not a string", v),
+				Summary:  fmt.Sprintf("'%v' is not a string", v),
+				Detail:   fmt.Sprintf("'%v' is not a string", v),
 			}
 			diags = append(diags, diag)
 		}
@@ -84,16 +84,16 @@ func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 		if err != nil {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%v is not a valid duration", value),
-				Detail:   fmt.Sprintf("%v is not a valid duration", value),
+				Summary:  fmt.Sprintf("'%v' is not a valid duration", value),
+				Detail:   fmt.Sprintf("'%v' is not a valid duration", value),
 			}
 			diags = append(diags, diag)
 		}
 		if dur < 0 {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%v duration must not be negative", value),
-				Detail:   fmt.Sprintf("%v duration must not be negative", value),
+				Summary:  fmt.Sprintf("'%v' duration must not be negative", value),
+				Detail:   fmt.Sprintf("'%v' duration must not be negative", value),
 			}
 			diags = append(diags, diag)
 		}
@@ -120,8 +120,8 @@ func validateStringMatchesPattern(pattern string) schema.SchemaValidateDiagFunc 
 		if !compiledRegex.MatchString(value) {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%v doesn't match the pattern '%s'", value, pattern),
-				Detail:   fmt.Sprintf("%v doesn't match the pattern '%s'", value, pattern),
+				Summary:  fmt.Sprintf("'%v' doesn't match the pattern '%s'", value, pattern),
+				Detail:   fmt.Sprintf("'%v' doesn't match the pattern '%s'", value, pattern),
 			}
 			diags = append(diags, diag)
 		}
@@ -137,8 +137,8 @@ func validateStringIsBase64Encoded() schema.SchemaValidateDiagFunc {
 		if _, err := base64.StdEncoding.DecodeString(value); err != nil {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%q is not base64 decodeable", value),
-				Detail:   fmt.Sprintf("%q is not base64 decodeable", value),
+				Summary:  fmt.Sprintf("'%v' is not base64 decodeable", value),
+				Detail:   fmt.Sprintf("'%v' is not base64 decodeable", value),
 			}
 			diags = append(diags, diag)
 		}
@@ -153,8 +153,8 @@ func validateDockerContainerPath() schema.SchemaValidateDiagFunc {
 		if !regexp.MustCompile(`^[a-zA-Z]:\\|^/`).MatchString(value) {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprintf("%v must be an absolute path", value),
-				Detail:   fmt.Sprintf("%v must be an absolute path", value),
+				Summary:  fmt.Sprintf("'%v' must be an absolute path", value),
+				Detail:   fmt.Sprintf("'%v' must be an absolute path", value),
 			}
 			diags = append(diags, diag)
 		}
