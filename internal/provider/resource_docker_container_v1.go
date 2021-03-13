@@ -155,11 +155,11 @@ func resourceDockerContainerV1() *schema.Resource {
 			},
 
 			"restart": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Default:      "no",
-				ValidateFunc: validateStringMatchesPattern(`^(no|on-failure|always|unless-stopped)$`),
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Default:          "no",
+				ValidateDiagFunc: validateStringMatchesPattern(`^(no|on-failure|always|unless-stopped)$`),
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
 					// treat "" as "no", which is Docker's default value
 					if oldV == "" {
@@ -230,10 +230,10 @@ func resourceDockerContainerV1() *schema.Resource {
 							Optional:    true,
 						},
 						"type": {
-							Type:         schema.TypeString,
-							Description:  "The mount type",
-							Required:     true,
-							ValidateFunc: validateStringMatchesPattern(`^(bind|volume|tmpfs)$`),
+							Type:             schema.TypeString,
+							Description:      "The mount type",
+							Required:         true,
+							ValidateDiagFunc: validateStringMatchesPattern(`^(bind|volume|tmpfs)$`),
 						},
 						"read_only": {
 							Type:        schema.TypeBool,
@@ -248,10 +248,10 @@ func resourceDockerContainerV1() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"propagation": {
-										Type:         schema.TypeString,
-										Description:  "A propagation mode with the value",
-										Optional:     true,
-										ValidateFunc: validateStringMatchesPattern(`^(private|rprivate|shared|rshared|slave|rslave)$`),
+										Type:             schema.TypeString,
+										Description:      "A propagation mode with the value",
+										Optional:         true,
+										ValidateDiagFunc: validateStringMatchesPattern(`^(private|rprivate|shared|rshared|slave|rslave)$`),
 									},
 								},
 							},
@@ -595,9 +595,9 @@ func resourceDockerContainerV1() *schema.Resource {
 			},
 
 			"cpu_set": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validateStringMatchesPattern(`^\d+([,-]\d+)*$`),
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validateStringMatchesPattern(`^\d+([,-]\d+)*$`),
 			},
 
 			"log_driver": {

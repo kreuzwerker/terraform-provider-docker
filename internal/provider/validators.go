@@ -78,8 +78,8 @@ func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 //nolint:staticcheck
 func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
-		var diags diag.Diagnostics
 		value := v.(string)
+		var diags diag.Diagnostics
 		dur, err := time.ParseDuration(value)
 		if err != nil {
 			diag := diag.Diagnostic{
@@ -102,23 +102,31 @@ func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 }
 
 //nolint:staticcheck
-func validateStringMatchesPattern(pattern string) schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, errors []error) {
+func validateStringMatchesPattern(pattern string) schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		compiledRegex, err := regexp.Compile(pattern)
+		var diags diag.Diagnostics
 		if err != nil {
-			errors = append(errors, fmt.Errorf(
-				"%q regex does not compile", pattern))
-			return
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("regex does not compile for pattern '%s'", pattern),
+				Detail:   fmt.Sprintf("regex does not compile for pattern '%s'", pattern),
+			}
+			diags = append(diags, diag)
+			return diags
 		}
 
 		value := v.(string)
 		if !compiledRegex.MatchString(value) {
-			errors = append(errors, fmt.Errorf(
-				"%q doesn't match the pattern (%q): %q",
-				k, pattern, value))
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("%v doesn't match the pattern '%s'", value, pattern),
+				Detail:   fmt.Sprintf("%v doesn't match the pattern '%s'", value, pattern),
+			}
+			diags = append(diags, diag)
 		}
 
-		return
+		return diags
 	}
 }
 

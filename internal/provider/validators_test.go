@@ -70,15 +70,15 @@ func TestValidateDurationGeq0(t *testing.T) {
 func TestValidateStringMatchesPattern(t *testing.T) {
 	pattern := `^(pause|continue-mate|break)$`
 	v := "pause"
-	if _, error := validateStringMatchesPattern(pattern)(v, "name"); error != nil {
+	if diags := validateStringMatchesPattern(pattern)(v, *new(cty.Path)); len(diags) != 0 {
 		t.Fatalf("%q should match the pattern", v)
 	}
 	v = "doesnotmatch"
-	if _, error := validateStringMatchesPattern(pattern)(v, "name"); error == nil {
+	if diags := validateStringMatchesPattern(pattern)(v, *new(cty.Path)); len(diags) == 0 {
 		t.Fatalf("%q should not match the pattern", v)
 	}
 	v = "continue-mate"
-	if _, error := validateStringMatchesPattern(pattern)(v, "name"); error != nil {
+	if diags := validateStringMatchesPattern(pattern)(v, *new(cty.Path)); len(diags) != 0 {
 		t.Fatalf("%q should match the pattern", v)
 	}
 }
