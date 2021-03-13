@@ -57,12 +57,12 @@ func TestValidateStringIsFloatRatio(t *testing.T) {
 
 func TestValidateDurationGeq0(t *testing.T) {
 	v := "1ms"
-	if _, error := validateDurationGeq0()(v, "name"); error != nil {
+	if diags := validateDurationGeq0()(v, *new(cty.Path)); len(diags) != 0 {
 		t.Fatalf("%v should be a valid durarion", v)
 	}
 
 	v = "-2h"
-	if _, error := validateDurationGeq0()(v, "name"); error == nil {
+	if diags := validateDurationGeq0()(v, *new(cty.Path)); len(diags) == 0 {
 		t.Fatalf("%v should be an invalid duration smaller than 0", v)
 	}
 }

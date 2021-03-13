@@ -76,19 +76,28 @@ func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 }
 
 //nolint:staticcheck
-func validateDurationGeq0() schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, errors []error) {
+func validateDurationGeq0() schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
 		value := v.(string)
 		dur, err := time.ParseDuration(value)
 		if err != nil {
-			errors = append(errors, fmt.Errorf(
-				"%q is not a valid duration", k))
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("%v is not a valid duration", value),
+				Detail:   fmt.Sprintf("%v is not a valid duration", value),
+			}
+			diags = append(diags, diag)
 		}
 		if dur < 0 {
-			errors = append(errors, fmt.Errorf(
-				"duration must not be negative"))
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("%v duration must not be negative", value),
+				Detail:   fmt.Sprintf("%v duration must not be negative", value),
+			}
+			diags = append(diags, diag)
 		}
-		return
+		return diags
 	}
 }
 
