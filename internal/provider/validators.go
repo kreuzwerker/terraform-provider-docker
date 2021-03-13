@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//nolint:staticcheck
 func validateIntegerGeqThan(threshold int) schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		value := v.(int)
@@ -29,7 +28,6 @@ func validateIntegerGeqThan(threshold int) schema.SchemaValidateDiagFunc {
 	}
 }
 
-//nolint:staticcheck
 func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		var diags diag.Diagnostics
@@ -75,7 +73,6 @@ func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 	}
 }
 
-//nolint:staticcheck
 func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		value := v.(string)
@@ -101,7 +98,6 @@ func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 	}
 }
 
-//nolint:staticcheck
 func validateStringMatchesPattern(pattern string) schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		compiledRegex, err := regexp.Compile(pattern)
