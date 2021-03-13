@@ -30,31 +30,48 @@ func validateIntegerGeqThan(threshold int) schema.SchemaValidateDiagFunc {
 }
 
 //nolint:staticcheck
-func validateStringIsFloatRatio() schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, errors []error) {
+func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
 		switch t := v.(type) {
 		case string:
 			stringValue := t
 			value, err := strconv.ParseFloat(stringValue, 64)
 			if err != nil {
-				errors = append(errors, fmt.Errorf(
-					"%q is not a float", k))
+				diag := diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("%v is not a float", v),
+					Detail:   fmt.Sprintf("%v is not a float", v),
+				}
+				diags = append(diags, diag)
 			}
 			if value < 0.0 || value > 1.0 {
-				errors = append(errors, fmt.Errorf(
-					"%q has to be between 0.0 and 1.0", k))
+				diag := diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
+					Detail:   fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
+				}
+				diags = append(diags, diag)
 			}
 		case int:
 			value := float64(t)
 			if value < 0.0 || value > 1.0 {
-				errors = append(errors, fmt.Errorf(
-					"%q has to be between 0.0 and 1.0", k))
+				diag := diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
+					Detail:   fmt.Sprintf("%v has to be between 0.0 and 1.0", v),
+				}
+				diags = append(diags, diag)
 			}
 		default:
-			errors = append(errors, fmt.Errorf(
-				"%q is not a string", k))
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("%v is not a string", v),
+				Detail:   fmt.Sprintf("%v is not a string", v),
+			}
+			diags = append(diags, diag)
 		}
-		return
+		return diags
 	}
 }
 
