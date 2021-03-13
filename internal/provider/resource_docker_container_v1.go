@@ -698,7 +698,7 @@ func resourceDockerContainerV1() *schema.Resource {
 							Type:             schema.TypeString,
 							Optional:         true,
 							ForceNew:         true,
-							ValidateDiagFunc: validateStringIsBase64Encoded,
+							ValidateDiagFunc: validateStringIsBase64Encoded(),
 						},
 						"file": {
 							Type:     schema.TypeString,

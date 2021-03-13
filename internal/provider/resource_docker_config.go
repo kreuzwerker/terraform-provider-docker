@@ -33,7 +33,7 @@ func resourceDockerConfig() *schema.Resource {
 				Required:         true,
 				Sensitive:        true,
 				ForceNew:         true,
-				ValidateDiagFunc: validateStringIsBase64Encoded,
+				ValidateDiagFunc: validateStringIsBase64Encoded(),
 			},
 		},
 	}

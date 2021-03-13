@@ -129,18 +129,20 @@ func validateStringMatchesPattern(pattern string) schema.SchemaValidateFunc {
 	}
 }
 
-func validateStringIsBase64Encoded(v interface{}, p cty.Path) diag.Diagnostics {
-	value := v.(string)
-	var diags diag.Diagnostics
-	if _, err := base64.StdEncoding.DecodeString(value); err != nil {
-		diag := diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  fmt.Sprintf("%q is not base64 decodeable", value),
-			Detail:   fmt.Sprintf("%q is not base64 decodeable", value),
+func validateStringIsBase64Encoded() schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
+		value := v.(string)
+		var diags diag.Diagnostics
+		if _, err := base64.StdEncoding.DecodeString(value); err != nil {
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("%q is not base64 decodeable", value),
+				Detail:   fmt.Sprintf("%q is not base64 decodeable", value),
+			}
+			diags = append(diags, diag)
 		}
-		diags = append(diags, diag)
+		return diags
 	}
-	return diags
 }
 
 func validateDockerContainerPath(v interface{}, k string) (ws []string, errors []error) {
