@@ -606,29 +606,29 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"memory": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validateIntegerGeqThan(0),
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 
 			"memory_swap": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validateIntegerGeqThan(-1),
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(-1),
 			},
 
 			"shm_size": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ForceNew:     true,
-				Computed:     true,
-				ValidateFunc: validateIntegerGeqThan(0),
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ForceNew:         true,
+				Computed:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 
 			"cpu_shares": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validateIntegerGeqThan(0),
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 
 			"cpu_set": {
@@ -808,11 +808,11 @@ func resourceDockerContainer() *schema.Resource {
 							ValidateFunc: validateDurationGeq0(),
 						},
 						"retries": {
-							Type:         schema.TypeInt,
-							Description:  "Consecutive failures needed to report unhealthy",
-							Optional:     true,
-							Default:      0,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "Consecutive failures needed to report unhealthy",
+							Optional:         true,
+							Default:          0,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 					},
 				},

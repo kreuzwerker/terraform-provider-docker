@@ -344,11 +344,11 @@ func resourceDockerService() *schema.Resource {
 													ValidateFunc: validateDurationGeq0(),
 												},
 												"retries": {
-													Type:         schema.TypeInt,
-													Description:  "Consecutive failures needed to report unhealthy",
-													Optional:     true,
-													Default:      0,
-													ValidateFunc: validateIntegerGeqThan(0),
+													Type:             schema.TypeInt,
+													Description:      "Consecutive failures needed to report unhealthy",
+													Optional:         true,
+													Default:          0,
+													ValidateDiagFunc: validateIntegerGeqThan(0),
 												},
 											},
 										},
@@ -437,11 +437,11 @@ func resourceDockerService() *schema.Resource {
 													Default:     "0",
 												},
 												"file_mode": {
-													Type:         schema.TypeInt,
-													Description:  "Represents represents the FileMode of the file",
-													Optional:     true,
-													Default:      0o444,
-													ValidateFunc: validateIntegerGeqThan(0),
+													Type:             schema.TypeInt,
+													Description:      "Represents represents the FileMode of the file",
+													Optional:         true,
+													Default:          0o444,
+													ValidateDiagFunc: validateIntegerGeqThan(0),
 												},
 											},
 										},
@@ -480,11 +480,11 @@ func resourceDockerService() *schema.Resource {
 													Default:     "0",
 												},
 												"file_mode": {
-													Type:         schema.TypeInt,
-													Description:  "Represents represents the FileMode of the file",
-													Optional:     true,
-													Default:      0o444,
-													ValidateFunc: validateIntegerGeqThan(0),
+													Type:             schema.TypeInt,
+													Description:      "Represents represents the FileMode of the file",
+													Optional:         true,
+													Default:          0o444,
+													ValidateDiagFunc: validateIntegerGeqThan(0),
 												},
 											},
 										},
@@ -593,10 +593,10 @@ func resourceDockerService() *schema.Resource {
 										ValidateFunc: validateDurationGeq0(),
 									},
 									"max_attempts": {
-										Type:         schema.TypeInt,
-										Description:  "Maximum attempts to restart a given container before giving up (default value is 0, which is ignored)",
-										Optional:     true,
-										ValidateFunc: validateIntegerGeqThan(0),
+										Type:             schema.TypeInt,
+										Description:      "Maximum attempts to restart a given container before giving up (default value is 0, which is ignored)",
+										Optional:         true,
+										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
 									"window": {
 										Type:         schema.TypeString,
@@ -630,10 +630,10 @@ func resourceDockerService() *schema.Resource {
 										Set:         schema.HashString,
 									},
 									"max_replicas": {
-										Type:         schema.TypeInt,
-										Description:  "Maximum number of replicas for per node (default value is 0, which is unlimited)",
-										Optional:     true,
-										ValidateFunc: validateIntegerGeqThan(0),
+										Type:             schema.TypeInt,
+										Description:      "Maximum number of replicas for per node (default value is 0, which is unlimited)",
+										Optional:         true,
+										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
 									"platforms": {
 										Type:        schema.TypeSet,
@@ -658,11 +658,11 @@ func resourceDockerService() *schema.Resource {
 							},
 						},
 						"force_update": {
-							Type:         schema.TypeInt,
-							Description:  "A counter that triggers an update even if no relevant parameters have been changed. See https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126",
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "A counter that triggers an update even if no relevant parameters have been changed. See https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126",
+							Optional:         true,
+							Computed:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"runtime": {
 							Type:         schema.TypeString,
@@ -721,11 +721,11 @@ func resourceDockerService() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"replicas": {
-										Type:         schema.TypeInt,
-										Description:  "The amount of replicas of the service",
-										Optional:     true,
-										Default:      1,
-										ValidateFunc: validateIntegerGeqThan(0),
+										Type:             schema.TypeInt,
+										Description:      "The amount of replicas of the service",
+										Optional:         true,
+										Default:          1,
+										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
 								},
 							},
@@ -748,11 +748,11 @@ func resourceDockerService() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"parallelism": {
-							Type:         schema.TypeInt,
-							Description:  "Maximum number of tasks to be updated in one iteration",
-							Optional:     true,
-							Default:      1,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "Maximum number of tasks to be updated in one iteration",
+							Optional:         true,
+							Default:          1,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"delay": {
 							Type:         schema.TypeString,
@@ -800,11 +800,11 @@ func resourceDockerService() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"parallelism": {
-							Type:         schema.TypeInt,
-							Description:  "Maximum number of tasks to be rollbacked in one iteration",
-							Optional:     true,
-							Default:      1,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "Maximum number of tasks to be rollbacked in one iteration",
+							Optional:         true,
+							Default:          1,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"delay": {
 							Type:         schema.TypeString,
@@ -1266,11 +1266,11 @@ func resourceDockerServiceV0() *schema.Resource {
 													ValidateFunc: validateDurationGeq0(),
 												},
 												"retries": {
-													Type:         schema.TypeInt,
-													Description:  "Consecutive failures needed to report unhealthy",
-													Optional:     true,
-													Default:      0,
-													ValidateFunc: validateIntegerGeqThan(0),
+													Type:             schema.TypeInt,
+													Description:      "Consecutive failures needed to report unhealthy",
+													Optional:         true,
+													Default:          0,
+													ValidateDiagFunc: validateIntegerGeqThan(0),
 												},
 											},
 										},
@@ -1476,10 +1476,10 @@ func resourceDockerServiceV0() *schema.Resource {
 										ValidateFunc: validateDurationGeq0(),
 									},
 									"max_attempts": {
-										Type:         schema.TypeInt,
-										Description:  "Maximum attempts to restart a given container before giving up (default value is 0, which is ignored)",
-										Optional:     true,
-										ValidateFunc: validateIntegerGeqThan(0),
+										Type:             schema.TypeInt,
+										Description:      "Maximum attempts to restart a given container before giving up (default value is 0, which is ignored)",
+										Optional:         true,
+										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
 									"window": {
 										Type:         schema.TypeString,
@@ -1535,11 +1535,11 @@ func resourceDockerServiceV0() *schema.Resource {
 							},
 						},
 						"force_update": {
-							Type:         schema.TypeInt,
-							Description:  "A counter that triggers an update even if no relevant parameters have been changed. See https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126",
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "A counter that triggers an update even if no relevant parameters have been changed. See https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126",
+							Optional:         true,
+							Computed:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"runtime": {
 							Type:         schema.TypeString,
@@ -1598,11 +1598,11 @@ func resourceDockerServiceV0() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"replicas": {
-										Type:         schema.TypeInt,
-										Description:  "The amount of replicas of the service",
-										Optional:     true,
-										Default:      1,
-										ValidateFunc: validateIntegerGeqThan(0),
+										Type:             schema.TypeInt,
+										Description:      "The amount of replicas of the service",
+										Optional:         true,
+										Default:          1,
+										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
 								},
 							},
@@ -1625,11 +1625,11 @@ func resourceDockerServiceV0() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"parallelism": {
-							Type:         schema.TypeInt,
-							Description:  "Maximum number of tasks to be updated in one iteration",
-							Optional:     true,
-							Default:      1,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "Maximum number of tasks to be updated in one iteration",
+							Optional:         true,
+							Default:          1,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"delay": {
 							Type:         schema.TypeString,
@@ -1677,11 +1677,11 @@ func resourceDockerServiceV0() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"parallelism": {
-							Type:         schema.TypeInt,
-							Description:  "Maximum number of tasks to be rollbacked in one iteration",
-							Optional:     true,
-							Default:      1,
-							ValidateFunc: validateIntegerGeqThan(0),
+							Type:             schema.TypeInt,
+							Description:      "Maximum number of tasks to be rollbacked in one iteration",
+							Optional:         true,
+							Default:          1,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"delay": {
 							Type:         schema.TypeString,

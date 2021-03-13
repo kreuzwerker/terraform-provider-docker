@@ -39,14 +39,19 @@ func validateIntegerInRange(min, max int) schema.SchemaValidateDiagFunc {
 }
 
 //nolint:staticcheck
-func validateIntegerGeqThan(threshold int) schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, errors []error) {
+func validateIntegerGeqThan(threshold int) schema.SchemaValidateDiagFunc {
+	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		value := v.(int)
+		var diags diag.Diagnostics
 		if value < threshold {
-			errors = append(errors, fmt.Errorf(
-				"%q cannot be lower than %d", k, threshold))
+			diag := diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("%q cannot be lower than %d", value, threshold),
+				Detail:   fmt.Sprintf("%q cannot be lower than %d", value, threshold),
+			}
+			diags = append(diags, diag)
 		}
-		return
+		return diags
 	}
 }
 

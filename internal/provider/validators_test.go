@@ -26,13 +26,13 @@ func TestValidateIntegerInRange(t *testing.T) {
 
 func TestValidateIntegerGeqThan0(t *testing.T) {
 	v := 1
-	if _, error := validateIntegerGeqThan(0)(v, "name"); error != nil {
-		t.Fatalf("%q should be an integer greater than 0", v)
+	if diags := validateIntegerGeqThan(0)(v, *new(cty.Path)); len(diags) != 0 {
+		t.Fatalf("%d should be an integer greater than 0", v)
 	}
 
 	v = -4
-	if _, error := validateIntegerGeqThan(0)(v, "name"); error == nil {
-		t.Fatalf("%q should be an invalid integer smaller than 0", v)
+	if diags := validateIntegerGeqThan(0)(v, *new(cty.Path)); len(diags) == 0 {
+		t.Fatalf("%d should be an invalid integer smaller than 0", v)
 	}
 }
 
