@@ -122,12 +122,12 @@ func TestValidateStringMatchesPattern(t *testing.T) {
 
 func TestValidateStringShouldBeBase64EncodedDiag(t *testing.T) {
 	v := `YmtzbGRrc2xka3NkMjM4MQ==`
-	if diags := validateStringIsBase64EncodedDiag(v, *new(cty.Path)); len(diags) != 0 {
+	if diags := validateStringIsBase64Encoded(v, *new(cty.Path)); len(diags) != 0 {
 		t.Fatalf("%q should be base64 decodeable", v)
 	}
 
 	v = `%&df#3NkMjM4MQ==`
-	if diags := validateStringIsBase64EncodedDiag(v, *new(cty.Path)); len(diags) == 0 {
+	if diags := validateStringIsBase64Encoded(v, *new(cty.Path)); len(diags) == 0 {
 		t.Fatalf("%q should NOT be base64 decodeable", v)
 	}
 }

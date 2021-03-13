@@ -30,7 +30,7 @@ func resourceDockerSecret() *schema.Resource {
 				Required:         true,
 				Sensitive:        true,
 				ForceNew:         true,
-				ValidateDiagFunc: validateStringIsBase64EncodedDiag,
+				ValidateDiagFunc: validateStringIsBase64Encoded,
 			},
 
 			"labels": {
@@ -71,7 +71,7 @@ func resourceDockerSecretV0() *schema.Resource {
 				Required:         true,
 				Sensitive:        true,
 				ForceNew:         true,
-				ValidateDiagFunc: validateStringIsBase64EncodedDiag,
+				ValidateDiagFunc: validateStringIsBase64Encoded,
 			},
 
 			"labels": {

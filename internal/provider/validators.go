@@ -119,7 +119,7 @@ func validateStringMatchesPattern(pattern string) schema.SchemaValidateFunc {
 	}
 }
 
-func validateStringIsBase64EncodedDiag(v interface{}, p cty.Path) diag.Diagnostics {
+func validateStringIsBase64Encoded(v interface{}, p cty.Path) diag.Diagnostics {
 	value := v.(string)
 	var diags diag.Diagnostics
 	if _, err := base64.StdEncoding.DecodeString(value); err != nil {
