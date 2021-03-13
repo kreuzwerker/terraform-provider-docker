@@ -56,18 +56,6 @@ func validateIntegerGeqThan(threshold int) schema.SchemaValidateDiagFunc {
 }
 
 //nolint:staticcheck
-func validateFloatRatio() schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, errors []error) {
-		value := v.(float64)
-		if value < 0.0 || value > 1.0 {
-			errors = append(errors, fmt.Errorf(
-				"%q has to be between 0.0 and 1.0", k))
-		}
-		return
-	}
-}
-
-//nolint:staticcheck
 func validateStringIsFloatRatio() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		switch t := v.(type) {

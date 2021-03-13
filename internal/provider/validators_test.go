@@ -36,23 +36,6 @@ func TestValidateIntegerGeqThan0(t *testing.T) {
 	}
 }
 
-func TestValidateFloatRatio(t *testing.T) {
-	v := 0.9
-	if _, error := validateFloatRatio()(v, "name"); error != nil {
-		t.Fatalf("%v should be a float between 0.0 and 1.0", v)
-	}
-
-	v = -4.5
-	if _, error := validateFloatRatio()(v, "name"); error == nil {
-		t.Fatalf("%v should be an invalid float smaller than 0.0", v)
-	}
-
-	v = 1.1
-	if _, error := validateFloatRatio()(v, "name"); error == nil {
-		t.Fatalf("%v should be an invalid float greater than 1.0", v)
-	}
-}
-
 func TestValidateStringIsFloatRatio(t *testing.T) {
 	v := "0.9"
 	if _, error := validateStringIsFloatRatio()(v, "name"); error != nil {
