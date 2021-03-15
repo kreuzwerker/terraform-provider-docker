@@ -149,7 +149,7 @@ func TestDockerImageNameSuppress(t *testing.T) {
 var serviceIDRegex = regexp.MustCompile(`[A-Za-z0-9_\+\.-]+`)
 
 func TestAccDockerService_minimalSpec(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -191,7 +191,7 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 }
 
 func TestAccDockerService_fullSpec(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -497,7 +497,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 }
 
 func TestAccDockerService_partialReplicationConfig(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -599,7 +599,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 }
 
 func TestAccDockerService_globalReplicationMode(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -645,7 +645,7 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 }
 
 func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -677,7 +677,7 @@ func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
 }
 
 func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -719,7 +719,7 @@ func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 func TestAccDockerService_privateImageConverge(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -773,7 +773,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	configData := "ewogICJwcmVmaXgiOiAiMTIzIgp9"
 	secretData := "ewogICJrZXkiOiAiUVdFUlRZIgp9"
 	image := "127.0.0.1:15000/tftest-service:v1"
-	ctx := context.TODO()
+	ctx := context.Background()
 	mounts := `
 	mounts {
 		source = docker_volume.foo.name
@@ -1120,7 +1120,7 @@ func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
 }
 
 func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -1186,7 +1186,7 @@ func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
 func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	imageFail := "127.0.0.1:15000/tftest-service:v3"
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -1393,7 +1393,7 @@ resource "docker_service" "foo" {
 // isServiceRemoved checks if a service was removed successfully
 func isServiceRemoved(serviceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		filters := filters.NewArgs()
 		filters.Add("name", serviceName)

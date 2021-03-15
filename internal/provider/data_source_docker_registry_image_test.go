@@ -48,7 +48,7 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 func TestAccDockerRegistryImage_auth(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,

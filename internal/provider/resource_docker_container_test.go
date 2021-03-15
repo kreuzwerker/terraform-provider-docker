@@ -36,7 +36,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	var c types.ContainerJSON
 	resource.Test(t, resource.TestCase{
@@ -663,7 +663,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 }
 
 func testAccCheckSwapLimit(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 	info, err := client.Info(ctx)
 	if err != nil {
@@ -677,7 +677,7 @@ func testAccCheckSwapLimit(t *testing.T) {
 
 func TestAccDockerContainer_upload(t *testing.T) {
 	var c types.ContainerJSON
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
@@ -738,7 +738,7 @@ func TestAccDockerContainer_upload(t *testing.T) {
 
 func TestAccDockerContainer_uploadSource(t *testing.T) {
 	var c types.ContainerJSON
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	wd, _ := os.Getwd()
 	testFile := wd + "/../../scripts/testing/testingFile"
@@ -847,7 +847,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 
 func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 	var c types.ContainerJSON
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	testCheck := func(srcPath, wantedContent, filePerm string) func(*terraform.State) error {
 		return func(*terraform.State) error {
@@ -992,7 +992,7 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 
 func TestAccDockerContainer_device(t *testing.T) {
 	var c types.ContainerJSON
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
@@ -1297,7 +1297,7 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 
 func TestAccDockerContainer_rm(t *testing.T) {
 	var c types.ContainerJSON
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
 		if !c.HostConfig.AutoRemove {
@@ -1588,7 +1588,7 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 
 func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		ctx := context.TODO()
+		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -1621,7 +1621,7 @@ func testAccContainerRunning(n string, container *types.ContainerJSON) resource.
 
 func testAccContainerNotRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		ctx := context.TODO()
+		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -1659,7 +1659,7 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 
 func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		ctx := context.TODO()
+		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)

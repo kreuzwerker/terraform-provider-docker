@@ -21,7 +21,7 @@ const testForceRemoveDockerImageName = "alpine:3.11.5"
 func TestAccDockerImage_basic(t *testing.T) {
 	// run a Docker container which refers the Docker image to test "force_remove" option
 	containerName := "test-docker-image-force-remove"
-	ctx := context.TODO()
+	ctx := context.Background()
 	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, testForceRemoveDockerImageName, "tail", "-f", "/dev/null").Run(); err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestAccDockerImage_basic(t *testing.T) {
 }
 
 func TestAccDockerImage_private(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -73,7 +73,7 @@ func TestAccDockerImage_private(t *testing.T) {
 }
 
 func TestAccDockerImage_destroy(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -137,7 +137,7 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 func TestAccDockerImage_data_private(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -162,7 +162,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -187,7 +187,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
 	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                  func() { testAccPreCheck(t) },
@@ -208,7 +208,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 }
 
 func TestAccDockerImage_sha265(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -242,7 +242,7 @@ func testAccDockerImageDestroy(ctx context.Context, s *terraform.State) error {
 }
 
 func TestAccDockerImage_build(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	wd, _ := os.Getwd()
 	dfPath := path.Join(wd, "Dockerfile")
 	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {

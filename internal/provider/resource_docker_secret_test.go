@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccDockerSecret_basic(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -35,7 +35,7 @@ func TestAccDockerSecret_basic(t *testing.T) {
 }
 
 func TestAccDockerSecret_basicUpdatable(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -80,7 +80,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 }
 
 func TestAccDockerSecret_labels(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,

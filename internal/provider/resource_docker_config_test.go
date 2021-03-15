@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccDockerConfig_basic(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -40,7 +40,7 @@ func TestAccDockerConfig_basic(t *testing.T) {
 }
 
 func TestAccDockerConfig_basicUpdatable(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,

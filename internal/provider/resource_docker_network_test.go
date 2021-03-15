@@ -37,7 +37,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 
 func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		ctx := context.TODO()
+		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
