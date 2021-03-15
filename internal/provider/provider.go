@@ -166,7 +166,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		authConfigs := &AuthConfigs{}
 
 		if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
-			authConfigs, err = providerSetToRegistryAuth(v)
+			authConfigs, err = providerSetToRegistryAuth(v.([]interface{}))
 
 			if err != nil {
 				return nil, diag.Errorf("Error loading registry auth config: %s", err)
@@ -189,12 +189,12 @@ type AuthConfigs struct {
 }
 
 // Take the given registry_auth schemas and return a map of registry auth configurations
-func providerSetToRegistryAuth(authList interface{}) (*AuthConfigs, error) {
+func providerSetToRegistryAuth(authList []interface{}) (*AuthConfigs, error) {
 	authConfigs := AuthConfigs{
 		Configs: make(map[string]types.AuthConfig),
 	}
 
-	for _, authInt := range authList.([]interface{}) {
+	for _, authInt := range authList {
 		auth := authInt.(map[string]interface{})
 		authConfig := types.AuthConfig{}
 		authConfig.ServerAddress = normalizeRegistryAddress(auth["address"].(string))
