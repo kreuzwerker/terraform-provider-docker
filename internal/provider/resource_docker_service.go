@@ -943,14 +943,23 @@ func resourceDockerServiceStateUpgradeV2(ctx context.Context, rawState map[strin
 	r, ok := taskSpec["restart_policy"]
 	if !ok && r == nil {
 		taskSpec["restart_policy"] = []interface{}{}
-		return rawState, nil
+	} else {
+		restartPolicy := r.(map[string]interface{})
+		// because we have MaxItem 1
+		newRestartPolicy := make([]interface{}, 1)
+		newRestartPolicy[0] = restartPolicy
+		taskSpec["restart_policy"] = newRestartPolicy
 	}
 
-	restartPolicy := r.(map[string]interface{})
-	// because we have MaxItem 1
-	newRestartPolicy := make([]interface{}, 1)
-	newRestartPolicy[0] = restartPolicy
-	taskSpec["restart_policy"] = newRestartPolicy
+	a, ok := rawState["auth"]
+	if !ok && a == nil {
+		rawState["auth"] = []interface{}{}
+	} else {
+		auth := a.(map[string]interface{})
+		newAuth := make([]interface{}, 1)
+		newAuth[0] = auth
+		rawState["auth"] = newAuth
+	}
 
 	return rawState, nil
 }
