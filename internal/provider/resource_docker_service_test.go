@@ -18,6 +18,78 @@ import (
 // ----------------------------------------
 // -----------    UNIT  TESTS   -----------
 // ----------------------------------------
+func TestMigrateServiceV1ToV2_empty_restart_policy(t *testing.T) {
+	v1State := map[string]interface{}{
+		"name": "volume-name",
+		"task_spec": []interface{}{
+			map[string]interface{}{
+				"container_spec": []interface{}{
+					map[string]interface{}{
+						"image":             "repo:tag",
+						"stop_grace_period": "10s",
+					},
+				},
+			},
+		},
+	}
+
+	// first validate that we build that correctly
+	v1Config := terraform.NewResourceConfigRaw(v1State)
+	diags := resourceDockerServiceV1().Validate(v1Config)
+	if diags.HasError() {
+		t.Error("test precondition failed - attempt to migrate an invalid v1 config")
+		return
+	}
+
+	ctx := context.Background()
+	v2State, _ := resourceDockerServiceStateUpgradeV2(ctx, v1State, nil)
+	v2Config := terraform.NewResourceConfigRaw(v2State)
+	diags = resourceDockerService().Validate(v2Config)
+	if diags.HasError() {
+		fmt.Println(diags)
+		t.Error("migrated service config is invalid")
+		return
+	}
+}
+func TestMigrateServiceV1ToV2_with_restart_policy(t *testing.T) {
+	v1State := map[string]interface{}{
+		"name": "volume-name",
+		"task_spec": []interface{}{
+			map[string]interface{}{
+				"container_spec": []interface{}{
+					map[string]interface{}{
+						"image":             "repo:tag",
+						"stop_grace_period": "10s",
+					},
+				},
+				"restart_policy": map[string]interface{}{
+					"condition":    "on-failure",
+					"delay":        "3s",
+					"max_attempts": 4,
+					"window":       "10s",
+				},
+			},
+		},
+	}
+
+	// first validate that we build that correctly
+	v1Config := terraform.NewResourceConfigRaw(v1State)
+	diags := resourceDockerServiceV1().Validate(v1Config)
+	if diags.HasError() {
+		t.Error("test precondition failed - attempt to migrate an invalid v1 config")
+		return
+	}
+
+	ctx := context.Background()
+	v2State, _ := resourceDockerServiceStateUpgradeV2(ctx, v1State, nil)
+	v2Config := terraform.NewResourceConfigRaw(v2State)
+	diags = resourceDockerService().Validate(v2Config)
+	if diags.HasError() {
+		fmt.Println(diags)
+		t.Error("migrated service config is invalid")
+		return
+	}
+}
 
 func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
 	authConfigs := make(map[string]types.AuthConfig)
