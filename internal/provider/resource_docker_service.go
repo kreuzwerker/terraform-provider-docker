@@ -939,7 +939,7 @@ func resourceDockerService() *schema.Resource {
 }
 
 func resourceDockerServiceStateUpgradeV2(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	taskSpec, ok := rawState["task_spec"].([]interface{})[0].(map[string]interface{})
+	taskSpec, _ := rawState["task_spec"].([]interface{})[0].(map[string]interface{})
 	r, ok := taskSpec["restart_policy"]
 	if !ok && r == nil {
 		taskSpec["restart_policy"] = []interface{}{}
