@@ -44,6 +44,12 @@ If you are running into one of these scenarios, we recommend opening an issue in
 # Copy-paste your Terraform configurations here - for large Terraform configs,
 # please use a service like Dropbox and share a link to the ZIP file. For
 # security, you can also encrypt the files using our GPG public key: https://keybase.io/hashicorp
+# The code should be runnable for maintainers to reproduce the problem.
+# We can't reproduce the problem with partial code.
+# Don't include unknown input variables, local values, resources, etc.
+# If you can reproduce the problem with public Docker images, please don't use private Docker images.
+# Don't include unneeded resources to reproduce the problem.
+# Don't set unneeded attributes to reproduce the problem.
 ```
 
 ### Debug Output
