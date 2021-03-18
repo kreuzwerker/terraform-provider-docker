@@ -13,7 +13,7 @@ setup() {
 
 run() {
   go clean -testcache
-  TF_ACC=1 go test ./docker -v -timeout 120m
+  TF_ACC=1 go test ./internal/provider -v -timeout 120m
   
   # keep the return value for the scripts to fail and clean properly
   return $?

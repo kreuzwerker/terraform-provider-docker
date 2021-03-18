@@ -1,6 +1,6 @@
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
-PKG_NAME=docker
+PKG_NAME=internal/provider
 
 default: build
 

@@ -1,7 +1,8 @@
 linters-settings:
   errcheck:
     # https://github.com/hashicorp/terraform-provider-aws/blob/9c9a116a857fb838a0e7d1cfbf420c2524f0abe1/.golangci.yml#L37-L39
-    ignore: github.com/hashicorp/terraform-plugin-sdk/helper/schema:ForceNew|Set,fmt:.*,io:Close
+    ignore: github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema:ForceNew|Set,fmt:.*,io:Close
+
 
 run:
   timeout: 10m
