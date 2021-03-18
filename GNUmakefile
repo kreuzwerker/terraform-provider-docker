@@ -34,7 +34,7 @@ testacc_cleanup: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/testacc_cleanup.sh'"
 
 compile: fmtcheck
-	@sh -c "'$(CURDIR)/scripts/compile.sh'"
+	@sh -c "curl -sL https://git.io/goreleaser | bash -s -- --rm-dist --skip-publish --snapshot"
 
 vet:
 	@echo "go vet ."
