@@ -22,6 +22,11 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: true
+      matrix:
+        terraform_version: 
+        - "0.12.30"
+        - "0.13.6"
+        - "0.14.8"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -43,4 +48,5 @@ jobs:
       - run: sudo cat /etc/default/docker
       - run: sudo service docker restart
       - run: make testacc
-
+        env: 
+          TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
