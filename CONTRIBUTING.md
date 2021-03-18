@@ -47,7 +47,7 @@ make test
 make testacc_setup
 
 ## run a single test
-TF_LOG=INFO TF_ACC=1 go test -v ./docker -run ^TestAccDockerImage_data_private_config_file$ -timeout 360s
+TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerImage_data_private_config_file$ -timeout 360s
 
 ## cleanup the local testing resources
 make testacc_cleanup
