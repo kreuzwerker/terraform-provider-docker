@@ -12,19 +12,17 @@ on:
       - website/docs/**
 
 env:
-  GO_VERSION: "1.15"
+  GO_VERSION: "1.16"
   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
 
 jobs:
   website-lint-spellcheck-tffmt:
     runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: true
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.15'
+          go-version: '1.16'
       - run: cat /etc/issue
       - run: bash scripts/gogetcookie.sh
       # locally: docker run -it ubuntu-20.04 bash (https://ubuntu.pkgs.org/20.04/docker-ce-stable-amd64/)
