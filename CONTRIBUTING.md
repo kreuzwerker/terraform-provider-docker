@@ -1,7 +1,21 @@
 # Contributing
 
-By participating to this project, you agree to abide our [code of
-conduct](/CODE_OF_CONDUCT.md).
+By participating to this project, you agree to abide our [code of conduct](/CODE_OF_CONDUCT.md).
+
+## Write Issue
+
+When you have a bug report or feature request or something, please create an issue from [here](https://github.com/kreuzwerker/terraform-provider-docker/issues/new/choose).
+Before creating an issue, please check whether same or releated issues exist.
+Please use issue templates as much as possible.
+
+### Guide of Bug report
+
+The code should be runnable for maintainers to reproduce the problem.
+We can't reproduce the problem with partial code.
+Don't include unknown input variables, local values, resources, etc.
+If you can reproduce the problem with public Docker images, please don't use private Docker images.
+Don't include unneeded resources to reproduce the problem.
+Don't set unneeded attributes to reproduce the problem.
 
 ## Setup your machine
 
