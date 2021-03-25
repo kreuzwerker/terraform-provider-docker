@@ -25,7 +25,7 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.8.0"
+      version = "2.11.0"
     }
   }
 }
@@ -36,15 +36,15 @@ provider "docker" {
 
 # Create a docker image resource
 # -> docker pull nginx:latest
-resource "docker_image" "foo" {
-  name         = "c"
+resource "docker_image" "nginx" {
+  name         = "nginx:latest"
   keep_locally = true
 }
 
 # Create a docker container resource
-# -> docker run --name foo -d nginx:latest
-resource "docker_container" "foo" {
-  name    = "foo"
-  image   = docker_image.foo.latest
+# -> same as 'docker run --name nginx -d nginx:latest'
+resource "docker_container" "nginx" {
+  name    = "nginx"
+  image   = docker_image.nginx.latest
 }
 ```
