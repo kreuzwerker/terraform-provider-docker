@@ -87,13 +87,8 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	imageName := d.Get("name").(string)
-	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
-	if err != nil {
-		d.SetId("")
-		return nil
-	}
 
-	foundImage := searchLocalImages(data, imageInspect.ID)
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 	if foundImage == nil {
 		d.SetId("")
 		return nil
@@ -129,13 +124,14 @@ func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func searchLocalImages(data Data, imageName string) *types.ImageSummary {
-	if apiImage, ok := data.DockerImages[imageName]; ok {
-		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
-		return apiImage
+func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) *types.ImageSummary {
+	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
+	if err != nil {
+		return nil
 	}
-	if apiImage, ok := data.DockerImages[imageName+":latest"]; ok {
-		log.Printf("[DEBUG] found local image via imageName + latest: %v", imageName)
+
+	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
+		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
 		return apiImage
 	}
 	return nil
@@ -157,12 +153,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 		return fmt.Errorf("Empty image name is not allowed")
 	}
 
-	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
-	if err != nil {
-		return fmt.Errorf("error inspecting image %s: %w", imageName, err)
-	}
-
-	foundImage := searchLocalImages(data, imageInspect.ID)
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 
 	if foundImage != nil {
 		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
@@ -295,24 +286,13 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage := searchLocalImages(data, imageName)
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 	if foundImage != nil {
 		return foundImage, nil
 	}
 
-	if imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName); err == nil {
-		if foundImage := searchLocalImages(data, imageInspect.ID); foundImage != nil {
-			return foundImage, nil
-		}
-	}
-
 	if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
 		return nil, fmt.Errorf("Unable to pull image %s: %s", imageName, err)
-	}
-
-	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
-	if err != nil {
-		return nil, fmt.Errorf("error inspecting image %s: %w", imageName, err)
 	}
 
 	// update the data structure of the images
@@ -320,7 +300,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage = searchLocalImages(data, imageInspect.ID)
+	foundImage = searchLocalImages(ctx, client, data, imageName)
 	if foundImage != nil {
 		return foundImage, nil
 	}
