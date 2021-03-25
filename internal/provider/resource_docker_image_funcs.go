@@ -85,8 +85,15 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 	for id := range data.DockerImages {
 		log.Printf("[DEBUG] local images data: %v", id)
 	}
-	foundImage := searchLocalImages(data, d.Get("name").(string))
 
+	imageName := d.Get("name").(string)
+	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
+	if err != nil {
+		d.SetId("")
+		return nil
+	}
+
+	foundImage := searchLocalImages(data, imageInspect.ID)
 	if foundImage == nil {
 		d.SetId("")
 		return nil
@@ -150,7 +157,12 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 		return fmt.Errorf("Empty image name is not allowed")
 	}
 
-	foundImage := searchLocalImages(data, imageName)
+	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
+	if err != nil {
+		return fmt.Errorf("error inspecting image %s: %w", imageName, err)
+	}
+
+	foundImage := searchLocalImages(data, imageInspect.ID)
 
 	if foundImage != nil {
 		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
@@ -288,8 +300,19 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return foundImage, nil
 	}
 
+	if imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName); err == nil {
+		if foundImage := searchLocalImages(data, imageInspect.ID); foundImage != nil {
+			return foundImage, nil
+		}
+	}
+
 	if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
 		return nil, fmt.Errorf("Unable to pull image %s: %s", imageName, err)
+	}
+
+	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("error inspecting image %s: %w", imageName, err)
 	}
 
 	// update the data structure of the images
@@ -297,7 +320,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage = searchLocalImages(data, imageName)
+	foundImage = searchLocalImages(data, imageInspect.ID)
 	if foundImage != nil {
 		return foundImage, nil
 	}
