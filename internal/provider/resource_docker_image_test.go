@@ -241,6 +241,25 @@ func testAccDockerImageDestroy(ctx context.Context, s *terraform.State) error {
 	return nil
 }
 
+func TestAccDockerImage_tag_sha265(t *testing.T) {
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testDockerImageWithTagAndSHA256RepoDigest,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.nginx", "latest", contentDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerImage_build(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()
@@ -393,4 +412,10 @@ ARG test_arg
 RUN echo ${test_arg} > test_arg.txt
 
 RUN apt-get update -qq
+`
+
+const testDockerImageWithTagAndSHA256RepoDigest = `
+resource "docker_image" "nginx" {
+	name = "nginx:1.18.0-alpine@sha256:0c56c40f232f41c1b8341c3cc055c8b528cb6decefd7f7c8506e2d30bb9678b6"
+}
 `
