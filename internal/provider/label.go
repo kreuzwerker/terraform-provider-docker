@@ -61,11 +61,13 @@ var labelSchema = &schema.Resource{
 			Type:        schema.TypeString,
 			Description: "Name of the label",
 			Required:    true,
+			ForceNew:    true,
 		},
 		"value": {
 			Type:        schema.TypeString,
 			Description: "Value of the label",
 			Required:    true,
+			ForceNew:    true,
 		},
 	},
 }
