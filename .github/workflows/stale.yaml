@@ -19,6 +19,8 @@ jobs:
           stale-issue-message: |
             This issue is stale because it has been open 60 days with no activity.
             Remove `stale` label or comment or this will be closed in 7 days.
+            If you don't want this issue to be closed, please set the label `pinned`.
           stale-pr-message: |
             This pull request is stale because it has been open 60 days with no activity.
             Remove `stale` label or comment or this will be closed in 7 days.
+            If you don't want this pull request to be closed, please set the label `pinned`.
