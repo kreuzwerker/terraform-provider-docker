@@ -26,6 +26,25 @@ resource "docker_image" "ubuntu" {
 
 ```
 
+Building a Docker image
+
+```hcl
+# image "zoo" and "zoo:develop" are built
+resource "docker_image" "zoo" {
+  name = "zoo"
+  build {
+    path = "."
+    tag  = ["zoo:develop"]
+    build_arg = {
+      foo : "zoo"
+    }
+    label = {
+      author : "zoo"
+    }
+  }
+}
+```
+
 ### Dynamic image
 
 ```hcl
