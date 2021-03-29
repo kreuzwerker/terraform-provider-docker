@@ -85,8 +85,10 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 	for id := range data.DockerImages {
 		log.Printf("[DEBUG] local images data: %v", id)
 	}
-	foundImage := searchLocalImages(data, d.Get("name").(string))
 
+	imageName := d.Get("name").(string)
+
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 	if foundImage == nil {
 		d.SetId("")
 		return nil
@@ -122,13 +124,14 @@ func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func searchLocalImages(data Data, imageName string) *types.ImageSummary {
-	if apiImage, ok := data.DockerImages[imageName]; ok {
-		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
-		return apiImage
+func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) *types.ImageSummary {
+	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
+	if err != nil {
+		return nil
 	}
-	if apiImage, ok := data.DockerImages[imageName+":latest"]; ok {
-		log.Printf("[DEBUG] found local image via imageName + latest: %v", imageName)
+
+	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
+		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
 		return apiImage
 	}
 	return nil
@@ -150,7 +153,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 		return fmt.Errorf("Empty image name is not allowed")
 	}
 
-	foundImage := searchLocalImages(data, imageName)
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 
 	if foundImage != nil {
 		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
@@ -283,7 +286,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage := searchLocalImages(data, imageName)
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 	if foundImage != nil {
 		return foundImage, nil
 	}
@@ -297,7 +300,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage = searchLocalImages(data, imageName)
+	foundImage = searchLocalImages(ctx, client, data, imageName)
 	if foundImage != nil {
 		return foundImage, nil
 	}
