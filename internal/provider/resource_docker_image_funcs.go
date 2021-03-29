@@ -67,12 +67,11 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 			}
 		}
 	}
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
-	if err != nil {
+	if _, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs); err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
 
-	d.SetId(apiImage.ID + d.Get("name").(string))
+	d.SetId(imageName)
 	return resourceDockerImageRead(ctx, d, meta)
 }
 
@@ -94,7 +93,7 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 		return nil
 	}
 
-	d.SetId(foundImage.ID + d.Get("name").(string))
+	d.SetId(imageName)
 	d.Set("latest", foundImage.ID)
 	return nil
 }

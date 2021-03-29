@@ -98,3 +98,11 @@ The `build` block supports:
 The following attributes are exported in addition to the above configuration:
 
 * `latest` (string) - The ID of the image.
+
+## Import
+
+Docker images can be imported using image name, e.g. for an image named `alpine:3.13.0`:
+
+```sh
+$ terraform import docker_image.alpine alpine:3.13.0
+```
