@@ -1,0 +1,19 @@
+{
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "matchManagers": ["gomod"],
+      "postUpdateOptions": ["gomodTidy"],
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin"],
+      "automerge": true,
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["digest"],
+      "enabled": false,
+    }
+  ]
+}
