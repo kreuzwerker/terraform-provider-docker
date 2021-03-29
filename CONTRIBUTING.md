@@ -10,12 +10,13 @@ Please use issue templates as much as possible.
 
 ### Guide of Bug report
 
-The code should be runnable for maintainers to reproduce the problem.
-We can't reproduce the problem with partial code.
-Don't include unknown input variables, local values, resources, etc.
-If you can reproduce the problem with public Docker images, please don't use private Docker images.
-Don't include unneeded resources to reproduce the problem.
-Don't set unneeded attributes to reproduce the problem.
+* The code should be runnable for maintainers to reproduce the problem
+  * We can't reproduce the problem with partial code
+  * Don't include unknown input variables, local values, resources, etc
+  * If you can reproduce the problem with public Docker images, please don't use private Docker images
+* The code should be simple as much as possible. The simple code helps us to understand and reproduce the problem
+  * Don't include unneeded resources to reproduce the problem
+  * Don't set unneeded attributes to reproduce the problem
 
 ## Setup your machine
 

@@ -26,6 +26,25 @@ resource "docker_image" "ubuntu" {
 
 ```
 
+Building a Docker image
+
+```hcl
+# image "zoo" and "zoo:develop" are built
+resource "docker_image" "zoo" {
+  name = "zoo"
+  build {
+    path = "."
+    tag  = ["zoo:develop"]
+    build_arg = {
+      foo : "zoo"
+    }
+    label = {
+      author : "zoo"
+    }
+  }
+}
+```
+
 ### Dynamic image
 
 ```hcl
@@ -57,19 +76,22 @@ The following arguments are supported:
 
 <a id="build-1"></a>
 ### Build
+
 Build image.
+
+Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.
 
 The `build` block supports:
 
-* `path` - (Required, string)
-* `dockerfile` - (Optional, string) default Dockerfile
-* `tag` - (Optional, list of strings) 
-* `force_remove` - (Optional, boolean)
-* `remove` - (Optional, boolean) default true
-* `no_cache` - (Optional, boolean)
-* `target` - (Optional, string)
-* `build_arg` - (Optional, map of strings)
-* `label` - (Optional, map of strings)
+* `path` - (Required, string) Context path
+* `dockerfile` - (Optional, string, default `Dockerfile`) Path to the Dockerfile
+* `tag` - (Optional, list of strings) Built Docker image name and optionally a tag in the `name:tag` format
+* `force_remove` - (Optional, boolean) Always remove intermediate containers
+* `remove` - (Optional, boolean, default `true`) Remove intermediate containers after a successful build
+* `no_cache` - (Optional, boolean) Do not use cache when building the image
+* `target` - (Optional, string) Set the target build stage to build
+* `build_arg` - (Optional, map of strings) Set build-time variables
+* `label` - (Optional, map of strings) Set metadata for an image
 
 ## Attributes Reference
 
