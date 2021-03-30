@@ -439,11 +439,12 @@ func resourceDockerService() *schema.Resource {
 													Optional:    true,
 												},
 												"file_mode": {
-													Type:             schema.TypeInt,
-													Description:      "Represents represents the FileMode of the file. Defaults to `0o444`",
-													Default:          0o444,
+													Type:             schema.TypeString,
 													Optional:         true,
-													ValidateDiagFunc: validateIntegerGeqThan(0),
+													Description:      "Represents represents the FileMode of the file. Defaults to `0o444`",
+													Default:          defaultFileMode,
+													DiffSuppressFunc: fileModeDiffSuppressFunc,
+													ValidateDiagFunc: fileModeSchemaValidateDiagFunc,
 												},
 											},
 										},
@@ -452,6 +453,9 @@ func resourceDockerService() *schema.Resource {
 										Type:        schema.TypeSet,
 										Description: "References to zero or more configs that will be exposed to the service",
 										Optional:    true,
+										Set: func(v interface{}) int {
+											return hashString(v.(map[string]interface{})["config_id"].(string))
+										},
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"config_id": {
@@ -482,11 +486,12 @@ func resourceDockerService() *schema.Resource {
 													Optional:    true,
 												},
 												"file_mode": {
-													Type:             schema.TypeInt,
+													Type:             schema.TypeString,
 													Description:      "Represents represents the FileMode of the file. Defaults to `0o444`.",
-													Default:          0o444,
 													Optional:         true,
-													ValidateDiagFunc: validateIntegerGeqThan(0),
+													Default:          defaultFileMode,
+													DiffSuppressFunc: fileModeDiffSuppressFunc,
+													ValidateDiagFunc: fileModeSchemaValidateDiagFunc,
 												},
 											},
 										},
