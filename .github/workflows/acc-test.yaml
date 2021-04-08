@@ -1,4 +1,3 @@
----
 name: Acc Tests
 on:
   push:
