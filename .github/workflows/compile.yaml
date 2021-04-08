@@ -9,7 +9,7 @@ on:
     types: ['opened', 'synchronize']
     paths:
       - '**.go'
-      - 'vendor/**'
+      - go.mod
       - '.github/workflows/**'
 
 env:
