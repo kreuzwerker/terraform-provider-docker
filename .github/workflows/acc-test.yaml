@@ -1,4 +1,3 @@
----
 name: Acc Tests
 on:
   push:
@@ -9,13 +8,13 @@ on:
     types: ['opened', 'synchronize']
     paths:
       - '**.go'
-      - 'vendor/**'
+      - go.mod
       - '.github/workflows/**'
 
 env:
-  GO_VERSION: "1.16"
   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
+  DOCKER_CE_VERSION: "5:20.10.1~3-0~ubuntu-focal"
 
 jobs:
   acc-test:
@@ -41,7 +40,7 @@ jobs:
       - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
       - run: sudo apt-get update
       # list available docker versions: apt-cache policy docker-ce 
-      - run: sudo apt-get -y install docker-ce=5:20.10.1~3-0~ubuntu-focal
+      - run: sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
       - run: docker version
       # Allow local registry to be insecure
       - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker

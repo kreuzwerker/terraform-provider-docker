@@ -1,4 +1,3 @@
----
 name: Compile Binaries
 on:
   push:
@@ -9,11 +8,10 @@ on:
     types: ['opened', 'synchronize']
     paths:
       - '**.go'
-      - 'vendor/**'
+      - go.mod
       - '.github/workflows/**'
 
 env:
-  GO_VERSION: "1.16"
   GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
 
 jobs:
