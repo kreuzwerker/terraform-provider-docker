@@ -1826,3 +1826,13 @@ func resourceDockerServiceV0() *schema.Resource {
 		},
 	}
 }
+
+func migrateServiceLabels(rawState map[string]interface{}) map[string]interface{} {
+	replaceLabelsMapFieldWithSetField(rawState)
+
+	taskSpec := rawState["task_spec"].([]interface{})[0].(map[string]interface{})
+	containerSpec := taskSpec["container_spec"].([]interface{})[0].(map[string]interface{})
+	migrateContainerLabels(containerSpec)
+
+	return rawState
+}
