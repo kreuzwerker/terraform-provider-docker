@@ -58,7 +58,6 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 		createOpts.IPAM = ipamOpts
 	}
 
-	var retNetwork types.NetworkCreateResponse
 	retNetwork, err := client.NetworkCreate(ctx, d.Get("name").(string), createOpts)
 	if err != nil {
 		return diag.Errorf("Unable to create network: %s", err)
