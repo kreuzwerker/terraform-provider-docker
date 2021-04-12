@@ -12,7 +12,7 @@ on:
       - '.github/workflows/**'
 
 env:
-  GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
+  GOPROXY: https://proxy.golang.org,https://gocenter.io,direct
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.5~3-0~ubuntu-focal"
 

@@ -12,7 +12,7 @@ on:
       - '.github/workflows/**'
 
 env:
-  GOPROXY: https://gocenter.io,https://proxy.golang.org,direct
+  GOPROXY: https://proxy.golang.org,https://gocenter.io,direct
 
 jobs:
   unit-test:
