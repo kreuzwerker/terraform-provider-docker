@@ -291,3 +291,15 @@ func getDockerContainerMounts(container types.ContainerJSON) []map[string]interf
 
 	return mounts
 }
+
+func flattenExtraHosts(in []string) []interface{} {
+	extraHosts := make([]interface{}, len(in))
+	for i, extraHost := range in {
+		extraHostSplit := strings.Split(extraHost, ":")
+		extraHosts[i] = map[string]interface{}{
+			"host": extraHostSplit[0],
+			"ip":   extraHostSplit[1],
+		}
+	}
+	return extraHosts
+}
