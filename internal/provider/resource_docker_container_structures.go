@@ -301,5 +301,19 @@ func flattenExtraHosts(in []string) []interface{} {
 			"ip":   extraHostSplit[1],
 		}
 	}
+
 	return extraHosts
+}
+
+func flattenUlimits(in []*units.Ulimit) []interface{} {
+	ulimits := make([]interface{}, len(in))
+	for i, ul := range in {
+		ulimits[i] = map[string]interface{}{
+			"name": ul.Name,
+			"soft": ul.Soft,
+			"hard": ul.Hard,
+		}
+	}
+
+	return ulimits
 }

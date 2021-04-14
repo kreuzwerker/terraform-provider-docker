@@ -653,15 +653,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
 		log.Printf("[WARN] failed to set host config from API: %s", err)
 	}
-	ulimits := make([]interface{}, len(container.HostConfig.Ulimits))
-	for i, ul := range container.HostConfig.Ulimits {
-		ulimits[i] = map[string]interface{}{
-			"name": ul.Name,
-			"soft": ul.Soft,
-			"hard": ul.Hard,
-		}
+	if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
+		log.Printf("[WARN] failed to set ulimits from API: %s", err)
 	}
-	d.Set("ulimit", ulimits)
 
 	// We decided not to set the environment variables and labels
 	// because they are taken over from the Docker image and aren't scalar
