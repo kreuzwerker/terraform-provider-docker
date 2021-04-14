@@ -317,3 +317,16 @@ func flattenUlimits(in []*units.Ulimit) []interface{} {
 
 	return ulimits
 }
+
+func flattenDevices(in []container.DeviceMapping) []interface{} {
+	devices := make([]interface{}, len(in))
+	for i, device := range in {
+		devices[i] = map[string]interface{}{
+			"host_path":      device.PathOnHost,
+			"container_path": device.PathInContainer,
+			"permissions":    device.CgroupPermissions,
+		}
+	}
+
+	return devices
+}

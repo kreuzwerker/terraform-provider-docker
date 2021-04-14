@@ -651,10 +651,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
 	if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
-		log.Printf("[WARN] failed to set host config from API: %s", err)
+		log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
 	}
 	if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
-		log.Printf("[WARN] failed to set ulimits from API: %s", err)
+		log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
 	}
 
 	// We decided not to set the environment variables and labels
@@ -666,15 +666,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 
 	d.Set("links", container.HostConfig.Links)
 	d.Set("privileged", container.HostConfig.Privileged)
-	devices := make([]interface{}, len(container.HostConfig.Devices))
-	for i, device := range container.HostConfig.Devices {
-		devices[i] = map[string]interface{}{
-			"host_path":      device.PathOnHost,
-			"container_path": device.PathInContainer,
-			"permissions":    device.CgroupPermissions,
-		}
+	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 	}
-	d.Set("devices", devices)
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
 	if container.HostConfig.MemorySwap > 0 {
