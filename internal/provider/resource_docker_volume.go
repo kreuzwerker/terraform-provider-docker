@@ -13,6 +13,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	volumeReadRefreshTimeout             = 30 * time.Second
+	volumeReadRefreshWaitBeforeRefreshes = 5 * time.Second
+	volumeReadRefreshDelay               = 2 * time.Second
+)
+
 func resourceDockerVolume() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDockerVolumeCreate,
@@ -115,15 +121,15 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), volumeReadRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"in_use"},
 		Target:     []string{"removed"},
 		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta),
-		Timeout:    30 * time.Second,
-		MinTimeout: 5 * time.Second,
-		Delay:      2 * time.Second,
+		Timeout:    volumeReadRefreshTimeout,
+		MinTimeout: volumeReadRefreshWaitBeforeRefreshes,
+		Delay:      volumeReadRefreshDelay,
 	}
 
 	// Wait, catching any errors
