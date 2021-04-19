@@ -13,6 +13,67 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*ProviderConfig).DockerClient
+	ctx := context.Background()
+	pluginName := d.Get("name").(string)
+	alias := d.Get("alias").(string)
+	log.Printf("[DEBUG] Install a Docker plugin " + pluginName)
+	opts := types.PluginInstallOptions{
+		RemoteRef:            pluginName,
+		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
+		Disabled:             !d.Get("enabled").(bool),
+		// TODO support other settings
+		Args: getDockerPluginEnv(d.Get("env")),
+	}
+	if v, ok := d.GetOk("grant_permissions"); ok {
+		opts.AcceptPermissionsFunc = getDockerPluginGrantPermissions(v)
+	}
+	body, err := client.PluginInstall(ctx, alias, opts)
+	if err != nil {
+		return fmt.Errorf("install a Docker plugin "+pluginName+": %w", err)
+	}
+	_, _ = ioutil.ReadAll(body)
+	key := pluginName
+	if alias != "" {
+		key = alias
+	}
+	plugin, _, err := client.PluginInspectWithRaw(ctx, key)
+	if err != nil {
+		return fmt.Errorf("inspect a Docker plugin "+key+": %w", err)
+	}
+	setDockerPlugin(d, plugin)
+	return nil
+}
+
+func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*ProviderConfig).DockerClient
+	ctx := context.Background()
+	pluginID := d.Id()
+	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
+	if err != nil {
+		log.Printf("[DEBUG] Inspect a Docker plugin "+pluginID+": %w", err)
+		d.SetId("")
+		return nil
+	}
+	setDockerPlugin(d, plugin)
+	return nil
+}
+
+func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*ProviderConfig).DockerClient
+	ctx := context.Background()
+	pluginID := d.Id()
+	log.Printf("[DEBUG] Remove a Docker plugin " + pluginID)
+	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
+		Force: d.Get("force_destroy").(bool),
+	}); err != nil {
+		return fmt.Errorf("remove the Docker plugin "+pluginID+": %w", err)
+	}
+	return nil
+}
+
+// Helpers
 func getDockerPluginEnv(src interface{}) []string {
 	if src == nil {
 		return nil
@@ -94,39 +155,6 @@ func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivilege
 	}
 }
 
-func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
-	pluginName := d.Get("name").(string)
-	alias := d.Get("alias").(string)
-	log.Printf("[DEBUG] Install a Docker plugin " + pluginName)
-	opts := types.PluginInstallOptions{
-		RemoteRef:            pluginName,
-		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
-		Disabled:             !d.Get("enabled").(bool),
-		// TODO support other settings
-		Args: getDockerPluginEnv(d.Get("env")),
-	}
-	if v, ok := d.GetOk("grant_permissions"); ok {
-		opts.AcceptPermissionsFunc = getDockerPluginGrantPermissions(v)
-	}
-	body, err := client.PluginInstall(ctx, alias, opts)
-	if err != nil {
-		return fmt.Errorf("install a Docker plugin "+pluginName+": %w", err)
-	}
-	_, _ = ioutil.ReadAll(body)
-	key := pluginName
-	if alias != "" {
-		key = alias
-	}
-	plugin, _, err := client.PluginInspectWithRaw(ctx, key)
-	if err != nil {
-		return fmt.Errorf("inspect a Docker plugin "+key+": %w", err)
-	}
-	setDockerPlugin(d, plugin)
-	return nil
-}
-
 func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	d.SetId(plugin.ID)
 	d.Set("plugin_reference", plugin.PluginReference)
@@ -139,20 +167,6 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	// path of devices .Settings.Devices
 	// args .Settings.Args
 	d.Set("env", plugin.Settings.Env)
-}
-
-func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
-	pluginID := d.Id()
-	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
-	if err != nil {
-		log.Printf("[DEBUG] Inspect a Docker plugin "+pluginID+": %w", err)
-		d.SetId("")
-		return nil
-	}
-	setDockerPlugin(d, plugin)
-	return nil
 }
 
 func disablePlugin(ctx context.Context, d *schema.ResourceData, cl *client.Client) error {
@@ -198,7 +212,7 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	oldEnabled, newEnabled := o.(bool), n.(bool)
 	if d.HasChange("env") {
 		if oldEnabled {
-			// To update the plugin setttings, the plugin must be disabled
+			// To update the plugin settings, the plugin must be disabled
 			if err := disablePlugin(ctx, d, cl); err != nil {
 				return err
 			}
@@ -246,17 +260,4 @@ func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error 
 	// call the read function to update the resource's state.
 	// https://learn.hashicorp.com/tutorials/terraform/provider-update?in=terraform/providers#implement-update
 	return resourceDockerPluginRead(d, meta)
-}
-
-func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
-	pluginID := d.Id()
-	log.Printf("[DEBUG] Remove a Docker plugin " + pluginID)
-	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
-		Force: d.Get("force_destroy").(bool),
-	}); err != nil {
-		return fmt.Errorf("remove the Docker plugin "+pluginID+": %w", err)
-	}
-	return nil
 }
