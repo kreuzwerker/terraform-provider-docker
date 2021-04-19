@@ -2,8 +2,10 @@ package provider
 
 import (
 	"context"
+	"log"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -101,8 +103,16 @@ func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("driver", network.Driver)
 	d.Set("options", network.Options)
 	d.Set("internal", network.Internal)
-	ipam := make([]ipamMap, len(network.IPAM.Config))
-	for i, config := range network.IPAM.Config {
+	if err = d.Set("ipam_config", flattenIpamConfig(network.IPAM.Config)); err != nil {
+		log.Printf("[WARN] failed to set ipam config from API: %s", err)
+	}
+
+	return nil
+}
+
+func flattenIpamConfig(in []network.IPAMConfig) []ipamMap {
+	ipam := make([]ipamMap, len(in))
+	for i, config := range in {
 		ipam[i] = ipamMap{
 			"subnet":      config.Subnet,
 			"gateway":     config.Gateway,
@@ -110,7 +120,6 @@ func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, me
 			"ip_range":    config.IPRange,
 		}
 	}
-	d.Set("ipam_config", ipam)
 
-	return nil
+	return ipam
 }
