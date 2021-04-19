@@ -1,11 +1,11 @@
 # Contributing
 
-By participating to this project, you agree to abide our [code of conduct](/CODE_OF_CONDUCT.md).
+By participating in this project, you agree to abide our [code of conduct](/CODE_OF_CONDUCT.md).
 
 ## Write Issue
 
 When you have a bug report or feature request or something, please create an issue from [here](https://github.com/kreuzwerker/terraform-provider-docker/issues/new/choose).
-Before creating an issue, please check whether same or releated issues exist.
+Before creating an issue, please check whether same or related issues exist.
 Please use issue templates as much as possible.
 
 ### Guide of Bug report
@@ -68,7 +68,7 @@ TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerImage_dat
 make testacc_cleanup
 ```
 
-Furthermore, we recommened running the linters for the code and the documentation:
+Furthermore, we recommend running the linters for the code and the documentation:
 
 ```sh
 # install all the dependencies
