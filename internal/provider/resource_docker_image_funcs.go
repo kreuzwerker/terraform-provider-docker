@@ -20,39 +20,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-func getBuildContext(filePath string, excludes []string) io.Reader {
-	filePath, _ = homedir.Expand(filePath)
-	ctx, _ := archive.TarWithOptions(filePath, &archive.TarOptions{
-		ExcludePatterns: excludes,
-	})
-	return ctx
-}
-
-func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
-	buf := new(bytes.Buffer)
-	buildErr := error(nil)
-
-	dec := json.NewDecoder(response.Body)
-	for dec.More() {
-		var m jsonmessage.JSONMessage
-		err := dec.Decode(&m)
-		if err != nil {
-			return buf.String(), fmt.Errorf("Problem decoding message from docker daemon: %s", err)
-		}
-
-		if err := m.Display(buf, false); err != nil {
-			return "", err
-		}
-
-		if m.Error != nil {
-			buildErr = fmt.Errorf("Unable to build image")
-		}
-	}
-	log.Printf("[DEBUG] %s", buf.String())
-
-	return buf.String(), buildErr
-}
-
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
@@ -124,6 +91,7 @@ func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
+// Helpers
 func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) *types.ImageSummary {
 	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
 	if err != nil {
@@ -359,4 +327,37 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		return fmt.Errorf("%s\n\n%s", err, buildResult)
 	}
 	return nil
+}
+
+func getBuildContext(filePath string, excludes []string) io.Reader {
+	filePath, _ = homedir.Expand(filePath)
+	ctx, _ := archive.TarWithOptions(filePath, &archive.TarOptions{
+		ExcludePatterns: excludes,
+	})
+	return ctx
+}
+
+func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
+	buf := new(bytes.Buffer)
+	buildErr := error(nil)
+
+	dec := json.NewDecoder(response.Body)
+	for dec.More() {
+		var m jsonmessage.JSONMessage
+		err := dec.Decode(&m)
+		if err != nil {
+			return buf.String(), fmt.Errorf("Problem decoding message from docker daemon: %s", err)
+		}
+
+		if err := m.Display(buf, false); err != nil {
+			return "", err
+		}
+
+		if m.Error != nil {
+			buildErr = fmt.Errorf("Unable to build image")
+		}
+	}
+	log.Printf("[DEBUG] %s", buf.String())
+
+	return buf.String(), buildErr
 }
