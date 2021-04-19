@@ -16,7 +16,8 @@ to date on the latest available version of the tag.
 
 ```hcl
 data "docker_registry_image" "ubuntu" {
-  name = "ubuntu:precise"
+  name       = "ubuntu:precise"
+  pull_image = true
 }
 
 resource "docker_image" "ubuntu" {
@@ -30,6 +31,7 @@ resource "docker_image" "ubuntu" {
 The following arguments are supported:
 
 * `name` - (Required, string) The name of the Docker image, including any tags. e.g. `alpine:latest`
+* `pull_image` - (Optional, bool) Whether the image should be pulled when `sha256_digest` changed
 
 ## Attributes Reference
 

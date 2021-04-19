@@ -31,12 +31,19 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
+			"pull_image": {
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+			},
 		},
 	}
 }
 
 func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	pullOpts := parseImageOptions(d.Get("name").(string))
+	imageName := d.Get("name").(string)
+	pullOpts := parseImageOptions(imageName)
 	authConfig := meta.(*ProviderConfig).AuthConfigs
 
 	// Use the official Docker Hub if a registry isn't specified
@@ -74,8 +81,21 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
+	changed := d.Id() != digest
 	d.SetId(digest)
 	d.Set("sha256_digest", digest)
+
+	if d.Get("pull_image").(bool) && changed {
+		var data Data
+		// load local images into the data structure
+		client := meta.(*ProviderConfig).DockerClient
+		if err := fetchLocalImages(ctx, &data, client); err != nil {
+			return diag.Errorf("Got error when attempting to fetch local images: %s", err)
+		}
+		if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
+			return diag.Errorf("Unable to pull image %s: %s", imageName, err)
+		}
+	}
 
 	return nil
 }
