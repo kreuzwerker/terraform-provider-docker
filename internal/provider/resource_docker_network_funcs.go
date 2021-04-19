@@ -14,6 +14,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	networkReadRefreshTimeout               = 30 * time.Second
+	networkReadRefreshWaitBeforeRefreshes   = 5 * time.Second
+	networkReadRefreshDelay                 = 2 * time.Second
+	networkRemoveRefreshTimeout             = 30 * time.Second
+	networkRemoveRefreshWaitBeforeRefreshes = 5 * time.Second
+	networkRemoveRefreshDelay               = 2 * time.Second
+)
+
 func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
@@ -69,15 +78,15 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), networkReadRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
 		Refresh:    resourceDockerNetworkReadRefreshFunc(ctx, d, meta),
-		Timeout:    30 * time.Second,
-		MinTimeout: 5 * time.Second,
-		Delay:      2 * time.Second,
+		Timeout:    networkReadRefreshTimeout,
+		MinTimeout: networkReadRefreshWaitBeforeRefreshes,
+		Delay:      networkReadRefreshDelay,
 	}
 
 	// Wait, catching any errors
@@ -90,15 +99,15 @@ func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), networkRemoveRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"removed"},
 		Refresh:    resourceDockerNetworkRemoveRefreshFunc(ctx, d, meta),
-		Timeout:    30 * time.Second,
-		MinTimeout: 5 * time.Second,
-		Delay:      2 * time.Second,
+		Timeout:    networkRemoveRefreshTimeout,
+		MinTimeout: networkRemoveRefreshWaitBeforeRefreshes,
+		Delay:      networkRemoveRefreshDelay,
 	}
 
 	// Wait, catching any errors
