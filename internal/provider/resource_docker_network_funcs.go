@@ -14,6 +14,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	networkReadRefreshTimeout               = 30 * time.Second
+	networkReadRefreshWaitBeforeRefreshes   = 5 * time.Second
+	networkReadRefreshDelay                 = 2 * time.Second
+	networkRemoveRefreshTimeout             = 30 * time.Second
+	networkRemoveRefreshWaitBeforeRefreshes = 5 * time.Second
+	networkRemoveRefreshDelay               = 2 * time.Second
+)
+
 func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
@@ -69,15 +78,15 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), networkReadRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
 		Refresh:    resourceDockerNetworkReadRefreshFunc(ctx, d, meta),
-		Timeout:    30 * time.Second,
-		MinTimeout: 5 * time.Second,
-		Delay:      2 * time.Second,
+		Timeout:    networkReadRefreshTimeout,
+		MinTimeout: networkReadRefreshWaitBeforeRefreshes,
+		Delay:      networkReadRefreshDelay,
 	}
 
 	// Wait, catching any errors
@@ -90,15 +99,15 @@ func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), networkRemoveRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"removed"},
 		Refresh:    resourceDockerNetworkRemoveRefreshFunc(ctx, d, meta),
-		Timeout:    30 * time.Second,
-		MinTimeout: 5 * time.Second,
-		Delay:      2 * time.Second,
+		Timeout:    networkRemoveRefreshTimeout,
+		MinTimeout: networkRemoveRefreshWaitBeforeRefreshes,
+		Delay:      networkRemoveRefreshDelay,
 	}
 
 	// Wait, catching any errors
@@ -200,36 +209,4 @@ func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context,
 
 		return networkID, "removed", nil
 	}
-}
-
-// TODO mavogel: separate structure file
-// TODO 2: seems like we can replace the set hash generation with plain lists -> #219
-func flattenIpamConfigSpec(in []network.IPAMConfig) *schema.Set { // []interface{} {
-	out := make([]interface{}, len(in))
-	for i, v := range in {
-		log.Printf("[DEBUG] flatten ipam %d: %#v", i, v)
-		m := make(map[string]interface{})
-		if len(v.Subnet) > 0 {
-			m["subnet"] = v.Subnet
-		}
-		if len(v.IPRange) > 0 {
-			m["ip_range"] = v.IPRange
-		}
-		if len(v.Gateway) > 0 {
-			m["gateway"] = v.Gateway
-		}
-		if len(v.AuxAddress) > 0 {
-			aux := make(map[string]interface{}, len(v.AuxAddress))
-			for ka, va := range v.AuxAddress {
-				aux[ka] = va
-			}
-			m["aux_address"] = aux
-		}
-		out[i] = m
-	}
-	// log.Printf("[INFO] flatten ipam out: %#v", out)
-	imapConfigsResource := resourceDockerNetwork().Schema["ipam_config"].Elem.(*schema.Resource)
-	f := schema.HashResource(imapConfigsResource)
-	return schema.NewSet(f, out)
-	// return out
 }

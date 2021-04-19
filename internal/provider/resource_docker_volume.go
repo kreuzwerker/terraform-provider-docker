@@ -13,6 +13,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	volumeReadRefreshTimeout             = 30 * time.Second
+	volumeReadRefreshWaitBeforeRefreshes = 5 * time.Second
+	volumeReadRefreshDelay               = 2 * time.Second
+)
+
 func resourceDockerVolume() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDockerVolumeCreate,
@@ -59,41 +65,6 @@ func resourceDockerVolume() *schema.Resource {
 				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 					return replaceLabelsMapFieldWithSetField(rawState), nil
 				},
-			},
-		},
-	}
-}
-
-func resourceDockerVolumeV0() *schema.Resource {
-	return &schema.Resource{
-		// This is only used for state migration, so the CRUD
-		// callbacks are no longer relevant
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-			},
-			"labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-			},
-			"driver": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-			},
-			"driver_opts": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-			},
-			"mountpoint": {
-				Type:     schema.TypeString,
-				Computed: true,
 			},
 		},
 	}
@@ -150,15 +121,15 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), 30)
+	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), volumeReadRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"in_use"},
 		Target:     []string{"removed"},
 		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta),
-		Timeout:    30 * time.Second,
-		MinTimeout: 5 * time.Second,
-		Delay:      2 * time.Second,
+		Timeout:    volumeReadRefreshTimeout,
+		MinTimeout: volumeReadRefreshWaitBeforeRefreshes,
+		Delay:      volumeReadRefreshDelay,
 	}
 
 	// Wait, catching any errors

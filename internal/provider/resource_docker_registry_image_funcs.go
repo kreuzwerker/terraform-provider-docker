@@ -28,6 +28,75 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*ProviderConfig).DockerClient
+	providerConfig := meta.(*ProviderConfig)
+	name := d.Get("name").(string)
+	log.Printf("[DEBUG] Creating docker image %s", name)
+
+	pushOpts := createPushImageOptions(name)
+
+	if buildOptions, ok := d.GetOk("build"); ok {
+		buildOptionsMap := buildOptions.([]interface{})[0].(map[string]interface{})
+		err := buildDockerRegistryImage(ctx, client, buildOptionsMap, pushOpts.FqName)
+		if err != nil {
+			return diag.Errorf("Error building docker image: %s", err)
+		}
+	}
+
+	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
+	if err := pushDockerRegistryImage(ctx, client, pushOpts, username, password); err != nil {
+		return diag.Errorf("Error pushing docker image: %s", err)
+	}
+
+	digest, err := getImageDigestWithFallback(pushOpts, username, password)
+	if err != nil {
+		return diag.Errorf("Unable to create image, image not found: %s", err)
+	}
+	d.SetId(digest)
+	d.Set("sha256_digest", digest)
+	return nil
+}
+
+func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	providerConfig := meta.(*ProviderConfig)
+	name := d.Get("name").(string)
+	pushOpts := createPushImageOptions(name)
+	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
+	digest, err := getImageDigestWithFallback(pushOpts, username, password)
+	if err != nil {
+		log.Printf("Got error getting registry image digest: %s", err)
+		d.SetId("")
+		return nil
+	}
+	d.Set("sha256_digest", digest)
+	return nil
+}
+
+func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.Get("keep_remotely").(bool) {
+		return nil
+	}
+	providerConfig := meta.(*ProviderConfig)
+	name := d.Get("name").(string)
+	pushOpts := createPushImageOptions(name)
+	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
+	digest := d.Get("sha256_digest").(string)
+	err := deleteDockerRegistryImage(pushOpts, digest, username, password, false)
+	if err != nil {
+		err = deleteDockerRegistryImage(pushOpts, pushOpts.Tag, username, password, true)
+		if err != nil {
+			return diag.Errorf("Got error getting registry image digest: %s", err)
+		}
+	}
+	return nil
+}
+
+func resourceDockerRegistryImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceDockerRegistryImageRead(ctx, d, meta)
+}
+
+// Helpers
 type internalPushImageOptions struct {
 	Name               string
 	FqName             string
@@ -458,72 +527,4 @@ func createPushImageOptions(image string) internalPushImageOptions {
 		FqName:             fmt.Sprintf("%s/%s:%s", pullOpts.Registry, pullOpts.Repository, pullOpts.Tag),
 	}
 	return pushOpts
-}
-
-func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
-	providerConfig := meta.(*ProviderConfig)
-	name := d.Get("name").(string)
-	log.Printf("[DEBUG] Creating docker image %s", name)
-
-	pushOpts := createPushImageOptions(name)
-
-	if buildOptions, ok := d.GetOk("build"); ok {
-		buildOptionsMap := buildOptions.([]interface{})[0].(map[string]interface{})
-		err := buildDockerRegistryImage(ctx, client, buildOptionsMap, pushOpts.FqName)
-		if err != nil {
-			return diag.Errorf("Error building docker image: %s", err)
-		}
-	}
-
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	if err := pushDockerRegistryImage(ctx, client, pushOpts, username, password); err != nil {
-		return diag.Errorf("Error pushing docker image: %s", err)
-	}
-
-	digest, err := getImageDigestWithFallback(pushOpts, username, password)
-	if err != nil {
-		return diag.Errorf("Unable to create image, image not found: %s", err)
-	}
-	d.SetId(digest)
-	d.Set("sha256_digest", digest)
-	return nil
-}
-
-func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerConfig := meta.(*ProviderConfig)
-	name := d.Get("name").(string)
-	pushOpts := createPushImageOptions(name)
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	digest, err := getImageDigestWithFallback(pushOpts, username, password)
-	if err != nil {
-		log.Printf("Got error getting registry image digest: %s", err)
-		d.SetId("")
-		return nil
-	}
-	d.Set("sha256_digest", digest)
-	return nil
-}
-
-func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.Get("keep_remotely").(bool) {
-		return nil
-	}
-	providerConfig := meta.(*ProviderConfig)
-	name := d.Get("name").(string)
-	pushOpts := createPushImageOptions(name)
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	digest := d.Get("sha256_digest").(string)
-	err := deleteDockerRegistryImage(pushOpts, digest, username, password, false)
-	if err != nil {
-		err = deleteDockerRegistryImage(pushOpts, pushOpts.Tag, username, password, true)
-		if err != nil {
-			return diag.Errorf("Got error getting registry image digest: %s", err)
-		}
-	}
-	return nil
-}
-
-func resourceDockerRegistryImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceDockerRegistryImageRead(ctx, d, meta)
 }
