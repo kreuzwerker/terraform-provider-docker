@@ -909,7 +909,7 @@ func updateV0ToV1PortsOrder(is *terraform.InstanceState, meta interface{}) error
 
 func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[string]interface{} {
 	if rawState == nil {
-		return rawState
+		return nil
 	}
 	labelMapIFace := rawState["labels"]
 	if labelMapIFace != nil {
