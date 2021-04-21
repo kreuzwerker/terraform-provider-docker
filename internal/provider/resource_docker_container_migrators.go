@@ -908,6 +908,9 @@ func updateV0ToV1PortsOrder(is *terraform.InstanceState, meta interface{}) error
 }
 
 func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[string]interface{} {
+	if rawState == nil {
+		return nil
+	}
 	labelMapIFace := rawState["labels"]
 	if labelMapIFace != nil {
 		labelMap := labelMapIFace.(map[string]interface{})
@@ -920,6 +923,11 @@ func replaceLabelsMapFieldWithSetField(rawState map[string]interface{}) map[stri
 }
 
 func migrateContainerLabels(rawState map[string]interface{}) map[string]interface{} {
+	if rawState == nil {
+		// https://github.com/kreuzwerker/terraform-provider-docker/issues/176
+		// to prevent error `assignment to entry in nil map`
+		rawState = map[string]interface{}{}
+	}
 	replaceLabelsMapFieldWithSetField(rawState)
 
 	m, ok := rawState["mounts"]
