@@ -35,6 +35,7 @@ scripts/testing/certs
 
 # build outputs
 results
+dist
 
 # testing
 testing
