@@ -22,9 +22,17 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	containerReadRefreshTimeout             = 30 * time.Second
+	containerReadRefreshWaitBeforeRefreshes = 5 * time.Second
+	containerReadRefreshDelay               = 2 * time.Second
+)
+
+// TODO mavogel: remove global var
 var creationTime time.Time
 
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -512,199 +520,230 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	log.Printf("[INFO] Waiting for container: '%s' to expose all fields: max '%v seconds'", d.Id(), containerReadRefreshTimeout)
 
-	apiContainer, err := fetchDockerContainer(ctx, d.Id(), client)
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"pending"},
+		Target:     []string{"all_fields", "removed"},
+		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
+		Timeout:    containerReadRefreshTimeout,
+		MinTimeout: containerReadRefreshWaitBeforeRefreshes,
+		Delay:      containerReadRefreshDelay,
+	}
+
+	// Wait, catching any errors
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if apiContainer == nil {
-		// This container doesn't exist anymore
-		d.SetId("")
-		return nil
-	}
 
-	var container types.ContainerJSON
+	return nil
+}
 
-	// TODO fix this with statefunc
-	loops := 1 // if it hasn't just been created, don't delay
-	if !creationTime.IsZero() {
-		loops = 30 // with 500ms spacing, 15 seconds; ought to be plenty
-	}
-	sleepTime := 500 * time.Millisecond
+func resourceDockerContainerReadRefreshFunc(ctx context.Context,
+	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		client := meta.(*ProviderConfig).DockerClient
 
-	for i := loops; i > 0; i-- {
+		// TODO mavogel: both IDs are the same -> unify
+		containerID := d.Id()
+		apiContainer, err := fetchDockerContainer(ctx, containerID, client)
+		if err != nil {
+			return containerID, "removed", nil
+		}
+		if apiContainer == nil {
+			log.Printf("[WARN] Container (%s) not found, removing from state", containerID)
+			d.SetId("")
+			return containerID, "removed", nil
+		}
+
+		var container types.ContainerJSON
+
+		// TODO fix this with statefunc
+		// loops := 1 // if it hasn't just been created, don't delay
+		// if !creationTime.IsZero() {
+		// 	loops = 30 // with 500ms spacing, 15 seconds; ought to be plenty
+		// }
+		// sleepTime := 500 * time.Millisecond
+
+		// for i := loops; i > 0; i-- {
 		container, err = client.ContainerInspect(ctx, apiContainer.ID)
 		if err != nil {
-			return diag.Errorf("Error inspecting container %s: %s", apiContainer.ID, err)
+			return containerID, "other", err
 		}
 
 		jsonObj, _ := json.MarshalIndent(container, "", "\t")
 		log.Printf("[INFO] Docker container inspect: %s", jsonObj)
 
-		if container.State.Running ||
-			!container.State.Running && !d.Get("must_run").(bool) {
-			break
-		}
+		// if container.State.Running ||
+		// 	!container.State.Running && !d.Get("must_run").(bool) {
+		// 	break
+		// }
 
 		if creationTime.IsZero() { // We didn't just create it, so don't wait around
-			return resourceDockerContainerDelete(ctx, d, meta)
-		}
-
-		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
-		if err != nil {
-			return diag.Errorf("Container finish time could not be parsed: %s", container.State.FinishedAt)
-		}
-		if finishTime.After(creationTime) {
-			// It exited immediately, so error out so dependent containers
-			// aren't started
 			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
 				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
-			}
-			return diag.Errorf("Container %s exited after creation, error was: %s", apiContainer.ID, container.State.Error)
-		}
-
-		time.Sleep(sleepTime)
-	}
-
-	// Handle the case of the for loop above running its course
-	if !container.State.Running && d.Get("must_run").(bool) {
-		if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-			log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
-		}
-		return diag.Errorf("Container %s failed to be in running state", apiContainer.ID)
-	}
-
-	if !container.State.Running {
-		d.Set("exit_code", container.State.ExitCode)
-	}
-
-	// Read Network Settings
-	if container.NetworkSettings != nil {
-		// TODO remove deprecated attributes in next major
-		d.Set("ip_address", container.NetworkSettings.IPAddress)
-		d.Set("ip_prefix_length", container.NetworkSettings.IPPrefixLen)
-		d.Set("gateway", container.NetworkSettings.Gateway)
-		if container.NetworkSettings != nil && len(container.NetworkSettings.Networks) > 0 {
-			// Still support deprecated outputs
-			for _, settings := range container.NetworkSettings.Networks {
-				d.Set("ip_address", settings.IPAddress)
-				d.Set("ip_prefix_length", settings.IPPrefixLen)
-				d.Set("gateway", settings.Gateway)
-				break
+				return containerID, "other", nil // TODO mavogel: pass error
 			}
 		}
 
-		d.Set("bridge", container.NetworkSettings.Bridge)
-		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
-			log.Printf("[WARN] failed to set ports from API: %s", err)
+		// finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
+		// if err != nil {
+		// 	return diag.Errorf("Container finish time could not be parsed: %s", container.State.FinishedAt)
+		// }
+		// if finishTime.After(creationTime) {
+		// 	// It exited immediately, so error out so dependent containers aren't started
+		// 	if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
+		// 		log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+		// 	}
+		// 	return diag.Errorf("Container %s exited after creation, error was: %s", apiContainer.ID, container.State.Error)
+		// }
+
+		// time.Sleep(sleepTime)
+		// }
+
+		// Handle the case of the for loop above running its course
+		if !container.State.Running && d.Get("must_run").(bool) {
+			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
+				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+				return containerID, "other", nil // TODO mavogel: pass error
+			}
+			log.Printf("[ERROR] Container %s failed to be in running state", apiContainer.ID)
+			return containerID, "other", nil // TODO mavogel: pass error
 		}
-		if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
-			log.Printf("[WARN] failed to set network settings from API: %s", err)
+
+		if !container.State.Running {
+			d.Set("exit_code", container.State.ExitCode)
 		}
-	}
 
-	// TODO all the other attributes
-	d.SetId(container.ID)
-	d.Set("name", strings.TrimLeft(container.Name, "/")) // api prefixes with '/' ...
-	d.Set("rm", container.HostConfig.AutoRemove)
-	d.Set("read_only", container.HostConfig.ReadonlyRootfs)
-	// "start" can't be imported
-	// attach
-	// logs
-	// "must_run" can't be imported
-	// container_logs
-	d.Set("image", container.Image)
-	d.Set("hostname", container.Config.Hostname)
-	d.Set("domainname", container.Config.Domainname)
-	d.Set("command", container.Config.Cmd)
-	d.Set("entrypoint", container.Config.Entrypoint)
-	d.Set("user", container.Config.User)
-	d.Set("dns", container.HostConfig.DNS)
-	d.Set("dns_opts", container.HostConfig.DNSOptions)
-	d.Set("security_opts", container.HostConfig.SecurityOpt)
-	d.Set("dns_search", container.HostConfig.DNSSearch)
-	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
-	d.Set("restart", container.HostConfig.RestartPolicy.Name)
-	d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
+		// Read Network Settings
+		if container.NetworkSettings != nil {
+			// TODO remove deprecated attributes in next major
+			d.Set("ip_address", container.NetworkSettings.IPAddress)
+			d.Set("ip_prefix_length", container.NetworkSettings.IPPrefixLen)
+			d.Set("gateway", container.NetworkSettings.Gateway)
+			if container.NetworkSettings != nil && len(container.NetworkSettings.Networks) > 0 {
+				// Still support deprecated outputs
+				for _, settings := range container.NetworkSettings.Networks {
+					d.Set("ip_address", settings.IPAddress)
+					d.Set("ip_prefix_length", settings.IPPrefixLen)
+					d.Set("gateway", settings.Gateway)
+					break
+				}
+			}
 
-	// From what I can tell Init being nullable is only for container creation to allow
-	// dockerd to default it to the daemons own default settings. So this != nil
-	// check is most likely not ever going to fail. In the event that it does the
-	// "init" value will be set to false as there isn't much else we can do about it.
-	if container.HostConfig.Init != nil {
-		d.Set("init", *container.HostConfig.Init)
-	} else {
-		d.Set("init", false)
-	}
-	d.Set("working_dir", container.Config.WorkingDir)
-	if len(container.HostConfig.CapAdd) > 0 || len(container.HostConfig.CapDrop) > 0 {
-		// TODO implement DiffSuppressFunc
-		d.Set("capabilities", []interface{}{
-			map[string]interface{}{
-				"add":  container.HostConfig.CapAdd,
-				"drop": container.HostConfig.CapDrop,
-			},
-		})
-	}
-	d.Set("mounts", getDockerContainerMounts(container))
-	// volumes
-	d.Set("tmpfs", container.HostConfig.Tmpfs)
-	if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
-	}
-	if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
-	}
+			d.Set("bridge", container.NetworkSettings.Bridge)
+			if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+				log.Printf("[WARN] failed to set ports from API: %s", err)
+			}
+			if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
+				log.Printf("[WARN] failed to set network settings from API: %s", err)
+			}
+		}
 
-	// We decided not to set the environment variables and labels
-	// because they are taken over from the Docker image and aren't scalar
-	// so it's difficult to treat them well.
-	// For detail, please see the following URLs.
-	// https://github.com/terraform-providers/terraform-provider-docker/issues/242
-	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
+		// TODO all the other attributes
+		d.SetId(container.ID)
+		d.Set("name", strings.TrimLeft(container.Name, "/")) // api prefixes with '/' ...
+		d.Set("rm", container.HostConfig.AutoRemove)
+		d.Set("read_only", container.HostConfig.ReadonlyRootfs)
+		// "start" can't be imported
+		// attach
+		// logs
+		// "must_run" can't be imported
+		// container_logs
+		d.Set("image", container.Image)
+		d.Set("hostname", container.Config.Hostname)
+		d.Set("domainname", container.Config.Domainname)
+		d.Set("command", container.Config.Cmd)
+		d.Set("entrypoint", container.Config.Entrypoint)
+		d.Set("user", container.Config.User)
+		d.Set("dns", container.HostConfig.DNS)
+		d.Set("dns_opts", container.HostConfig.DNSOptions)
+		d.Set("security_opts", container.HostConfig.SecurityOpt)
+		d.Set("dns_search", container.HostConfig.DNSSearch)
+		d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
+		d.Set("restart", container.HostConfig.RestartPolicy.Name)
+		d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
 
-	d.Set("links", container.HostConfig.Links)
-	d.Set("privileged", container.HostConfig.Privileged)
-	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+		// From what I can tell Init being nullable is only for container creation to allow
+		// dockerd to default it to the daemons own default settings. So this != nil
+		// check is most likely not ever going to fail. In the event that it does the
+		// "init" value will be set to false as there isn't much else we can do about it.
+		if container.HostConfig.Init != nil {
+			d.Set("init", *container.HostConfig.Init)
+		} else {
+			d.Set("init", false)
+		}
+		d.Set("working_dir", container.Config.WorkingDir)
+		if len(container.HostConfig.CapAdd) > 0 || len(container.HostConfig.CapDrop) > 0 {
+			// TODO implement DiffSuppressFunc
+			d.Set("capabilities", []interface{}{
+				map[string]interface{}{
+					"add":  container.HostConfig.CapAdd,
+					"drop": container.HostConfig.CapDrop,
+				},
+			})
+		}
+		d.Set("mounts", getDockerContainerMounts(container))
+		// volumes
+		d.Set("tmpfs", container.HostConfig.Tmpfs)
+		if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
+		}
+		if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+		}
+
+		// We decided not to set the environment variables and labels
+		// because they are taken over from the Docker image and aren't scalar
+		// so it's difficult to treat them well.
+		// For detail, please see the following URLs.
+		// https://github.com/terraform-providers/terraform-provider-docker/issues/242
+		// https://github.com/terraform-providers/terraform-provider-docker/pull/269
+
+		d.Set("links", container.HostConfig.Links)
+		d.Set("privileged", container.HostConfig.Privileged)
+		if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+		}
+		// "destroy_grace_seconds" can't be imported
+		d.Set("memory", container.HostConfig.Memory/1024/1024)
+		if container.HostConfig.MemorySwap > 0 {
+			d.Set("memory_swap", container.HostConfig.MemorySwap/1024/1024)
+		} else {
+			d.Set("memory_swap", container.HostConfig.MemorySwap)
+		}
+		d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
+		d.Set("cpu_shares", container.HostConfig.CPUShares)
+		d.Set("cpu_set", container.HostConfig.CpusetCpus)
+		d.Set("log_driver", container.HostConfig.LogConfig.Type)
+		d.Set("log_opts", container.HostConfig.LogConfig.Config)
+		// "network_alias" is deprecated
+		d.Set("network_mode", container.HostConfig.NetworkMode)
+		// networks
+		// networks_advanced
+		d.Set("pid_mode", container.HostConfig.PidMode)
+		d.Set("userns_mode", container.HostConfig.UsernsMode)
+		// "upload" can't be imported
+		if container.Config.Healthcheck != nil {
+			d.Set("healthcheck", []interface{}{
+				map[string]interface{}{
+					"test":         container.Config.Healthcheck.Test,
+					"interval":     container.Config.Healthcheck.Interval.String(),
+					"timeout":      container.Config.Healthcheck.Timeout.String(),
+					"start_period": container.Config.Healthcheck.StartPeriod.String(),
+					"retries":      container.Config.Healthcheck.Retries,
+				},
+			})
+		}
+		d.Set("sysctls", container.HostConfig.Sysctls)
+		d.Set("ipc_mode", container.HostConfig.IpcMode)
+		d.Set("group_add", container.HostConfig.GroupAdd)
+		d.Set("tty", container.Config.Tty)
+		d.Set("stdin_open", container.Config.OpenStdin)
+
+		return containerID, "all_fields", nil
 	}
-	// "destroy_grace_seconds" can't be imported
-	d.Set("memory", container.HostConfig.Memory/1024/1024)
-	if container.HostConfig.MemorySwap > 0 {
-		d.Set("memory_swap", container.HostConfig.MemorySwap/1024/1024)
-	} else {
-		d.Set("memory_swap", container.HostConfig.MemorySwap)
-	}
-	d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
-	d.Set("cpu_shares", container.HostConfig.CPUShares)
-	d.Set("cpu_set", container.HostConfig.CpusetCpus)
-	d.Set("log_driver", container.HostConfig.LogConfig.Type)
-	d.Set("log_opts", container.HostConfig.LogConfig.Config)
-	// "network_alias" is deprecated
-	d.Set("network_mode", container.HostConfig.NetworkMode)
-	// networks
-	// networks_advanced
-	d.Set("pid_mode", container.HostConfig.PidMode)
-	d.Set("userns_mode", container.HostConfig.UsernsMode)
-	// "upload" can't be imported
-	if container.Config.Healthcheck != nil {
-		d.Set("healthcheck", []interface{}{
-			map[string]interface{}{
-				"test":         container.Config.Healthcheck.Test,
-				"interval":     container.Config.Healthcheck.Interval.String(),
-				"timeout":      container.Config.Healthcheck.Timeout.String(),
-				"start_period": container.Config.Healthcheck.StartPeriod.String(),
-				"retries":      container.Config.Healthcheck.Retries,
-			},
-		})
-	}
-	d.Set("sysctls", container.HostConfig.Sysctls)
-	d.Set("ipc_mode", container.HostConfig.IpcMode)
-	d.Set("group_add", container.HostConfig.GroupAdd)
-	d.Set("tty", container.Config.Tty)
-	d.Set("stdin_open", container.Config.OpenStdin)
-	return nil
 }
 
 func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
