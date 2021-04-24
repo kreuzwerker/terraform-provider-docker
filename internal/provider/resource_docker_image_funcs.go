@@ -34,7 +34,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 			}
 		}
 	}
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
+	apiImage, err := findImage(ctx, imageName, false, client, meta.(*ProviderConfig).AuthConfigs)
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -71,7 +71,7 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 	// the value of "latest" or others
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
+	apiImage, err := findImage(ctx, imageName, d.HasChange("pull_triggers"), client, meta.(*ProviderConfig).AuthConfigs)
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -243,20 +243,23 @@ func parseImageOptions(image string) internalPullImageOptions {
 	return pullOpts
 }
 
-func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
+func findImage(ctx context.Context, imageName string, forcePull bool, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
 	if imageName == "" {
 		return nil, fmt.Errorf("Empty image name is not allowed")
 	}
 
 	var data Data
-	// load local images into the data structure
-	if err := fetchLocalImages(ctx, &data, client); err != nil {
-		return nil, err
-	}
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
-	if foundImage != nil {
-		return foundImage, nil
+	if !forcePull {
+		// load local images into the data structure
+		if err := fetchLocalImages(ctx, &data, client); err != nil {
+			return nil, err
+		}
+
+		foundImage := searchLocalImages(ctx, client, data, imageName)
+		if foundImage != nil {
+			return foundImage, nil
+		}
 	}
 
 	if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
@@ -268,7 +271,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage = searchLocalImages(ctx, client, data, imageName)
+	foundImage := searchLocalImages(ctx, client, data, imageName)
 	if foundImage != nil {
 		return foundImage, nil
 	}

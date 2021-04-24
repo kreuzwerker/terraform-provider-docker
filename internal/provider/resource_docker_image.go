@@ -38,7 +38,6 @@ func resourceDockerImage() *schema.Resource {
 			"pull_triggers": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},

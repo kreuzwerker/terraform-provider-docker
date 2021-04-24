@@ -32,7 +32,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*ProviderConfig).DockerClient
 	authConfigs := meta.(*ProviderConfig).AuthConfigs
 	image := d.Get("image").(string)
-	_, err = findImage(ctx, image, client, authConfigs)
+	_, err = findImage(ctx, image, false, client, authConfigs)
 	if err != nil {
 		return diag.Errorf("Unable to create container with image %s: %s", image, err)
 	}
