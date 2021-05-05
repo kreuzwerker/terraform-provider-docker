@@ -55,7 +55,7 @@ exit /b %outcome%
 
 :setup
   call:log "setup"
-  call %~dp0testing\setup_private_registry.bat
+  call "%~dp0testing\setup_private_registry.bat"
   exit /b %ErrorLevel%
 
 
@@ -73,8 +73,8 @@ exit /b %outcome%
     call docker rm -f -v %%p
   )
   call:print "### stopped private registry ###"
-  rmdir /q /s %~dp0testing\auth
-  rmdir /q /s %~dp0testing\certs
+  rmdir /q /s "%~dp0testing\auth"
+  rmdir /q /s "%~dp0testing\certs"
   call:print "### removed auth and certs ###"
   for %%r in ("container" "volume") do (
     call docker %%r ls -f "name=tftest-" -q
