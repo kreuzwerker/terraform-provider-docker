@@ -711,7 +711,7 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 		// for {
 		container, err = client.ContainerInspect(ctx, apiContainer.ID)
 		if err != nil {
-			return container, "other", err
+			return container, "pending", err
 		}
 
 		jsonObj, _ := json.MarshalIndent(container, "", "\t")
@@ -726,14 +726,14 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 		if creationTime.IsZero() { // We didn't just create it, so don't wait around
 			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
 				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
-				return container, "other", errors.New("container faield to be deleted") // TODO mavogel: pass error
+				return container, "pending", errors.New("container faield to be deleted") // TODO mavogel: pass error
 			}
 		}
 
 		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
 		if err != nil {
 			// return diag.Errorf("Container finish time could not be parsed: %s", container.State.FinishedAt)
-			return container, "other", err
+			return container, "pending", err
 		}
 		if finishTime.After(creationTime) {
 			// It exited immediately, so error out so dependent containers aren't started
