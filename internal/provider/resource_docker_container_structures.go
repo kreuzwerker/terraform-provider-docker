@@ -41,10 +41,10 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	sort.Sort(byPortAndProtocol(internalPortKeys))
 
 	for _, portKey := range internalPortKeys {
-		m := make(map[string]interface{})
-
 		portBindings := in[nat.Port(portKey)]
 		for _, portBinding := range portBindings {
+			m := make(map[string]interface{})
+
 			portProtocolSplit := strings.Split(string(portKey), "/")
 			convertedInternal, _ := strconv.Atoi(portProtocolSplit[0])
 			convertedExternal, _ := strconv.Atoi(portBinding.HostPort)
