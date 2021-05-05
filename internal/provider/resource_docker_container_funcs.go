@@ -596,7 +596,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		}
 
 		d.Set("bridge", container.NetworkSettings.Bridge)
-		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+		if err := d.Set("ports", flattenContainerPorts(container.HostConfig.PortBindings)); err != nil {
 			log.Printf("[WARN] failed to set ports from API: %s", err)
 		}
 		if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
