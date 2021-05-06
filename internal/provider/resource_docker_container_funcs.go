@@ -729,11 +729,13 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 
 			if container.State.Running ||
 				!container.State.Running && !d.Get("must_run").(bool) {
-				// break
-				return container, "running", nil
+				log.Printf("[DEBUG] Container %s is running: %v", containerID, container.State.Running)
+				break
+				// return container, "running", nil
 			}
 
 			if creationTime.IsZero() { // We didn't just create it, so don't wait around
+				log.Printf("[DEBUG] Container %s was not created", containerID)
 				if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
 					log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
 					return container, "pending", errors.New("container failed to be deleted") // TODO mavogel: pass error
@@ -746,6 +748,7 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 				return container, "pending", err
 			}
 			if finishTime.After(creationTime) {
+				log.Printf("[DEBUG] Container %s exited immediately: started: %v - finished: %v", containerID, creationTime, finishTime)
 				// It exited immediately, so error out so dependent containers aren't started
 				if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
 					log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
