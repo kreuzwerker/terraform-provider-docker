@@ -549,6 +549,8 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	container := containerRaw.(types.ContainerJSON)
+	jsonObj, _ := json.MarshalIndent(container, "", "\t")
+	log.Printf("[INFO] Docker container inspect from stateFunc: %s", jsonObj)
 
 	if !container.State.Running && d.Get("must_run").(bool) {
 		if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
@@ -730,8 +732,8 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 			if container.State.Running ||
 				!container.State.Running && !d.Get("must_run").(bool) {
 				log.Printf("[DEBUG] Container %s is running: %v", containerID, container.State.Running)
-				break
-				// return container, "running", nil
+				// break
+				return container, "running", nil
 			}
 
 			if creationTime.IsZero() { // We didn't just create it, so don't wait around
