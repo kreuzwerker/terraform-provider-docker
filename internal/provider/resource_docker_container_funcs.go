@@ -553,7 +553,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 
 	containerRaw, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		if errors.Is(err, errContainerFailedToBeCreated) || errors.Is(err, errContainerExitedImmediately) {
+		if errors.Is(err, errContainerFailedToBeCreated) {
+			return resourceDockerContainerDelete(ctx, d, meta)
+		}
+		if errors.Is(err, errContainerExitedImmediately) {
 			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
 				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
 				return diag.FromErr(errContainerFailedToBeDeleted)
