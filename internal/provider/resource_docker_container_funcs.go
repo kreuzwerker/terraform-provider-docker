@@ -521,6 +521,17 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*ProviderConfig).DockerClient
+	apiContainer, err := fetchDockerContainer(ctx, d.Id(), client)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if apiContainer == nil {
+		log.Printf("[WARN] Container (%s) not found, removing from state", d.Id())
+		d.SetId("")
+		return diag.FromErr(err)
+	}
+
 	log.Printf("[INFO] Waiting for container: '%s' to expose all fields: max '%v seconds'", d.Id(), containerReadRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
@@ -688,15 +699,15 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 
 		// TODO mavogel: both IDs are the same -> unify
 		containerID := d.Id()
-		apiContainer, err := fetchDockerContainer(ctx, containerID, client)
-		if err != nil {
-			return nil, "failed", err
-		}
-		if apiContainer == nil {
-			log.Printf("[WARN] Container (%s) not found, removing from state", containerID)
-			d.SetId("")
-			return nil, "failed", errors.New("container not found")
-		}
+		// apiContainer, err := fetchDockerContainer(ctx, containerID, client)
+		// if err != nil {
+		// 	return nil, "failed", err
+		// }
+		// if apiContainer == nil {
+		// 	log.Printf("[WARN] Container (%s) not found, removing from state", containerID)
+		// 	d.SetId("")
+		// 	return nil, "failed", errors.New("container not found")
+		// }
 
 		var container types.ContainerJSON
 
@@ -709,7 +720,7 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 
 		// for i := loops; i > 0; i-- {
 		// for {
-		container, err = client.ContainerInspect(ctx, apiContainer.ID)
+		container, err := client.ContainerInspect(ctx, containerID)
 		if err != nil {
 			return container, "pending", err
 		}
@@ -725,22 +736,22 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 
 		if creationTime.IsZero() { // We didn't just create it, so don't wait around
 			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
-				return container, "pending", errors.New("container faield to be deleted") // TODO mavogel: pass error
+				log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
+				return container, "pending", errors.New("container failed to be deleted") // TODO mavogel: pass error
 			}
 		}
 
 		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
 		if err != nil {
-			// return diag.Errorf("Container finish time could not be parsed: %s", container.State.FinishedAt)
+			log.Printf("[ERROR] Container %s finish time could not be parsed: %s", containerID, container.State.FinishedAt)
 			return container, "pending", err
 		}
 		if finishTime.After(creationTime) {
 			// It exited immediately, so error out so dependent containers aren't started
 			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+				log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
 			}
-			// return diag.Errorf("Container %s exited after creation, error was: %s", apiContainer.ID, container.State.Error)
+			log.Printf("[ERROR] Container %s exited after creation, error was: %s", containerID, container.State.Error)
 			return container, "pending", err
 		}
 
