@@ -741,7 +741,7 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
 			}
 			// return diag.Errorf("Container %s exited after creation, error was: %s", apiContainer.ID, container.State.Error)
-			return container, "other", err
+			return container, "pending", err
 		}
 
 		// time.Sleep(sleepTime)
