@@ -712,51 +712,50 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 		var container types.ContainerJSON
 
 		// TODO fix this with statefunc
-		// loops := 1 // if it hasn't just been created, don't delay
-		// if !creationTime.IsZero() {
-		// 	loops = 30 // with 500ms spacing, 15 seconds; ought to be plenty
-		// }
-		// sleepTime := 500 * time.Millisecond
-
-		// for i := loops; i > 0; i-- {
-		// for {
-		container, err := client.ContainerInspect(ctx, containerID)
-		if err != nil {
-			return container, "pending", err
+		loops := 1 // if it hasn't just been created, don't delay
+		if !creationTime.IsZero() {
+			loops = 30 // with 500ms spacing, 15 seconds; ought to be plenty
 		}
+		sleepTime := 500 * time.Millisecond
 
-		jsonObj, _ := json.MarshalIndent(container, "", "\t")
-		log.Printf("[INFO] Docker container inspect: %s", jsonObj)
-
-		if container.State.Running ||
-			!container.State.Running && !d.Get("must_run").(bool) {
-			// break
-			return container, "running", nil
-		}
-
-		if creationTime.IsZero() { // We didn't just create it, so don't wait around
-			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-				log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
-				return container, "pending", errors.New("container failed to be deleted") // TODO mavogel: pass error
+		for i := loops; i > 0; i-- {
+			container, err := client.ContainerInspect(ctx, containerID)
+			if err != nil {
+				return container, "pending", err
 			}
-		}
 
-		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
-		if err != nil {
-			log.Printf("[ERROR] Container %s finish time could not be parsed: %s", containerID, container.State.FinishedAt)
-			return container, "pending", err
-		}
-		if finishTime.After(creationTime) {
-			// It exited immediately, so error out so dependent containers aren't started
-			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-				log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
+			jsonObj, _ := json.MarshalIndent(container, "", "\t")
+			log.Printf("[INFO] Docker container inspect: %s", jsonObj)
+
+			if container.State.Running ||
+				!container.State.Running && !d.Get("must_run").(bool) {
+				// break
+				return container, "running", nil
 			}
-			log.Printf("[ERROR] Container %s exited after creation, error was: %s", containerID, container.State.Error)
-			return container, "pending", err
-		}
 
-		// time.Sleep(sleepTime)
-		// }
+			if creationTime.IsZero() { // We didn't just create it, so don't wait around
+				if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
+					log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
+					return container, "pending", errors.New("container failed to be deleted") // TODO mavogel: pass error
+				}
+			}
+
+			finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
+			if err != nil {
+				log.Printf("[ERROR] Container %s finish time could not be parsed: %s", containerID, container.State.FinishedAt)
+				return container, "pending", err
+			}
+			if finishTime.After(creationTime) {
+				// It exited immediately, so error out so dependent containers aren't started
+				if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
+					log.Printf("[ERROR] Container %s failed to be deleted: %v", containerID, err)
+				}
+				log.Printf("[ERROR] Container %s exited after creation, error was: %s", containerID, container.State.Error)
+				return container, "pending", err
+			}
+
+			time.Sleep(sleepTime)
+		}
 
 		return container, "running", nil
 	}
