@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/docker/cli/cli/command/image/build"
@@ -331,6 +332,11 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 
 func getBuildContext(filePath string, excludes []string) io.Reader {
 	filePath, _ = homedir.Expand(filePath)
+	//TarWithOptions works only with absolute paths in Windows.
+	filePath, err := filepath.Abs(filePath)
+	if err != nil {
+		log.Fatalf("Invalid build directory: %s", filePath)
+	}
 	ctx, _ := archive.TarWithOptions(filePath, &archive.TarOptions{
 		ExcludePatterns: excludes,
 	})

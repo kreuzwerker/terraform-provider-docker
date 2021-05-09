@@ -3,8 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/docker/docker/api/types"
@@ -111,7 +114,8 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 
 func TestAccDockerRegistryImageResource_build(t *testing.T) {
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
-	context := "../../scripts/testing/docker_registry_image_context"
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context")), "\\", "\\\\")
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -130,7 +134,8 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 	t.Skip("mavogel: need to check")
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
-	context := "../../scripts/testing/docker_registry_image_context"
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context"), "\\", "\\\\")
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,

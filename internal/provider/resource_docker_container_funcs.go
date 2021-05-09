@@ -467,9 +467,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if d.Get("attach").(bool) {
 		var b bytes.Buffer
-
+		logsRead := make(chan bool)
 		if d.Get("logs").(bool) {
 			go func() {
+				defer func() { logsRead <- true }()
 				reader, err := client.ContainerLogs(ctx, retContainer.ID, types.ContainerLogsOptions{
 					ShowStdout: true,
 					ShowStderr: true,
@@ -503,6 +504,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 		case <-attachCh:
 			if d.Get("logs").(bool) {
+				// There is a race condition here.
+				// If the goroutine does not finish writing into the buffer by this line, we will have no logs.
+				// Thus, waiting for the goroutine to finish
+				<-logsRead
 				d.Set("container_logs", b.String())
 			}
 		}
