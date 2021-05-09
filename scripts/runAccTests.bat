@@ -1,5 +1,6 @@
 @echo off
 setlocal
+setlocal EnableDelayedExpansion
 
 :: As of `go-dockerclient` v1.2.0, the default endpoint to the Docker daemon
 :: is a UNIX socket.  We need to force it to use the Windows named pipe when
@@ -55,19 +56,30 @@ exit /b %outcome%
 
 :setup
   call:log "setup"
-  call "%~dp0testing\setup_private_registry.bat"
+  :: Setup testing files
+  echo | set /p=foo > "%~dp0testing\testingFile"
+  call openssl base64 -in "%~dp0testing\testingFile" -out "%~dp0testing\tmp.base64"
+  type nul > "%~dp0testing\testingFile.base64"
+  for /f "usebackq" %%x in ("%~dp0testing\tmp.base64") do echo | set /p=%%x >> "%~dp0testing\testingFile.base64"
+  del /Q "%~dp0testing\tmp.base64"
+
+  call "%~dp0testing\setup_private_registry.bat"  
   exit /b %ErrorLevel%
 
 
 :run
   call:log "run"
+  call go clean -testcache
   call go test ./internal/provider -v -timeout 120m
   exit /b %ErrorLevel%
 
 
 :cleanup
   call:log "cleanup"
-  call:print "### unsetted env ###"
+  call:print "### unset env ###"
+  del /Q "%~dp0testing\testingFile"
+  del /Q "%~dp0testing\testingFile.base64"
+  call:print "### deleted testing files ###"
   for /F %%p in ('docker container ls -f "name=private_registry" -q') do (
     call docker stop %%p
     call docker rm -f -v %%p
@@ -97,7 +109,7 @@ exit /b %outcome%
     call:print "### removed %%r ###"
   )
   for /F %%i in ('docker images -aq 127.0.0.1:5000/tftest-service') do (
-    echo Deleting imag %%i
+    echo Deleting image %%i
     docker rmi -f %%i
   )
   call:print "### removed service images ###"

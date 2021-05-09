@@ -43,6 +43,7 @@ call docker run ^
   -v "%~dp0certs":/certs ^
   -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt" ^
   -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key" ^
+  -e "REGISTRY_STORAGE_DELETE_ENABLED=true" ^
   registry:2.7.0
 if %ErrorLevel% neq 0 (
   call:print "Failed to create ephemeral Docker registry."
@@ -64,8 +65,8 @@ for /L %%i in (1,1,3) do (
   call docker build ^
     -t tftest-service ^
     --build-arg JS_FILE_PATH=server_v%%i.js ^
-    "%~dp0" ^
-    -f "%~dp0Dockerfile"
+    -f "%~dp0Dockerfile" ^
+    "%~dp0."
   call docker tag ^
     tftest-service ^
     127.0.0.1:15000/tftest-service:v%%i
@@ -82,7 +83,7 @@ exit /b %ErrorLevel%
 
 
 :mkdirp
-  if not exist "%~1"\nul (
+  if not exist "%~1" (
     mkdir "%~1"
   )
   exit /b %ErrorLevel%
