@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -22,9 +23,25 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	containerReadRefreshTimeout             = 15 * time.Second
+	containerReadRefreshWaitBeforeRefreshes = 100 * time.Millisecond
+	containerReadRefreshDelay               = 100 * time.Millisecond
+)
+
+var (
+	errContainerFailedToBeCreated        = errors.New("container failed to be created")
+	errContainerFailedToBeDeleted        = errors.New("container failed to be deleted")
+	errContainerExitedImmediately        = errors.New("container exited immediately")
+	errContainerFailedToBeInRunningState = errors.New("container failed to be in running state")
+)
+
+// NOTE mavogel: we keep this global var for tracking
+// the time in the create and read func
 var creationTime time.Time
 
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -512,6 +529,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeout)
 	client := meta.(*ProviderConfig).DockerClient
 
 	apiContainer, err := fetchDockerContainer(ctx, d.Id(), client)
@@ -524,55 +542,40 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		return nil
 	}
 
-	var container types.ContainerJSON
-
-	// TODO fix this with statefunc
-	loops := 1 // if it hasn't just been created, don't delay
-	if !creationTime.IsZero() {
-		loops = 30 // with 500ms spacing, 15 seconds; ought to be plenty
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"pending"},
+		Target:     []string{"running"},
+		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
+		Timeout:    containerReadRefreshTimeout,
+		MinTimeout: containerReadRefreshWaitBeforeRefreshes,
+		Delay:      containerReadRefreshDelay,
 	}
-	sleepTime := 500 * time.Millisecond
 
-	for i := loops; i > 0; i-- {
-		container, err = client.ContainerInspect(ctx, apiContainer.ID)
-		if err != nil {
-			return diag.Errorf("Error inspecting container %s: %s", apiContainer.ID, err)
-		}
-
-		jsonObj, _ := json.MarshalIndent(container, "", "\t")
-		log.Printf("[INFO] Docker container inspect: %s", jsonObj)
-
-		if container.State.Running ||
-			!container.State.Running && !d.Get("must_run").(bool) {
-			break
-		}
-
-		if creationTime.IsZero() { // We didn't just create it, so don't wait around
+	containerRaw, err := stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		if errors.Is(err, errContainerFailedToBeCreated) {
 			return resourceDockerContainerDelete(ctx, d, meta)
 		}
-
-		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
-		if err != nil {
-			return diag.Errorf("Container finish time could not be parsed: %s", container.State.FinishedAt)
-		}
-		if finishTime.After(creationTime) {
-			// It exited immediately, so error out so dependent containers
-			// aren't started
+		if errors.Is(err, errContainerExitedImmediately) {
 			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
 				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+				return diag.FromErr(errContainerFailedToBeDeleted)
 			}
-			return diag.Errorf("Container %s exited after creation, error was: %s", apiContainer.ID, container.State.Error)
 		}
-
-		time.Sleep(sleepTime)
+		return diag.FromErr(err)
 	}
 
-	// Handle the case of the for loop above running its course
+	container := containerRaw.(types.ContainerJSON)
+	jsonObj, _ := json.MarshalIndent(container, "", "\t")
+	log.Printf("[DEBUG] Docker container inspect from stateFunc: %s", jsonObj)
+
 	if !container.State.Running && d.Get("must_run").(bool) {
 		if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-			log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
+			log.Printf("[ERROR] Container %s failed to be deleted: %v", container.ID, err)
+			return err
 		}
-		return diag.Errorf("Container %s failed to be in running state", apiContainer.ID)
+		log.Printf("[ERROR] Container %s failed to be in running state", container.ID)
+		return diag.FromErr(errContainerFailedToBeInRunningState)
 	}
 
 	if !container.State.Running {
@@ -704,7 +707,49 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("group_add", container.HostConfig.GroupAdd)
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
+
 	return nil
+}
+
+func resourceDockerContainerReadRefreshFunc(ctx context.Context,
+	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		client := meta.(*ProviderConfig).DockerClient
+		containerID := d.Id()
+
+		var container types.ContainerJSON
+		container, err := client.ContainerInspect(ctx, containerID)
+		if err != nil {
+			return container, "pending", err
+		}
+
+		jsonObj, _ := json.MarshalIndent(container, "", "\t")
+		log.Printf("[DEBUG] Docker container inspect: %s", jsonObj)
+
+		if container.State.Running ||
+			!container.State.Running && !d.Get("must_run").(bool) {
+			log.Printf("[DEBUG] Container %s is running: %v", containerID, container.State.Running)
+			// break
+			return container, "running", nil
+		}
+
+		if creationTime.IsZero() { // We didn't just create it, so don't wait around
+			log.Printf("[DEBUG] Container %s was not created", containerID)
+			return container, "pending", errContainerFailedToBeCreated
+		}
+
+		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
+		if err != nil {
+			log.Printf("[ERROR] Container %s finish time could not be parsed: %s", containerID, container.State.FinishedAt)
+			return container, "pending", err
+		}
+		if finishTime.After(creationTime) {
+			log.Printf("[INFO] Container %s exited immediately: started: %v - finished: %v", containerID, creationTime, finishTime)
+			return container, "pending", errContainerExitedImmediately
+		}
+
+		return container, "running", nil
+	}
 }
 
 func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
