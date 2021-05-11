@@ -239,7 +239,7 @@ func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildO
 
 	// the tar hash is passed only after the initial creation
 	buildContext := buildOptions["context"].(string)
-	if lastIndex := strings.LastIndexByte(buildContext, ':'); lastIndex > -1 {
+	if lastIndex := strings.LastIndexByte(buildContext, ':'); (lastIndex > -1) && (buildContext[lastIndex+1] != filepath.Separator) {
 		buildContext = buildContext[:lastIndex]
 	}
 	dockerContextTarPath, err := buildDockerImageContextTar(buildContext)
@@ -275,7 +275,6 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 	}
 
 	defer tmpFile.Close()
-
 	if _, err = os.Stat(buildContext); err != nil {
 		return "", fmt.Errorf("Unable to read build context - %v", err.Error())
 	}
