@@ -80,6 +80,15 @@ make website-lint
 make website-lint-fix
 ```
 
+In case you need to run the GitHub actions setup locally in a docker container and run the tests there,
+run the following commands:
+```sh
+docker build -f testacc.Dockerfile  -t testacc-local .
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/test testacc-local bash
+make testacc_setup
+TF_LOG=DEBUG TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerContainer_nostart$
+```
+
 ### Test against current terraform IaC descriptions
 In order to extend the provider and test it with `terraform`, build the provider as mentioned above with:
 
