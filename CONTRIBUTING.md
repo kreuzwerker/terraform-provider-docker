@@ -73,7 +73,11 @@ Furthermore, we recommened running the linters for the code and the documentatio
 ```sh
 # install all the dependencies
 make setup
+# lint the go code
 make golangci-lint
+# generate or update the documentation
+make website-generation
+# lint the documentation
 make website-link-check
 make website-lint
 # you can also use this command to fix most errors automatically
