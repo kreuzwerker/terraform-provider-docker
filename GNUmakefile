@@ -76,7 +76,7 @@ website-lint:
 		echo "Unexpected mispelling found in website files."; \
 		echo "To automatically fix the misspelling, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
-	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli website/docs/ || (echo; \
+	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli docs/ || (echo; \
 		echo "Unexpected issues found in website Markdown files."; \
 		echo "To apply any automatic fixes, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
@@ -89,7 +89,7 @@ website-lint:
 website-lint-fix:
 	@echo "==> Applying automatic website linter fixes..."
 	@misspell -w -source=text website/
-	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix website/docs/
+	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix docs/
 	@terrafmt fmt ./website --pattern '*.markdown'
 
 .PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
