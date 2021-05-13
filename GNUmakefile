@@ -64,6 +64,9 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
+website-generation:
+	go generate
+	
 website-link-check:
 	@scripts/markdown-link-check.sh
 
