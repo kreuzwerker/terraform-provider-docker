@@ -48,7 +48,7 @@ func dataSourceDockerNetwork() *schema.Resource {
 
 			"ipam_config": {
 				Type:        schema.TypeSet,
-				Description: "IPAM configuration options",
+				Description: "The IPAM configuration options",
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
