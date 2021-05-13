@@ -12,6 +12,7 @@ setup:
 	cd tools && GO111MODULE=on go install github.com/client9/misspell/cmd/misspell
 	cd tools && GO111MODULE=on go install github.com/katbyte/terrafmt
 	cd tools && GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	cd tools && GO111MODULE=on go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 	rm -f .git/hooks/commit-msg \
 	&& curl --fail -o .git/hooks/commit-msg https://raw.githubusercontent.com/hazcod/semantic-commit-hook/master/commit-msg \
 	&& chmod 500 .git/hooks/commit-msg
