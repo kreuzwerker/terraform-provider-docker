@@ -62,4 +62,11 @@ Required:
 - **label** (String) Name of the label
 - **value** (String) Value of the label
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+#!/bin/bash
+terraform import docker_network.foo "$(docker network inspect -f {{.ID}} p73)"
+```
