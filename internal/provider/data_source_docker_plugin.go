@@ -10,6 +10,8 @@ import (
 
 func dataSourceDockerPlugin() *schema.Resource {
 	return &schema.Resource{
+		Description: "Reads the local Docker plugin. The plugin must be installed locally.",
+
 		Read: dataSourceDockerPluginRead,
 
 		Schema: map[string]*schema.Schema{
@@ -18,38 +20,41 @@ func dataSourceDockerPlugin() *schema.Resource {
 				Optional: true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.",
+				Optional:    true,
 			},
 			"alias": {
 				Type:        schema.TypeString,
+				Description: "The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.",
 				Optional:    true,
-				Description: "Docker Plugin alias",
 			},
 			"plugin_reference": {
 				Type:        schema.TypeString,
-				Description: "Docker Plugin Reference",
+				Description: "The Docker Plugin Reference",
 				Computed:    true,
 			},
 			"enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Description: "If `true` the plugin is enabled",
+				Computed:    true,
 			},
 			"grant_all_permissions": {
 				Type:        schema.TypeBool,
-				Computed:    true,
 				Description: "If true, grant all permissions necessary to run the plugin",
+				Computed:    true,
 			},
 			"env": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Description: "The environment variables in the from of `KEY=VALUE`, e.g. `DEBUG=0`",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
 }
 
-var errDataSourceKeyIsMissing = errors.New("One of id or alias must be assigned")
+var errDataSourceKeyIsMissing = errors.New("one of id or alias must be assigned")
 
 func getDataSourcePluginKey(d *schema.ResourceData) (string, error) {
 	id, idOK := d.GetOk("id")
