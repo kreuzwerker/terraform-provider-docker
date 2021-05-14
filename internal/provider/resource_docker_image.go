@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -10,6 +12,12 @@ func resourceDockerImage() *schema.Resource {
 		ReadContext:   resourceDockerImageRead,
 		UpdateContext: resourceDockerImageUpdate,
 		DeleteContext: resourceDockerImageDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: func(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+				d.Set("name", d.Id())
+				return []*schema.ResourceData{d}, nil
+			},
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
