@@ -3,12 +3,12 @@
 page_title: "docker_registry_image Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  
+  Manages the lifecycle of docker image/tag in a registry.
 ---
 
 # docker_registry_image (Resource)
 
-
+Manages the lifecycle of docker image/tag in a registry.
 
 ## Example Usage
 

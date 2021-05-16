@@ -12,6 +12,8 @@ import (
 
 func resourceDockerConfig() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the configs of a Docker service in a swarm.",
+
 		CreateContext: resourceDockerConfigCreate,
 		ReadContext:   resourceDockerConfigRead,
 		DeleteContext: resourceDockerConfigDelete,

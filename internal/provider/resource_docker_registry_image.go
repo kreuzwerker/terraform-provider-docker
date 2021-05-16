@@ -8,6 +8,8 @@ import (
 
 func resourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the lifecycle of docker image/tag in a registry.",
+
 		CreateContext: resourceDockerRegistryImageCreate,
 		ReadContext:   resourceDockerRegistryImageRead,
 		DeleteContext: resourceDockerRegistryImageDelete,

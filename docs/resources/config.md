@@ -3,12 +3,12 @@
 page_title: "docker_config Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  
+  Manages the configs of a Docker service in a swarm.
 ---
 
 # docker_config (Resource)
 
-
+Manages the configs of a Docker service in a swarm.
 
 ## Example Usage
 

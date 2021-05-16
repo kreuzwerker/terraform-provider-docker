@@ -3,12 +3,14 @@
 page_title: "docker_image Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  
+  Pulls a Docker image to a given Docker host from a Docker Registry.
+   This resource will not pull new layers of the image automatically unless used i conjunction with [docker_registry_image](/docs/providers/docker/d/registry_image.html data source to update the pull_triggers field.
 ---
 
 # docker_image (Resource)
 
-
+Pulls a Docker image to a given Docker host from a Docker Registry.
+ This resource will *not* pull new layers of the image automatically unless used i conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.
 
 ## Example Usage
 

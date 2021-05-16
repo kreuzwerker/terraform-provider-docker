@@ -3,12 +3,12 @@
 page_title: "docker_secret Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  
+  Manages the secrets of a Docker service in a swarm.
 ---
 
 # docker_secret (Resource)
 
-
+Manages the secrets of a Docker service in a swarm.
 
 ## Example Usage
 

@@ -12,6 +12,8 @@ import (
 
 func resourceDockerSecret() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the secrets of a Docker service in a swarm.",
+
 		CreateContext: resourceDockerSecretCreate,
 		ReadContext:   resourceDockerSecretRead,
 		DeleteContext: resourceDockerSecretDelete,

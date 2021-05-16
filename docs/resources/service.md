@@ -3,12 +3,14 @@
 page_title: "docker_service Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  
+  This resource manages the lifecycle of a Docker service. By default, the creation, update and delete of services are detached.
+   With the Converge Config the behavior of the docker cli is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform terraform that a service could no be updated and was successfully rolled back.
 ---
 
 # docker_service (Resource)
 
-
+This resource manages the lifecycle of a Docker service. By default, the creation, update and delete of services are detached.
+ With the [Converge Config](#convergeconfig) the behavior of the `docker cli` is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform `terraform` that a service could no be updated and was successfully rolled back.
 
 ## Example Usage
 

@@ -9,6 +9,8 @@ import (
 
 func resourceDockerContainer() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the lifecycle of a Docker container.",
+
 		CreateContext: resourceDockerContainerCreate,
 		ReadContext:   resourceDockerContainerRead,
 		UpdateContext: resourceDockerContainerUpdate,

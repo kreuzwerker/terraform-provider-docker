@@ -3,12 +3,12 @@
 page_title: "docker_container Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  
+  Manages the lifecycle of a Docker container.
 ---
 
 # docker_container (Resource)
 
-
+Manages the lifecycle of a Docker container.
 
 ## Example Usage
 
