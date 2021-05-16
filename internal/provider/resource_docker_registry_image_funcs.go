@@ -244,7 +244,7 @@ func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildO
 	}
 	dockerContextTarPath, err := buildDockerImageContextTar(buildContext)
 	if err != nil {
-		return fmt.Errorf("Unable to build context %v", err)
+		return fmt.Errorf("unable to build context %v", err)
 	}
 	defer os.Remove(dockerContextTarPath)
 	dockerBuildContext, err := os.Open(dockerContextTarPath)
@@ -271,12 +271,12 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 	// Create our Temp File:  This will create a filename like /tmp/terraform-provider-docker-123456.tar
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "terraform-provider-docker-*.tar")
 	if err != nil {
-		return "", fmt.Errorf("Cannot create temporary file - %v", err.Error())
+		return "", fmt.Errorf("cannot create temporary file - %v", err.Error())
 	}
 
 	defer tmpFile.Close()
 	if _, err = os.Stat(buildContext); err != nil {
-		return "", fmt.Errorf("Unable to read build context - %v", err.Error())
+		return "", fmt.Errorf("unable to read build context - %v", err.Error())
 	}
 
 	tw := tar.NewWriter(tmpFile)
@@ -402,6 +402,7 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 	// cuz we don't have a valid certs for this case
 	if env, okEnv := os.LookupEnv("TF_ACC"); okEnv {
 		if i, errConv := strconv.Atoi(env); errConv == nil && i >= 1 {
+			// DevSkim: ignore DS440000
 			cfg := &tls.Config{
 				InsecureSkipVerify: true,
 			}
@@ -504,7 +505,7 @@ func getImageDigestWithFallback(opts internalPushImageOptions, username, passwor
 	if err != nil {
 		digest, err = getImageDigest(opts.Registry, opts.Repository, opts.Tag, username, password, true)
 		if err != nil {
-			return "", fmt.Errorf("Unable to get digest: %s", err)
+			return "", fmt.Errorf("unable to get digest: %s", err)
 		}
 	}
 	return digest, nil

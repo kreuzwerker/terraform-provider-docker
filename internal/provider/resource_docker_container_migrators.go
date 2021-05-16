@@ -807,7 +807,7 @@ func resourceDockerContainerMigrateState(
 		log.Println("[INFO] Found Docker Container State v0; migrating to v1")
 		return migrateDockerContainerMigrateStateV0toV1(is, meta)
 	default:
-		return is, fmt.Errorf("Unexpected schema version: %d", v)
+		return is, fmt.Errorf("unexpected schema version: %d", v)
 	}
 }
 

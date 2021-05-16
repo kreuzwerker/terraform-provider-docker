@@ -119,7 +119,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 
 	imageName := d.Get("name").(string)
 	if imageName == "" {
-		return fmt.Errorf("Empty image name is not allowed")
+		return fmt.Errorf("empty image name is not allowed")
 	}
 
 	foundImage := searchLocalImages(ctx, client, data, imageName)
@@ -140,7 +140,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) error {
 	images, err := client.ImageList(ctx, types.ImageListOptions{All: false})
 	if err != nil {
-		return fmt.Errorf("Unable to list Docker images: %s", err)
+		return fmt.Errorf("unable to list Docker images: %s", err)
 	}
 
 	if data.DockerImages == nil {
@@ -246,7 +246,7 @@ func parseImageOptions(image string) internalPullImageOptions {
 
 func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
 	if imageName == "" {
-		return nil, fmt.Errorf("Empty image name is not allowed")
+		return nil, fmt.Errorf("empty image name is not allowed")
 	}
 
 	var data Data
@@ -261,7 +261,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 	}
 
 	if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
-		return nil, fmt.Errorf("Unable to pull image %s: %s", imageName, err)
+		return nil, fmt.Errorf("unable to pull image %s: %s", imageName, err)
 	}
 
 	// update the data structure of the images
@@ -274,7 +274,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return foundImage, nil
 	}
 
-	return nil, fmt.Errorf("Unable to find or pull image %s", imageName)
+	return nil, fmt.Errorf("unable to find or pull image %s", imageName)
 }
 
 func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
@@ -352,7 +352,7 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 		var m jsonmessage.JSONMessage
 		err := dec.Decode(&m)
 		if err != nil {
-			return buf.String(), fmt.Errorf("Problem decoding message from docker daemon: %s", err)
+			return buf.String(), fmt.Errorf("problem decoding message from docker daemon: %s", err)
 		}
 
 		if err := m.Display(buf, false); err != nil {
@@ -360,7 +360,7 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 		}
 
 		if m.Error != nil {
-			buildErr = fmt.Errorf("Unable to build image")
+			buildErr = fmt.Errorf("unable to build image")
 		}
 	}
 	log.Printf("[DEBUG] %s", buf.String())

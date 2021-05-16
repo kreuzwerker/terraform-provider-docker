@@ -57,6 +57,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 			Soft: int64(2),
 		}), "Ulimits")
 		assert(len(options.BuildArgs) == 1, "BuildArgs")
+		// DevSkim: ignore DS137138
 		assert(*options.BuildArgs["HTTP_PROXY"] == "http://10.20.30.2:1234", "BuildArgs")
 		assert(len(options.AuthConfigs) == 1, "AuthConfigs")
 		assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], types.AuthConfig{

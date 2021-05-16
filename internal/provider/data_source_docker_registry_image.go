@@ -89,6 +89,7 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 	// cuz we don't have a valid certs for this case
 	if env, okEnv := os.LookupEnv("TF_ACC"); okEnv {
 		if i, errConv := strconv.Atoi(env); errConv == nil && i >= 1 {
+			// DevSkim: ignore DS440000
 			cfg := &tls.Config{
 				InsecureSkipVerify: true,
 			}

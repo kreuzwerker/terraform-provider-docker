@@ -891,6 +891,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 				Config: testAccDockerContainerUploadBase64Config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
+					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
 					testCheck("/terraform/test2.txt", "foobar", "100644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -912,6 +913,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 				Config: testAccDockerContainerUploadBase64Config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
+					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
 					testCheck("/terraform/test2.txt", "foobar", "100644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
