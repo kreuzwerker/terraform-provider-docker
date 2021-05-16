@@ -25,13 +25,15 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "The name of the Docker image, including any tags. e.g. `alpine:latest`",
+				Required:    true,
 			},
 
 			"sha256_digest": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The content digest of the image, as stored on the registry.",
+				Computed:    true,
 			},
 		},
 	}
