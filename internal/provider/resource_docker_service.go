@@ -24,25 +24,29 @@ func resourceDockerService() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"auth": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Description: "Configuration for the authentication for pulling the images of the service",
+				Optional:    true,
+				ForceNew:    true,
+				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"server_address": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The address of the server for the authentication",
+							Required:    true,
+							ForceNew:    true,
 						},
 						"username": {
 							Type:        schema.TypeString,
+							Description: "The username",
 							Optional:    true,
 							ForceNew:    true,
 							DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
 						},
 						"password": {
 							Type:        schema.TypeString,
+							Description: "The password",
 							Optional:    true,
 							ForceNew:    true,
 							DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
@@ -362,15 +366,17 @@ func resourceDockerService() *schema.Resource {
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"ip": {
-													Type:     schema.TypeString,
-													Required: true,
-													ForceNew: true,
+													Type:        schema.TypeString,
+													Description: "The ip of the host",
+													Required:    true,
+													ForceNew:    true,
 												},
 
 												"host": {
-													Type:     schema.TypeString,
-													Required: true,
-													ForceNew: true,
+													Type:        schema.TypeString,
+													Description: "The name of the host",
+													Required:    true,
+													ForceNew:    true,
 												},
 											},
 										},

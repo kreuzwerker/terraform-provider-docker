@@ -267,7 +267,7 @@ resource "docker_service" "foo" {
 
 ### Optional
 
-- **auth** (Block List, Max: 1) (see [below for nested schema](#nestedblock--auth))
+- **auth** (Block List, Max: 1) Configuration for the authentication for pulling the images of the service (see [below for nested schema](#nestedblock--auth))
 - **converge_config** (Block List, Max: 1) A configuration to ensure that a service converges aka reaches the desired that of all task up and running (see [below for nested schema](#nestedblock--converge_config))
 - **endpoint_spec** (Block List, Max: 1) Properties that can be configured to access and load balance a service (see [below for nested schema](#nestedblock--endpoint_spec))
 - **id** (String) The ID of this resource.
@@ -371,8 +371,8 @@ Optional:
 
 Required:
 
-- **host** (String)
-- **ip** (String)
+- **host** (String) The name of the host
+- **ip** (String) The ip of the host
 
 
 <a id="nestedblock--task_spec--container_spec--labels"></a>
@@ -571,12 +571,12 @@ Optional:
 
 Required:
 
-- **server_address** (String)
+- **server_address** (String) The address of the server for the authentication
 
 Optional:
 
-- **password** (String, Sensitive)
-- **username** (String)
+- **password** (String, Sensitive) The password
+- **username** (String) The username
 
 
 <a id="nestedblock--converge_config"></a>
