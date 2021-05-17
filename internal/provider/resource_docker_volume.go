@@ -32,10 +32,11 @@ func resourceDockerVolume() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "The name of the Docker volume (will be generated if not provided).",
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
 			},
 			"labels": {
 				Type:        schema.TypeSet,
@@ -45,19 +46,22 @@ func resourceDockerVolume() *schema.Resource {
 				Elem:        labelSchema,
 			},
 			"driver": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "Driver type for the volume (defaults to `local`).",
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
 			},
 			"driver_opts": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeMap,
+				Description: "Options specific to the driver.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 			"mountpoint": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The mountpoint of the volume.",
+				Computed:    true,
 			},
 		},
 		SchemaVersion: 1,

@@ -26,15 +26,15 @@ resource "docker_volume" "shared_volume" {
 
 ### Optional
 
-- **driver** (String)
-- **driver_opts** (Map of String)
+- **driver** (String) Driver type for the volume (defaults to `local`).
+- **driver_opts** (Map of String) Options specific to the driver.
 - **id** (String) The ID of this resource.
 - **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
-- **name** (String)
+- **name** (String) The name of the Docker volume (will be generated if not provided).
 
 ### Read-Only
 
-- **mountpoint** (String)
+- **mountpoint** (String) The mountpoint of the volume.
 
 <a id="nestedblock--labels"></a>
 ### Nested Schema for `labels`
