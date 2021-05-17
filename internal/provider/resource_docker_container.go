@@ -574,6 +574,7 @@ func resourceDockerContainer() *schema.Resource {
 			"network_data": {
 				Type:        schema.TypeList,
 				Description: "The data of the networks the container is connected to",
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"network_name": {
