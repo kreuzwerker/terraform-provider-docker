@@ -99,7 +99,7 @@ resource "docker_image" "ubuntu" {
 - **gateway** (String, Deprecated) The network gateway of the container.
 - **ip_address** (String, Deprecated) The IP address of the container.
 - **ip_prefix_length** (Number, Deprecated) The IP prefix length of the container.
-- **network_data** (List of Object) The data of the networks the container is connected to (see [below for nested schema](#nestedatt--network_data))
+- **network_data** (Block List) The data of the networks the container is connected to (see [below for nested schema](#nestedblock--network_data))
 
 <a id="nestedblock--capabilities"></a>
 ### Nested Schema for `capabilities`
@@ -276,18 +276,18 @@ Optional:
 - **volume_name** (String) The name of the docker volume which should be mounted.
 
 
-<a id="nestedatt--network_data"></a>
+<a id="nestedblock--network_data"></a>
 ### Nested Schema for `network_data`
 
 Read-Only:
 
-- **gateway** (String)
-- **global_ipv6_address** (String)
-- **global_ipv6_prefix_length** (Number)
-- **ip_address** (String)
-- **ip_prefix_length** (Number)
-- **ipv6_gateway** (String)
-- **network_name** (String)
+- **gateway** (String, Deprecated) The network gateway of the container.
+- **global_ipv6_address** (String) The IPV6 address of the container
+- **global_ipv6_prefix_length** (Number) The IPV6 prefix length address of the container
+- **ip_address** (String, Deprecated) The IP address of the container.
+- **ip_prefix_length** (Number, Deprecated) The IP prefix length of the container.
+- **ipv6_gateway** (String) The IPV6 gateway of the container
+- **network_name** (String) The name of the network
 
 ## Import
 
