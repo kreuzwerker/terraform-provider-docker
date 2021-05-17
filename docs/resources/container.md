@@ -30,84 +30,84 @@ resource "docker_image" "ubuntu" {
 
 ### Required
 
-- **image** (String)
-- **name** (String)
+- **image** (String) The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.
+- **name** (String) The name of the Docker container.
 
 ### Optional
 
-- **attach** (Boolean)
-- **capabilities** (Block Set, Max: 1) (see [below for nested schema](#nestedblock--capabilities))
-- **command** (List of String)
-- **cpu_set** (String)
-- **cpu_shares** (Number)
-- **destroy_grace_seconds** (Number)
-- **devices** (Block Set) (see [below for nested schema](#nestedblock--devices))
-- **dns** (Set of String)
-- **dns_opts** (Set of String)
-- **dns_search** (Set of String)
-- **domainname** (String)
-- **entrypoint** (List of String)
-- **env** (Set of String)
+- **attach** (Boolean) If true attach to the container after its creation and waits the end of its execution.
+- **capabilities** (Block Set, Max: 1) Add or drop certrain linux capabilities (see [below for nested schema](#nestedblock--capabilities))
+- **command** (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-","baz.con"]`.
+- **cpu_set** (String) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
+- **cpu_shares** (Number) CPU shares (relative weight) for the container.
+- **destroy_grace_seconds** (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
+- **devices** (Block Set) Bind devices to the container (see [below for nested schema](#nestedblock--devices))
+- **dns** (Set of String) DNS servers to use.
+- **dns_opts** (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
+- **dns_search** (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
+- **domainname** (String) Domain name of the container.
+- **entrypoint** (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
+- **env** (Set of String) Environment variables to set.
 - **group_add** (Set of String) Additional groups for the container user
 - **healthcheck** (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--healthcheck))
-- **host** (Block Set) (see [below for nested schema](#nestedblock--host))
-- **hostname** (String)
+- **host** (Block Set) Additional hosts to add to the container. (see [below for nested schema](#nestedblock--host))
+- **hostname** (String) Hostname of the container.
 - **id** (String) The ID of this resource.
-- **init** (Boolean)
-- **ipc_mode** (String) IPC sharing mode for the container
-- **labels** (Block Set) (see [below for nested schema](#nestedblock--labels))
-- **links** (Set of String, Deprecated)
-- **log_driver** (String)
-- **log_opts** (Map of String)
-- **logs** (Boolean)
-- **max_retry_count** (Number)
-- **memory** (Number)
-- **memory_swap** (Number)
+- **init** (Boolean) Configured whether an init process should be injected for this container. If unset this will default to the `dockerd` defaults.
+- **ipc_mode** (String) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
+- **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
+- **links** (Set of String, Deprecated) Set of links for link based connectivity between containers that are running on the same host.
+- **log_driver** (String) The logging driver to use for the container. Defaults to `json-file`.
+- **log_opts** (Map of String) Key/value pairs to use as options for the logging driver.
+- **logs** (Boolean) Save the container logs (`attach` must be enabled).
+- **max_retry_count** (Number) The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'
+- **memory** (Number) The memory limit for the container in MBs.
+- **memory_swap** (Number) The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 - **mounts** (Block Set) Specification for mounts to be added to containers created as part of the service (see [below for nested schema](#nestedblock--mounts))
-- **must_run** (Boolean)
+- **must_run** (Boolean) If true, then the Docker container will be kept running. If false, then as long as the container exists, Terraform assumes it is successful.
 - **network_alias** (Set of String, Deprecated) Set an alias for the container in all specified networks
-- **network_mode** (String)
-- **networks** (Set of String, Deprecated)
-- **networks_advanced** (Block Set) (see [below for nested schema](#nestedblock--networks_advanced))
-- **pid_mode** (String)
-- **ports** (Block List) (see [below for nested schema](#nestedblock--ports))
-- **privileged** (Boolean)
-- **publish_all_ports** (Boolean)
-- **read_only** (Boolean)
-- **remove_volumes** (Boolean)
-- **restart** (String)
-- **rm** (Boolean)
+- **network_mode** (String) Network mode of the container.
+- **networks** (Set of String, Deprecated) ID of the networks in which the container is.
+- **networks_advanced** (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
+- **pid_mode** (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
+- **ports** (Block List) Publish a container's port(s) to the host (see [below for nested schema](#nestedblock--ports))
+- **privileged** (Boolean) If true, the container runs in privileged mode.
+- **publish_all_ports** (Boolean) Publish all ports of the container.
+- **read_only** (Boolean) If true, the container will be started as readonly.
+- **remove_volumes** (Boolean) If true, it will remove anonymous volumes associated with the container
+- **restart** (String) The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'.
+- **rm** (Boolean) If true, then the container will be automatically removed after his execution. Terraform won't check this container after creation.
 - **security_opts** (Set of String) List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration
-- **shm_size** (Number)
-- **start** (Boolean)
-- **stdin_open** (Boolean)
-- **sysctls** (Map of String)
-- **tmpfs** (Map of String)
-- **tty** (Boolean)
-- **ulimit** (Block Set) (see [below for nested schema](#nestedblock--ulimit))
-- **upload** (Block Set) (see [below for nested schema](#nestedblock--upload))
-- **user** (String)
-- **userns_mode** (String)
-- **volumes** (Block Set) (see [below for nested schema](#nestedblock--volumes))
-- **working_dir** (String)
+- **shm_size** (Number) Size of `/dev/shm` in MBs.
+- **start** (Boolean) If true, then the Docker container will be started after creation. If false, then the container is only created.
+- **stdin_open** (Boolean) If true, keep STDIN open even if not attached (`docker run -i`)
+- **sysctls** (Map of String) A map of kernel parameters (sysctls) to set in the container.
+- **tmpfs** (Map of String) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
+- **tty** (Boolean) If true, allocate a pseudo-tty (`docker run -t`)
+- **ulimit** (Block Set) Ulimit options to add (see [below for nested schema](#nestedblock--ulimit))
+- **upload** (Block Set) Specifies files to upload to the container before starting it. Only one of `content` or `content_base64` can be set and at least one of them has to be set. (see [below for nested schema](#nestedblock--upload))
+- **user** (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
+- **userns_mode** (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
+- **volumes** (Block Set) Spec for mounting volumes in the container (see [below for nested schema](#nestedblock--volumes))
+- **working_dir** (String) The working directory for commands to run in
 
 ### Read-Only
 
-- **bridge** (String)
-- **container_logs** (String)
-- **exit_code** (Number)
-- **gateway** (String, Deprecated)
-- **ip_address** (String, Deprecated)
-- **ip_prefix_length** (Number, Deprecated)
-- **network_data** (List of Object) (see [below for nested schema](#nestedatt--network_data))
+- **bridge** (String) The network bridge of the container as read from its NetworkSettings.
+- **container_logs** (String) The logs of the container if its execution is done (`attach` must be disabled).
+- **exit_code** (Number) The exit code of the container if its execution is done (`must_run` must be disabled).
+- **gateway** (String, Deprecated) The network gateway of the container.
+- **ip_address** (String, Deprecated) The IP address of the container.
+- **ip_prefix_length** (Number, Deprecated) The IP prefix length of the container.
+- **network_data** (List of Object) The data of the networks the container is connected to (see [below for nested schema](#nestedatt--network_data))
 
 <a id="nestedblock--capabilities"></a>
 ### Nested Schema for `capabilities`
 
 Optional:
 
-- **add** (Set of String)
-- **drop** (Set of String)
+- **add** (Set of String) List of linux capabilities to add.
+- **drop** (Set of String) List of linux capabilities to drop.
 
 
 <a id="nestedblock--devices"></a>
@@ -115,12 +115,12 @@ Optional:
 
 Required:
 
-- **host_path** (String)
+- **host_path** (String) The path on the host where the device is located.
 
 Optional:
 
-- **container_path** (String)
-- **permissions** (String)
+- **container_path** (String) The path in the container where the device will be bound.
+- **permissions** (String) The cgroup permissions given to the container to access the device. Defaults to `rwm`.
 
 
 <a id="nestedblock--healthcheck"></a>
@@ -128,7 +128,7 @@ Optional:
 
 Required:
 
-- **test** (List of String) The test to perform as list
+- **test** (List of String) Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `["CMD", "curl", "-f", "localhost/health"]`.
 
 Optional:
 
@@ -143,8 +143,8 @@ Optional:
 
 Required:
 
-- **host** (String)
-- **ip** (String)
+- **host** (String) Hostname to add.
+- **ip** (String) IP address this hostname should resolve to.
 
 
 <a id="nestedblock--labels"></a>
@@ -215,13 +215,13 @@ Required:
 
 Required:
 
-- **name** (String)
+- **name** (String) The name of the network.
 
 Optional:
 
-- **aliases** (Set of String)
-- **ipv4_address** (String)
-- **ipv6_address** (String)
+- **aliases** (Set of String) The network aliases of the container in the specific network.
+- **ipv4_address** (String) The IPV4 address of the container in the specific network.
+- **ipv6_address** (String) The IPV6 address of the container in the specific network.
 
 
 <a id="nestedblock--ports"></a>
@@ -229,13 +229,13 @@ Optional:
 
 Required:
 
-- **internal** (Number)
+- **internal** (Number) Port within the container.
 
 Optional:
 
-- **external** (Number)
-- **ip** (String)
-- **protocol** (String)
+- **external** (Number) Port exposed out of the container. If not given a free random port `>= 32768` will be used.
+- **ip** (String) IP address/mask that can access this port, default to `0.0.0.0`
+- **protocol** (String) Protocol that can be used over this port, defaults to `tcp`.
 
 
 <a id="nestedblock--ulimit"></a>
@@ -243,9 +243,9 @@ Optional:
 
 Required:
 
-- **hard** (Number)
-- **name** (String)
-- **soft** (Number)
+- **hard** (Number) The hard limit
+- **name** (String) The name of the ulimit
+- **soft** (Number) The soft limit
 
 
 <a id="nestedblock--upload"></a>
@@ -253,15 +253,15 @@ Required:
 
 Required:
 
-- **file** (String)
+- **file** (String) Path to the file in the container where is upload goes to
 
 Optional:
 
-- **content** (String)
-- **content_base64** (String)
-- **executable** (Boolean)
-- **source** (String)
-- **source_hash** (String)
+- **content** (String) Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text. Conflicts with `content_base64` & `source`
+- **content_base64** (String) Base64-encoded data that will be decoded and uploaded as raw bytes for the object content. This allows safely uploading non-UTF8 binary data, but is recommended only for larger binary content such as the result of the `base64encode` interpolation function. See [here](https://github.com/terraform-providers/terraform-provider-docker/issues/48#issuecomment-374174588) for the reason. Conflicts with `content` & `source`
+- **executable** (Boolean) If true, the file will be uploaded with user executable permission. Defaults to false.
+- **source** (String) A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state. Conflicts with `content` & `content_base64`
+- **source_hash** (String) If using `source`, this will force an update if the file content has updated but the filename has not.
 
 
 <a id="nestedblock--volumes"></a>
@@ -269,11 +269,11 @@ Optional:
 
 Optional:
 
-- **container_path** (String)
-- **from_container** (String)
-- **host_path** (String)
-- **read_only** (Boolean)
-- **volume_name** (String)
+- **container_path** (String) The path in the container where the volume will be mounted.
+- **from_container** (String) The container where the volume is coming from.
+- **host_path** (String) The path on the host where the volume is coming from.
+- **read_only** (Boolean) If true, this volume will be readonly. Defaults to false.
+- **volume_name** (String) The name of the docker volume which should be mounted.
 
 
 <a id="nestedatt--network_data"></a>

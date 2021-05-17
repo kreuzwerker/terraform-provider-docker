@@ -36,40 +36,46 @@ func resourceDockerContainer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "The name of the Docker container.",
+				Required:    true,
+				ForceNew:    true,
 			},
 
 			"rm": {
-				Type:     schema.TypeBool,
-				Default:  false,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "If true, then the container will be automatically removed after his execution. Terraform won't check this container after creation.",
+				Default:     false,
+				Optional:    true,
 			},
 
 			"read_only": {
-				Type:     schema.TypeBool,
-				Default:  false,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Description: "If true, the container will be started as readonly.",
+				Default:     false,
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"start": {
-				Type:     schema.TypeBool,
-				Default:  true,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "If true, then the Docker container will be started after creation. If false, then the container is only created.",
+				Default:     true,
+				Optional:    true,
 			},
 
 			"attach": {
-				Type:     schema.TypeBool,
-				Default:  false,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "If true attach to the container after its creation and waits the end of its execution.",
+				Default:     false,
+				Optional:    true,
 			},
 
 			"logs": {
-				Type:     schema.TypeBool,
-				Default:  false,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "Save the container logs (`attach` must be enabled).",
+				Default:     false,
+				Optional:    true,
 			},
 
 			// Indicates whether the container must be running.
@@ -88,65 +94,74 @@ func resourceDockerContainer() *schema.Resource {
 			// following the principle that the containers
 			// should be pristine when started.
 			"must_run": {
-				Type:     schema.TypeBool,
-				Default:  true,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "If true, then the Docker container will be kept running. If false, then as long as the container exists, Terraform assumes it is successful.",
+				Default:     true,
+				Optional:    true,
 			},
 
 			"exit_code": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Description: "The exit code of the container if its execution is done (`must_run` must be disabled).",
+				Computed:    true,
 			},
 
 			"container_logs": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The logs of the container if its execution is done (`attach` must be disabled).",
+				Computed:    true,
 			},
 
 			// ForceNew is not true for image because we need to
 			// sane this against Docker image IDs, as each image
 			// can have multiple names/tags attached do it.
 			"image": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.",
+				Required:    true,
+				ForceNew:    true,
 				// DiffSuppressFunc: suppressIfSHAwasAdded(), // TODO mvogel
 			},
 
 			"hostname": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Hostname of the container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
 			},
 
 			"domainname": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "Domain name of the container.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"command": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-\",\"baz.con\"]`.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"entrypoint": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogra\"]`.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"user": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeString,
+				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
 					// treat "" as a no-op, which is Docker's default value
 					if newV == "" {
@@ -157,50 +172,57 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"dns": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Description: "DNS servers to use.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
 
 			"dns_opts": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Description: "DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
 
 			"dns_search": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Description: "DNS search domains that are used when bare unqualified hostnames are used inside of the container.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
 
 			"publish_all_ports": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Description: "Publish all ports of the container.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"restart": {
 				Type:             schema.TypeString,
+				Description:      "The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'.",
 				Optional:         true,
 				Default:          "no",
 				ValidateDiagFunc: validateStringMatchesPattern(`^(no|on-failure|always|unless-stopped)$`),
 			},
 
 			"max_retry_count": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Description: "The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'",
+				Optional:    true,
 			},
 			"working_dir": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "The working directory for commands to run in",
+				Optional:    true,
+				ForceNew:    true,
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
 					// treat "" as a no-op, which is Docker's default behavior
 					if newV == "" {
@@ -210,43 +232,47 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 			"remove_volumes": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Description: "If true, it will remove anonymous volumes associated with the container",
+				Optional:    true,
+				Default:     true,
 			},
 			"capabilities": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				MaxItems: 1,
+				Type:        schema.TypeSet,
+				Description: "Add or drop certrain linux capabilities",
+				Optional:    true,
+				ForceNew:    true,
+				MaxItems:    1,
 				// TODO implement DiffSuppressFunc
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"add": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							ForceNew: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-							Set:      schema.HashString,
+							Type:        schema.TypeSet,
+							Description: "List of linux capabilities to add.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
 						},
 
 						"drop": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							ForceNew: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-							Set:      schema.HashString,
+							Type:        schema.TypeSet,
+							Description: "List of linux capabilities to drop.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
 						},
 					},
 				},
 			},
 			"security_opts": {
 				Type:        schema.TypeSet,
+				Description: "List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration",
 				Set:         schema.HashString,
 			},
 			"mounts": {
@@ -350,72 +376,79 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 			"volumes": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Description: "Spec for mounting volumes in the container",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"from_container": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The container where the volume is coming from.",
+							Optional:    true,
+							ForceNew:    true,
 						},
-
 						"container_path": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The path in the container where the volume will be mounted.",
+							Optional:    true,
+							ForceNew:    true,
 						},
-
 						"host_path": {
 							Type:             schema.TypeString,
+							Description:      "The path on the host where the volume is coming from.",
 							Optional:         true,
 							ForceNew:         true,
 							ValidateDiagFunc: validateDockerContainerPath(),
 						},
-
 						"volume_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The name of the docker volume which should be mounted.",
+							Optional:    true,
+							ForceNew:    true,
 						},
-
 						"read_only": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeBool,
+							Description: "If true, this volume will be readonly. Defaults to false.",
+							Optional:    true,
+							ForceNew:    true,
 						},
 					},
 				},
 			},
 			"tmpfs": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:        schema.TypeMap,
+				Description: "A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.",
+				Optional:    true,
 			},
 			"ports": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeList,
+				Description: "Publish a container's port(s) to the host",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"internal": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeInt,
+							Description: "Port within the container.",
+							Required:    true,
+							ForceNew:    true,
 						},
 
 						"external": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
-							ForceNew: true,
+							Type:        schema.TypeInt,
+							Description: "Port exposed out of the container. If not given a free random port `>= 32768` will be used.",
+							Optional:    true,
+							Computed:    true,
+							ForceNew:    true,
 						},
 
 						"ip": {
-							Type:     schema.TypeString,
-							Default:  "0.0.0.0",
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "IP address/mask that can access this port, default to `0.0.0.0`",
+							Default:     "0.0.0.0",
+							Optional:    true,
+							ForceNew:    true,
 							StateFunc: func(val interface{}) string {
 								// Empty IP assignments default to 0.0.0.0
 								if val.(string) == "" {
@@ -427,10 +460,11 @@ func resourceDockerContainer() *schema.Resource {
 						},
 
 						"protocol": {
-							Type:     schema.TypeString,
-							Default:  "tcp",
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "Protocol that can be used over this port, defaults to `tcp`.",
+							Default:     "tcp",
+							Optional:    true,
+							ForceNew:    true,
 						},
 					},
 				},
@@ -438,189 +472,221 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"host": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Description: "Additional hosts to add to the container.",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "IP address this hostname should resolve to.",
+							Required:    true,
+							ForceNew:    true,
 						},
 
 						"host": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "Hostname to add.",
+							Required:    true,
+							ForceNew:    true,
 						},
 					},
 				},
 			},
 
 			"ulimit": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Description: "Ulimit options to add",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The name of the ulimit",
+							Required:    true,
+							ForceNew:    true,
 						},
 						"soft": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeInt,
+							Description: "The soft limit",
+							Required:    true,
+							ForceNew:    true,
 						},
 						"hard": {
-							Type:     schema.TypeInt,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeInt,
+							Description: "The hard limit",
+							Required:    true,
+							ForceNew:    true,
 						},
 					},
 				},
 			},
 
 			"env": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Description: "Environment variables to set.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
 
 			"links": {
-				Type:       schema.TypeSet,
-				Optional:   true,
-				ForceNew:   true,
-				Elem:       &schema.Schema{Type: schema.TypeString},
-				Set:        schema.HashString,
-				Deprecated: "The --link flag is a legacy feature of Docker. It may eventually be removed.",
+				Type:        schema.TypeSet,
+				Description: "Set of links for link based connectivity between containers that are running on the same host.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Deprecated:  "The --link flag is a legacy feature of Docker. It may eventually be removed.",
 			},
 
 			"ip_address": {
-				Type:       schema.TypeString,
-				Computed:   true,
-				Deprecated: "Use ip_adresses_data instead. This field exposes the data of the container's first network.",
+				Type:        schema.TypeString,
+				Description: "The IP address of the container.",
+				Computed:    true,
+				Deprecated:  "Use `network_data` instead. The IP address of the container's first network it.",
 			},
 
 			"ip_prefix_length": {
-				Type:       schema.TypeInt,
-				Computed:   true,
-				Deprecated: "Use ip_prefix_length from ip_adresses_data instead. This field exposes the data of the container's first network.",
+				Type:        schema.TypeInt,
+				Description: "The IP prefix length of the container.",
+				Computed:    true,
+				Deprecated:  "Use `network_data` instead. The IP prefix length of the container as read from its NetworkSettings.",
 			},
 
 			"gateway": {
-				Type:       schema.TypeString,
-				Computed:   true,
-				Deprecated: "Use gateway from ip_adresses_data instead. This field exposes the data of the container's first network.",
+				Type:        schema.TypeString,
+				Description: "The network gateway of the container.",
+				Computed:    true,
+				Deprecated:  "Use `network_data` instead. The network gateway of the container as read from its NetworkSettings.",
 			},
 
 			"bridge": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The network bridge of the container as read from its NetworkSettings.",
+				Computed:    true,
 			},
 
 			"network_data": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Description: "The data of the networks the container is connected to",
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"network_name": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Description: "The name of the network",
+							Computed:    true,
 						},
 						"ip_address": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Description: "The IP address of the container.",
+							Computed:    true,
+							Deprecated:  "Use `network_data` instead. The IP address of the container's first network it.",
 						},
 						"ip_prefix_length": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Description: "The IP prefix length of the container.",
+							Computed:    true,
+							Deprecated:  "Use `network_data` instead. The IP prefix length of the container as read from its NetworkSettings.",
 						},
 						"gateway": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Description: "The network gateway of the container.",
+							Computed:    true,
+							Deprecated:  "Use `network_data` instead. The network gateway of the container as read from its NetworkSettings.",
 						},
 						"global_ipv6_address": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Description: "The IPV6 address of the container",
+							Computed:    true,
 						},
 						"global_ipv6_prefix_length": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Description: "The IPV6 prefix length address of the container",
+							Computed:    true,
 						},
 						"ipv6_gateway": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Description: "The IPV6 gateway of the container",
+							Computed:    true,
 						},
 					},
 				},
 			},
 
 			"privileged": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Description: "If true, the container runs in privileged mode.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"devices": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Description: "Bind devices to the container",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"host_path": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The path on the host where the device is located.",
+							Required:    true,
+							ForceNew:    true,
 						},
-
 						"container_path": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The path in the container where the device will be bound.",
+							Optional:    true,
+							ForceNew:    true,
 						},
-
 						"permissions": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The cgroup permissions given to the container to access the device. Defaults to `rwm`.",
+							Optional:    true,
+							ForceNew:    true,
 						},
 					},
 				},
 			},
 
 			"destroy_grace_seconds": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Description: "If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.",
+				Optional:    true,
 			},
 
 			"labels": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
-				Elem:     labelSchema,
+				Type:        schema.TypeSet,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Elem:        labelSchema,
 			},
 
 			"memory": {
 				Type:             schema.TypeInt,
+				Description:      "The memory limit for the container in MBs.",
 				Optional:         true,
 				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 
 			"memory_swap": {
 				Type:             schema.TypeInt,
+				Description:      "The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.",
 				Optional:         true,
 				ValidateDiagFunc: validateIntegerGeqThan(-1),
 			},
 
 			"shm_size": {
 				Type:             schema.TypeInt,
+				Description:      "Size of `/dev/shm` in MBs.",
 				Optional:         true,
 				ForceNew:         true,
 				Computed:         true,
@@ -629,43 +695,48 @@ func resourceDockerContainer() *schema.Resource {
 
 			"cpu_shares": {
 				Type:             schema.TypeInt,
+				Description:      "CPU shares (relative weight) for the container.",
 				Optional:         true,
 				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 
 			"cpu_set": {
 				Type:             schema.TypeString,
+				Description:      "A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.",
 				Optional:         true,
 				ValidateDiagFunc: validateStringMatchesPattern(`^\d+([,-]\d+)*$`),
 			},
 
 			"log_driver": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "json-file",
+				Type:        schema.TypeString,
+				Description: "The logging driver to use for the container. Defaults to `json-file`.",
+				Optional:    true,
+				ForceNew:    true,
+				Default:     "json-file",
 			},
 
 			"log_opts": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeMap,
+				Description: "Key/value pairs to use as options for the logging driver.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"network_alias": {
 				Type:        schema.TypeSet,
+				Description: "Set an alias for the container in all specified networks",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
-				Description: "Set an alias for the container in all specified networks",
-				Deprecated:  "Use networks_advanced instead. Will be removed in v2.0.0",
+				Deprecated:  "Use networks_advanced instead. Will be removed in v3.0.0",
 			},
 
 			"network_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "Network mode of the container.",
+				Optional:    true,
+				ForceNew:    true,
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
 					// treat "" as "default", which is Docker's default value
 					if oldV == "" {
@@ -679,96 +750,111 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"networks": {
-				Type:       schema.TypeSet,
-				Optional:   true,
-				ForceNew:   true,
-				Elem:       &schema.Schema{Type: schema.TypeString},
-				Set:        schema.HashString,
-				Deprecated: "Use networks_advanced instead. Will be removed in v2.0.0",
+				Type:        schema.TypeSet,
+				Description: "ID of the networks in which the container is.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Deprecated:  "Use networks_advanced instead. Will be removed in v3.0.0",
 			},
 
 			"networks_advanced": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Description: "The networks the container is attached to",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The name of the network.",
+							Required:    true,
+							ForceNew:    true,
 						},
 						"aliases": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							ForceNew: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-							Set:      schema.HashString,
+							Type:        schema.TypeSet,
+							Description: "The network aliases of the container in the specific network.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
 						},
 						"ipv4_address": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The IPV4 address of the container in the specific network.",
+							Optional:    true,
+							ForceNew:    true,
 						},
 						"ipv6_address": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "The IPV6 address of the container in the specific network.",
+							Optional:    true,
+							ForceNew:    true,
 						},
 					},
 				},
 			},
 
 			"pid_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 			"userns_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Description: "Sets the usernamespace mode for the container when usernamespace remapping option is enabled.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"upload": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Description: "Specifies files to upload to the container before starting it. Only one of `content` or `content_base64` can be set and at least one of them has to be set.",
+				Optional:    true,
+				ForceNew:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"content": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Description: "Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text. Conflicts with `content_base64` & `source`",
+							Optional:    true,
 							// This is intentional. The container is mutated once, and never updated later.
 							// New configuration forces a new deployment, even with the same binaries.
 							ForceNew: true,
 						},
 						"content_base64": {
 							Type:             schema.TypeString,
+							Description:      "Base64-encoded data that will be decoded and uploaded as raw bytes for the object content. This allows safely uploading non-UTF8 binary data, but is recommended only for larger binary content such as the result of the `base64encode` interpolation function. See [here](https://github.com/terraform-providers/terraform-provider-docker/issues/48#issuecomment-374174588) for the reason. Conflicts with `content` & `source`",
 							Optional:         true,
 							ForceNew:         true,
 							ValidateDiagFunc: validateStringIsBase64Encoded(),
 						},
 						"file": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "Path to the file in the container where is upload goes to",
+							Required:    true,
+							ForceNew:    true,
 						},
 						"executable": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							ForceNew: true,
-							Default:  false,
+							Type:        schema.TypeBool,
+							Description: "If true, the file will be uploaded with user executable permission. Defaults to false.",
+							Optional:    true,
+							ForceNew:    true,
+							Default:     false,
 						},
 						"source": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state. Conflicts with `content` & `content_base64`",
+							Optional:    true,
+							ForceNew:    true,
 						},
 						"source_hash": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Description: "If using `source`, this will force an update if the file content has updated but the filename has not. ",
+							Optional:    true,
+							ForceNew:    true,
 						},
 					},
 				},
@@ -784,7 +870,7 @@ func resourceDockerContainer() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"test": {
 							Type:        schema.TypeList,
-							Description: "The test to perform as list",
+							Description: "Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `[\"CMD\", \"curl\", \"-f\", \"localhost/health\"]`.",
 							Required:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
@@ -821,13 +907,14 @@ func resourceDockerContainer() *schema.Resource {
 			},
 
 			"sysctls": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeMap,
+				Description: "A map of kernel parameters (sysctls) to set in the container.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 			"ipc_mode": {
 				Type:        schema.TypeString,
-				Description: "IPC sharing mode for the container",
+				Description: "IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -841,21 +928,24 @@ func resourceDockerContainer() *schema.Resource {
 				Set:         schema.HashString,
 			},
 			"init": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Description: "Configured whether an init process should be injected for this container. If unset this will default to the `dockerd` defaults.",
+				Optional:    true,
+				Computed:    true,
 			},
 			"tty": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Description: "If true, allocate a pseudo-tty (`docker run -t`)",
+				Optional:    true,
+				ForceNew:    true,
+				Default:     false,
 			},
 			"stdin_open": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Description: "If true, keep STDIN open even if not attached (`docker run -i`)",
+				Optional:    true,
+				ForceNew:    true,
+				Default:     false,
 			},
 		},
 	}
