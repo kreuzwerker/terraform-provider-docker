@@ -36,10 +36,11 @@ func resourceDockerSecret() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     labelSchema,
+				Type:        schema.TypeSet,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        labelSchema,
 			},
 		},
 		SchemaVersion: 1,
@@ -77,9 +78,10 @@ func resourceDockerSecretV0() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeMap,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
 			},
 		},
 	}

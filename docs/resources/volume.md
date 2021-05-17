@@ -29,7 +29,7 @@ resource "docker_volume" "shared_volume" {
 - **driver** (String)
 - **driver_opts** (Map of String)
 - **id** (String) The ID of this resource.
-- **labels** (Block Set) (see [below for nested schema](#nestedblock--labels))
+- **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 - **name** (String)
 
 ### Read-Only

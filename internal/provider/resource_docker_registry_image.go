@@ -209,9 +209,10 @@ func resourceDockerRegistryImage() *schema.Resource {
 							},
 						},
 						"labels": {
-							Type:     schema.TypeMap,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeMap,
+							Description: "User-defined key/value metadata",
+							Optional:    true,
+							ForceNew:    true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},

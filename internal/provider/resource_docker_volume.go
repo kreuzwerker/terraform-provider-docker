@@ -38,10 +38,11 @@ func resourceDockerVolume() *schema.Resource {
 				ForceNew: true,
 			},
 			"labels": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     labelSchema,
+				Type:        schema.TypeSet,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        labelSchema,
 			},
 			"driver": {
 				Type:     schema.TypeString,

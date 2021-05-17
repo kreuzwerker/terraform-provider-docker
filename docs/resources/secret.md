@@ -59,7 +59,7 @@ resource "docker_service" "service" {
 ### Optional
 
 - **id** (String) The ID of this resource.
-- **labels** (Block Set) (see [below for nested schema](#nestedblock--labels))
+- **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 
 <a id="nestedblock--labels"></a>
 ### Nested Schema for `labels`

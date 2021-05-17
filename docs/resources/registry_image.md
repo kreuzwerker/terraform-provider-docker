@@ -62,7 +62,7 @@ Optional:
 - **extra_hosts** (List of String)
 - **force_remove** (Boolean)
 - **isolation** (String)
-- **labels** (Map of String)
+- **labels** (Map of String) User-defined key/value metadata
 - **memory** (Number)
 - **memory_swap** (Number)
 - **network_mode** (String)
