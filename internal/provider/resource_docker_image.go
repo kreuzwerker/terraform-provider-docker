@@ -15,22 +15,26 @@ func resourceDockerImage() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "The name of the Docker image, including any tags or SHA256 repo digests.",
+				Required:    true,
 			},
 
 			"latest": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The ID of the image.",
+				Computed:    true,
 			},
 
 			"keep_locally": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.",
+				Optional:    true,
 			},
 
 			"pull_trigger": {
 				Type:          schema.TypeString,
+				Description:   "A value which cause an image pull when changed",
 				Optional:      true,
 				ForceNew:      true,
 				ConflictsWith: []string{"pull_triggers"},
@@ -38,29 +42,33 @@ func resourceDockerImage() *schema.Resource {
 			},
 
 			"pull_triggers": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Description: "List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html)",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
 
 			"output": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Deprecated: "Is unused and will be removed",
+				Computed:   true,
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:       schema.TypeString,
+					Deprecated: "Is unused and will be removed",
 				},
 			},
 
 			"force_remove": {
 				Type:        schema.TypeBool,
-				Description: "Force remove the image when the resource is destroyed",
+				Description: "If true, then the image is removed forcibly when the resource is destroyed.",
 				Optional:    true,
 			},
 
 			"build": {
 				Type:          schema.TypeSet,
+				Description:   "Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.",
 				Optional:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"pull_triggers", "pull_trigger"},

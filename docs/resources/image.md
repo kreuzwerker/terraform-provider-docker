@@ -53,21 +53,21 @@ resource "docker_image" "ubuntu" {
 
 ### Required
 
-- **name** (String)
+- **name** (String) The name of the Docker image, including any tags or SHA256 repo digests.
 
 ### Optional
 
-- **build** (Block Set, Max: 1) (see [below for nested schema](#nestedblock--build))
-- **force_remove** (Boolean) Force remove the image when the resource is destroyed
+- **build** (Block Set, Max: 1) Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. (see [below for nested schema](#nestedblock--build))
+- **force_remove** (Boolean) If true, then the image is removed forcibly when the resource is destroyed.
 - **id** (String) The ID of this resource.
-- **keep_locally** (Boolean)
-- **pull_trigger** (String, Deprecated)
-- **pull_triggers** (Set of String)
+- **keep_locally** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
+- **pull_trigger** (String, Deprecated) A value which cause an image pull when changed
+- **pull_triggers** (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html)
 
 ### Read-Only
 
-- **latest** (String)
-- **output** (String)
+- **latest** (String) The ID of the image.
+- **output** (String, Deprecated)
 
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`
