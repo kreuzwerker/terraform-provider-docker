@@ -16,18 +16,19 @@ func dataSourceDockerPlugin() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"name": {
 				Type:        schema.TypeString,
-				Description: "The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.",
+				Description: "The ID of the plugin, which has precendence over the `alias` of both are given",
 				Optional:    true,
 			},
 			"alias": {
 				Type:        schema.TypeString,
 				Description: "The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.",
 				Optional:    true,
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Description: "The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.",
+				Computed:    true,
 			},
 			"plugin_reference": {
 				Type:        schema.TypeString,

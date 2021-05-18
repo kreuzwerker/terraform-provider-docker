@@ -13,8 +13,14 @@ Reads the local Docker plugin. The plugin must be installed locally.
 ## Example Usage
 
 ```terraform
-data "docker_plugin" "sample-volume-plugin" {
+### With alias
+data "docker_plugin" "by_alias" {
   alias = "sample-volume-plugin:latest"
+}
+
+### With ID
+data "docker_plugin" "by_id" {
+  id = "e9a9db917b3bfd6706b5d3a66d4bceb9f"
 }
 ```
 
@@ -24,14 +30,14 @@ data "docker_plugin" "sample-volume-plugin" {
 ### Optional
 
 - **alias** (String) The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.
-- **id** (String) The ID of this resource.
-- **name** (String) The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.
+- **id** (String) The ID of the plugin, which has precendence over the `alias` of both are given
 
 ### Read-Only
 
 - **enabled** (Boolean) If `true` the plugin is enabled
 - **env** (Set of String) The environment variables in the from of `KEY=VALUE`, e.g. `DEBUG=0`
 - **grant_all_permissions** (Boolean) If true, grant all permissions necessary to run the plugin
+- **name** (String) The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.
 - **plugin_reference** (String) The Docker Plugin Reference
 
 
