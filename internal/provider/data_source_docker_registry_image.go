@@ -32,7 +32,7 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 
 			"sha256_digest": {
 				Type:        schema.TypeString,
-				Description: "The content digest of the image, as stored on the registry.",
+				Description: "The content digest of the image, as stored in the registry.",
 				Computed:    true,
 			},
 		},

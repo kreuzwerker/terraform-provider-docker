@@ -36,6 +36,6 @@ resource "docker_image" "ubuntu" {
 
 ### Read-Only
 
-- **sha256_digest** (String) The content digest of the image, as stored on the registry.
+- **sha256_digest** (String) The content digest of the image, as stored in the registry.
 
 
