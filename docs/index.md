@@ -2,7 +2,7 @@
 layout: ""
 page_title: "Provider: Docker"
 description: |-
-  The Docker provider is used to interact with Docker containers and images.
+  The Docker provider is used to interact with Docker resources, like containers, images, service etc.
 ---
 
 # Docker Provider
