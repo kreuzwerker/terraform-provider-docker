@@ -20,12 +20,12 @@ func dataSourceDockerNetwork() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name of the Docker network.",
-				Optional:    true,
+				Required:    true,
 			},
 
 			"id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"driver": {
