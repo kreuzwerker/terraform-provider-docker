@@ -12,12 +12,52 @@ description: |-
 
 ## Example Usage
 
-{{tffile "examples/resources/docker_config/resource.tf"}}
+### Basic
+
+{{tffile "examples/resources/docker_config/resource-basic.tf"}}
+
+### Advanced
+#### Dynamically set config with a template
+In this example you can use the `${var.foo_port}` variable to dynamically
+set the `${port}` variable in the `foo.configs.json.tpl` template and create
+the data of the `foo_config` with the help of the `base64encode` interpolation 
+function.
+
+The file `foo.config.json.tpl` has the following content:
+
+{{codefile "gojson" "examples/resources/docker_config/foo.config.json.tpl" }}
+
+and the resource uses it as follows:
+
+{{tffile "examples/resources/docker_config/resource-advanced.tf"}}
+
+#### Update config with no downtime
+To update a `config`, Terraform will destroy the existing resource and create a replacement. 
+To effectively use a `docker_config` resource with a `docker_service` resource, it's recommended
+ to specify `create_before_destroy` in a `lifecycle` block. Provide a unique `name` attribute, 
+for example with one of the interpolation functions `uuid` or `timestamp` as shown
+in the example below. The reason is this [issue](https://github.com/moby/moby/issues/35803).
+
+{{tffile "examples/resources/docker_config/resource-no-downtime.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax by providing the `id`:
 
 {{codefile "shell" "examples/resources/docker_config/import.sh" }}
+
+### Example
+
+Assuming you created a `config` as follows
+
+{{codefile "shell" "examples/resources/docker_config/import-create.sh" }}
+
+you provide the definition for the resource as follows
+
+{{tffile "examples/resources/docker_config/import-resource.tf" }}
+
+then the import command is as follows
+
+{{codefile "shell" "examples/resources/docker_config/import-resource.sh" }}

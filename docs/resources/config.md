@@ -12,55 +12,64 @@ Manages the configs of a Docker service in a swarm.
 
 ## Example Usage
 
-```terraform
 ### Basic
+
+```terraform
 resource "docker_config" "foo_config" {
   name = "foo_config"
-  data = "ewogICJzZXJIfQo="
+  data = base64encode("{\"a\": \"b\"}")
 }
+```
 
 ### Advanced
 #### Dynamically set config with a template
-# In this example you can use the `${var.foo_port}` variable to dynamically
-# set the `${port}` variable in the `foo.configs.json.tpl` template and create
-# the data of the `foo_config` with the help of the `base64encode` interpolation 
-# function.
+In this example you can use the `${var.foo_port}` variable to dynamically
+set the `${port}` variable in the `foo.configs.json.tpl` template and create
+the data of the `foo_config` with the help of the `base64encode` interpolation 
+function.
 
-# File `foo.config.json.tpl`
-# 
-# {
-#   "server": {
-#     "public_port": ${port}
-#   }
-# }
+The file `foo.config.json.tpl` has the following content:
 
-# File `main.tf`
-
-# Creates the template in renders the variable
-data "template_file" "foo_config_tpl" {
-  template = file("foo.config.json.tpl")
-
-  vars {
-    port = var.foo_port
+```gojson
+{
+  "server": {
+    "public_port": ${port}
   }
 }
+```
 
-# Creates the config
+and the resource uses it as follows:
+
+```terraform
 resource "docker_config" "foo_config" {
   name = "foo_config"
-  data = base64encode(data.template_file.foo_config_tpl.rendered)
+  data = base64encode(
+    templatefile("${path.cwd}/foo.config.json.tpl",
+      {
+        port = 8080
+      }
+    )
+  )
 }
+```
 
 #### Update config with no downtime
-# To update a `config`, Terraform will destroy the existing resource and create a replacement. 
-# To effectively use a `docker_config` resource with a `docker_service` resource, it's recommended
-#  to specify `create_before_destroy` in a `lifecycle` block. Provide a unique `name` attribute, 
-# for example with one of the interpolation functions `uuid` or `timestamp` as shown
-# in the example below. The reason is https://github.com/moby/moby/issues/35803.
+To update a `config`, Terraform will destroy the existing resource and create a replacement. 
+To effectively use a `docker_config` resource with a `docker_service` resource, it's recommended
+ to specify `create_before_destroy` in a `lifecycle` block. Provide a unique `name` attribute, 
+for example with one of the interpolation functions `uuid` or `timestamp` as shown
+in the example below. The reason is this [issue](https://github.com/moby/moby/issues/35803).
 
+```terraform
 resource "docker_config" "service_config" {
   name = "${var.service_name}-config-${replace(timestamp(), ":", ".")}"
-  data = base64encode(data.template_file.service_config_tpl.rendered)
+  data = base64encode(
+    templatefile("${path.cwd}/foo.config.json.tpl",
+      {
+        port = 8080
+      }
+    )
+  )
 
   lifecycle {
     ignore_changes        = ["name"]
@@ -69,7 +78,7 @@ resource "docker_config" "service_config" {
 }
 
 resource "docker_service" "service" {
-  # ...
+  # ... other attributes ommited for brevity
   configs = [
     {
       config_id   = docker_config.service_config.id
@@ -94,15 +103,36 @@ resource "docker_service" "service" {
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax by providing the `id`:
+
+```shell
+#!/bin/bash
+terraform import docker_config.foo id
+```
+
+### Example
+
+Assuming you created a `config` as follows
 
 ```shell
 #!/bin/bash
 printf '{"a":"b"}' | docker config create foo -
-# prints the the long ID 
+# prints the id 
 08c26c477474478d971139f750984775a7f019dbe8a2e7f09d66a187c009e66d
+```
 
-$ terraform import docker_config.foo 08c26c477474478d971139f750984775a7f019dbe8a2e7f09d66a187c009e66d
-# or use the short version to retrieve the long ID
-$ terraform import docker_config.foo "$(docker config inspect -f {{.ID}} 08c)"
+you provide the definition for the resource as follows
+
+```terraform
+resource "docker_config" "foo_config" {
+  name = "foo_config"
+  data = base64encode("{\"a\": \"b\"}")
+}
+```
+
+then the import command is as follows
+
+```shell
+#!/bin/bash
+terraform import docker_config.foo 08c26c477474478d971139f750984775a7f019dbe8a2e7f09d66a187c009e66d
 ```
