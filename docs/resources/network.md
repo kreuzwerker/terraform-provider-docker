@@ -31,10 +31,10 @@ resource "docker_network" "private_network" {
 - **check_duplicate** (Boolean) Requests daemon to check for networks with same name.
 - **driver** (String) The driver of the Docker network. Possible values are `bridge`, `host`, `overlay`, `macvlan`. See [network docs](https://docs.docker.com/network/#network-drivers) for more details.
 - **id** (String) The ID of this resource.
-- **ingress** (Boolean) Create swarm routing-mesh network.Defaults to `false`.
+- **ingress** (Boolean) Create swarm routing-mesh network. Defaults to `false`.
 - **internal** (Boolean) Whether the network is internal.
 - **ipam_config** (Block Set) The IPAM configuration options (see [below for nested schema](#nestedblock--ipam_config))
-- **ipam_driver** (String) Driver used by the custom IP scheme of the network.
+- **ipam_driver** (String) Driver used by the custom IP scheme of the network. Defaults to `default`
 - **ipv6** (Boolean) Enable IPv6 networking. Defaults to `false`.
 - **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 - **options** (Map of String) Only available with bridge networks. See [bridge options docs](https://docs.docker.com/engine/reference/commandline/network_create/#bridge-driver-options) for more details.
@@ -68,5 +68,11 @@ Import is supported using the following syntax:
 
 ```shell
 #!/bin/bash
-terraform import docker_network.foo "$(docker network inspect -f {{.ID}} p73)"
+docker network create foo
+# prints the long ID
+87b57a9b91ecab2db2a6dbf38df74c67d7c7108cbe479d6576574ec2cd8c2d73
+
+$ terraform import docker_network.foo 87b57a9b91ecab2db2a6dbf38df74c67d7c7108cbe479d6576574ec2cd8c2d73
+# or use the short version to retrieve the long ID
+$ terraform import docker_network.foo "$(docker network inspect -f {{.ID}} 87b)"
 ```

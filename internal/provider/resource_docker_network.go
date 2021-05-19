@@ -77,7 +77,7 @@ func resourceDockerNetwork() *schema.Resource {
 
 			"ingress": {
 				Type:        schema.TypeBool,
-				Description: "Create swarm routing-mesh network.Defaults to `false`.",
+				Description: "Create swarm routing-mesh network. Defaults to `false`.",
 				Optional:    true,
 				ForceNew:    true,
 			},
@@ -91,10 +91,10 @@ func resourceDockerNetwork() *schema.Resource {
 
 			"ipam_driver": {
 				Type:        schema.TypeString,
-				Description: "Driver used by the custom IP scheme of the network.",
+				Description: "Driver used by the custom IP scheme of the network. Defaults to `default`",
+				Default:     "default",
 				Optional:    true,
 				ForceNew:    true,
-				Default:     "default",
 			},
 
 			"ipam_config": {
