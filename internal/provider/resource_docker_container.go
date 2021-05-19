@@ -37,21 +37,21 @@ func resourceDockerContainer() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Description: "The name of the Docker container.",
+				Description: "The name of the container.",
 				Required:    true,
 				ForceNew:    true,
 			},
 
 			"rm": {
 				Type:        schema.TypeBool,
-				Description: "If true, then the container will be automatically removed after his execution. Terraform won't check this container after creation.",
+				Description: "If `true`, then the container will be automatically removed after his execution. Terraform won't check this container after creation. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
 
 			"read_only": {
 				Type:        schema.TypeBool,
-				Description: "If true, the container will be started as readonly.",
+				Description: "If `true`, the container will be started as readonly. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 				ForceNew:    true,
@@ -59,21 +59,21 @@ func resourceDockerContainer() *schema.Resource {
 
 			"start": {
 				Type:        schema.TypeBool,
-				Description: "If true, then the Docker container will be started after creation. If false, then the container is only created.",
+				Description: "If `true`, then the Docker container will be started after creation. If `false`, then the container is only created. Defaults to `true`.",
 				Default:     true,
 				Optional:    true,
 			},
 
 			"attach": {
 				Type:        schema.TypeBool,
-				Description: "If true attach to the container after its creation and waits the end of its execution.",
+				Description: "If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
 
 			"logs": {
 				Type:        schema.TypeBool,
-				Description: "Save the container logs (`attach` must be enabled).",
+				Description: "Save the container logs (`attach` must be enabled). Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
@@ -95,7 +95,7 @@ func resourceDockerContainer() *schema.Resource {
 			// should be pristine when started.
 			"must_run": {
 				Type:        schema.TypeBool,
-				Description: "If true, then the Docker container will be kept running. If false, then as long as the container exists, Terraform assumes it is successful.",
+				Description: "If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.",
 				Default:     true,
 				Optional:    true,
 			},
@@ -207,20 +207,20 @@ func resourceDockerContainer() *schema.Resource {
 
 			"restart": {
 				Type:             schema.TypeString,
-				Description:      "The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'.",
-				Optional:         true,
+				Description:      "The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'. Defaults to `no`.",
 				Default:          "no",
+				Optional:         true,
 				ValidateDiagFunc: validateStringMatchesPattern(`^(no|on-failure|always|unless-stopped)$`),
 			},
 
 			"max_retry_count": {
 				Type:        schema.TypeInt,
-				Description: "The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'",
+				Description: "The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'.",
 				Optional:    true,
 			},
 			"working_dir": {
 				Type:        schema.TypeString,
-				Description: "The working directory for commands to run in",
+				Description: "The working directory for commands to run in.",
 				Optional:    true,
 				ForceNew:    true,
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
@@ -233,13 +233,13 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"remove_volumes": {
 				Type:        schema.TypeBool,
-				Description: "If true, it will remove anonymous volumes associated with the container",
-				Optional:    true,
+				Description: "If `true`, it will remove anonymous volumes associated with the container. Defaults to `true`.",
 				Default:     true,
+				Optional:    true,
 			},
 			"capabilities": {
 				Type:        schema.TypeSet,
-				Description: "Add or drop certrain linux capabilities",
+				Description: "Add or drop certrain linux capabilities.",
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,
@@ -268,7 +268,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"security_opts": {
 				Type:        schema.TypeSet,
-				Description: "List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration",
+				Description: "List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -277,7 +277,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"mounts": {
 				Type:        schema.TypeSet,
-				Description: "Specification for mounts to be added to containers created as part of the service",
+				Description: "Specification for mounts to be added to containers created as part of the service.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -289,7 +289,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"source": {
 							Type:        schema.TypeString,
-							Description: "Mount source (e.g. a volume name, a host path)",
+							Description: "Mount source (e.g. a volume name, a host path).",
 							Optional:    true,
 						},
 						"type": {
@@ -300,19 +300,19 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"read_only": {
 							Type:        schema.TypeBool,
-							Description: "Whether the mount should be read-only",
+							Description: "Whether the mount should be read-only.",
 							Optional:    true,
 						},
 						"bind_options": {
 							Type:        schema.TypeList,
-							Description: "Optional configuration for the bind type",
+							Description: "Optional configuration for the bind type.",
 							Optional:    true,
 							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"propagation": {
 										Type:             schema.TypeString,
-										Description:      "A propagation mode with the value",
+										Description:      "A propagation mode with the value.",
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(private|rprivate|shared|rshared|slave|rslave)$`),
 									},
@@ -321,30 +321,30 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"volume_options": {
 							Type:        schema.TypeList,
-							Description: "Optional configuration for the volume type",
+							Description: "Optional configuration for the volume type.",
 							Optional:    true,
 							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"no_copy": {
 										Type:        schema.TypeBool,
-										Description: "Populate volume with data from the target",
+										Description: "Populate volume with data from the target.",
 										Optional:    true,
 									},
 									"labels": {
 										Type:        schema.TypeSet,
-										Description: "User-defined key/value metadata",
+										Description: "User-defined key/value metadata.",
 										Optional:    true,
 										Elem:        labelSchema,
 									},
 									"driver_name": {
 										Type:        schema.TypeString,
-										Description: "Name of the driver to use to create the volume",
+										Description: "Name of the driver to use to create the volume.",
 										Optional:    true,
 									},
 									"driver_options": {
 										Type:        schema.TypeMap,
-										Description: "key/value map of driver specific options",
+										Description: "key/value map of driver specific options.",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 									},
@@ -353,7 +353,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"tmpfs_options": {
 							Type:        schema.TypeList,
-							Description: "Optional configuration for the tmpfs type",
+							Description: "Optional configuration for the tmpfs type.",
 							Optional:    true,
 							ForceNew:    true,
 							MaxItems:    1,
@@ -361,12 +361,12 @@ func resourceDockerContainer() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"size_bytes": {
 										Type:        schema.TypeInt,
-										Description: "The size for the tmpfs mount in bytes",
+										Description: "The size for the tmpfs mount in bytes.",
 										Optional:    true,
 									},
 									"mode": {
 										Type:        schema.TypeInt,
-										Description: "The permission mode for the tmpfs mount in an integer",
+										Description: "The permission mode for the tmpfs mount in an integer.",
 										Optional:    true,
 									},
 								},
@@ -377,7 +377,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"volumes": {
 				Type:        schema.TypeSet,
-				Description: "Spec for mounting volumes in the container",
+				Description: "Spec for mounting volumes in the container.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -409,7 +409,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"read_only": {
 							Type:        schema.TypeBool,
-							Description: "If true, this volume will be readonly. Defaults to false.",
+							Description: "If `true`, this volume will be readonly. Defaults to `false`.",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -423,7 +423,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"ports": {
 				Type:        schema.TypeList,
-				Description: "Publish a container's port(s) to the host",
+				Description: "Publish a container's port(s) to the host.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -445,7 +445,7 @@ func resourceDockerContainer() *schema.Resource {
 
 						"ip": {
 							Type:        schema.TypeString,
-							Description: "IP address/mask that can access this port, default to `0.0.0.0`",
+							Description: "IP address/mask that can access this port. Defaults to `0.0.0.0`.",
 							Default:     "0.0.0.0",
 							Optional:    true,
 							ForceNew:    true,
@@ -461,7 +461,7 @@ func resourceDockerContainer() *schema.Resource {
 
 						"protocol": {
 							Type:        schema.TypeString,
-							Description: "Protocol that can be used over this port, defaults to `tcp`.",
+							Description: "Protocol that can be used over this port. Defaults to `tcp`.",
 							Default:     "tcp",
 							Optional:    true,
 							ForceNew:    true,
@@ -487,7 +487,7 @@ func resourceDockerContainer() *schema.Resource {
 
 						"host": {
 							Type:        schema.TypeString,
-							Description: "Hostname to add.",
+							Description: "Hostname to add",
 							Required:    true,
 							ForceNew:    true,
 						},
@@ -497,7 +497,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"ulimit": {
 				Type:        schema.TypeSet,
-				Description: "Ulimit options to add",
+				Description: "Ulimit options to add.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -573,7 +573,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"network_data": {
 				Type:        schema.TypeList,
-				Description: "The data of the networks the container is connected to",
+				Description: "The data of the networks the container is connected to.",
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -602,17 +602,17 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"global_ipv6_address": {
 							Type:        schema.TypeString,
-							Description: "The IPV6 address of the container",
+							Description: "The IPV6 address of the container.",
 							Computed:    true,
 						},
 						"global_ipv6_prefix_length": {
 							Type:        schema.TypeInt,
-							Description: "The IPV6 prefix length address of the container",
+							Description: "The IPV6 prefix length address of the container.",
 							Computed:    true,
 						},
 						"ipv6_gateway": {
 							Type:        schema.TypeString,
-							Description: "The IPV6 gateway of the container",
+							Description: "The IPV6 gateway of the container.",
 							Computed:    true,
 						},
 					},
@@ -621,14 +621,14 @@ func resourceDockerContainer() *schema.Resource {
 
 			"privileged": {
 				Type:        schema.TypeBool,
-				Description: "If true, the container runs in privileged mode.",
+				Description: "If `true`, the container runs in privileged mode.",
 				Optional:    true,
 				ForceNew:    true,
 			},
 
 			"devices": {
 				Type:        schema.TypeSet,
-				Description: "Bind devices to the container",
+				Description: "Bind devices to the container.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -710,9 +710,9 @@ func resourceDockerContainer() *schema.Resource {
 			"log_driver": {
 				Type:        schema.TypeString,
 				Description: "The logging driver to use for the container. Defaults to `json-file`.",
+				Default:     "json-file",
 				Optional:    true,
 				ForceNew:    true,
-				Default:     "json-file",
 			},
 
 			"log_opts": {
@@ -839,10 +839,10 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"executable": {
 							Type:        schema.TypeBool,
-							Description: "If true, the file will be uploaded with user executable permission. Defaults to false.",
+							Description: "If `true`, the file will be uploaded with user executable permission. Defaults to `false`.",
+							Default:     false,
 							Optional:    true,
 							ForceNew:    true,
-							Default:     false,
 						},
 						"source": {
 							Type:        schema.TypeString,
@@ -876,30 +876,30 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"interval": {
 							Type:             schema.TypeString,
-							Description:      "Time between running the check (ms|s|m|h)",
-							Optional:         true,
+							Description:      "Time between running the check (ms|s|m|h). Defaults to `0s`.",
 							Default:          "0s",
+							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
 						},
 						"timeout": {
 							Type:             schema.TypeString,
-							Description:      "Maximum time to allow one check to run (ms|s|m|h)",
-							Optional:         true,
+							Description:      "Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.",
 							Default:          "0s",
+							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
 						},
 						"start_period": {
 							Type:             schema.TypeString,
-							Description:      "Start period for the container to initialize before counting retries towards unstable (ms|s|m|h)",
-							Optional:         true,
+							Description:      "Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.",
 							Default:          "0s",
+							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
 						},
 						"retries": {
 							Type:             schema.TypeInt,
-							Description:      "Consecutive failures needed to report unhealthy",
-							Optional:         true,
+							Description:      "Consecutive failures needed to report unhealthy. Defaults to `0`.",
 							Default:          0,
+							Optional:         true,
 							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 					},
@@ -935,17 +935,17 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"tty": {
 				Type:        schema.TypeBool,
-				Description: "If true, allocate a pseudo-tty (`docker run -t`)",
+				Description: "If `true`, allocate a pseudo-tty (`docker run -t`). Defaults to `false`.",
+				Default:     false,
 				Optional:    true,
 				ForceNew:    true,
-				Default:     false,
 			},
 			"stdin_open": {
 				Type:        schema.TypeBool,
-				Description: "If true, keep STDIN open even if not attached (`docker run -i`)",
+				Description: "If `true`, keep STDIN open even if not attached (`docker run -i`). Defaults to `false`.",
+				Default:     false,
 				Optional:    true,
 				ForceNew:    true,
-				Default:     false,
 			},
 		},
 	}
