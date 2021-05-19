@@ -123,7 +123,7 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.SetId(secret.ID)
 	d.Set("name", secret.Spec.Name)
 	// Note mavogel: secret data is not exposed via the API
-	// TODO next major if we do not explicitly do not store it in the state we could import it, but BC
+	// TODO next major if we do not explicitly store it in the state we could import it, but BC
 	// d.Set("data", base64.StdEncoding.EncodeToString(secret.Spec.Data))
 	return nil
 }
