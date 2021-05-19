@@ -312,7 +312,7 @@ Optional:
 - **healthcheck** (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--task_spec--container_spec--healthcheck))
 - **hostname** (String) The hostname to use for the container, as a valid RFC 1123 hostname
 - **hosts** (Block Set) A list of hostname/IP mappings to add to the container's hosts file (see [below for nested schema](#nestedblock--task_spec--container_spec--hosts))
-- **isolation** (String) Isolation technology of the containers running the service. (Windows only)
+- **isolation** (String) Isolation technology of the containers running the service. (Windows only). Defaults to `default`.
 - **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--task_spec--container_spec--labels))
 - **mounts** (Block Set) Specification for mounts to be added to containers created as part of the service (see [below for nested schema](#nestedblock--task_spec--container_spec--mounts))
 - **privileges** (Block List, Max: 1) Security options for the container (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges))
@@ -333,9 +333,9 @@ Required:
 Optional:
 
 - **config_name** (String) Name of the config that this references, but this is just provided for lookup/display purposes. The config in the reference will be identified by its ID
-- **file_gid** (String) Represents the file GID
-- **file_mode** (Number) Represents represents the FileMode of the file
-- **file_uid** (String) Represents the file UID
+- **file_gid** (String) Represents the file GID. Defaults to `0`.
+- **file_mode** (Number) Represents represents the FileMode of the file. Defaults to `0o444`.
+- **file_uid** (String) Represents the file UID. Defaults to `0`.
 
 
 <a id="nestedblock--task_spec--container_spec--dns_config"></a>
@@ -360,10 +360,10 @@ Required:
 
 Optional:
 
-- **interval** (String) Time between running the check (ms|s|m|h)
-- **retries** (Number) Consecutive failures needed to report unhealthy
-- **start_period** (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h)
-- **timeout** (String) Maximum time to allow one check to run (ms|s|m|h)
+- **interval** (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
+- **retries** (Number) Consecutive failures needed to report unhealthy. Defaults to `0`
+- **start_period** (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
+- **timeout** (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
 
 <a id="nestedblock--task_spec--container_spec--hosts"></a>
@@ -478,9 +478,9 @@ Required:
 
 Optional:
 
-- **file_gid** (String) Represents the file GID
-- **file_mode** (Number) Represents represents the FileMode of the file
-- **file_uid** (String) Represents the file UID
+- **file_gid** (String) Represents the file GID. Defaults to `0`
+- **file_mode** (Number) Represents represents the FileMode of the file. Defaults to `0o444`
+- **file_uid** (String) Represents the file UID. Defaults to `0`
 - **secret_name** (String) Name of the secret that this references, but this is just provided for lookup/display purposes. The config in the reference will be identified by its ID
 
 
@@ -584,8 +584,8 @@ Optional:
 
 Optional:
 
-- **delay** (String) The interval to check if the desired state is reached (ms|s). Default: 7s
-- **timeout** (String) The timeout of the service to reach the desired state (s|m). Default: 3m
+- **delay** (String) The interval to check if the desired state is reached (ms|s). Defaults to `7s`.
+- **timeout** (String) The timeout of the service to reach the desired state (s|m). Defaults to `3m`
 
 
 <a id="nestedblock--endpoint_spec"></a>
@@ -606,8 +606,8 @@ Required:
 Optional:
 
 - **name** (String) A random name for the port
-- **protocol** (String) Rrepresents the protocol of a port: 'tcp', 'udp' or 'sctp'
-- **publish_mode** (String) Represents the mode in which the port is to be published: 'ingress' or 'host'
+- **protocol** (String) Rrepresents the protocol of a port: 'tcp', 'udp' or 'sctp'. Defaults to `tcp`.
+- **publish_mode** (String) Represents the mode in which the port is to be published: 'ingress' or 'host'. Defaults to `ingress`.
 - **published_port** (Number) The port on the swarm hosts
 
 
@@ -626,7 +626,7 @@ Required:
 
 Optional:
 
-- **global** (Boolean) The global service mode
+- **global** (Boolean) The global service mode. Defaults to `false`
 - **replicated** (Block List, Max: 1) The replicated service mode (see [below for nested schema](#nestedblock--mode--replicated))
 
 <a id="nestedblock--mode--replicated"></a>
@@ -634,7 +634,7 @@ Optional:
 
 Optional:
 
-- **replicas** (Number) The amount of replicas of the service
+- **replicas** (Number) The amount of replicas of the service. Defaults to `1`
 
 
 
@@ -643,12 +643,12 @@ Optional:
 
 Optional:
 
-- **delay** (String) Delay between task rollbacks (ns|us|ms|s|m|h)
-- **failure_action** (String) Action on rollback failure: pause | continue
-- **max_failure_ratio** (String) Failure rate to tolerate during a rollback
-- **monitor** (String) Duration after each task rollback to monitor for failure (ns|us|ms|s|m|h)
-- **order** (String) Rollback order: either 'stop-first' or 'start-first'
-- **parallelism** (Number) Maximum number of tasks to be rollbacked in one iteration
+- **delay** (String) Delay between task rollbacks (ns|us|ms|s|m|h). Defaults to `0s`.
+- **failure_action** (String) Action on rollback failure: pause | continue. Defaults to `pause`.
+- **max_failure_ratio** (String) Failure rate to tolerate during a rollback. Defaults to `0.0`.
+- **monitor** (String) Duration after each task rollback to monitor for failure (ns|us|ms|s|m|h). Defaults to `5s`.
+- **order** (String) Rollback order: either 'stop-first' or 'start-first'. Defaults to `stop-first`.
+- **parallelism** (Number) Maximum number of tasks to be rollbacked in one iteration. Defaults to `1`
 
 
 <a id="nestedblock--update_config"></a>
@@ -656,12 +656,12 @@ Optional:
 
 Optional:
 
-- **delay** (String) Delay between task updates (ns|us|ms|s|m|h)
-- **failure_action** (String) Action on update failure: pause | continue | rollback
-- **max_failure_ratio** (String) Failure rate to tolerate during an update
-- **monitor** (String) Duration after each task update to monitor for failure (ns|us|ms|s|m|h)
-- **order** (String) Update order: either 'stop-first' or 'start-first'
-- **parallelism** (Number) Maximum number of tasks to be updated in one iteration
+- **delay** (String) Delay between task updates (ns|us|ms|s|m|h). Defaults to `0s`.
+- **failure_action** (String) Action on update failure: pause | continue | rollback. Defaults to `pause`.
+- **max_failure_ratio** (String) Failure rate to tolerate during an update. Defaults to `0.0`.
+- **monitor** (String) Duration after each task update to monitor for failure (ns|us|ms|s|m|h). Defaults to `5s`.
+- **order** (String) Update order: either 'stop-first' or 'start-first'. Defaults to `stop-first`.
+- **parallelism** (Number) Maximum number of tasks to be updated in one iteration. Defaults to `1`
 
 ## Import
 
@@ -669,6 +669,9 @@ Import is supported using the following syntax:
 
 ```shell
 #!/bin/bash
+
+docker service create --name foo -p 8080:80 nginx
+4pcphbxkfn2rffhbhe6czytgi
 
 ## A Docker service can be imported using the long id, 
 ## e.g. for a service with the short id `55ba873dd`:
