@@ -26,7 +26,7 @@ resource "docker_volume" "shared_volume" {
 
 ### Optional
 
-- **driver** (String) Driver type for the volume (defaults to `local`).
+- **driver** (String) Driver type for the volume. Defaults to `local`.
 - **driver_opts** (Map of String) Options specific to the driver.
 - **id** (String) The ID of this resource.
 - **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
@@ -51,8 +51,11 @@ Import is supported using the following syntax:
 ```shell
 #!/bin/bash
 
+docker volume create
+524b0457aa2a87dd2b75c74c3e4e53f406974249e63ab3ed9bf21e5644f9dc7d
+
 # Docker volume can be imported using the long id, 
 # e.g. for a volume with the short id `ecae276c5`:
 
-terraform import docker_volume.foo "$(docker volume inspect -f {{.ID}} eca)"
+terraform import docker_volume.foo 524b0457aa2a87dd2b75c74c3e4e53f406974249e63ab3ed9bf21e5644f9dc7d
 ```

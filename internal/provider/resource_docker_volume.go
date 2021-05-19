@@ -47,7 +47,7 @@ func resourceDockerVolume() *schema.Resource {
 			},
 			"driver": {
 				Type:        schema.TypeString,
-				Description: "Driver type for the volume (defaults to `local`).",
+				Description: "Driver type for the volume. Defaults to `local`.",
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
