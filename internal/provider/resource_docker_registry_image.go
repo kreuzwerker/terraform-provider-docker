@@ -25,9 +25,9 @@ func resourceDockerRegistryImage() *schema.Resource {
 
 			"keep_remotely": {
 				Type:        schema.TypeBool,
-				Description: "If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation.",
-				Optional:    true,
+				Description: "If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation. Defaults to `false`",
 				Default:     false,
+				Optional:    true,
 			},
 
 			"build": {
@@ -141,9 +141,9 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"dockerfile": {
 							Type:        schema.TypeString,
-							Description: "Dockerfile file. Default is \"Dockerfile\"",
-							Optional:    true,
+							Description: "Dockerfile file. Defaults to `Dockerfile`",
 							Default:     "Dockerfile",
+							Optional:    true,
 							ForceNew:    true,
 						},
 						"ulimit": {

@@ -33,7 +33,7 @@ resource "docker_registry_image" "helloworld" {
 
 - **build** (Block List, Max: 1) Definition for building the image (see [below for nested schema](#nestedblock--build))
 - **id** (String) The ID of this resource.
-- **keep_remotely** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation.
+- **keep_remotely** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation. Defaults to `false`
 
 ### Read-Only
 
@@ -58,7 +58,7 @@ Optional:
 - **cpu_set_cpus** (String) CPUs in which to allow execution (e.g., 0-3, 0,1)
 - **cpu_set_mems** (String) MEMs in which to allow execution (0-3, 0,1)
 - **cpu_shares** (Number) CPU shares (relative weight)
-- **dockerfile** (String) Dockerfile file. Default is "Dockerfile"
+- **dockerfile** (String) Dockerfile file. Defaults to `Dockerfile`
 - **extra_hosts** (List of String) A list of hostnames/IP mappings to add to the container’s /etc/hosts file. Specified in the form ["hostname:IP"]
 - **force_remove** (Boolean) Always remove intermediate containers
 - **isolation** (String) Isolation represents the isolation technology of a container. The supported values are
@@ -107,11 +107,4 @@ Required:
 - **name** (String) type of ulimit, e.g. `nofile`
 - **soft** (Number) hard limit
 
-## Import
 
-Import is supported using the following syntax:
-
-```shell
-#!/bin/bash
-# TODO
-```
