@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manages the configs of a Docker service in a swarm.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_config (Resource)
 
 Manages the configs of a Docker service in a swarm.
