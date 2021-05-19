@@ -58,6 +58,7 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	foundImage := searchLocalImages(ctx, client, data, imageName)
 	if foundImage == nil {
+		log.Printf("[DEBUG] did not find image with name: %v", imageName)
 		d.SetId("")
 		return nil
 	}

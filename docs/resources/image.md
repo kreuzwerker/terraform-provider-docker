@@ -62,7 +62,7 @@ resource "docker_image" "ubuntu" {
 - **id** (String) The ID of this resource.
 - **keep_locally** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
 - **pull_trigger** (String, Deprecated) A value which cause an image pull when changed
-- **pull_triggers** (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html)
+- **pull_triggers** (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html).
 
 ### Read-Only
 
@@ -79,19 +79,12 @@ Required:
 Optional:
 
 - **build_arg** (Map of String) Set build-time variables
-- **dockerfile** (String) Name of the Dockerfile (Default is 'PATH/Dockerfile')
+- **dockerfile** (String) Name of the Dockerfile. Defaults to `Dockerfile`.
 - **force_remove** (Boolean) Always remove intermediate containers
 - **label** (Map of String) Set metadata for an image
 - **no_cache** (Boolean) Do not use cache when building the image
-- **remove** (Boolean) Remove intermediate containers after a successful build (default true)
+- **remove** (Boolean) Remove intermediate containers after a successful build. Defaults to  `true`.
 - **tag** (List of String) Name and optionally a tag in the 'name:tag' format
 - **target** (String) Set the target build stage to build
 
-## Import
 
-Import is supported using the following syntax:
-
-```shell
-#!/bin/bash
-# TODO
-```

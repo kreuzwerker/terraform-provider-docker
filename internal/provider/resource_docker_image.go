@@ -43,7 +43,7 @@ func resourceDockerImage() *schema.Resource {
 
 			"pull_triggers": {
 				Type:        schema.TypeSet,
-				Description: "List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html)",
+				Description: "List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html).",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -52,11 +52,11 @@ func resourceDockerImage() *schema.Resource {
 
 			"output": {
 				Type:       schema.TypeString,
-				Deprecated: "Is unused and will be removed",
+				Deprecated: "Is unused and will be removed.",
 				Computed:   true,
 				Elem: &schema.Schema{
 					Type:       schema.TypeString,
-					Deprecated: "Is unused and will be removed",
+					Deprecated: "Is unused and will be removed.",
 				},
 			},
 
@@ -82,7 +82,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"dockerfile": {
 							Type:        schema.TypeString,
-							Description: "Name of the Dockerfile (Default is 'PATH/Dockerfile')",
+							Description: "Name of the Dockerfile. Defaults to `Dockerfile`.",
 							Optional:    true,
 							Default:     "Dockerfile",
 							ForceNew:    true,
@@ -102,7 +102,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"remove": {
 							Type:        schema.TypeBool,
-							Description: "Remove intermediate containers after a successful build (default true)",
+							Description: "Remove intermediate containers after a successful build. Defaults to  `true`.",
 							Default:     true,
 							Optional:    true,
 						},
