@@ -37,9 +37,9 @@ func resourceDockerPlugin() *schema.Resource {
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
-				Description: "If `true` the plugin is enabled",
-				Optional:    true,
+				Description: "If `true` the plugin is enabled. Defaults to `true`",
 				Default:     true,
+				Optional:    true,
 			},
 			"grant_all_permissions": {
 				Type:          schema.TypeBool,
