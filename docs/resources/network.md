@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   docker_network provides details about a specific Docker Network.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_network (Resource)
 
 `docker_network` provides details about a specific Docker Network.

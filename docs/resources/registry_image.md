@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manages the lifecycle of docker image/tag in a registry.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_registry_image (Resource)
 
 Manages the lifecycle of docker image/tag in a registry.
@@ -106,5 +106,3 @@ Required:
 - **hard** (Number) soft limit
 - **name** (String) type of ulimit, e.g. `nofile`
 - **soft** (Number) hard limit
-
-

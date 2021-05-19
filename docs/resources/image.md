@@ -6,7 +6,7 @@ description: |-
   Pulls a Docker image to a given Docker host from a Docker Registry.
    This resource will not pull new layers of the image automatically unless used i conjunction with [docker_registry_image](/docs/providers/docker/d/registry_image.html data source to update the pull_triggers field.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_image (Resource)
 
 Pulls a Docker image to a given Docker host from a Docker Registry.
@@ -86,5 +86,3 @@ Optional:
 - **remove** (Boolean) Remove intermediate containers after a successful build. Defaults to  `true`.
 - **tag** (List of String) Name and optionally a tag in the 'name:tag' format
 - **target** (String) Set the target build stage to build
-
-

@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manages the lifecycle of a Docker container.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_container (Resource)
 
 Manages the lifecycle of a Docker container.

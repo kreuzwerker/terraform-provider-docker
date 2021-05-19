@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manages the lifecycle of a Docker plugin.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_plugin (Resource)
 
 Manages the lifecycle of a Docker plugin.

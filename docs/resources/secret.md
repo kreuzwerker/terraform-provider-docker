@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manages the secrets of a Docker service in a swarm.
 ---
-
+<!-- Bug: Type and Name are switched -->
 # docker_secret (Resource)
 
 Manages the secrets of a Docker service in a swarm.
