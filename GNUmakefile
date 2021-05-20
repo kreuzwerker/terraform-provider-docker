@@ -80,9 +80,9 @@ website-lint:
 		echo "Unexpected issues found in website Markdown files."; \
 		echo "To apply any automatic fixes, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
-	@terrafmt diff ./website --check --pattern '*.markdown' --quiet || (echo; \
+	@terrafmt diff ./docs --check --pattern '*.md' --quiet || (echo; \
 		echo "Unexpected differences in website HCL formatting."; \
-		echo "To see the full differences, run: terrafmt diff ./website --pattern '*.markdown'"; \
+		echo "To see the full differences, run: terrafmt diff ./docs --pattern '*.md'"; \
 		echo "To automatically fix the formatting, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
 
