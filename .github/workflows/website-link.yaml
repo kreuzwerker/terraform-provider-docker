@@ -25,4 +25,4 @@ jobs:
           use-verbose-mode: 'yes'
           config-file: '.markdownlinkcheck.json'
           folder-path: 'docs'
-          file-extension: '.markdown'
+          file-extension: '.md'
