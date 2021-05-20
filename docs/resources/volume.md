@@ -3,12 +3,12 @@
 page_title: "docker_volume Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  Creates and destroys a volume in Docker. This can be used alongside docker_container to prepare volumes that can be shared across containers.
+  Creates and destroys a volume in Docker. This can be used alongside docker_container container.md to prepare volumes that can be shared across containers.
 ---
 <!-- Bug: Type and Name are switched -->
 # docker_volume (Resource)
 
-Creates and destroys a volume in Docker. This can be used alongside [docker_container](/docs/resources/container.md) to prepare volumes that can be shared across containers.
+Creates and destroys a volume in Docker. This can be used alongside [docker_container](container.md) to prepare volumes that can be shared across containers.
 
 ## Example Usage
 

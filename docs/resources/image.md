@@ -4,13 +4,13 @@ page_title: "docker_image Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
   Pulls a Docker image to a given Docker host from a Docker Registry.
-   This resource will not pull new layers of the image automatically unless used in conjunction with [docker_registry_image](/docs/providers/docker/d/registry_image.html data source to update the pull_triggers field.
+   This resource will not pull new layers of the image automatically unless used in conjunction with dockerregistryimage registry_image.md data source to update the pull_triggers field.
 ---
 <!-- Bug: Type and Name are switched -->
 # docker_image (Resource)
 
 Pulls a Docker image to a given Docker host from a Docker Registry.
- This resource will *not* pull new layers of the image automatically unless used in conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.
+ This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](registry_image.md) data source to update the `pull_triggers` field.
 
 ## Example Usage
 
@@ -76,7 +76,7 @@ resource "docker_image" "zoo" {
 - **id** (String) The ID of this resource.
 - **keep_locally** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
 - **pull_trigger** (String, Deprecated) A value which cause an image pull when changed
-- **pull_triggers** (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html).
+- **pull_triggers** (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the [docker_registry_image](../data-sources/registry_image.md).
 
 ### Read-Only
 

@@ -6,7 +6,7 @@ import (
 
 func resourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.",
+		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](registry_image.md) data source to update the `pull_triggers` field.",
 
 		CreateContext: resourceDockerImageCreate,
 		ReadContext:   resourceDockerImageRead,
@@ -43,7 +43,7 @@ func resourceDockerImage() *schema.Resource {
 
 			"pull_triggers": {
 				Type:        schema.TypeSet,
-				Description: "List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the `docker_registry_image` [data source](/docs/providers/docker/d/registry_image.html).",
+				Description: "List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the [docker_registry_image](../data-sources/registry_image.md).",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
