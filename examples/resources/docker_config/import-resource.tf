@@ -1,4 +1,4 @@
-resource "docker_config" "foo_config" {
-  name = "foo_config"
+resource "docker_config" "foo" {
+  name = "foo"
   data = base64encode("{\"a\": \"b\"}")
 }
