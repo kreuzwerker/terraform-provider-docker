@@ -4,25 +4,49 @@ page_title: "docker_image Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
   Pulls a Docker image to a given Docker host from a Docker Registry.
-   This resource will not pull new layers of the image automatically unless used i conjunction with [docker_registry_image](/docs/providers/docker/d/registry_image.html data source to update the pull_triggers field.
+   This resource will not pull new layers of the image automatically unless used in conjunction with [docker_registry_image](/docs/providers/docker/d/registry_image.html data source to update the pull_triggers field.
 ---
 <!-- Bug: Type and Name are switched -->
 # docker_image (Resource)
 
 Pulls a Docker image to a given Docker host from a Docker Registry.
- This resource will *not* pull new layers of the image automatically unless used i conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.
+ This resource will *not* pull new layers of the image automatically unless used in conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.
 
 ## Example Usage
 
+### Basic
+
+Finds and downloads the latest `ubuntu:precise` image but does not check
+for further updates of the image
+
 ```terraform
-# Find the latest Ubuntu precise image.
 resource "docker_image" "ubuntu" {
   name = "ubuntu:precise"
 }
+```
 
-# Access it somewhere else with ${docker_image.ubuntu.latest}
+### Dynamic updates
 
-# image "zoo" and "zoo:develop" are built
+To be able to update an update dynamically when the `sha256` sum changes,
+you need to use it in combination with `docker_registry_image` as follows:
+
+```terraform
+data "docker_registry_image" "ubuntu" {
+  name = "ubuntu:precise"
+}
+
+resource "docker_image" "ubuntu" {
+  name          = data.docker_registry_image.ubuntu.name
+  pull_triggers = [data.docker_registry_image.ubuntu.sha256_digest]
+}
+```
+
+### Build
+
+You can also use the resource to build and image.
+In thid case the image "zoo" and "zoo:develop" are built.
+
+```terraform
 resource "docker_image" "zoo" {
   name = "zoo"
   build {
@@ -35,16 +59,6 @@ resource "docker_image" "zoo" {
       author : "zoo"
     }
   }
-}
-
-# Dynamic image
-data "docker_registry_image" "ubuntu" {
-  name = "ubuntu:precise"
-}
-
-resource "docker_image" "ubuntu" {
-  name          = data.docker_registry_image.ubuntu.name
-  pull_triggers = [data.docker_registry_image.ubuntu.sha256_digest]
 }
 ```
 

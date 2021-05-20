@@ -6,7 +6,7 @@ import (
 
 func resourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used i conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.",
+		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [`docker_registry_image`](/docs/providers/docker/d/registry_image.html data source to update the `pull_triggers` field.",
 
 		CreateContext: resourceDockerImageCreate,
 		ReadContext:   resourceDockerImageRead,
