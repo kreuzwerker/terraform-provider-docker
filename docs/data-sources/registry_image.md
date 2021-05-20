@@ -3,12 +3,12 @@
 page_title: "docker_registry_image Data Source - terraform-provider-docker"
 subcategory: ""
 description: |-
-  Reads the image metadata from a Docker Registry. Used in conjunction with the docker_image resource to keep an image up to date on the latest available version of the tag.
+  Reads the image metadata from a Docker Registry. Used in conjunction with the docker_image docs/resources/image.md resource to keep an image up to date on the latest available version of the tag.
 ---
 
 # docker_registry_image (Data Source)
 
-Reads the image metadata from a Docker Registry. Used in conjunction with the [docker_image](/docs/providers/docker/r/image.html) resource to keep an image up to date on the latest available version of the tag.
+Reads the image metadata from a Docker Registry. Used in conjunction with the [docker_image](docs/resources/image.md) resource to keep an image up to date on the latest available version of the tag.
 
 ## Example Usage
 

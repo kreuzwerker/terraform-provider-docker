@@ -19,7 +19,7 @@ import (
 
 func dataSourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Reads the image metadata from a Docker Registry. Used in conjunction with the [docker_image](/docs/providers/docker/r/image.html) resource to keep an image up to date on the latest available version of the tag.",
+		Description: "Reads the image metadata from a Docker Registry. Used in conjunction with the [docker_image](/docs/resources/image.md) resource to keep an image up to date on the latest available version of the tag.",
 
 		ReadContext: dataSourceDockerRegistryImageRead,
 

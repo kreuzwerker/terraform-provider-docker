@@ -21,7 +21,7 @@ const (
 
 func resourceDockerVolume() *schema.Resource {
 	return &schema.Resource{
-		Description: "Creates and destroys a volume in Docker. This can be used alongside [docker_container](/docs/providers/docker/r/container.html) to prepare volumes that can be shared across containers.",
+		Description: "Creates and destroys a volume in Docker. This can be used alongside [docker_container](/docs/resources/container.md) to prepare volumes that can be shared across containers.",
 
 		CreateContext: resourceDockerVolumeCreate,
 		ReadContext:   resourceDockerVolumeRead,
