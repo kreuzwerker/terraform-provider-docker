@@ -17,6 +17,46 @@ Use the navigation to the left to read about the available resources.
 
 ## Example Usage
 
-{{tffile "examples/provider/provider.tf"}}
+Terraform 0.13 and later:
+
+{{tffile "examples/provider/provider-tf13.tf"}}
+
+Terraform 0.12 and earlier:
+
+{{tffile "examples/provider/provider-tf12.tf"}}
+
+-> **Note**
+You can also use the `ssh` protocol to connect to the docker host on a remote machine.
+The configuration would look as follows:
+
+{{tffile "examples/provider/provider-ssh.tf"}}
+
+## Registry credentials
+
+Registry credentials can be provided on a per-registry basis with the `registry_auth`
+field, passing either a config file or the username/password directly.
+
+-> **Note**
+The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+
+{{tffile "examples/provider/provider-credentials.tf"}}
+
+-> **Note**
+When passing in a config file either the corresponding `auth` string of the repository is read or the os specific
+[credential helpers](https://github.com/docker/docker-credential-helpers#available-programs) are
+used to retrieve the authentication credentials.
+
+You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
+
+An example content of the file `~/.docker/config.json` on macOS may look like follows:
+
+{{codefile "json" "examples/provider/provider-docker-config.json"}}
+
+## Certificate information
+
+Specify certificate information either with a directory or
+directly with the content of the files for connecting to the Docker host via TLS.
+
+{{tffile "examples/provider/provider-cert.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}

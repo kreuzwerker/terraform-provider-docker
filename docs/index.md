@@ -17,9 +17,25 @@ Use the navigation to the left to read about the available resources.
 
 ## Example Usage
 
+Terraform 0.13 and later:
+
 ```terraform
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "2.11.0"
+    }
+  }
+}
+
 provider "docker" {
-  host = "tcp://127.0.0.1:2376/"
+  host = "unix:///var/run/docker.sock"
+}
+
+# Pulls the image
+resource "docker_image" "ubuntu" {
+  name = "ubuntu:latest"
 }
 
 # Create a container
@@ -27,9 +43,133 @@ resource "docker_container" "foo" {
   image = docker_image.ubuntu.latest
   name  = "foo"
 }
+```
 
+Terraform 0.12 and earlier:
+
+```terraform
+provider "docker" {
+  version = "~> 2.11.0"
+  host    = "unix:///var/run/docker.sock"
+}
+
+# Pulls the image
 resource "docker_image" "ubuntu" {
   name = "ubuntu:latest"
+}
+
+# Create a container
+resource "docker_container" "foo" {
+  image = docker_image.ubuntu.latest
+  name  = "foo"
+}
+```
+
+-> **Note**
+You can also use the `ssh` protocol to connect to the docker host on a remote machine.
+The configuration would look as follows:
+
+```terraform
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "2.11.0"
+    }
+  }
+}
+
+provider "docker" {
+  host = "unix:///var/run/docker.sock"
+}
+
+# Pulls the image
+resource "docker_image" "ubuntu" {
+  name = "ubuntu:latest"
+}
+
+# Create a container
+resource "docker_container" "foo" {
+  image = docker_image.ubuntu.latest
+  name  = "foo"
+}
+```
+
+## Registry credentials
+
+Registry credentials can be provided on a per-registry basis with the `registry_auth`
+field, passing either a config file or the username/password directly.
+
+-> **Note**
+The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+
+```terraform
+provider "docker" {
+  host = "tcp://localhost:2376"
+
+  registry_auth {
+    address     = "registry.hub.docker.com"
+    config_file = pathexpand("~/.docker/config.json")
+  }
+
+  registry_auth {
+    address             = "registry.my.company.com"
+    config_file_content = var.plain_content_of_config_file
+  }
+
+  registry_auth {
+    address  = "quay.io:8181"
+    username = "someuser"
+    password = "somepass"
+  }
+}
+
+data "docker_registry_image" "quay" {
+  name = "myorg/privateimage"
+}
+
+data "docker_registry_image" "quay" {
+  name = "quay.io:8181/myorg/privateimage"
+}
+```
+
+-> **Note**
+When passing in a config file either the corresponding `auth` string of the repository is read or the os specific
+[credential helpers](https://github.com/docker/docker-credential-helpers#available-programs) are
+used to retrieve the authentication credentials.
+
+You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
+
+An example content of the file `~/.docker/config.json` on macOS may look like follows:
+
+```json
+{
+    "auths": {
+        "repo.mycompany:8181": {
+            "auth": "dXNlcjpwYXNz="
+        },
+        "otherrepo.other-company:8181": {}
+    },
+    "credsStore": "osxkeychain"
+}
+```
+
+## Certificate information
+
+Specify certificate information either with a directory or
+directly with the content of the files for connecting to the Docker host via TLS.
+
+```terraform
+provider "docker" {
+  host = "tcp://your-host-ip:2376/"
+
+  # -> specify either
+  cert_path = pathexpand("~/.docker")
+
+  # -> or the following
+  ca_material   = file(pathexpand("~/.docker/ca.pem")) # this can be omitted
+  cert_material = file(pathexpand("~/.docker/cert.pem"))
+  key_material  = file(pathexpand("~/.docker/key.pem"))
 }
 ```
 
