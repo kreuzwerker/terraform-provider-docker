@@ -17,7 +17,7 @@ func dataSourceDockerPlugin() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:        schema.TypeString,
-				Description: "The ID of the plugin, which has precendence over the `alias` of both are given",
+				Description: "The ID of the plugin, which has precedence over the `alias` of both are given",
 				Optional:    true,
 			},
 			"alias": {

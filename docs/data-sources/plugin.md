@@ -30,7 +30,7 @@ data "docker_plugin" "by_id" {
 ### Optional
 
 - **alias** (String) The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.
-- **id** (String) The ID of the plugin, which has precendence over the `alias` of both are given
+- **id** (String) The ID of the plugin, which has precedence over the `alias` of both are given
 
 ### Read-Only
 

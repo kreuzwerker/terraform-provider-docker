@@ -72,7 +72,7 @@ website-link-check:
 
 website-lint:
 	@echo "==> Checking website against linters..."
-	@misspell -error -source=text website/ || (echo; \
+	@misspell -error -source=text docs/ || (echo; \
 		echo "Unexpected mispelling found in website files."; \
 		echo "To automatically fix the misspelling, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
@@ -88,7 +88,7 @@ website-lint:
 
 website-lint-fix:
 	@echo "==> Applying automatic website linter fixes..."
-	@misspell -w -source=text website/
+	@misspell -w -source=text docs/
 	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix docs/
 	@terrafmt fmt ./website --pattern '*.markdown'
 
