@@ -90,7 +90,7 @@ website-lint-fix:
 	@echo "==> Applying automatic website linter fixes..."
 	@misspell -w -source=text docs/
 	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix docs/
-	@terrafmt fmt ./website --pattern '*.markdown'
+	@terrafmt fmt ./docs --pattern '*.md'
 
 .PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
 
