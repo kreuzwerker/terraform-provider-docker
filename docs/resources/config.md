@@ -124,8 +124,8 @@ printf '{"a":"b"}' | docker config create foo -
 you provide the definition for the resource as follows
 
 ```terraform
-resource "docker_config" "foo_config" {
-  name = "foo_config"
+resource "docker_config" "foo" {
+  name = "foo"
   data = base64encode("{\"a\": \"b\"}")
 }
 ```
