@@ -1,33 +1,3 @@
-# Basic
-## The following configuration starts a Docker Service with 
-## - the given image, 
-## - 1 replica
-## - exposes the port `8080` in `vip` mode to the host machine
-## - moreover, uses the `container` runtime
-
-resource "docker_service" "foo" {
-  name = "foo-service"
-
-  task_spec {
-    container_spec {
-      image = "repo.mycompany.com:8080/foo-service:v1"
-    }
-  }
-
-  endpoint_spec {
-    ports {
-      target_port = "8080"
-    }
-  }
-}
-
-# The following command is the equivalent:
-# docker service create -d -p 8080 --name foo-service repo.mycompany.com:8080/foo-service:v1
-
-# Advanced
-## The following configuration shows the full capabilities of a Docker Service. 
-# Currently, the [Docker API 1.32](https://docs.docker.com/engine/api/v1.32) is implemented.
-
 resource "docker_volume" "test_volume" {
   name = "tftest-volume"
 }

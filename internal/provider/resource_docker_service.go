@@ -666,14 +666,14 @@ func resourceDockerService() *schema.Resource {
 						},
 						"force_update": {
 							Type:             schema.TypeInt,
-							Description:      "A counter that triggers an update even if no relevant parameters have been changed. See https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126",
+							Description:      "A counter that triggers an update even if no relevant parameters have been changed. See the [spec](https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126).",
 							Optional:         true,
 							Computed:         true,
 							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 						"runtime": {
 							Type:             schema.TypeString,
-							Description:      "Runtime is the type of runtime specified for the task executor. See https://github.com/moby/moby/blob/master/api/types/swarm/runtime.go",
+							Description:      "Runtime is the type of runtime specified for the task executor. See the [types](https://github.com/moby/moby/blob/master/api/types/swarm/runtime.go).",
 							Optional:         true,
 							Computed:         true,
 							ValidateDiagFunc: validateStringMatchesPattern("^(container|plugin)$"),

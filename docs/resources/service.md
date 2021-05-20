@@ -14,14 +14,16 @@ This resource manages the lifecycle of a Docker service. By default, the creatio
 
 ## Example Usage
 
-```terraform
-# Basic
-## The following configuration starts a Docker Service with 
-## - the given image, 
-## - 1 replica
-## - exposes the port `8080` in `vip` mode to the host machine
-## - moreover, uses the `container` runtime
+### Basic
 
+The following configuration starts a Docker Service with
+
+- the given image,
+- 1 replica
+- exposes the port `8080` in `vip` mode to the host machine
+- moreover, uses the `container` runtime
+
+```terraform
 resource "docker_service" "foo" {
   name = "foo-service"
 
@@ -37,14 +39,21 @@ resource "docker_service" "foo" {
     }
   }
 }
+```
 
-# The following command is the equivalent:
-# docker service create -d -p 8080 --name foo-service repo.mycompany.com:8080/foo-service:v1
+The following command is the equivalent:
 
-# Advanced
-## The following configuration shows the full capabilities of a Docker Service. 
-# Currently, the [Docker API 1.32](https://docs.docker.com/engine/api/v1.32) is implemented.
+```shell
+#!/bin/bash
+docker service create -d -p 8080 --name foo-service repo.mycompany.com:8080/foo-service:v1
+```
 
+### Advanced
+
+The following configuration shows the full capabilities of a Docker Service,
+with a `volume`, `config`, `secret` and `network`
+
+```terraform
 resource "docker_volume" "test_volume" {
   name = "tftest-volume"
 }
@@ -285,13 +294,13 @@ Required:
 
 Optional:
 
-- **force_update** (Number) A counter that triggers an update even if no relevant parameters have been changed. See https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126
+- **force_update** (Number) A counter that triggers an update even if no relevant parameters have been changed. See the [spec](https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126).
 - **log_driver** (Block List, Max: 1) Specifies the log driver to use for tasks created from this spec. If not present, the default one for the swarm will be used, finally falling back to the engine default if not specified (see [below for nested schema](#nestedblock--task_spec--log_driver))
 - **networks** (Set of String) Ids of the networks in which the  container will be put in
 - **placement** (Block List, Max: 1) The placement preferences (see [below for nested schema](#nestedblock--task_spec--placement))
 - **resources** (Block List, Max: 1) Resource requirements which apply to each individual container created as part of the service (see [below for nested schema](#nestedblock--task_spec--resources))
 - **restart_policy** (Block List, Max: 1) Specification for the restart policy which applies to containers created as part of this service. (see [below for nested schema](#nestedblock--task_spec--restart_policy))
-- **runtime** (String) Runtime is the type of runtime specified for the task executor. See https://github.com/moby/moby/blob/master/api/types/swarm/runtime.go
+- **runtime** (String) Runtime is the type of runtime specified for the task executor. See the [types](https://github.com/moby/moby/blob/master/api/types/swarm/runtime.go).
 
 <a id="nestedblock--task_spec--container_spec"></a>
 ### Nested Schema for `task_spec.container_spec`
@@ -665,16 +674,49 @@ Optional:
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax by providing the `id`:
 
 ```shell
 #!/bin/bash
+terraform import docker_service.foo id
+```
 
+### Example
+
+Assuming you created a `service` as follows
+
+```shell
+#!/bin/bash
 docker service create --name foo -p 8080:80 nginx
+# prints th ID
 4pcphbxkfn2rffhbhe6czytgi
+```
 
-## A Docker service can be imported using the long id, 
-## e.g. for a service with the short id `55ba873dd`:
+you provide the definition for the resource as follows
 
-$ terraform import docker_service.foo "$(docker service inspect -f {{.ID}} 55b)"
+```terraform
+resource "docker_service" "foo" {
+  name = "foo"
+
+  task_spec {
+    container_spec {
+      image = "nginx"
+    }
+  }
+
+  endpoint_spec {
+    ports {
+      target_port    = "80"
+      published_port = "8080"
+
+    }
+  }
+}
+```
+
+then the import command is as follows
+
+```shell
+#!/bin/bash
+terraform import docker_service.foo 4pcphbxkfn2rffhbhe6czytgi
 ```

@@ -12,12 +12,46 @@ description: |-
 
 ## Example Usage
 
-{{tffile "examples/resources/docker_service/resource.tf"}}
+### Basic
+
+The following configuration starts a Docker Service with
+
+- the given image,
+- 1 replica
+- exposes the port `8080` in `vip` mode to the host machine
+- moreover, uses the `container` runtime
+
+{{tffile "examples/resources/docker_service/resource-basic.tf"}}
+
+The following command is the equivalent:
+
+{{codefile "shell" "examples/resources/docker_service/resource-basic-create.sh" }}
+
+### Advanced
+
+The following configuration shows the full capabilities of a Docker Service,
+with a `volume`, `config`, `secret` and `network`
+
+{{tffile "examples/resources/docker_service/resource-advanced.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax by providing the `id`:
 
 {{codefile "shell" "examples/resources/docker_service/import.sh" }}
+
+### Example
+
+Assuming you created a `service` as follows
+
+{{codefile "shell" "examples/resources/docker_service/import-create.sh" }}
+
+you provide the definition for the resource as follows
+
+{{tffile "examples/resources/docker_service/import-resource.tf" }}
+
+then the import command is as follows
+
+{{codefile "shell" "examples/resources/docker_service/import-resource.sh" }}
