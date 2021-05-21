@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -296,6 +297,16 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 
 		// update the name to correctly reflect the desired destination when untaring
 		header.Name = strings.TrimPrefix(strings.Replace(file, buildContext, "", -1), string(filepath.Separator))
+
+		// set archive metadata non deterministic
+		header.Mode = 0
+		header.Uid = 0
+		header.Gid = 0
+		header.Uname = ""
+		header.Gname = ""
+		header.ModTime = time.Time{}
+		header.AccessTime = time.Time{}
+		header.ChangeTime = time.Time{}
 
 		// write the header
 		if err := tw.WriteHeader(header); err != nil {
