@@ -68,16 +68,13 @@ TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerImage_dat
 make testacc_cleanup
 ```
 
-Furthermore, we recommened running the linters for the code and the documentation:
+Furthermore, run the linters for the code:
 
 ```sh
 # install all the dependencies
 make setup
+# lint the go code
 make golangci-lint
-make website-link-check
-make website-lint
-# you can also use this command to fix most errors automatically
-make website-lint-fix
 ```
 
 In case you need to run the GitHub actions setup locally in a docker container and run the tests there,
@@ -88,6 +85,27 @@ docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):/test test
 make testacc_setup
 TF_LOG=DEBUG TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerContainer_nostart$
 ```
+
+### Update the documentation
+
+Furthermore, run the generation and linters for the documentation:
+
+```sh
+# install all the dependencies
+make setup
+# generate or update the documentation
+make website-generation
+# lint the documentation
+make website-link-check
+make website-lint
+# you can also use this command to fix most errors automatically
+make website-lint-fix
+```
+
+The documentation is generated based on the tool [terraform-plugin-docs](https://github.com/hashicorp/terraform-plugin-docs):
+
+- The content of the `Description` attribute is parsed of each resource
+- All the templates for the resources are located in `templates`.
 
 ### Test against current terraform IaC descriptions
 In order to extend the provider and test it with `terraform`, build the provider as mentioned above with:

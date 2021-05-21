@@ -12,6 +12,8 @@ import (
 
 func resourceDockerSecret() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the secrets of a Docker service in a swarm.",
+
 		CreateContext: resourceDockerSecretCreate,
 		ReadContext:   resourceDockerSecretRead,
 		DeleteContext: resourceDockerSecretDelete,
@@ -34,10 +36,11 @@ func resourceDockerSecret() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Elem:     labelSchema,
+				Type:        schema.TypeSet,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        labelSchema,
 			},
 		},
 		SchemaVersion: 1,
@@ -75,9 +78,10 @@ func resourceDockerSecretV0() *schema.Resource {
 			},
 
 			"labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeMap,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
 			},
 		},
 	}
@@ -119,7 +123,7 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.SetId(secret.ID)
 	d.Set("name", secret.Spec.Name)
 	// Note mavogel: secret data is not exposed via the API
-	// TODO next major if we do not explicitly do not store it in the state we could import it, but BC
+	// TODO next major if we do not explicitly store it in the state we could import it, but BC
 	// d.Set("data", base64.StdEncoding.EncodeToString(secret.Spec.Data))
 	return nil
 }
