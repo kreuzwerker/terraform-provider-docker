@@ -12,6 +12,8 @@ import (
 
 func resourceDockerConfig() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the configs of a Docker service in a swarm.",
+
 		CreateContext: resourceDockerConfigCreate,
 		ReadContext:   resourceDockerConfigRead,
 		DeleteContext: resourceDockerConfigDelete,
@@ -31,7 +33,6 @@ func resourceDockerConfig() *schema.Resource {
 				Type:             schema.TypeString,
 				Description:      "Base64-url-safe-encoded config data",
 				Required:         true,
-				Sensitive:        true,
 				ForceNew:         true,
 				ValidateDiagFunc: validateStringIsBase64Encoded(),
 			},

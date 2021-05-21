@@ -199,9 +199,9 @@ func volumeSetToDockerVolumes(volumes *schema.Set) (map[string]struct{}, []strin
 
 		switch {
 		case len(fromContainer) == 0 && len(containerPath) == 0:
-			return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, errors.New("Volume entry without container path or source container")
+			return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, errors.New("volume entry without container path or source container")
 		case len(fromContainer) != 0 && len(containerPath) != 0:
-			return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, errors.New("Both a container and a path specified in a volume entry")
+			return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, errors.New("both a container and a path specified in a volume entry")
 		case len(fromContainer) != 0:
 			retVolumeFromContainers = append(retVolumeFromContainers, fromContainer)
 		case len(volumeName) != 0:

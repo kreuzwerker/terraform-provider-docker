@@ -2,13 +2,5 @@
     "ignorePatterns": [
     ],
     "replacementPatterns": [
-        {
-            "pattern": "^/docs/providers/docker/r/(.*).html",
-            "replacement": "/github/workspace/website/docs/r/$1.html.markdown"
-        },
-        {
-            "pattern": "^/docs/providers/docker/d/(.*).html",
-            "replacement": "/github/workspace/website/docs/d/$1.html.markdown"
-        }
     ]
 }

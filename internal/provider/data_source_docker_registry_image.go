@@ -19,17 +19,21 @@ import (
 
 func dataSourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
+		Description: "Reads the image metadata from a Docker Registry. Used in conjunction with the [docker_image](../resources/image.md) resource to keep an image up to date on the latest available version of the tag.",
+
 		ReadContext: dataSourceDockerRegistryImageRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "The name of the Docker image, including any tags. e.g. `alpine:latest`",
+				Required:    true,
 			},
 
 			"sha256_digest": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "The content digest of the image, as stored in the registry.",
+				Computed:    true,
 			},
 		},
 	}
@@ -87,6 +91,7 @@ func getImageDigest(registry, image, tag, username, password string, fallback bo
 	// cuz we don't have a valid certs for this case
 	if env, okEnv := os.LookupEnv("TF_ACC"); okEnv {
 		if i, errConv := strconv.Atoi(env); errConv == nil && i >= 1 {
+			// DevSkim: ignore DS440000
 			cfg := &tls.Config{
 				InsecureSkipVerify: true,
 			}
