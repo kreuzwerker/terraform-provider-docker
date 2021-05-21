@@ -55,8 +55,8 @@ Optional:
 - **cgroup_parent** (String) Optional parent cgroup for the container
 - **cpu_period** (Number) The length of a CPU period in microseconds
 - **cpu_quota** (Number) Microseconds of CPU time that the container can get in a CPU period
-- **cpu_set_cpus** (String) CPUs in which to allow execution (e.g., 0-3, 0,1)
-- **cpu_set_mems** (String) MEMs in which to allow execution (0-3, 0,1)
+- **cpu_set_cpus** (String) CPUs in which to allow execution (e.g., `0-3`, `0`, `1`)
+- **cpu_set_mems** (String) MEMs in which to allow execution (`0-3`, `0`, `1`)
 - **cpu_shares** (Number) CPU shares (relative weight)
 - **dockerfile** (String) Dockerfile file. Defaults to `Dockerfile`
 - **extra_hosts** (List of String) A list of hostnames/IP mappings to add to the container’s /etc/hosts file. Specified in the form ["hostname:IP"]

@@ -47,7 +47,7 @@ func dataSourceDockerPlugin() *schema.Resource {
 			},
 			"env": {
 				Type:        schema.TypeSet,
-				Description: "The environment variables in the from of `KEY=VALUE`, e.g. `DEBUG=0`",
+				Description: "The environment variables in the form of `KEY=VALUE`, e.g. `DEBUG=0`",
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},

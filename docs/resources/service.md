@@ -511,8 +511,8 @@ Optional:
 
 Optional:
 
-- **constraints** (Set of String) An array of constraints. e.g.: node.role==manager
-- **max_replicas** (Number) Maximum number of replicas for per node (default value is 0, which is unlimited)
+- **constraints** (Set of String) An array of constraints. e.g.: `node.role==manager`
+- **max_replicas** (Number) Maximum number of replicas for per node (default value is `0`, which is unlimited)
 - **platforms** (Block Set) Platforms stores all the platforms that the service's image can run on (see [below for nested schema](#nestedblock--task_spec--placement--platforms))
 - **prefs** (Set of String) Preferences provide a way to make the scheduler aware of factors such as topology. They are provided in order from highest to lowest precedence, e.g.: spread=node.role.manager
 
@@ -521,8 +521,8 @@ Optional:
 
 Required:
 
-- **architecture** (String) The architecture, e.g. amd64
-- **os** (String) The operation system, e.g. linux
+- **architecture** (String) The architecture, e.g. `amd64`
+- **os** (String) The operation system, e.g. `linux`
 
 
 
@@ -540,7 +540,7 @@ Optional:
 Optional:
 
 - **memory_bytes** (Number) The amounf of memory in bytes the container allocates
-- **nano_cpus** (Number) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000
+- **nano_cpus** (Number) CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least 1000000
 
 
 <a id="nestedblock--task_spec--resources--reservation"></a>
@@ -548,7 +548,7 @@ Optional:
 
 Optional:
 
-- **generic_resources** (Block List, Max: 1) User-defined resources can be either Integer resources (e.g, SSD=3) or String resources (e.g, GPU=UUID1) (see [below for nested schema](#nestedblock--task_spec--resources--reservation--generic_resources))
+- **generic_resources** (Block List, Max: 1) User-defined resources can be either Integer resources (e.g, `SSD=3`) or String resources (e.g, GPU=UUID1) (see [below for nested schema](#nestedblock--task_spec--resources--reservation--generic_resources))
 - **memory_bytes** (Number) The amounf of memory in bytes the container allocates
 - **nano_cpus** (Number) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000
 
@@ -570,8 +570,8 @@ Optional:
 
 - **condition** (String) Condition for restart
 - **delay** (String) Delay between restart attempts (ms|s|m|h)
-- **max_attempts** (Number) Maximum attempts to restart a given container before giving up (default value is 0, which is ignored)
-- **window** (String) The time window used to evaluate the restart policy (default value is 0, which is unbounded) (ms|s|m|h)
+- **max_attempts** (Number) Maximum attempts to restart a given container before giving up (default value is `0`, which is ignored)
+- **window** (String) The time window used to evaluate the restart policy (default value is `0`, which is unbounded) (ms|s|m|h)
 
 
 

@@ -42,7 +42,7 @@ func dataSourceDockerNetwork() *schema.Resource {
 
 			"internal": {
 				Type:        schema.TypeBool,
-				Description: "Whether the network is internal.",
+				Description: "If `true`, the network is internal.",
 				Computed:    true,
 			},
 

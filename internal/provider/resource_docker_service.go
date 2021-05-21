@@ -523,7 +523,7 @@ func resourceDockerService() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"nano_cpus": {
 													Type:        schema.TypeInt,
-													Description: "CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000",
+													Description: "CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least 1000000",
 													Optional:    true,
 												},
 												"memory_bytes": {
@@ -553,7 +553,7 @@ func resourceDockerService() *schema.Resource {
 												},
 												"generic_resources": {
 													Type:        schema.TypeList,
-													Description: "User-defined resources can be either Integer resources (e.g, SSD=3) or String resources (e.g, GPU=UUID1)",
+													Description: "User-defined resources can be either Integer resources (e.g, `SSD=3`) or String resources (e.g, GPU=UUID1)",
 													MaxItems:    1,
 													Optional:    true,
 													Elem: &schema.Resource{
@@ -601,13 +601,13 @@ func resourceDockerService() *schema.Resource {
 									},
 									"max_attempts": {
 										Type:             schema.TypeInt,
-										Description:      "Maximum attempts to restart a given container before giving up (default value is 0, which is ignored)",
+										Description:      "Maximum attempts to restart a given container before giving up (default value is `0`, which is ignored)",
 										Optional:         true,
 										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
 									"window": {
 										Type:             schema.TypeString,
-										Description:      "The time window used to evaluate the restart policy (default value is 0, which is unbounded) (ms|s|m|h)",
+										Description:      "The time window used to evaluate the restart policy (default value is `0`, which is unbounded) (ms|s|m|h)",
 										Optional:         true,
 										ValidateDiagFunc: validateDurationGeq0(),
 									},
@@ -624,7 +624,7 @@ func resourceDockerService() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"constraints": {
 										Type:        schema.TypeSet,
-										Description: "An array of constraints. e.g.: node.role==manager",
+										Description: "An array of constraints. e.g.: `node.role==manager`",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Set:         schema.HashString,
@@ -638,7 +638,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"max_replicas": {
 										Type:             schema.TypeInt,
-										Description:      "Maximum number of replicas for per node (default value is 0, which is unlimited)",
+										Description:      "Maximum number of replicas for per node (default value is `0`, which is unlimited)",
 										Optional:         true,
 										ValidateDiagFunc: validateIntegerGeqThan(0),
 									},
@@ -650,12 +650,12 @@ func resourceDockerService() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"architecture": {
 													Type:        schema.TypeString,
-													Description: "The architecture, e.g. amd64",
+													Description: "The architecture, e.g. `amd64`",
 													Required:    true,
 												},
 												"os": {
 													Type:        schema.TypeString,
-													Description: "The operation system, e.g. linux",
+													Description: "The operation system, e.g. `linux`",
 													Required:    true,
 												},
 											},

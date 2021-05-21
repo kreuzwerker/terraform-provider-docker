@@ -81,13 +81,13 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"cpu_set_cpus": {
 							Type:        schema.TypeString,
-							Description: "CPUs in which to allow execution (e.g., 0-3, 0,1)",
+							Description: "CPUs in which to allow execution (e.g., `0-3`, `0`, `1`)",
 							Optional:    true,
 							ForceNew:    true,
 						},
 						"cpu_set_mems": {
 							Type:        schema.TypeString,
-							Description: "MEMs in which to allow execution (0-3, 0,1)",
+							Description: "MEMs in which to allow execution (`0-3`, `0`, `1`)",
 							Optional:    true,
 							ForceNew:    true,
 						},

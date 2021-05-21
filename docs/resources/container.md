@@ -47,7 +47,7 @@ resource "docker_image" "ubuntu" {
 - **dns_search** (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
 - **domainname** (String) Domain name of the container.
 - **entrypoint** (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
-- **env** (Set of String) Environment variables to set.
+- **env** (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
 - **group_add** (Set of String) Additional groups for the container user
 - **healthcheck** (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--healthcheck))
 - **host** (Block Set) Additional hosts to add to the container. (see [below for nested schema](#nestedblock--host))

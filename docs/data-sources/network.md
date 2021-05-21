@@ -29,7 +29,7 @@ data "docker_network" "main" {
 
 - **driver** (String) The driver of the Docker network. Possible values are `bridge`, `host`, `overlay`, `macvlan`. See [network docs](https://docs.docker.com/network/#network-drivers) for more details.
 - **id** (String) The ID of this resource.
-- **internal** (Boolean) Whether the network is internal.
+- **internal** (Boolean) If `true`, the network is internal.
 - **ipam_config** (Set of Object) The IPAM configuration options (see [below for nested schema](#nestedatt--ipam_config))
 - **options** (Map of String) Only available with bridge networks. See [bridge options docs](https://docs.docker.com/engine/reference/commandline/network_create/#bridge-driver-options) for more details.
 - **scope** (String) Scope of the network. One of `swarm`, `global`, or `local`.

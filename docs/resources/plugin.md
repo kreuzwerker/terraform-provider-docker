@@ -43,7 +43,7 @@ resource "docker_plugin" "sample-volume-plugin" {
 - **alias** (String) Docker Plugin alias
 - **enable_timeout** (Number) HTTP client timeout to enable the plugin
 - **enabled** (Boolean) If `true` the plugin is enabled. Defaults to `true`
-- **env** (Set of String) The environment variables in the from of `KEY=VALUE`, e.g. `DEBUG=0`
+- **env** (Set of String) The environment variables in the form of `KEY=VALUE`, e.g. `DEBUG=0`
 - **force_destroy** (Boolean) If true, then the plugin is destroyed forcibly
 - **force_disable** (Boolean) If true, then the plugin is disabled forcibly
 - **grant_all_permissions** (Boolean) If true, grant all permissions necessary to run the plugin

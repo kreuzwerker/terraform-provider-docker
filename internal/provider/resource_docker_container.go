@@ -526,7 +526,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"env": {
 				Type:        schema.TypeSet,
-				Description: "Environment variables to set.",
+				Description: "Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
