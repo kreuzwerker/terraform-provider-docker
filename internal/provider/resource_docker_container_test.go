@@ -65,13 +65,13 @@ func TestAccDockerContainer_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning(resourceName, &c),
 				),
 			},
 			{
-				Config: testAccDockerContainerUpdateConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUpdateConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning(resourceName, &c),
 				),
@@ -113,7 +113,7 @@ func TestAccDockerContainer_init(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerInitConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerInitConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning(resourceName, &c),
 				),
@@ -153,7 +153,7 @@ func TestAccDockerContainer_basic_network(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerWith2BridgeNetworkConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerWith2BridgeNetworkConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "bridge", ""),
@@ -182,7 +182,7 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainer2NetworksConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainer2NetworksConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "bridge", ""),
@@ -246,7 +246,7 @@ func TestAccDockerContainer_volume(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerVolumeConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerVolumeConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -278,7 +278,7 @@ func TestAccDockerContainer_mounts(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerMountsConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerMountsConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo_mounts", &c),
 					testCheck,
@@ -310,7 +310,7 @@ func TestAccDockerContainer_tmpfs(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerTmpfsConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerTmpfsConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -344,7 +344,7 @@ func TestAccDockerContainer_sysctls(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerSysctlsConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerSysctlsConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -369,7 +369,7 @@ func TestAccDockerContainer_groupadd_id(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerGroupAddIdConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGroupAddIdConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -394,7 +394,7 @@ func TestAccDockerContainer_groupadd_name(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerGroupAddNameConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGroupAddNameConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -419,7 +419,7 @@ func TestAccDockerContainer_groupadd_multiple(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerGroupAddMultipleConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGroupAddMultipleConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -444,7 +444,7 @@ func TestAccDockerContainer_tty(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerTTYConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerTTYConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -469,7 +469,7 @@ func TestAccDockerContainer_STDIN_Enabled(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerSTDIN_Config,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerSTDIN_Config"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -652,7 +652,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerCustomizedConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerCustomizedConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -717,7 +717,7 @@ func TestAccDockerContainer_upload(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerUploadConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -781,7 +781,7 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testAccDockerContainerUploadSourceConfig, testFile),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadSourceConfig"), testFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -825,7 +825,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testAccDockerContainerUploadSourceHashConfig, testFile, string(hash)),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadSourceHashConfig"), testFile, string(hash)),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					grabFirstCheck,
@@ -834,7 +834,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 				),
 			},
 			{
-				Config: fmt.Sprintf(testAccDockerContainerUploadSourceHashConfig, testFile, string(hash)+"arbitrary"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadSourceHashConfig"), testFile, string(hash)+"arbitrary"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -888,7 +888,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerUploadBase64Config,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadBase64Config"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					// DevSkim: ignore DS173237
@@ -910,7 +910,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 			// We add a second on purpose to detect if there is a dirty plan
 			// although the file content did not change
 			{
-				Config: testAccDockerContainerUploadBase64Config,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadBase64Config"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					// DevSkim: ignore DS173237
@@ -1048,7 +1048,7 @@ func TestAccDockerContainer_device(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerDeviceConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDeviceConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1089,7 +1089,7 @@ func TestAccDockerContainer_port_internal(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerInternalPortConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerInternalPortConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1154,7 +1154,7 @@ func TestAccDockerContainer_port_multiple_internal(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerMultipleInternalPortConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerMultipleInternalPortConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1205,7 +1205,7 @@ func TestAccDockerContainer_port(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerPortConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerPortConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1218,7 +1218,7 @@ func TestAccDockerContainer_port(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDockerContainerConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -1278,7 +1278,7 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerMultiplePortConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerMultiplePortConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1316,7 +1316,7 @@ func TestAccDockerContainer_rm(t *testing.T) {
 		CheckDestroy:      testAccContainerWaitConditionRemoved(ctx, "docker_container.foo", &c),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerRmConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRmConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1344,7 +1344,7 @@ func TestAccDockerContainer_readonly(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerReadOnlyConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerReadOnlyConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1381,7 +1381,7 @@ func TestAccDockerContainer_healthcheck(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerHealthcheckConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerHealthcheckConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1398,7 +1398,7 @@ func TestAccDockerContainer_nostart(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerNoStartConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerNoStartConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
 				),
@@ -1415,7 +1415,7 @@ func TestAccDockerContainer_attach(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerAttachConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerAttachConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -1435,7 +1435,7 @@ func TestAccDockerContainer_logs(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerLogsConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerLogsConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -1457,7 +1457,7 @@ func TestAccDockerContainer_exitcode(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerExitCodeConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerExitCodeConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -1495,7 +1495,7 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerNetworksIPv4AddressConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerNetworksIPv4AddressConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1534,7 +1534,7 @@ func TestAccDockerContainer_ipv6address(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerNetworksIPv6AddressConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerNetworksIPv6AddressConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1578,7 +1578,7 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerContainerNetworksDualStackAddressConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerNetworksDualStackAddressConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
@@ -1755,679 +1755,3 @@ func testValueHigherEqualThan(name, key string, value int) resource.TestCheckFun
 		return nil
 	}
 }
-
-const testAccDockerContainerConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-}
-`
-
-const testAccDockerContainerInitConfig = `
-resource "docker_image" "fooinit" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "fooinit" {
-	name = "tf-test"
-	image = docker_image.fooinit.latest
-	init = true
-}
-`
-
-const testAccDockerContainerUpdateConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	restart = "on-failure"
-	max_retry_count = 5
-	cpu_shares = 32
-	cpu_set = "0-1"
-	memory = 512
-	memory_swap = 2048
-}
-`
-
-const testAccDockerContainerWith2BridgeNetworkConfig = `
-resource "docker_network" "tftest" {
-  name = "tftest-contnw"
-}
-
-resource "docker_network" "tftest_2" {
-  name = "tftest-contnw-2"
-}
-
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name  	 = "tf-test"
-	image 	 = docker_image.foo.latest
-	networks = [
-		docker_network.tftest.name,
-		docker_network.tftest_2.name
-	]
-}
-`
-
-const testAccDockerContainerVolumeConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_volume" "foo" {
-    name = "testAccDockerContainerVolume_volume"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-    volumes {
-        volume_name = docker_volume.foo.name
-        container_path = "/tmp/volume"
-        read_only = false
-    }
-}
-`
-
-const testAccDockerContainerMountsConfig = `
-resource "docker_image" "foo_mounts" {
-	name = "nginx:latest"
-}
-
-resource "docker_volume" "foo_mounts" {
-    name = "testAccDockerContainerMounts_volume"
-}
-
-resource "docker_container" "foo_mounts" {
-	name = "tf-test"
-	image = docker_image.foo_mounts.latest
-
-	mounts {
-		target      = "/mount/test"
-		source      = docker_volume.foo_mounts.name
-		type        = "volume"
-		read_only   = true
-	}
-	mounts {
-		target  = "/mount/tmpfs"
-		type    = "tmpfs"
-	}
-}
-`
-
-const testAccDockerContainerTmpfsConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	tmpfs = {
-		"/mount/tmpfs" = "rw,noexec,nosuid"
-	}
-}
-`
-
-const testAccDockerContainerCustomizedConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	entrypoint = ["/bin/bash", "-c", "cat /proc/kmsg"]
-	user = "root:root"
-	restart = "on-failure"
-	destroy_grace_seconds = 10
-	max_retry_count = 5
-	memory = 512
-	shm_size = 128
-	memory_swap = 2048
-	cpu_shares = 32
-	cpu_set = "0-1"
-
-	capabilities {
-		add  = ["ALL"]
-		drop = ["SYS_ADMIN"]
-	}
-
-	security_opts = ["apparmor=unconfined", "label=disable"]
-
-	dns = ["8.8.8.8"]
-	dns_opts = ["rotate"]
-	dns_search = ["example.com"]
-	labels {
-		label = "env"
-		value = "prod"
-	}
-	labels {
-		label = "role"
-		value = "test"
-	}
-	labels {
-		label = "maintainer"
-		value = "NGINX Docker Maintainers <docker-maint@nginx.com>"
-	}
-	log_driver = "json-file"
-	log_opts = {
-		max-size = "10m"
-		max-file = 20
-	}
-	network_mode = "bridge"
-
-	networks_advanced {
-		name = docker_network.test_network.name
-		aliases = ["tftest"]
-	}
-
-	host {
-		host = "testhost"
-		ip = "10.0.1.0"
-	}
-
-	host {
-		host = "testhost2"
-		ip = "10.0.2.0"
-	}
-
-	ulimit {
-		name = "nproc"
-		hard = 1024
-		soft = 512
-	}
-
-	ulimit {
-		name = "nofile"
-		hard = 262144
-		soft = 200000
-	}
-
-	pid_mode 		= "host"
-	userns_mode = "testuser:231072:65536"
-	ipc_mode = "private"
-	working_dir = "/tmp"
-}
-
-resource "docker_network" "test_network" {
-  name = "test"
-}
-`
-
-const testAccDockerContainerUploadConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	upload {
-		content = "foo"
-		file = "/terraform/test.txt"
-		executable = true
-	}
-}
-`
-
-const testAccDockerContainerUploadSourceConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	upload {
-		source = "%s"
-		file = "/terraform/test.txt"
-		executable = true
-	}
-}
-`
-
-const testAccDockerContainerUploadSourceHashConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	upload {
-		source = "%s"
-		source_hash = "%s"
-		file = "/terraform/test.txt"
-		executable = true
-	}
-}
-`
-
-const testAccDockerContainerUploadBase64Config = `
-resource "docker_image" "foo" {
-	name         = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name  = "tf-test"
-	image = docker_image.foo.latest
-
-	upload {
-		content_base64 = base64encode("894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8")
-		file           = "/terraform/test1.txt"
-		executable     = true
-	}
-
-	upload {
-		content = "foobar"
-		file    = "/terraform/test2.txt"
-	}
-}
-`
-
-const testAccDockerContainerDeviceConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	devices {
-    	host_path = "/dev/zero"
-    	container_path = "/dev/zero_test"
-      permissions = "rwm"
-	}
-}
-`
-
-const testAccDockerContainerInternalPortConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	ports {
-		internal = 80
-	}
-}
-`
-
-const testAccDockerContainerMultipleInternalPortConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	ports {
-		internal = 80
-	}
-
-	ports {
-		internal = 81
-	}
-}
-`
-
-const testAccDockerContainerPortConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	ports {
-		internal = 80
-		external = 32787
-	}
-}
-`
-
-const testAccDockerContainerMultiplePortConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	ports {
-		internal = 80
-		external = 32787
-	}
-
-	ports {
-		internal = 81
-		external = 32788
-	}
-
-}
-`
-
-const testAccDockerContainer2NetworksConfig = `
-resource "docker_image" "foo" {
-  name         = "nginx:latest"
-  keep_locally = true
-}
-
-resource "docker_network" "test_network_1" {
-  name = "tftest-1"
-}
-
-resource "docker_network" "test_network_2" {
-  name = "tftest-2"
-}
-
-resource "docker_container" "foo" {
-  name          = "tf-test"
-  image         = docker_image.foo.latest
-  network_mode  = docker_network.test_network_1.name
-  networks      = [docker_network.test_network_2.name]
-  network_alias = ["tftest-container"]
-}
-
-resource "docker_container" "bar" {
-  name          = "tf-test-bar"
-  image         = docker_image.foo.latest
-  network_mode  = "bridge"
-  networks      = [docker_network.test_network_2.name]
-  network_alias = ["tftest-container-foo"]
-}
-`
-
-const testAccDockerContainerHealthcheckConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-  name  = "tf-test"
-  image = docker_image.foo.latest
-
-  healthcheck {
-    test         = ["CMD", "/bin/true"]
-    interval     = "30s"
-    timeout      = "5s"
-    start_period = "15s"
-    retries      = 10
-  }
-}
-`
-
-const testAccDockerContainerNoStartConfig = `
-resource "docker_image" "foo" {
-  name         = "nginx:latest"
-  keep_locally = true
-}
-
-resource "docker_container" "foo" {
-  name     = "tf-test"
-  image    = docker_image.foo.latest
-  start    = false
-  must_run = false
-}
-`
-
-const testAccDockerContainerNetworksIPv4AddressConfig = `
-resource "docker_network" "test" {
-	name = "tf-test"
-	ipam_config {
-		subnet = "10.0.1.0/24"
-	}
-}
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	networks_advanced {
-		name = docker_network.test.name
-		ipv4_address = "10.0.1.123"
-	}
-}
-`
-
-const testAccDockerContainerNetworksIPv6AddressConfig = `
-resource "docker_network" "test" {
-	name = "tf-test"
-	ipv6 = true
-	ipam_config {
-		subnet = "fd00::1/64"
-		gateway = "fd00:0:0:0::f"
-	}
-}
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	networks_advanced {
-		name = docker_network.test.name
-		ipv6_address = "fd00:0:0:0::123"
-	}
-}
-`
-
-const testAccDockerContainerNetworksDualStackAddressConfig = `
-resource "docker_network" "test" {
-	name = "tf-test"
-	ipv6 = true
-
-	ipam_config {
-		subnet = "10.0.1.0/24"
-	}
-
-	ipam_config {
-		subnet = "fd00::1/64"
-	}
-}
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-	keep_locally = true
-}
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	networks_advanced {
-		name = docker_network.test.name
-		ipv4_address = "10.0.1.123"
-		ipv6_address = "fd00:0:0:0::123"
-	}
-}
-`
-
-const testAccDockerContainerRmConfig = `
-resource "docker_image" "foo" {
-	name = "busybox:latest"
-	keep_locally = true
-}
- resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	command = ["/bin/sleep", "15"]
-	rm = true
-}
-`
-
-const testAccDockerContainerReadOnlyConfig = `
-resource "docker_image" "foo" {
-	name = "busybox:latest"
-	keep_locally = true
-}
- resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	command = ["/bin/sleep", "15"]
-	read_only = true
-}
-`
-
-const testAccDockerContainerAttachConfig = `
-resource "docker_image" "foo" {
-	name = "busybox:latest"
-	keep_locally = true
-}
- resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	command = ["/bin/sh", "-c", "for i in $(seq 1 15); do sleep 1; done"]
-	attach = true
-	must_run = false
-}
-`
-
-const testAccDockerContainerLogsConfig = `
-resource "docker_image" "foo" {
-  name         = "busybox:latest"
-  keep_locally = true
-}
-
-resource "docker_container" "foo" {
-  name     = "tf-test"
-  image    = docker_image.foo.latest
-  command  = ["/bin/sh", "-c", "for i in $(seq 1 10); do echo \"$i\"; done"]
-  attach   = true
-  logs     = true
-  must_run = false
-}
-`
-
-const testAccDockerContainerExitCodeConfig = `
-resource "docker_image" "foo" {
-name = "busybox:latest"
-keep_locally = true
-}
- resource "docker_container" "foo" {
-name = "tf-test"
-image = docker_image.foo.latest
-command = ["/bin/sh", "-c", "exit 123"]
-attach = true
-must_run = false
-}
-`
-
-const testAccDockerContainerSysctlsConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	sysctls = {
-		"net.ipv4.ip_forward" = "1"
-	}
-}
-`
-
-const testAccDockerContainerGroupAddNameConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	group_add = [
-		"users"
-	]
-}
-`
-
-const testAccDockerContainerGroupAddIdConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	group_add = [
-		100
-	]
-}
-`
-
-const testAccDockerContainerGroupAddMultipleConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-
-	group_add = [
-		1,
-		2,
-		3,
-	]
-}
-`
-
-const testAccDockerContainerTTYConfig = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	tty = true
-}
-`
-
-const testAccDockerContainerSTDIN_Config = `
-resource "docker_image" "foo" {
-	name = "nginx:latest"
-}
-
-resource "docker_container" "foo" {
-	name = "tf-test"
-	image = docker_image.foo.latest
-	stdin_open = true
-}
-`
