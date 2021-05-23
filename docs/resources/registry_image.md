@@ -33,6 +33,7 @@ resource "docker_registry_image" "helloworld" {
 
 - **build** (Block List, Max: 1) Definition for building the image (see [below for nested schema](#nestedblock--build))
 - **id** (String) The ID of this resource.
+- **insecure_skip_verify** (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
 - **keep_remotely** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation. Defaults to `false`
 
 ### Read-Only
