@@ -88,6 +88,7 @@ provider "docker" {
 data "docker_registry_image" "foobar" {
 	provider = "docker.private"
 	name     = "%s"
+	insecure_skip_verify = true
 }
 `
 

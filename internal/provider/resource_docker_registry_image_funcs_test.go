@@ -169,7 +169,7 @@ func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) res
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)
 		username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-		digest, _ := getImageDigestWithFallback(pushOpts, username, password)
+		digest, _ := getImageDigestWithFallback(pushOpts, username, password, true)
 		if digest != "" {
 			return fmt.Errorf("image found")
 		}
@@ -183,12 +183,12 @@ func testDockerRegistryImageInRegistry(pushOpts internalPushImageOptions, cleanu
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)
 		username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-		digest, err := getImageDigestWithFallback(pushOpts, username, password)
+		digest, err := getImageDigestWithFallback(pushOpts, username, password, true)
 		if err != nil || len(digest) < 1 {
 			return fmt.Errorf("image not found")
 		}
 		if cleanup {
-			err := deleteDockerRegistryImage(pushOpts, digest, username, password, false)
+			err := deleteDockerRegistryImage(pushOpts, digest, username, password, true, false)
 			if err != nil {
 				return fmt.Errorf("Unable to remove test image. %s", err)
 			}
@@ -200,6 +200,7 @@ func testDockerRegistryImageInRegistry(pushOpts internalPushImageOptions, cleanu
 const testBuildDockerRegistryImageMappingConfig = `
 resource "docker_registry_image" "foo" {
 	name = "localhost:15000/foo:1.0"
+	insecure_skip_verify = true
 	build {
 		suppress_output = true
 		remote_context = "fooRemoteContext"
@@ -265,6 +266,8 @@ provider "docker" {
 resource "docker_registry_image" "foo" {
 	provider = "docker.private"
 	name = "%s"
+	insecure_skip_verify = true
+
 	build {
 		context = "%s"
 		remove = true
@@ -284,7 +287,9 @@ provider "docker" {
 resource "docker_registry_image" "foo" {
 	provider = "docker.private"
 	name = "%s"
+	insecure_skip_verify = true
 	keep_remotely = true
+
 	build {
 		context = "%s"
 		remove = true

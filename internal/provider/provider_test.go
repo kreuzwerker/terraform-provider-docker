@@ -89,5 +89,6 @@ provider "docker" {
 data "docker_registry_image" "foobar" {
 	provider = "docker.private"
 	name = "localhost:15000/helloworld:1.0"
+	insecure_skip_verify = true
 }
 `

@@ -9,8 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -34,6 +32,13 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The content digest of the image, as stored in the registry.",
 				Computed:    true,
+			},
+
+			"insecure_skip_verify": {
+				Type:        schema.TypeBool,
+				Description: "If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`",
+				Optional:    true,
+				Default:     false,
 			},
 		},
 	}
@@ -70,9 +75,10 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 		password = auth.Password
 	}
 
-	digest, err := getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, false)
+	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
+	digest, err := getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, false)
 	if err != nil {
-		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, true)
+		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, true)
 		if err != nil {
 			return diag.Errorf("Got error when attempting to fetch image version from registry: %s", err)
 		}
@@ -84,21 +90,15 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func getImageDigest(registry, image, tag, username, password string, fallback bool) (string, error) {
+func getImageDigest(registry, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
 	client := http.DefaultClient
 
-	// Allow insecure registries only for ACC tests
-	// cuz we don't have a valid certs for this case
-	if env, okEnv := os.LookupEnv("TF_ACC"); okEnv {
-		if i, errConv := strconv.Atoi(env); errConv == nil && i >= 1 {
-			// DevSkim: ignore DS440000
-			cfg := &tls.Config{
-				InsecureSkipVerify: true,
-			}
-			client.Transport = &http.Transport{
-				TLSClientConfig: cfg,
-			}
-		}
+	// DevSkim: ignore DS440000
+	cfg := &tls.Config{
+		InsecureSkipVerify: insecureSkipVerify,
+	}
+	client.Transport = &http.Transport{
+		TLSClientConfig: cfg,
 	}
 
 	req, err := http.NewRequest("GET", "https://"+registry+"/v2/"+image+"/manifests/"+tag, nil)
