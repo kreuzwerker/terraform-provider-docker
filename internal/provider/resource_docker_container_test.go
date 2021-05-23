@@ -45,7 +45,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testAccDockerContainerPrivateImage, registry, dockerConfig, image),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerPrivateImage"), registry, dockerConfig, image),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 				),
@@ -1755,28 +1755,6 @@ func testValueHigherEqualThan(name, key string, value int) resource.TestCheckFun
 		return nil
 	}
 }
-
-const testAccDockerContainerPrivateImage = `
-provider "docker" {
-	alias = "private"
-	registry_auth {
-		address = "%s"
-		config_file = "%s"
-	}
-}
-
-resource "docker_image" "foo" {
-	provider = "docker.private"
-	name  = "%s"
-	keep_locally = true
-}
-
-resource "docker_container" "foo" {
-	provider = "docker.private"
-	name  = "tf-test"
-	image = docker_image.foo.latest
-}
-`
 
 const testAccDockerContainerConfig = `
 resource "docker_image" "foo" {
