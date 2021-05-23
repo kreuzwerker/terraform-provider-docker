@@ -973,7 +973,6 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 }
 
 func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
-	t.Skip("Skipping this test because it is flaky only on travis")
 	// Step 1
 	configData := "ewogICJwcmVmaXgiOiAiMTIzIgp9"
 	secretData := "ewogICJrZXkiOiAiUVdFUlRZIgp9"
