@@ -33,18 +33,21 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-      - run: cat /etc/issue
-      - run: bash scripts/gogetcookie.sh
-      # locally: docker run -it ubuntu:20.04 bash (https://ubuntu.pkgs.org/20.04/docker-ce-stable-amd64/)
-      - run: sudo apt-get update
-      - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-      - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-      - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-      - run: sudo apt-get update
-      # list available docker versions: apt-cache policy docker-ce 
-      - run: sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
-      - run: docker version
-      - run: sudo service docker restart
-      - run: make testacc
+      - name: Setup cookies
+        run: |
+          cat /etc/issue
+          bash scripts/gogetcookie.sh
+      - name: Setup docker version ${{ env.DOCKER_CE_VERSION }}
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
+          docker version
+          sudo service docker restart
+      - name: Run acceptance tests
+        run: make testacc
         env: 
           TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}

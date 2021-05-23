@@ -18,9 +18,11 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 # Install docker
+# see listed docker versions: 'apt-cache policy docker-ce'
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && \
-    apt-get update
+    apt-get update \
+    apt-cache policy docker-ce
 RUN apt-get -y install docker-ce=${DOCKER_CE_VERSION}
 
 # Install terraform

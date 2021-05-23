@@ -23,9 +23,13 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-      - run: cat /etc/issue
-      - run: bash scripts/gogetcookie.sh
-      - run: make vet
-      - run: make test
+      - name: Setup cookies
+        run: |
+          cat /etc/issue
+          bash scripts/gogetcookie.sh
+      - name: Running vet
+        run: make vet
+      - name: Running unit tests
+        run: make test
 
 
