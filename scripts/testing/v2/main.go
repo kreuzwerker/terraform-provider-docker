@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+const listenAddr = ":8080"
+
 type config struct {
 	Prefix string `json:"prefix"`
 }
@@ -28,15 +30,24 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	http.HandleFunc("/newroute", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("new Route!"))
-	})
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("%s - Hello World!", configs.Prefix)))
+		_, err = w.Write([]byte(fmt.Sprintf("%s - Hello World!", configs.Prefix)))
+		if err != nil {
+			log.Fatalln("failed to write for path '/'")
+		}
 	})
 
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/newroute", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte("new Route!"))
+		if err != nil {
+			log.Fatalln("failed to write for path '/newroute'")
+		}
+	})
+
+	err = http.ListenAndServe(listenAddr, nil)
+	if err != nil {
+		log.Fatalf("failed to listen and server on port '%s'", listenAddr)
+	}
 }
