@@ -43,9 +43,6 @@ jobs:
       # list available docker versions: apt-cache policy docker-ce 
       - run: sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
       - run: docker version
-      # Allow local registry to be insecure
-      - run: sudo sed 's/DOCKER_OPTS="/DOCKER_OPTS="--insecure-registry=127.0.0.1:15000 /g' -i /etc/default/docker
-      - run: sudo cat /etc/default/docker
       - run: sudo service docker restart
       - run: make testacc
         env: 
