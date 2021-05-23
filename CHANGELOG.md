@@ -1,3 +1,48 @@
+## 2.12.0 (May 23, 2021)
+
+IMPROVEMENTS
+- migrate to terraform-sdk-v2 ([#102](https://github.com/kreuzwerker/terraform-provider-docker/issues/102))
+- support darwin arm builds and golang 1.16 ([#140](https://github.com/kreuzwerker/terraform-provider-docker/issues/140))  
+- add documentation generation ([#193](https://github.com/kreuzwerker/terraform-provider-docker/issues/193))
+
+BUG FIXES
+- set `ForceNew`: `true` to labelSchema ([#152](https://github.com/kreuzwerker/terraform-provider-docker/issues/152))
+- search local images with Docker image ID ([#151](https://github.com/kreuzwerker/terraform-provider-docker/issues/151))
+- update module github.com/golangci/golangci-lint to v1.39.0 ([#166](https://github.com/kreuzwerker/terraform-provider-docker/issues/166))
+- update module github.com/katbyte/terrafmt to v0.3.0 ([#168](https://github.com/kreuzwerker/terraform-provider-docker/issues/168))
+- update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.5.0 ([#167](https://github.com/kreuzwerker/terraform-provider-docker/issues/167))
+- update module github.com/docker/docker to v20.10.5 ([#165](https://github.com/kreuzwerker/terraform-provider-docker/issues/165))
+- update module github.com/docker/cli to v20.10.5 ([#164](https://github.com/kreuzwerker/terraform-provider-docker/issues/164))
+- update module github.com/docker/docker to v20.10.6 ([#174](https://github.com/kreuzwerker/terraform-provider-docker/issues/174))
+- update module github.com/docker/cli to v20.10.6 ([#175](https://github.com/kreuzwerker/terraform-provider-docker/issues/175))
+- move helpers ([#170](https://github.com/kreuzwerker/terraform-provider-docker/issues/170))
+- assign map to `rawState` when it is nil to prevent `panic` ([#180](https://github.com/kreuzwerker/terraform-provider-docker/issues/180))
+- remove gpg key from action to make it work in forks
+- skip sign on `compile` action
+- update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.6.1 ([#181](https://github.com/kreuzwerker/terraform-provider-docker/issues/181))
+- replace for loops with StateChangeConf ([#182](https://github.com/kreuzwerker/terraform-provider-docker/issues/182))
+- update module github.com/golangci/golangci-lint to v1.40.0 ([#191](https://github.com/kreuzwerker/terraform-provider-docker/issues/191))
+- test spaces for windows ([#190](https://github.com/kreuzwerker/terraform-provider-docker/issues/190))
+- rewriting tar header fields ([#198](https://github.com/kreuzwerker/terraform-provider-docker/issues/198))
+
+DOCS
+- fix Github repository URL in README ([#136](https://github.com/kreuzwerker/terraform-provider-docker/issues/136))
+- chore: add the guide about Terraform Configuration in Bug Report ([#139](https://github.com/kreuzwerker/terraform-provider-docker/issues/139))
+- add a guide about writing issues to CONTRIBUTING.md ([#149](https://github.com/kreuzwerker/terraform-provider-docker/issues/149))
+- add an example to build an image with docker_image ([#158](https://github.com/kreuzwerker/terraform-provider-docker/issues/158))
+- format Guide of Bug report ([#159](https://github.com/kreuzwerker/terraform-provider-docker/issues/159))
+- add releasing steps
+
+CI 
+- bump docker dependency to v20.10.5 ([#119](https://github.com/kreuzwerker/terraform-provider-docker/issues/119)). Note: Removes `generic_resources` for `docker_service`. 
+- run acceptance tests with multiple Terraform versions ([#129](https://github.com/kreuzwerker/terraform-provider-docker/issues/129))
+- fix/workflows ([#169](https://github.com/kreuzwerker/terraform-provider-docker/issues/169))
+
+CHORE 
+- configure actions/stale ([#157](https://github.com/kreuzwerker/terraform-provider-docker/issues/157))
+- configure Renovate ([#162](https://github.com/kreuzwerker/terraform-provider-docker/issues/162))
+- ignore `dist` folder
+
 ## 2.11.0 (January 22, 2021)
 
 IMPROVEMENTS:

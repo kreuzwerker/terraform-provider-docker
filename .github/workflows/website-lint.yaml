@@ -28,7 +28,7 @@ jobs:
       - name: Generate the website
         run: make website-generation
       - name: Verify Changed files
-        uses: tj-actions/verify-changed-files@v6.1
+        uses: tj-actions/verify-changed-files@v6.2
         id: verify-changed-files
         with:
           files: |

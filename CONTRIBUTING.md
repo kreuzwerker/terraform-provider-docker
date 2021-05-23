@@ -178,3 +178,9 @@ You can follow the documentation on
 
 Push your branch to your `terraform-provider-docker` fork and open a 
 pull request against the master branch.
+
+## Releasing
+- Update the `CHANGELOG.md` by hand by [comparing](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.11.0...master) with the latest release, e.g. `v2.11.0`
+- Replace all occurences of the latest release, e.g. `v2.11.0` with the new one, e.g. `v2.12.0`, execpt in the files `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**/*`
+- regenerate the website: `make website-generation`
+- run `git tag v2.12.0 && git push origin master v2.12.0`
