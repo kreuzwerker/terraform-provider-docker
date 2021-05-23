@@ -87,7 +87,7 @@ provider "docker" {
 }
 data "docker_registry_image" "foobar" {
 	provider = "docker.private"
-	name = "%s"
+	name     = "%s"
 }
 `
 
