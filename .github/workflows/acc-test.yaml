@@ -15,6 +15,7 @@ env:
   GOPROXY: https://proxy.golang.org,https://gocenter.io,direct
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.5~3-0~ubuntu-focal"
+  GO_VERSION: "1.16"
 
 jobs:
   acc-test:
@@ -31,7 +32,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.16'
+          go-version: ${{ env.GO_VERSION }}
       - run: cat /etc/issue
       - run: bash scripts/gogetcookie.sh
       # locally: docker run -it ubuntu:20.04 bash (https://ubuntu.pkgs.org/20.04/docker-ce-stable-amd64/)
