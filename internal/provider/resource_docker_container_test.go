@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -35,7 +36,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
-	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
+	dockerConfig := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "dockerconfig.json"), "\\", "\\\\")
 	ctx := context.Background()
 
 	var c types.ContainerJSON
@@ -741,7 +742,7 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	ctx := context.Background()
 
 	wd, _ := os.Getwd()
-	testFile := wd + "/../../scripts/testing/testingFile"
+	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
 	testFileContent, _ := ioutil.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
@@ -806,7 +807,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 	var firstRunId string
 
 	wd, _ := os.Getwd()
-	testFile := wd + "/../../scripts/testing/testingFile"
+	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
 	hash, _ := ioutil.ReadFile(testFile + ".base64")
 	grabFirstCheck := func(*terraform.State) error {
 		firstRunId = c.ID
@@ -890,6 +891,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 				Config: testAccDockerContainerUploadBase64Config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
+					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
 					testCheck("/terraform/test2.txt", "foobar", "100644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -911,6 +913,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 				Config: testAccDockerContainerUploadBase64Config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
+					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
 					testCheck("/terraform/test2.txt", "foobar", "100644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
@@ -1909,7 +1912,7 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
 	name = "tf-test"
 	image = docker_image.foo.latest
-	entrypoint = ["/bin/bash", "-c", "ping localhost"]
+	entrypoint = ["/bin/bash", "-c", "cat /proc/kmsg"]
 	user = "root:root"
 	restart = "on-failure"
 	destroy_grace_seconds = 10

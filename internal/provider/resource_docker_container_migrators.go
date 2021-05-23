@@ -452,12 +452,13 @@ func resourceDockerContainerV1() *schema.Resource {
 			},
 
 			"env": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Type:        schema.TypeSet,
+				Description: "The environment variables to in the form of `KEY=VALUE`, e.g. `DEBUG=0`",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
 
 			"links": {
@@ -807,7 +808,7 @@ func resourceDockerContainerMigrateState(
 		log.Println("[INFO] Found Docker Container State v0; migrating to v1")
 		return migrateDockerContainerMigrateStateV0toV1(is, meta)
 	default:
-		return is, fmt.Errorf("Unexpected schema version: %d", v)
+		return is, fmt.Errorf("unexpected schema version: %d", v)
 	}
 }
 

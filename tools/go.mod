@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/client9/misspell v0.3.4
-	github.com/golangci/golangci-lint v1.40.0
+	github.com/golangci/golangci-lint v1.40.1
+	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/katbyte/terrafmt v0.3.0
 )

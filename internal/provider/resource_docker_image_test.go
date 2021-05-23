@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -161,7 +162,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
-	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
+	dockerConfig := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "dockerconfig.json"), "\\", "\\\\")
 	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
@@ -186,7 +187,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	wd, _ := os.Getwd()
-	dockerConfig := wd + "/../../scripts/testing/dockerconfig.json"
+	dockerConfig := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "dockerconfig.json"), "\\", "\\\\")
 	ctx := context.Background()
 
 	resource.Test(t, resource.TestCase{
@@ -263,7 +264,7 @@ func TestAccDockerImage_tag_sha265(t *testing.T) {
 func TestAccDockerImage_build(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()
-	dfPath := path.Join(wd, "Dockerfile")
+	dfPath := filepath.Join(wd, "Dockerfile")
 	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
 		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
 	}

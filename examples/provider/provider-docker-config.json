@@ -1,0 +1,9 @@
+{
+    "auths": {
+        "repo.mycompany:8181": {
+            "auth": "dXNlcjpwYXNz="
+        },
+        "otherrepo.other-company:8181": {}
+    },
+    "credsStore": "osxkeychain"
+}

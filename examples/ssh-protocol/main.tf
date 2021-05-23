@@ -13,11 +13,11 @@ resource "docker_image" "test" {
 
 # scaffolding
 variable "pub_key" {
-  type = "string"
+  type = string
 }
 
 provider "docker" {
-    version = "~> 1.2.0"
+  version = "~> 1.2.0"
 }
 
 resource "docker_image" "dind" {

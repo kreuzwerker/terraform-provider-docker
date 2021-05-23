@@ -220,7 +220,7 @@ func providerSetToRegistryAuth(authList []interface{}) (*AuthConfigs, error) {
 			}
 			authFileConfig, err := c.GetAuthConfig(registryHostname)
 			if err != nil {
-				return nil, fmt.Errorf("Couldn't find registry config for '%s' in file content", registryHostname)
+				return nil, fmt.Errorf("couldn't find registry config for '%s' in file content", registryHostname)
 			}
 			authConfig.Username = authFileConfig.Username
 			authConfig.Password = authFileConfig.Password
@@ -278,7 +278,9 @@ func loadConfigFile(configData io.Reader) (*configfile.ConfigFile, error) {
 // Copied from github.com/docker/docker/registry.ConvertToHostname to reduce dependencies.
 func convertToHostname(url string) string {
 	stripped := url
+	// DevSkim: ignore DS137138
 	if strings.HasPrefix(url, "http://") {
+		// DevSkim: ignore DS137138
 		stripped = strings.TrimPrefix(url, "http://")
 	} else if strings.HasPrefix(url, "https://") {
 		stripped = strings.TrimPrefix(url, "https://")

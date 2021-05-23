@@ -6,6 +6,8 @@ import (
 
 func resourceDockerPlugin() *schema.Resource {
 	return &schema.Resource{
+		Description: "Manages the lifecycle of a Docker plugin.",
+
 		Create: resourceDockerPluginCreate,
 		Read:   resourceDockerPluginRead,
 		Update: resourceDockerPluginUpdate,
@@ -13,29 +15,31 @@ func resourceDockerPlugin() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:             schema.TypeString,
+				Description:      "Docker Plugin name",
 				Required:         true,
 				ForceNew:         true,
-				Description:      "Docker Plugin name",
 				DiffSuppressFunc: diffSuppressFuncPluginName,
 				ValidateFunc:     validateFuncPluginName,
 			},
 			"alias": {
 				Type:        schema.TypeString,
+				Description: "Docker Plugin alias",
 				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Docker Plugin alias",
 				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
 					return complementTag(oldV) == complementTag(newV)
 				},
 			},
 			"enabled": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Description: "If `true` the plugin is enabled. Defaults to `true`",
+				Default:     true,
+				Optional:    true,
 			},
 			"grant_all_permissions": {
 				Type:          schema.TypeBool,
@@ -45,18 +49,21 @@ func resourceDockerPlugin() *schema.Resource {
 			},
 			"grant_permissions": {
 				Type:          schema.TypeSet,
+				Description:   "Grant specific permissions only",
 				Optional:      true,
 				ConflictsWith: []string{"grant_all_permissions"},
 				Set:           dockerPluginGrantPermissionsSetFunc,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Description: "The name of the permission",
+							Required:    true,
 						},
 						"value": {
-							Type:     schema.TypeSet,
-							Required: true,
+							Type:        schema.TypeSet,
+							Description: "The value of the permission",
+							Required:    true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -65,10 +72,11 @@ func resourceDockerPlugin() *schema.Resource {
 				},
 			},
 			"env": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Description: "The environment variables in the form of `KEY=VALUE`, e.g. `DEBUG=0`",
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"plugin_reference": {
 				Type:        schema.TypeString,
@@ -77,18 +85,19 @@ func resourceDockerPlugin() *schema.Resource {
 			},
 
 			"force_destroy": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Description: "If true, then the plugin is destroyed forcibly",
+				Optional:    true,
 			},
 			"enable_timeout": {
 				Type:        schema.TypeInt,
-				Optional:    true,
 				Description: "HTTP client timeout to enable the plugin",
+				Optional:    true,
 			},
 			"force_disable": {
 				Type:        schema.TypeBool,
+				Description: "If true, then the plugin is disabled forcibly",
 				Optional:    true,
-				Description: "If true, then the plugin is disabled forcibly when the plugin is disabled",
 			},
 		},
 	}

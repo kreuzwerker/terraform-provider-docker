@@ -594,6 +594,7 @@ func authToServiceAuth(auths []interface{}) types.AuthConfig {
 // fromRegistryAuth extract the desired AuthConfiguration for the given image
 func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) types.AuthConfig {
 	// Remove normalized prefixes to simplify substring
+	// DevSkim: ignore DS137138
 	image = strings.Replace(strings.Replace(image, "http://", "", 1), "https://", "", 1)
 	// Get the registry with optional port
 	lastBin := strings.Index(image, "/")

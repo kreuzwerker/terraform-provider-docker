@@ -12,6 +12,7 @@ setup:
 	cd tools && GO111MODULE=on go install github.com/client9/misspell/cmd/misspell
 	cd tools && GO111MODULE=on go install github.com/katbyte/terrafmt
 	cd tools && GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	cd tools && GO111MODULE=on go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 	rm -f .git/hooks/commit-msg \
 	&& curl --fail -o .git/hooks/commit-msg https://raw.githubusercontent.com/hazcod/semantic-commit-hook/master/commit-msg \
 	&& chmod 500 .git/hooks/commit-msg
@@ -63,30 +64,33 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
+website-generation:
+	go generate
+	
 website-link-check:
 	@scripts/markdown-link-check.sh
 
 website-lint:
 	@echo "==> Checking website against linters..."
-	@misspell -error -source=text website/ || (echo; \
+	@misspell -error -source=text docs/ || (echo; \
 		echo "Unexpected mispelling found in website files."; \
 		echo "To automatically fix the misspelling, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
-	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli website/docs/ || (echo; \
+	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli docs/ || (echo; \
 		echo "Unexpected issues found in website Markdown files."; \
 		echo "To apply any automatic fixes, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
-	@terrafmt diff ./website --check --pattern '*.markdown' --quiet || (echo; \
+	@terrafmt diff ./docs --check --pattern '*.md' --quiet || (echo; \
 		echo "Unexpected differences in website HCL formatting."; \
-		echo "To see the full differences, run: terrafmt diff ./website --pattern '*.markdown'"; \
+		echo "To see the full differences, run: terrafmt diff ./docs --pattern '*.md'"; \
 		echo "To automatically fix the formatting, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
 
 website-lint-fix:
 	@echo "==> Applying automatic website linter fixes..."
-	@misspell -w -source=text website/
-	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix website/docs/
-	@terrafmt fmt ./website --pattern '*.markdown'
+	@misspell -w -source=text docs/
+	@docker run -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix docs/
+	@terrafmt fmt ./docs --pattern '*.md'
 
 .PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
 

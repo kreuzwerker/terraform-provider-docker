@@ -1664,7 +1664,7 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 	}
 
 	if len(imagesAfterDelete) != 0 {
-		return fmt.Errorf("Expected images of patter '%s' to be deleted, but there is/are still %d", imagePattern, len(imagesAfterDelete))
+		return fmt.Errorf("Expected images of pattern '%s' to be deleted, but there is/are still %d", imagePattern, len(imagesAfterDelete))
 	}
 
 	return nil

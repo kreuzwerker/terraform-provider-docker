@@ -8,7 +8,7 @@ on:
     types: ['opened', 'synchronize']
     paths:
       - .github/workflows/website-lint.yaml
-      - website/docs/**
+      - docs/**
 
 env:
   GO_VERSION: "1.16"
@@ -16,6 +16,32 @@ env:
   DOCKER_CE_VERSION: "5:20.10.5~3-0~ubuntu-focal"
 
 jobs:
+  website-generation:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16'
+      - name: Setup tools
+        run: make setup
+      - name: Generate the website
+        run: make website-generation
+      - name: Verify Changed files
+        uses: tj-actions/verify-changed-files@v6.1
+        id: verify-changed-files
+        with:
+          files: |
+             docs/**/*.md
+      - name: Display changed files
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        run: |
+          echo "Changed files: ${{ steps.verify_changed_files.outputs.changed_files }}"
+      - name: Fail if files have changed
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        run: |
+          echo "Generated website was not up-to-date. Please run 'make website-generation' locally, commit, and push again";
+          exit 1;
   website-lint-spellcheck-tffmt:
     runs-on: ubuntu-20.04
     steps:
@@ -23,25 +49,17 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16'
-      - run: cat /etc/issue
-      - run: bash scripts/gogetcookie.sh
-      # locally: docker run -it ubuntu-20.04 bash (https://ubuntu.pkgs.org/20.04/docker-ce-stable-amd64/)
-      - run: sudo apt-get update
-      - run: sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-      - run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-      - run: sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-      - run: sudo apt-get update
-      # list available docker versions: apt-cache policy docker-ce 
-      - run: sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
       - run: docker version
-      - run: make setup
-      - run: make website-lint
+      - name: Setup tools
+        run: make setup
+      - name: Lint website
+        run: make website-lint
   markdown-lint:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: avto-dev/markdown-lint@v1
         with:
-          args: 'website/docs'
+          args: 'docs'
           config: '.markdownlint.yml'
 
