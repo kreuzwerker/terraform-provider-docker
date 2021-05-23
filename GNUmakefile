@@ -18,7 +18,7 @@ setup:
 	&& chmod 500 .git/hooks/commit-msg
 
 golangci-lint:
-	@golangci-lint run ./$(PKG_NAME)/...
+	@golangci-lint run ./...
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
