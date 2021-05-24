@@ -132,7 +132,8 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 		if err != nil {
 			return err
 		}
-		log.Printf("[INFO] Deleted image items: %v", imageDeleteResponseItems)
+		indentedImageDeleteResponseItems, _ := json.MarshalIndent(imageDeleteResponseItems, "", "\t")
+		log.Printf("[DEBUG] Deleted image items: \n%s", indentedImageDeleteResponseItems)
 	}
 
 	return nil
