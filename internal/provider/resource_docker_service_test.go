@@ -360,23 +360,7 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image 			  = "127.0.0.1:15000/tftest-service:v1"
-							stop_grace_period = "10s"
-						}
-					}
-				}
-				`,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceMinimalSpec"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
@@ -402,213 +386,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_volume" "test_volume" {
-					name = "tftest-volume"
-				}
-
-				resource "docker_config" "service_config" {
-					name = "tftest-full-myconfig"
-					data = "ewogICJwcmVmaXgiOiAiMTIzIgp9"
-				}
-
-				resource "docker_secret" "service_secret" {
-					name = "tftest-mysecret"
-					data = "ewogICJrZXkiOiAiUVdFUlRZIgp9"
-				}
-
-				resource "docker_network" "test_network" {
-					name   = "tftest-network"
-					driver = "overlay"
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-
-					labels {
-						label = "servicelabel"
-						value = "true"
-					}
-
-					task_spec {
-						container_spec {
-							image = "127.0.0.1:15000/tftest-service:v1"
-
-							labels {
-								label = "foo"
-								value = "bar"
-							}
-
-							command  = ["ls"]
-							args     = ["-las"]
-							hostname = "my-fancy-service"
-
-							env = {
-								MYFOO = "BAR"
-								URI   = "/api-call?param1=value1"
-							}
-
-							dir    = "/root"
-							user   = "root"
-							groups = ["docker", "foogroup"]
-
-							privileges {
-								se_linux_context {
-									disable = true
-									user    = "user-label"
-									role    = "role-label"
-									type    = "type-label"
-									level   = "level-label"
-								}
-							}
-
-							read_only = true
-
-							mounts {
-								target      = "/mount/test"
-								source      = docker_volume.test_volume.name
-								type        = "volume"
-								read_only   = true
-
-								volume_options {
-									no_copy = true
-									labels {
-										label = "foo"
-										value = "bar"
-									}
-									driver_name = "random-driver"
-									driver_options = {
-										op1 = "val1"
-									}
-								}
-							}
-
-							stop_signal       = "SIGTERM"
-							stop_grace_period = "10s"
-
-							healthcheck {
-								test     = ["CMD", "curl", "-f", "localhost:8080/health"]
-								interval = "5s"
-								timeout  = "2s"
-								retries  = 4
-							}
-
-							hosts {
-								host = "testhost"
-								ip   = "10.0.1.0"
-							}
-
-							dns_config {
-								nameservers = ["8.8.8.8"]
-								search      = ["example.org"]
-								options     = ["timeout:3"]
-							}
-
-							secrets {
-								secret_id   = docker_secret.service_secret.id
-								secret_name = docker_secret.service_secret.name
-								file_name   = "/secrets.json"
-								file_uid    = "0"
-								file_gid    = "0"
-								file_mode   = 0777
-							}
-
-							configs {
-								config_id   = docker_config.service_config.id
-								config_name = docker_config.service_config.name
-								file_name = "/configs.json"
-							}
-						}
-
-						resources {
-							limits {
-								nano_cpus    = 1000000
-								memory_bytes = 536870912
-							}
-						}
-
-						restart_policy {
-							condition    = "on-failure"
-							delay        = "3s"
-							max_attempts = 4
-							window       = "10s"
-						}
-
-						placement {
-							constraints = [
-								"node.role==manager",
-							]
-
-							prefs = [
-								"spread=node.role.manager",
-							]
-
-							platforms {
-								architecture = "amd64"
-								os 			 = "linux"
-							}
-
-							max_replicas = 2
-						}
-
-						force_update = 0
-						runtime      = "container"
-						networks     = [docker_network.test_network.id]
-
-						log_driver {
-							name = "json-file"
-
-							options = {
-								max-size = "10m"
-								max-file = "3"
-							}
-						}
-					}
-
-					mode {
-						replicated {
-							replicas = 2
-						}
-					}
-
-					update_config {
-						parallelism       = 2
-						delay             = "10s"
-						failure_action    = "pause"
-						monitor           = "5s"
-						max_failure_ratio = "0.1"
-						order             = "start-first"
-					}
-
-					rollback_config {
-						parallelism       = 2
-						delay             = "5ms"
-						failure_action    = "pause"
-						monitor           = "10h"
-						max_failure_ratio = "0.9"
-						order             = "stop-first"
-					}
-
-					endpoint_spec {
-						mode = "vip"
-
-						ports {
-							name           = "random"
-							protocol       = "tcp"
-							target_port    = "8080"
-							published_port = "8080"
-							publish_mode   = "ingress"
-						}
-					}
-				}
-
-				`,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceFullSpec"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
@@ -708,24 +486,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image             = "127.0.0.1:15000/tftest-service:v1"
-							stop_grace_period = "10s"
-						}
-					}
-					mode {}
-				}
-				`,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServicePartialReplicationConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
@@ -734,26 +495,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 				),
 			},
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image             = "127.0.0.1:15000/tftest-service:v1"
-							stop_grace_period = "10s"
-						}
-					}
-					mode {
-						replicated {}
-					}
-				}
-				`,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServicePartialReplicationConfigStep2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
@@ -762,28 +504,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 				),
 			},
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image             = "127.0.0.1:15000/tftest-service:v1"
-							stop_grace_period = "10s"
-						}
-					}
-					mode {
-						replicated {
-							replicas = 2
-						}
-					}
-				}
-				`,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServicePartialReplicationConfigStep3"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
@@ -810,26 +531,7 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image             = "127.0.0.1:15000/tftest-service:v1"
-							stop_grace_period = "10s"
-						}
-					}
-					mode {
-						global = true
-					}
-				}
-				`,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceGlobalReplicationMode"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
@@ -856,22 +558,7 @@ func TestAccDockerService_ConflictingGlobalAndReplicated(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
-						}
-					}
-					mode {
-						replicated {
-							replicas = 2
-						}
-						global = true
-					}
-				}
-				`,
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceConflictingGlobalAndReplicated"),
 				ExpectError: regexp.MustCompile(`.*conflicts with.*`),
 			},
 		},
@@ -888,29 +575,7 @@ func TestAccDockerService_ConflictingGlobalModeAndConverge(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic"
-					task_spec {
-						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
-						}
-					}
-					mode {
-						global = true
-					}
-					converge_config {
-						delay    = "7s"
-						timeout  = "10s"
-					}
-				}
-				`,
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceConflictingGlobalModeAndConverge"),
 				ExpectError: regexp.MustCompile(`.*conflicts with.*`),
 			},
 		},
@@ -931,38 +596,102 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(`
-					provider "docker" {
-						registry_auth {
-							address = "%s"
-						}
-					}
-
-					resource "docker_service" "foo" {
-						name     = "tftest-service-foo"
-						task_spec {
-							container_spec {
-								image             = "%s"
-								stop_grace_period = "10s"
-								
-							}
-						}
-						mode {
-							replicated {
-								replicas = 2
-							}
-						}
-
-						converge_config {
-							delay    = "7s"
-							timeout  = "3m"
-						}
-					}
-				`, registry, image),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServicePrivateImageConverge"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-foo"),
 					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
+
+func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceNonExistingPrivateImageConverge"),
+				ExpectError: regexp.MustCompile(`.*did not converge after.*`),
+				Check: resource.ComposeTestCheckFunc(
+					isServiceRemoved("tftest-service-privateimagedoesnotexist"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServicenonExistingPublicImageConverge"),
+				ExpectError: regexp.MustCompile(`.*did not converge after.*`),
+				Check: resource.ComposeTestCheckFunc(
+					isServiceRemoved("tftest-service-publicimagedoesnotexist"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceConvergeAndStopGracefully"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
+					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic-converge"),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
+					testValueHigherEqualThan("docker_service.foo", "endpoint_spec.0.ports.0.target_port", 8080),
+					testValueHigherEqualThan("docker_service.foo", "endpoint_spec.0.ports.0.published_port", 30000),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
+
+func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
+	image := "127.0.0.1:15000/tftest-service:v1"
+	imageFail := "127.0.0.1:15000/tftest-service:v3"
+	ctx := context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_service", "updateFailsAndRollbackConvergeConfig"), image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
+					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-updateFailsAndRollbackConverge"),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
+				),
+			},
+			{
+				Config:      fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_service", "updateFailsAndRollbackConvergeConfig"), imageFail),
+				ExpectError: regexp.MustCompile(`.*rollback completed.*`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
+					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-updateFailsAndRollbackConverge"),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 				),
 			},
 		},
@@ -1252,346 +981,107 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	})
 }
 
-func TestAccDockerService_nonExistingPrivateImageConverge(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: `
-				resource "docker_service" "foo" {
-					name     = "tftest-service-privateimagedoesnotexist"
-					task_spec {
-						container_spec {
-							image    = "127.0.0.1:15000/idonoexist:latest"
-						}
-					}
-
-					mode {
-						replicated {
-							replicas = 2
-						}
-					}
-
-					converge_config {
-						delay    = "7s"
-						timeout  = "20s"
-					}
-				}
-				`,
-				ExpectError: regexp.MustCompile(`.*did not converge after.*`),
-				Check: resource.ComposeTestCheckFunc(
-					isServiceRemoved("tftest-service-privateimagedoesnotexist"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccDockerService_nonExistingPublicImageConverge(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: `
-				resource "docker_service" "foo" {
-					name     = "tftest-service-publicimagedoesnotexist"
-					task_spec {
-						container_spec {
-							image    = "stovogel/blablabla:part5"
-						}
-					}
-
-					mode {
-						replicated {
-							replicas = 2
-						}
-					}
-
-					converge_config {
-						delay    = "7s"
-						timeout  = "10s"
-					}
-				}
-				`,
-				ExpectError: regexp.MustCompile(`.*did not converge after.*`),
-				Check: resource.ComposeTestCheckFunc(
-					isServiceRemoved("tftest-service-publicimagedoesnotexist"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
-	ctx := context.Background()
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: `
-				provider "docker" {
-					registry_auth {
-						address = "127.0.0.1:15000"
-					}
-				}
-
-				resource "docker_service" "foo" {
-					name     = "tftest-service-basic-converge"
-					task_spec {
-						container_spec {
-							image    = "127.0.0.1:15000/tftest-service:v1"
-							stop_grace_period = "10s"
-							healthcheck {
-								test     = ["CMD", "curl", "-f", "localhost:8080/health"]
-								interval = "5s"
-								timeout  = "2s"
-								start_period = "0s"
-								retries  = 4
-							}
-						}
-					}
-
-					mode {
-						replicated {
-							replicas = 2
-						}
-					}
-
-					endpoint_spec {
-						ports {
-							target_port = "8080"
-						}
-					}
-
-					converge_config {
-						delay    = "7s"
-						timeout  = "3m"
-					}
-				}
-				`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
-					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic-converge"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
-					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
-					testValueHigherEqualThan("docker_service.foo", "endpoint_spec.0.ports.0.target_port", 8080),
-					testValueHigherEqualThan("docker_service.foo", "endpoint_spec.0.ports.0.published_port", 30000),
-				),
-			},
-		},
-		CheckDestroy: func(state *terraform.State) error {
-			return checkAndRemoveImages(ctx, state)
-		},
-	})
-}
-
-func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
-	image := "127.0.0.1:15000/tftest-service:v1"
-	imageFail := "127.0.0.1:15000/tftest-service:v3"
-	ctx := context.Background()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: fmt.Sprintf(updateFailsAndRollbackConvergeConfig, image),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
-					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-updateFailsAndRollbackConverge"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
-					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
-				),
-			},
-			{
-				Config:      fmt.Sprintf(updateFailsAndRollbackConvergeConfig, imageFail),
-				ExpectError: regexp.MustCompile(`.*rollback completed.*`),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
-					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-updateFailsAndRollbackConverge"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
-					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
-				),
-			},
-		},
-		CheckDestroy: func(state *terraform.State) error {
-			return checkAndRemoveImages(ctx, state)
-		},
-	})
-}
-
 const updateMultiplePropertiesConfigConverge = `
 provider "docker" {
 	alias = "private"
 	registry_auth {
-		address = "127.0.0.1:15000"
+	  address = "127.0.0.1:15000"
 	}
-}
-
-resource "docker_volume" "foo" {
+  }
+  
+  resource "docker_volume" "foo" {
 	name = "tftest-volume"
-}
-
-resource "docker_volume" "foo2" {
+  }
+  
+  resource "docker_volume" "foo2" {
 	name = "tftest-volume2"
-}
-
-resource "docker_config" "service_config" {
-	name 			 = "tftest-myconfig-${uuid()}"
-	data 			 = "%s"
-
+  }
+  
+  resource "docker_config" "service_config" {
+	name = "tftest-myconfig-${uuid()}"
+	data = "%s"
+  
 	lifecycle {
-		ignore_changes = ["name"]
-		create_before_destroy = true
+	  ignore_changes        = ["name"]
+	  create_before_destroy = true
 	}
-}
-
-resource "docker_secret" "service_secret" {
-	name 			 = "tftest-tftest-mysecret-${replace(timestamp(),":", ".")}"
-	data 			 = "%s"
-
+  }
+  
+  resource "docker_secret" "service_secret" {
+	name = "tftest-tftest-mysecret-${replace(timestamp(), ":", ".")}"
+	data = "%s"
+  
 	lifecycle {
-		ignore_changes = ["name"]
-		create_before_destroy = true
+	  ignore_changes        = ["name"]
+	  create_before_destroy = true
 	}
-}
-
-resource "docker_service" "foo" {
+  }
+  
+  resource "docker_service" "foo" {
 	provider = "docker.private"
 	name     = "tftest-fnf-service-up-crihiadr"
-
+  
 	task_spec {
-		container_spec {
-			image   = "%s"
-
-			%s
-
-			%s
-
-			configs {
-				config_id   = docker_config.service_config.id
-				config_name = docker_config.service_config.name
-				file_name   = "/configs.json"
-			}
-
-			secrets {
-				secret_id   = docker_secret.service_secret.id
-				secret_name = docker_secret.service_secret.name
-				file_name   = "/secrets.json"
-			}
-
-			healthcheck {
-				test     = ["CMD", "curl", "-f", "localhost:8080/health"]
-				interval = "%s"
-				timeout  = "%s"
-				start_period = "1s"
-				retries  = 2
-			}
-
-			stop_grace_period = "10s"
-		}
-
-		log_driver {
-			%s
-		}
-
-	}
-
-	mode {
-		replicated {
-			replicas = %d
-		}
-	}
-
-	update_config {
-		parallelism       = 2
-		delay             = "3s"
-		failure_action    = "continue"
-		monitor           = "3s"
-		max_failure_ratio = "0.5"
-		order             = "start-first"
-	}
-
-	endpoint_spec {
+	  container_spec {
+		image = "%s"
+  
 		%s
-	}
-
-	converge_config {
-		delay    = "7s"
-		timeout  = "2m"
-	}
-}
-`
-
-const updateFailsAndRollbackConvergeConfig = `
-provider "docker" {
-	alias = "private"
-	registry_auth {
-		address = "127.0.0.1:15000"
-	}
-}
-
-resource "docker_service" "foo" {
-	provider = "docker.private"
-	name     = "tftest-service-updateFailsAndRollbackConverge"
-	task_spec {
-		container_spec {
-			image             = "%s"
-			stop_grace_period = "10s"
-
-			healthcheck {
-				test     = ["CMD", "curl", "-f", "localhost:8080/health"]
-				interval = "5s"
-				timeout  = "2s"
-				start_period = "0s"
-				retries  = 4
-			}
+  
+		%s
+  
+		configs {
+		  config_id   = docker_config.service_config.id
+		  config_name = docker_config.service_config.name
+		  file_name   = "/configs.json"
 		}
+  
+		secrets {
+		  secret_id   = docker_secret.service_secret.id
+		  secret_name = docker_secret.service_secret.name
+		  file_name   = "/secrets.json"
+		}
+  
+		healthcheck {
+		  test         = ["CMD", "curl", "-f", "localhost:8080/health"]
+		  interval     = "%s"
+		  timeout      = "%s"
+		  start_period = "1s"
+		  retries      = 2
+		}
+  
+		stop_grace_period = "10s"
+	  }
+  
+	  log_driver {
+		%s
+	  }
+  
 	}
-
+  
 	mode {
-		replicated {
-			replicas = 2
-		}
+	  replicated {
+		replicas = %d
+	  }
 	}
-
+  
 	update_config {
-		parallelism       = 1
-		delay             = "5s"
-		failure_action    = "rollback"
-		monitor           = "10s"
-		max_failure_ratio = "0.0"
-		order             = "stop-first"
+	  parallelism       = 2
+	  delay             = "3s"
+	  failure_action    = "continue"
+	  monitor           = "3s"
+	  max_failure_ratio = "0.5"
+	  order             = "start-first"
 	}
-
-	rollback_config {
-		parallelism       = 1
-		delay             = "1s"
-		failure_action    = "pause"
-		monitor           = "4s"
-		max_failure_ratio = "0.0"
-		order             = "stop-first"
-	}
-
+  
 	endpoint_spec {
-		mode = "vip"
-		ports {
-			name = "random"
-			protocol     = "tcp"
-			target_port 		 = "8080"
-			published_port 		 = "8080"
-			publish_mode = "ingress"
-		}
+	  %s
 	}
-
+  
 	converge_config {
-		delay    = "7s"
-		timeout  = "3m"
+	  delay   = "7s"
+	  timeout = "2m"
 	}
-}
+  }
 `
 
 // Helpers
