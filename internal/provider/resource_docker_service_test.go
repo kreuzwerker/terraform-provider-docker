@@ -702,7 +702,6 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 }
 
 func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
-	t.Skip("Skipping this test because it is flaky only on travis")
 	// Step 1
 	configData := "ewogICJwcmVmaXgiOiAiMTIzIgp9"
 	secretData := "ewogICJrZXkiOiAiUVdFUlRZIgp9"
@@ -863,8 +862,8 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hostname", ""),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.#", "1"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.1878413705.host", "testhost"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.1878413705.ip", "10.0.1.0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.host", "testhost"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.ip", "10.0.1.0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.isolation", "default"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "1"),
@@ -911,8 +910,8 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hostname", ""),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.#", "1"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.host", "testhost2"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.ip", "10.0.2.2"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.host", "testhost2"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.ip", "10.0.2.2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.isolation", "default"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "2"),
@@ -959,8 +958,8 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.retries", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hostname", ""),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.#", "1"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.host", "testhost2"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.575059346.ip", "10.0.2.2"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.host", "testhost2"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.hosts.0.ip", "10.0.2.2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.isolation", "default"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.labels.#", "0"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.#", "2"),
