@@ -234,7 +234,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginMinimum,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginMinimum"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
@@ -244,7 +244,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 			},
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginAlias,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginAlias"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
@@ -254,7 +254,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 			},
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginDisableWhenSet,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginDisableWhenSet"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
@@ -267,7 +267,7 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 			},
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginDisabled,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginDisabled"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
@@ -295,7 +295,7 @@ func TestAccDockerPlugin_grantAllPermissions(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginGrantAllPermissions,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginGrantAllPermissions"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/vieux/sshfs:latest"),
@@ -319,7 +319,7 @@ func TestAccDockerPlugin_grantPermissions(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ResourceName: resourceName,
-				Config:       testAccDockerPluginGrantPermissions,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginGrantPermissions"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/vieux/sshfs:latest"),
 					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/vieux/sshfs:latest"),
@@ -333,82 +333,3 @@ func TestAccDockerPlugin_grantPermissions(t *testing.T) {
 		},
 	})
 }
-
-const testAccDockerPluginMinimum = `
-resource "docker_plugin" "test" {
-  name          = "docker.io/tiborvass/sample-volume-plugin:latest"
-  force_destroy = true
-}`
-
-const testAccDockerPluginAlias = `
-resource "docker_plugin" "test" {
-  name             = "docker.io/tiborvass/sample-volume-plugin:latest"
-  alias            = "sample:latest"
-  force_destroy    = true
-}`
-
-const testAccDockerPluginDisableWhenSet = `
-resource "docker_plugin" "test" {
-  name                  = "docker.io/tiborvass/sample-volume-plugin:latest"
-  alias                 = "sample:latest"
-  grant_all_permissions = true
-  force_destroy         = true
-  enable_timeout        = 60
-  env = [
-    "DEBUG=1"
-  ]
-}`
-
-const testAccDockerPluginDisabled = `
-resource "docker_plugin" "test" {
-  name                  = "docker.io/tiborvass/sample-volume-plugin:latest"
-  alias                 = "sample:latest"
-  enabled               = false
-  grant_all_permissions = true
-  force_destroy         = true
-  force_disable         = true
-  enable_timeout        = 60
-  env = [
-    "DEBUG=1"
-  ]
-}`
-
-// To install this plugin, it is required to grant required permissions.
-const testAccDockerPluginGrantAllPermissions = `
-resource "docker_plugin" "test" {
-  name                  = "docker.io/vieux/sshfs:latest"
-  grant_all_permissions = true
-  force_destroy         = true
-}`
-
-// To install this plugin, it is required to grant required permissions.
-const testAccDockerPluginGrantPermissions = `
-resource "docker_plugin" "test" {
-  name          = "vieux/sshfs"
-  force_destroy = true
-  grant_permissions {
-    name = "network"
-    value = [
-      "host"
-    ]
-  }
-  grant_permissions {
-    name = "mount"
-    value = [
-      "",
-      "/var/lib/docker/plugins/"
-    ]
-  }
-  grant_permissions {
-    name = "device"
-    value = [
-      "/dev/fuse"
-    ]
-  }
-  grant_permissions {
-    name = "capabilities"
-    value = [
-      "CAP_SYS_ADMIN"
-    ]
-  }
-}`
