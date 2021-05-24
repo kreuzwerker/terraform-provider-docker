@@ -18,7 +18,11 @@ func TestAccDockerVolume_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerVolumeConfig,
+				Config: `
+				resource "docker_volume" "foo" {
+					name = "testAccDockerVolume_basic"
+				}
+				`,
 				Check: resource.ComposeTestCheckFunc(
 					checkDockerVolume("docker_volume.foo", &v),
 					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_basic"),
@@ -58,12 +62,6 @@ func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
 	}
 }
 
-const testAccDockerVolumeConfig = `
-resource "docker_volume" "foo" {
-	name = "testAccDockerVolume_basic"
-}
-`
-
 func TestAccDockerVolume_labels(t *testing.T) {
 	var v types.Volume
 
@@ -72,7 +70,19 @@ func TestAccDockerVolume_labels(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerVolumeLabelsConfig,
+				Config: `
+				resource "docker_volume" "foo" {
+					name = "test_foo"
+					labels {
+					  label = "com.docker.compose.project"
+					  value = "test"
+					}
+					labels {
+					  label = "com.docker.compose.volume"
+					  value = "foo"
+					}
+				  }
+				`,
 				Check: resource.ComposeTestCheckFunc(
 					checkDockerVolume("docker_volume.foo", &v),
 					testCheckLabelMap("docker_volume.foo", "labels",
@@ -100,17 +110,3 @@ func testAccVolumeLabel(volume *types.Volume, name string, value string) resourc
 		return nil
 	}
 }
-
-const testAccDockerVolumeLabelsConfig = `
-resource "docker_volume" "foo" {
-  name = "test_foo"
-  labels {
-    label = "com.docker.compose.project"
-    value = "test"
-  }
-  labels {
-    label = "com.docker.compose.volume"
-    value = "foo"
-  }
-}
-`
