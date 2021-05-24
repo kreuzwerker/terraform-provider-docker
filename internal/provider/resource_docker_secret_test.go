@@ -50,7 +50,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 					data 			 = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
 
 					lifecycle {
-						ignore_changes = ["name"]
+						ignore_changes        = ["name"]
 						create_before_destroy = true
 					}
 				}
@@ -66,7 +66,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 					data 			 = "U3VuIDI1IE1hciAyMDE4IDE0OjUzOjIxIENFU1QK"
 
 					lifecycle {
-						ignore_changes = ["name"]
+						ignore_changes        = ["name"]
 						create_before_destroy = true
 					}
 				}
