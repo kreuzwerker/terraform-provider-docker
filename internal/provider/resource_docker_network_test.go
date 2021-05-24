@@ -19,7 +19,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
 				),
@@ -68,12 +68,6 @@ func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheck
 	}
 }
 
-const testAccDockerNetworkConfig = `
-resource "docker_network" "foo" {
-  name = "bar"
-}
-`
-
 func TestAccDockerNetwork_internal(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
@@ -83,7 +77,7 @@ func TestAccDockerNetwork_internal(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkInternalConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkInternalConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
 					testAccNetworkInternal(&n, true),
@@ -107,13 +101,6 @@ func testAccNetworkInternal(network *types.NetworkResource, internal bool) resou
 	}
 }
 
-const testAccDockerNetworkInternalConfig = `
-resource "docker_network" "foo" {
-  name = "bar"
-  internal = true
-}
-`
-
 func TestAccDockerNetwork_attachable(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
@@ -123,7 +110,7 @@ func TestAccDockerNetwork_attachable(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkAttachableConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkAttachableConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
 					testAccNetworkAttachable(&n, true),
@@ -147,13 +134,6 @@ func testAccNetworkAttachable(network *types.NetworkResource, attachable bool) r
 	}
 }
 
-const testAccDockerNetworkAttachableConfig = `
-resource "docker_network" "foo" {
-  name = "bar"
-  attachable = true
-}
-`
-
 //func TestAccDockerNetwork_ingress(t *testing.T) {
 //	var n types.NetworkResource
 //
@@ -162,7 +142,7 @@ resource "docker_network" "foo" {
 //		ProviderFactories: providerFactories,
 //		Steps: []resource.TestStep{
 //			resource.TestStep{
-//				Config: testAccDockerNetworkIngressConfig,
+//				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkIngressConfig"),
 //				Check: resource.ComposeTestCheckFunc(
 //					testAccNetwork("docker_network.foo", &n),
 //					testAccNetworkIngress(&n, true),
@@ -181,12 +161,6 @@ resource "docker_network" "foo" {
 //	}
 //}
 //
-//const testAccDockerNetworkIngressConfig = `
-//resource "docker_network" "foo" {
-//  name = "bar"
-//  ingress = true
-//}
-//`
 
 func TestAccDockerNetwork_ipv4(t *testing.T) {
 	var n types.NetworkResource
@@ -197,7 +171,7 @@ func TestAccDockerNetwork_ipv4(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkIPv4Config,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkIPv4Config"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
 					testAccNetworkIPv4(&n, true),
@@ -224,15 +198,6 @@ func testAccNetworkIPv4(network *types.NetworkResource, internal bool) resource.
 	}
 }
 
-const testAccDockerNetworkIPv4Config = `
-resource "docker_network" "foo" {
-  name = "bar"
-  ipam_config {
-    subnet = "10.0.1.0/24"
-  }
-}
-`
-
 func TestAccDockerNetwork_ipv6(t *testing.T) {
 	t.Skip("mavogel: need to fix ipv6 network state")
 	var n types.NetworkResource
@@ -243,7 +208,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkIPv6Config,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkIPv6Config"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
 					testAccNetworkIPv6(&n, true),
@@ -275,20 +240,6 @@ func testAccNetworkIPv6(network *types.NetworkResource, internal bool) resource.
 	}
 }
 
-const testAccDockerNetworkIPv6Config = `
-resource "docker_network" "foo" {
-  name = "bar"
-  ipv6 = true
-  ipam_config {
-    subnet = "fd00::1/64"
-  }
-  # TODO mavogel: Would work but BC - 219
-  #   ipam_config {
-  #     subnet = "10.0.1.0/24"
-  #   }
-}
-`
-
 func TestAccDockerNetwork_labels(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
@@ -298,7 +249,7 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkLabelsConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkLabelsConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetwork(resourceName, &n),
 					testCheckLabelMap(resourceName, "labels",
@@ -326,17 +277,3 @@ func testAccNetworkLabel(network *types.NetworkResource, name string, value stri
 		return nil
 	}
 }
-
-const testAccDockerNetworkLabelsConfig = `
-resource "docker_network" "foo" {
-  name = "test_foo"
-  labels {
-    label = "com.docker.compose.network"
-    value = "foo"
-  }
-  labels {
-    label = "com.docker.compose.project"
-    value = "test"
-  }
-}
-`

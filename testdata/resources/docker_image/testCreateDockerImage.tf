@@ -12,4 +12,4 @@ resource "docker_image" "test" {
       test_label2 = "solo"
     }
   }
-} 
+}
