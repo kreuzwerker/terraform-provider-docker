@@ -92,14 +92,8 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 
 func getImageDigest(registry, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
 	client := http.DefaultClient
-
 	// DevSkim: ignore DS440000
-	cfg := &tls.Config{
-		InsecureSkipVerify: insecureSkipVerify,
-	}
-	client.Transport = &http.Transport{
-		TLSClientConfig: cfg,
-	}
+	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
 
 	req, err := http.NewRequest("GET", "https://"+registry+"/v2/"+image+"/manifests/"+tag, nil)
 	if err != nil {

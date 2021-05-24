@@ -412,12 +412,7 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 	client := http.DefaultClient
 
 	// DevSkim: ignore DS440000
-	cfg := &tls.Config{
-		InsecureSkipVerify: insecureSkipVerify,
-	}
-	client.Transport = &http.Transport{
-		TLSClientConfig: cfg,
-	}
+	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
 
 	req, err := http.NewRequest("DELETE", pushOpts.NormalizedRegistry+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
 	if err != nil {
