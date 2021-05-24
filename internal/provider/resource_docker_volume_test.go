@@ -101,12 +101,3 @@ func TestAccDockerVolume_labels(t *testing.T) {
 		},
 	})
 }
-
-func testAccVolumeLabel(volume *types.Volume, name string, value string) resource.TestCheckFunc { //nolint:deadcode,unused
-	return func(s *terraform.State) error {
-		if volume.Labels[name] != value {
-			return fmt.Errorf("Bad value for label '%s': %s", name, volume.Labels[name])
-		}
-		return nil
-	}
-}
