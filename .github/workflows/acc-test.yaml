@@ -48,6 +48,8 @@ jobs:
           docker version
           sudo service docker restart
       - name: Run acceptance tests
-        run: TF_LOG=DEBUG TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerService_updateMultiplePropertiesConverge$
+        run: |
+          make testacc_setup
+          TF_LOG=DEBUG TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerService_updateMultiplePropertiesConverge$
         env: 
           TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
