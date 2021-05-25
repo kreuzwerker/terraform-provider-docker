@@ -288,7 +288,8 @@ func flattenServiceHosts(in []string) *schema.Set {
 	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
-		split := strings.Split(v, ":")
+		split := strings.Split(v, " ")
+		log.Println("[DEBUG] got service hostnames to split:", split)
 		m["host"] = split[0]
 		m["ip"] = split[1]
 		out[i] = m
@@ -856,7 +857,7 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 				}
 			}
 			if value, ok := rawContainerSpec["hosts"]; ok {
-				containerSpec.Hosts = extraHostsSetToDockerExtraHosts(value.(*schema.Set))
+				containerSpec.Hosts = extraHostsSetToServiceExtraHosts(value.(*schema.Set))
 			}
 			if value, ok := rawContainerSpec["dns_config"]; ok {
 				containerSpec.DNSConfig = &swarm.DNSConfig{}
@@ -1334,4 +1335,19 @@ func mapSetToPlacementPlatforms(stringSet *schema.Set) []swarm.Platform {
 	}
 
 	return ret
+}
+
+func extraHostsSetToServiceExtraHosts(extraHosts *schema.Set) []string {
+	retExtraHosts := []string{}
+
+	for _, hostInt := range extraHosts.List() {
+		host := hostInt.(map[string]interface{})
+		ip := host["ip"].(string)
+		hostname := host["host"].(string)
+		// the delimiter is a 'space' + hostname and ip are switched
+		// see https://github.com/kreuzwerker/terraform-provider-docker/issues/202#issuecomment-847715879
+		retExtraHosts = append(retExtraHosts, ip+" "+hostname)
+	}
+
+	return retExtraHosts
 }
