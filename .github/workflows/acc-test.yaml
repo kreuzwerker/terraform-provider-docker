@@ -50,6 +50,8 @@ jobs:
       - name: Run acceptance tests
         run: |
           make testacc_setup
+          cat ~/.docker/config.json
+          cat /home/runner/.docker/config.json
           TF_LOG=DEBUG TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerService_updateMultiplePropertiesConverge$
         env: 
           TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
