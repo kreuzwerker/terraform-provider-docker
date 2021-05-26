@@ -97,7 +97,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	extraHosts := []string{}
 	if v, ok := d.GetOk("host"); ok {
-		extraHosts = extraHostsSetToDockerExtraHosts(v.(*schema.Set))
+		extraHosts = extraHostsSetToContainerExtraHosts(v.(*schema.Set))
 	}
 
 	extraUlimits := []*units.Ulimit{}
