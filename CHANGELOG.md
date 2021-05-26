@@ -1,3 +1,7 @@
+## 2.12.2 (May 26, 2021)
+
+DOCS
+- update documentation and website for the release which was forgotten in `v2.12.1`
 ## 2.12.1 (May 26, 2021)
 
 BUG FIXES
