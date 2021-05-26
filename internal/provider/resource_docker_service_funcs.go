@@ -619,14 +619,6 @@ func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType 
 		auth = authToServiceAuth(rawAuth.([]interface{}))
 	} else {
 		authConfigs := meta.(*ProviderConfig).AuthConfigs.Configs
-		if len(authConfigs) == 0 {
-			log.Printf("[DEBUG] AuthConfigs empty on %s. Wait 3s and try again", stageType)
-			// sometimes the dockerconfig is read succesfully from disk but the
-			// call to create/update the service is faster. So we delay to prevent the
-			// passing of an empty auth configuration in this case
-			<-time.After(3 * time.Second)
-			authConfigs = meta.(*ProviderConfig).AuthConfigs.Configs
-		}
 		log.Printf("[DEBUG] Getting configs from provider auth '%v'", authConfigs)
 		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), authConfigs)
 	}
