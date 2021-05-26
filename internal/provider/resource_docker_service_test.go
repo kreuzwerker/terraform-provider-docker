@@ -981,11 +981,8 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 }
 
 const updateMultiplePropertiesConfigConverge = `
-provider "docker" {
+  provider "docker" {
 	alias = "private"
-	registry_auth {
-	  address = "127.0.0.1:15000"
-	}
   }
   
   resource "docker_volume" "foo" {
@@ -1019,6 +1016,11 @@ provider "docker" {
   resource "docker_service" "foo" {
 	provider = "docker.private"
 	name     = "tftest-fnf-service-up-crihiadr"
+	auth {
+		server_address	= "127.0.0.1:15000"
+		username		= "testuser"
+		password		= "testpwd"
+	}
   
 	task_spec {
 	  container_spec {
