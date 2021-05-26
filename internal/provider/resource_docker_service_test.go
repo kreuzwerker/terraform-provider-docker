@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -406,6 +408,15 @@ func testAccServiceRunning(resourceName string, service *swarm.Service) resource
 	}
 }
 
+func mapEquals(key, expectedValue string, m map[string]string) bool {
+	extractedValue, ok := m[key]
+	if ok && extractedValue == expectedValue {
+		return true
+	}
+
+	return false
+}
+
 func TestAccDockerService_fullSpec(t *testing.T) {
 	var s swarm.Service
 
@@ -414,10 +425,133 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 	// work as expected. This is to avoid bugs like
 	// https://github.com/kreuzwerker/terraform-provider-docker/issues/202
 	testCheckServiceInspect := func(*terraform.State) error {
+		if len(s.Spec.Labels) != 1 || !mapEquals("servicelabel", "true", s.Spec.Labels) {
+			return fmt.Errorf("Service Spec.Labels is wrong: %v", s.Spec.Labels)
+		}
+
+		if len(s.Spec.TaskTemplate.ContainerSpec.Command) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.Command[0] != "ls" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Command is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Command)
+		}
+
+		if len(s.Spec.TaskTemplate.ContainerSpec.Args) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.Args[0] != "-las" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Args is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Args)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.Hostname == "" ||
+			s.Spec.TaskTemplate.ContainerSpec.Hostname != "my-fancy-service" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Hostname is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Hostname)
+		}
+
+		// because the order is not deterministic
+		if len(s.Spec.TaskTemplate.ContainerSpec.Env) != 2 ||
+			(s.Spec.TaskTemplate.ContainerSpec.Env[0] != "URI=/api-call?param1=value1" && s.Spec.TaskTemplate.ContainerSpec.Env[0] != "MYFOO=BAR") ||
+			(s.Spec.TaskTemplate.ContainerSpec.Env[1] != "URI=/api-call?param1=value1" && s.Spec.TaskTemplate.ContainerSpec.Env[1] != "MYFOO=BAR") {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Env is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Env)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.Dir == "" ||
+			s.Spec.TaskTemplate.ContainerSpec.Dir != "/root" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Dir is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Dir)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.User == "" ||
+			s.Spec.TaskTemplate.ContainerSpec.User != "root" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.User is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.User)
+		}
+
+		if len(s.Spec.TaskTemplate.ContainerSpec.Groups) != 2 ||
+			s.Spec.TaskTemplate.ContainerSpec.Groups[0] != "docker" ||
+			s.Spec.TaskTemplate.ContainerSpec.Groups[1] != "foogroup" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Groups is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Groups)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.Privileges.CredentialSpec != nil {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Privileges.CredentialSpec is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Privileges.CredentialSpec)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext == nil ||
+			s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext.Disable != true ||
+			s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext.User != "user-label" ||
+			s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext.Role != "role-label" ||
+			s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext.Type != "type-label" ||
+			s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext.Level != "level-label" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.StopSignal == "" ||
+			s.Spec.TaskTemplate.ContainerSpec.StopSignal != "SIGTERM" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.StopSignal is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.StopSignal)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.ReadOnly != true {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.ReadOnly is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.ReadOnly)
+		}
+
+		if len(s.Spec.TaskTemplate.ContainerSpec.Mounts) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Type != "volume" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Source != "tftest-volume" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Target != "/mount/test" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].ReadOnly != true ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].BindOptions != nil ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Consistency != mount.Consistency("") ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.NoCopy != true ||
+			!mapEquals("foo", "bar", s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.Labels) ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.DriverConfig.Name != "random-driver" ||
+			!mapEquals("op1", "val1", s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.DriverConfig.Options) {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Mounts is wrong: %#v", s.Spec.TaskTemplate.ContainerSpec.Mounts)
+		}
+
+		if *s.Spec.TaskTemplate.ContainerSpec.StopGracePeriod != 10*time.Second {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.StopGracePeriod is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.StopGracePeriod)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.Healthcheck == nil ||
+			len(s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test) != 4 ||
+			s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test[0] != "CMD" ||
+			s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test[1] != "curl" ||
+			s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test[2] != "-f" ||
+			s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test[3] != "localhost:8080/health" ||
+			s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Interval != 5*time.Second ||
+			s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Timeout != 2*time.Second ||
+			time.Duration(s.Spec.TaskTemplate.ContainerSpec.Healthcheck.Retries) != 4 {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Healthcheck is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Healthcheck)
+		}
+
 		if len(s.Spec.TaskTemplate.ContainerSpec.Hosts) != 1 ||
 			s.Spec.TaskTemplate.ContainerSpec.Hosts[0] != "10.0.1.0 testhost" {
-			return fmt.Errorf("Service TaskTemplate.ContainerSpec has wrong Hosts: %s", s.Spec.TaskTemplate.ContainerSpec.Hosts)
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Hosts is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Hosts)
 		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.DNSConfig == nil ||
+			len(s.Spec.TaskTemplate.ContainerSpec.DNSConfig.Nameservers) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.DNSConfig.Nameservers[0] != "8.8.8.8" ||
+			len(s.Spec.TaskTemplate.ContainerSpec.DNSConfig.Search) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.DNSConfig.Search[0] != "example.org" ||
+			len(s.Spec.TaskTemplate.ContainerSpec.DNSConfig.Options) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.DNSConfig.Options[0] != "timeout:3" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.DNSConfig is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.DNSConfig)
+		}
+
+		if len(s.Spec.TaskTemplate.ContainerSpec.Secrets) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].SecretName != "tftest-mysecret" ||
+			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.Name != "/secrets.json" ||
+			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.UID != "0" ||
+			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.GID != "0" ||
+			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.Mode != os.FileMode(777) {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Secrets is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Secrets)
+		}
+
+		if len(s.Spec.TaskTemplate.ContainerSpec.Configs) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.Configs[0].ConfigName != "tftest-full-myconfig" ||
+			s.Spec.TaskTemplate.ContainerSpec.Configs[0].File.Name != "/configs.json" ||
+			s.Spec.TaskTemplate.ContainerSpec.Configs[0].File.UID != "0" ||
+			s.Spec.TaskTemplate.ContainerSpec.Configs[0].File.GID != "0" ||
+			s.Spec.TaskTemplate.ContainerSpec.Configs[0].File.Mode != os.FileMode(292) {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Configs is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Configs)
+		}
+
 		return nil
 	}
 
