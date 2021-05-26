@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -379,7 +380,47 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 	})
 }
 
+func testAccServiceRunning(resourceName string, service *swarm.Service) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ctx := context.Background()
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		inspectedService, _, err := client.ServiceInspectWithRaw(ctx, rs.Primary.ID, types.ServiceInspectOptions{})
+		if err != nil {
+			return fmt.Errorf("Service with ID '%s': %w", rs.Primary.ID, err)
+		}
+
+		// we set the value to the pointer to be able to use the value
+		// outside of the function
+		*service = inspectedService
+		return nil
+
+	}
+}
+
 func TestAccDockerService_fullSpec(t *testing.T) {
+	var s swarm.Service
+
+	// validates the inspected service json contains
+	// all attributes set in the terraform spec so all mappers and flatteners
+	// work as expected. This is to avoid bugs like
+	// https://github.com/kreuzwerker/terraform-provider-docker/issues/202
+	testCheckServiceInspect := func(*terraform.State) error {
+		if len(s.Spec.TaskTemplate.ContainerSpec.Hosts) != 1 ||
+			s.Spec.TaskTemplate.ContainerSpec.Hosts[0] != "10.0.1.0 testhost" {
+			return fmt.Errorf("Service TaskTemplate.ContainerSpec has wrong Hosts: %s", s.Spec.TaskTemplate.ContainerSpec.Hosts)
+		}
+		return nil
+	}
+
 	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -465,6 +506,8 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "endpoint_spec.0.ports.0.target_port", "8080"),
 					resource.TestCheckResourceAttr("docker_service.foo", "endpoint_spec.0.ports.0.published_port", "8080"),
 					resource.TestCheckResourceAttr("docker_service.foo", "endpoint_spec.0.ports.0.publish_mode", "ingress"),
+					testAccServiceRunning("docker_service.foo", &s),
+					testCheckServiceInspect,
 				),
 			},
 			{

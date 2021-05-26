@@ -1589,12 +1589,12 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 	})
 }
 
-func testAccContainerRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
+func testAccContainerRunning(resourceName string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
-		rs, ok := s.RootModule().Resources[n]
+		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
 		}
 
 		if rs.Primary.ID == "" {
