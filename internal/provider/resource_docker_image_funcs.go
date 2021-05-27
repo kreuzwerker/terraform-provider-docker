@@ -63,6 +63,7 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 		return nil
 	}
 
+	// TODO mavogel: remove the appended name from the ID
 	d.SetId(foundImage.ID + d.Get("name").(string))
 	d.Set("latest", foundImage.ID)
 	return nil
@@ -99,6 +100,9 @@ func searchLocalImages(ctx context.Context, client *client.Client, data Data, im
 	if err != nil {
 		return nil
 	}
+
+	jsonObj, _ := json.MarshalIndent(imageInspect, "", "\t")
+	log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
 
 	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
 		log.Printf("[DEBUG] found local image via imageName: %v", imageName)

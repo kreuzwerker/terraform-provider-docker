@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -54,6 +55,22 @@ func TestAccDockerImage_basic(t *testing.T) {
 
 func TestAccDockerImage_private(t *testing.T) {
 	ctx := context.Background()
+	var i types.ImageInspect
+
+	testCheckImageInspect := func(*terraform.State) error {
+		if len(i.RepoTags) != 1 ||
+			i.RepoTags[0] != "gcr.io:443/google_containers/pause:0.8.0" {
+			return fmt.Errorf("Image RepoTags is wrong: %v", i.RepoTags)
+		}
+
+		if len(i.RepoDigests) != 1 ||
+			i.RepoDigests[0] != "gcr.io:443/google_containers/pause@sha256:bbeaef1d40778579b7b86543fe03e1ec041428a50d21f7a7b25630e357ec9247" {
+			return fmt.Errorf("Image RepoDigests is wrong: %v", i.RepoDigests)
+		}
+
+		return nil
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -65,6 +82,8 @@ func TestAccDockerImage_private(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAddDockerPrivateImageConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
+					testAccImageCreated("docker_image.foobar", &i),
+					testCheckImageInspect,
 				),
 			},
 		},
@@ -295,3 +314,35 @@ RUN echo ${test_arg} > test_arg.txt
 
 RUN apt-get update -qq
 `
+
+func testAccImageCreated(resourceName string, image *types.ImageInspect) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ctx := context.Background()
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		name := rs.Primary.Attributes["name"]
+		// TODO mavogel: it's because we set the ID in the format:
+		// d.SetId(foundImage.ID + d.Get("name").(string))
+		// so we need to strip away the name
+		strippedID := strings.Replace(rs.Primary.ID, name, "", -1)
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		inspectedImage, _, err := client.ImageInspectWithRaw(ctx, strippedID)
+		if err != nil {
+			return fmt.Errorf("Image with ID '%s': %w", strippedID, err)
+		}
+
+		// we set the value to the pointer to be able to use the value
+		// outside of the function
+		*image = inspectedImage
+		return nil
+
+	}
+}
