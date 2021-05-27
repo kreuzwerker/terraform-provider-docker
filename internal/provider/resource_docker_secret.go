@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"log"
 
 	"github.com/docker/docker/api/types/swarm"
@@ -120,6 +121,10 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 		d.SetId("")
 		return nil
 	}
+
+	jsonObj, _ := json.MarshalIndent(secret, "", "\t")
+	log.Printf("[DEBUG] Docker secret inspect from readFunc: %s", jsonObj)
+
 	d.SetId(secret.ID)
 	d.Set("name", secret.Spec.Name)
 	// Note mavogel: secret data is not exposed via the API

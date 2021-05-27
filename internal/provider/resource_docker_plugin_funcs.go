@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -56,6 +57,10 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 		d.SetId("")
 		return nil
 	}
+
+	jsonObj, _ := json.MarshalIndent(plugin, "", "\t")
+	log.Printf("[DEBUG] Docker plugin inspect from readFunc: %s", jsonObj)
+
 	setDockerPlugin(d, plugin)
 	return nil
 }
