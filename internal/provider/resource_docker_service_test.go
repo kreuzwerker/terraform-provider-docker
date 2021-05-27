@@ -539,6 +539,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.Name != "/secrets.json" ||
 			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.UID != "0" ||
 			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.GID != "0" ||
+			// nolint: staticcheck
 			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.Mode != os.FileMode(777) {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Secrets is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Secrets)
 		}
@@ -550,6 +551,113 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			s.Spec.TaskTemplate.ContainerSpec.Configs[0].File.GID != "0" ||
 			s.Spec.TaskTemplate.ContainerSpec.Configs[0].File.Mode != os.FileMode(292) {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Configs is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Configs)
+		}
+
+		if s.Spec.TaskTemplate.ContainerSpec.Isolation == "" ||
+			s.Spec.TaskTemplate.ContainerSpec.Isolation != "default" {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Isolation is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.Isolation)
+		}
+
+		if s.Spec.TaskTemplate.Resources == nil ||
+			s.Spec.TaskTemplate.Resources.Limits == nil ||
+			s.Spec.TaskTemplate.Resources.Limits.NanoCPUs != 1000000 ||
+			s.Spec.TaskTemplate.Resources.Limits.MemoryBytes != 536870912 {
+			return fmt.Errorf("Service Spec.TaskTemplate.Resources is wrong: %v", s.Spec.TaskTemplate.Resources)
+		}
+
+		if s.Spec.TaskTemplate.RestartPolicy == nil ||
+			s.Spec.TaskTemplate.RestartPolicy.Condition != "on-failure" ||
+			*s.Spec.TaskTemplate.RestartPolicy.Delay != 3*time.Second ||
+			*s.Spec.TaskTemplate.RestartPolicy.MaxAttempts != 4 ||
+			*s.Spec.TaskTemplate.RestartPolicy.Window != 10*time.Second {
+			return fmt.Errorf("Service Spec.TaskTemplate.RestartPolicy is wrong: %v", s.Spec.TaskTemplate.RestartPolicy)
+		}
+
+		if s.Spec.TaskTemplate.Placement == nil ||
+			len(s.Spec.TaskTemplate.Placement.Constraints) != 1 ||
+			s.Spec.TaskTemplate.Placement.Constraints[0] != "node.role==manager" ||
+			len(s.Spec.TaskTemplate.Placement.Preferences) != 1 ||
+			s.Spec.TaskTemplate.Placement.Preferences[0].Spread == nil ||
+			s.Spec.TaskTemplate.Placement.Preferences[0].Spread.SpreadDescriptor != "spread=node.role.manager" ||
+			// s.Spec.TaskTemplate.Placement.MaxReplicas == uint64(2) || NOTE: mavogel: it's 0x2 in the log but does not work here either
+			len(s.Spec.TaskTemplate.Placement.Platforms) != 1 ||
+			s.Spec.TaskTemplate.Placement.Platforms[0].Architecture != "amd64" ||
+			s.Spec.TaskTemplate.Placement.Platforms[0].OS != "linux" {
+			return fmt.Errorf("Service Spec.TaskTemplate.Placement is wrong: %#v", s.Spec.TaskTemplate.Placement)
+		}
+
+		if s.Spec.TaskTemplate.Runtime == "" ||
+			s.Spec.TaskTemplate.Runtime != "container" {
+			return fmt.Errorf("Service Spec.TaskTemplate.Runtime is wrong: %s", s.Spec.TaskTemplate.Runtime)
+		}
+
+		if len(s.Spec.TaskTemplate.Networks) != 1 ||
+			s.Spec.TaskTemplate.Networks[0].Target == "" {
+			return fmt.Errorf("Service Spec.TaskTemplate.Networks is wrong: %s", s.Spec.TaskTemplate.Networks)
+		}
+
+		if s.Spec.TaskTemplate.LogDriver == nil ||
+			s.Spec.TaskTemplate.LogDriver.Name != "json-file" ||
+			!mapEquals("max-file", "3", s.Spec.TaskTemplate.LogDriver.Options) ||
+			!mapEquals("max-size", "10m", s.Spec.TaskTemplate.LogDriver.Options) {
+			return fmt.Errorf("Service Spec.TaskTemplate.LogDriver is wrong: %s", s.Spec.TaskTemplate.LogDriver)
+		}
+
+		if s.Spec.TaskTemplate.ForceUpdate != 0 {
+			return fmt.Errorf("Service Spec.TaskTemplate.ForceUpdate is wrong: %v", s.Spec.TaskTemplate.ForceUpdate)
+		}
+
+		if s.Spec.Mode.Replicated == nil ||
+			*s.Spec.Mode.Replicated.Replicas != uint64(2) {
+			return fmt.Errorf("Service s.Spec.Mode.Replicated is wrong: %#v", s.Spec.Mode.Replicated)
+		}
+
+		if s.Spec.UpdateConfig == nil ||
+			s.Spec.UpdateConfig.Parallelism != uint64(2) ||
+			s.Spec.UpdateConfig.Delay != 10*time.Second ||
+			s.Spec.UpdateConfig.FailureAction != "pause" ||
+			s.Spec.UpdateConfig.Monitor != 5*time.Second ||
+			s.Spec.UpdateConfig.MaxFailureRatio != 0.1 ||
+			s.Spec.UpdateConfig.Order != "start-first" {
+			return fmt.Errorf("Service s.Spec.UpdateConfig is wrong: %#v", s.Spec.UpdateConfig)
+		}
+
+		if s.Spec.RollbackConfig == nil ||
+			s.Spec.RollbackConfig.Parallelism != uint64(2) ||
+			s.Spec.RollbackConfig.Delay != 5*time.Millisecond ||
+			s.Spec.RollbackConfig.FailureAction != "pause" ||
+			s.Spec.RollbackConfig.Monitor != 10*time.Hour ||
+			s.Spec.RollbackConfig.MaxFailureRatio != 0.9 ||
+			s.Spec.RollbackConfig.Order != "stop-first" {
+			return fmt.Errorf("Service s.Spec.RollbackConfig is wrong: %#v", s.Spec.RollbackConfig)
+		}
+
+		if s.Spec.EndpointSpec == nil ||
+			s.Spec.EndpointSpec.Mode != swarm.ResolutionModeVIP ||
+			len(s.Spec.EndpointSpec.Ports) != 1 ||
+			s.Spec.EndpointSpec.Ports[0].Name != "random" ||
+			s.Spec.EndpointSpec.Ports[0].Protocol != swarm.PortConfigProtocolTCP ||
+			s.Spec.EndpointSpec.Ports[0].TargetPort != uint32(8080) ||
+			s.Spec.EndpointSpec.Ports[0].PublishedPort != uint32(8080) ||
+			s.Spec.EndpointSpec.Ports[0].PublishMode != swarm.PortConfigPublishModeIngress {
+			return fmt.Errorf("Service s.Spec.EndpointSpec is wrong: %#v", s.Spec.EndpointSpec)
+		}
+
+		if s.Endpoint.Spec.Mode != swarm.ResolutionModeVIP ||
+			len(s.Endpoint.Spec.Ports) != 1 ||
+			s.Endpoint.Spec.Ports[0].Name != "random" ||
+			s.Endpoint.Spec.Ports[0].Protocol != swarm.PortConfigProtocolTCP ||
+			s.Endpoint.Spec.Ports[0].TargetPort != uint32(8080) ||
+			s.Endpoint.Spec.Ports[0].PublishedPort != uint32(8080) ||
+			s.Endpoint.Spec.Ports[0].PublishMode != swarm.PortConfigPublishModeIngress ||
+			len(s.Endpoint.Ports) != 1 ||
+			s.Endpoint.Ports[0].Name != "random" ||
+			s.Endpoint.Ports[0].Protocol != swarm.PortConfigProtocolTCP ||
+			s.Endpoint.Ports[0].TargetPort != uint32(8080) ||
+			s.Endpoint.Ports[0].PublishedPort != uint32(8080) ||
+			s.Endpoint.Ports[0].PublishMode != swarm.PortConfigPublishModeIngress ||
+			len(s.Endpoint.VirtualIPs) != 2 {
+			return fmt.Errorf("Service s.Endpoint is wrong: %#v", s.Endpoint)
 		}
 
 		return nil
