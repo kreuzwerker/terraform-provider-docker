@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"log"
 
 	"github.com/docker/docker/api/types/swarm"
@@ -68,6 +69,10 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 		d.SetId("")
 		return nil
 	}
+
+	jsonObj, _ := json.MarshalIndent(config, "", "\t")
+	log.Printf("[DEBUG] Docker config inspect from readFunc: %s", jsonObj)
+
 	d.SetId(config.ID)
 	d.Set("name", config.Spec.Name)
 	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
