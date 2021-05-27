@@ -1436,12 +1436,3 @@ func testAccServiceRunning(resourceName string, service *swarm.Service) resource
 
 	}
 }
-
-func mapEquals(key, expectedValue string, m map[string]string) bool {
-	extractedValue, ok := m[key]
-	if ok && extractedValue == expectedValue {
-		return true
-	}
-
-	return false
-}

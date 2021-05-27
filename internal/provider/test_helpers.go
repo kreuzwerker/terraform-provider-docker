@@ -54,3 +54,18 @@ func loadTestConfiguration(t *testing.T, resourceType resourceType, resourceName
 
 	return string(testConfigContent)
 }
+
+// mapEquals returns true if the expectedValue is found under the given key in
+// the map. Otherwise returns false, as well when the map ist nil
+func mapEquals(key, expectedValue string, m map[string]string) bool {
+	if m == nil {
+		return false
+	}
+
+	extractedValue, ok := m[key]
+	if ok && extractedValue == expectedValue {
+		return true
+	}
+
+	return false
+}
