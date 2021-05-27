@@ -382,41 +382,6 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 	})
 }
 
-func testAccServiceRunning(resourceName string, service *swarm.Service) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		ctx := context.Background()
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set")
-		}
-
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		inspectedService, _, err := client.ServiceInspectWithRaw(ctx, rs.Primary.ID, types.ServiceInspectOptions{})
-		if err != nil {
-			return fmt.Errorf("Service with ID '%s': %w", rs.Primary.ID, err)
-		}
-
-		// we set the value to the pointer to be able to use the value
-		// outside of the function
-		*service = inspectedService
-		return nil
-
-	}
-}
-
-func mapEquals(key, expectedValue string, m map[string]string) bool {
-	extractedValue, ok := m[key]
-	if ok && extractedValue == expectedValue {
-		return true
-	}
-
-	return false
-}
-
 func TestAccDockerService_fullSpec(t *testing.T) {
 	var s swarm.Service
 
@@ -1444,4 +1409,39 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func testAccServiceRunning(resourceName string, service *swarm.Service) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ctx := context.Background()
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		inspectedService, _, err := client.ServiceInspectWithRaw(ctx, rs.Primary.ID, types.ServiceInspectOptions{})
+		if err != nil {
+			return fmt.Errorf("Service with ID '%s': %w", rs.Primary.ID, err)
+		}
+
+		// we set the value to the pointer to be able to use the value
+		// outside of the function
+		*service = inspectedService
+		return nil
+
+	}
+}
+
+func mapEquals(key, expectedValue string, m map[string]string) bool {
+	extractedValue, ok := m[key]
+	if ok && extractedValue == expectedValue {
+		return true
+	}
+
+	return false
 }
