@@ -21,7 +21,7 @@ func TestAccDockerRegistryImage_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerImageDataSourceConfig,
+				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foo", "sha256_digest", registryDigestRegexp),
 				),
@@ -36,7 +36,7 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerImageDataSourcePrivateConfig,
+				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourcePrivateConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.bar", "sha256_digest", registryDigestRegexp),
 				),
@@ -54,7 +54,7 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testAccDockerImageDataSourceAuthConfig, registry, image),
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceAuthConfig"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
 				),
@@ -65,32 +65,6 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 		},
 	})
 }
-
-const testAccDockerImageDataSourceConfig = `
-data "docker_registry_image" "foo" {
-	name = "alpine:latest"
-}
-`
-
-const testAccDockerImageDataSourcePrivateConfig = `
-data "docker_registry_image" "bar" {
-	name = "gcr.io:443/google_containers/pause:0.8.0"
-}
-`
-
-const testAccDockerImageDataSourceAuthConfig = `
-provider "docker" {
-	alias = "private"
-	registry_auth {
-		address = "%s"
-	}
-}
-data "docker_registry_image" "foobar" {
-	provider = "docker.private"
-	name     = "%s"
-	insecure_skip_verify = true
-}
-`
 
 func TestGetDigestFromResponse(t *testing.T) {
 	headerContent := "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
