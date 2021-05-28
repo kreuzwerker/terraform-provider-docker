@@ -33,6 +33,92 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 	})
 }
 
+func TestAccDockerNetwork_full(t *testing.T) {
+	var n types.NetworkResource
+	resourceName := "docker_network.foo"
+
+	testCheckNetworkInspect := func(*terraform.State) error {
+		if n.Scope == "" || n.Scope != "local" {
+			return fmt.Errorf("Network Scope is wrong: %v", n.Scope)
+		}
+
+		if n.Driver == "" || n.Driver != "bridge" {
+			return fmt.Errorf("Network Driver is wrong: %v", n.Driver)
+		}
+
+		if n.EnableIPv6 != false {
+			return fmt.Errorf("Network EnableIPv6 is wrong: %v", n.EnableIPv6)
+		}
+
+		if n.IPAM.Driver == "" ||
+			n.IPAM.Options != nil ||
+			len(n.IPAM.Config) != 1 ||
+			n.IPAM.Config[0].Gateway != "" ||
+			n.IPAM.Config[0].IPRange != "" ||
+			n.IPAM.Config[0].AuxAddress != nil ||
+			n.IPAM.Config[0].Subnet != "10.0.1.0/24" ||
+			n.IPAM.Driver != "default" {
+			return fmt.Errorf("Network IPAM is wrong: %v", n.IPAM)
+		}
+
+		if n.Internal != true {
+			return fmt.Errorf("Network Internal is wrong: %v", n.Internal)
+		}
+
+		if n.Attachable != false {
+			return fmt.Errorf("Network Attachable is wrong: %v", n.Attachable)
+		}
+
+		if n.Ingress != false {
+			return fmt.Errorf("Network Ingress is wrong: %v", n.Ingress)
+		}
+
+		if n.ConfigFrom.Network != "" {
+			return fmt.Errorf("Network ConfigFrom is wrong: %v", n.ConfigFrom)
+		}
+
+		if n.ConfigOnly != false {
+			return fmt.Errorf("Network ConfigOnly is wrong: %v", n.ConfigOnly)
+		}
+
+		if n.Containers == nil || len(n.Containers) != 0 {
+			return fmt.Errorf("Network Containers is wrong: %v", n.Containers)
+		}
+
+		if n.Options == nil || len(n.Options) != 0 {
+			return fmt.Errorf("Network Options is wrong: %v", n.Options)
+		}
+
+		if n.Labels == nil ||
+			len(n.Labels) != 2 ||
+			!mapEquals("com.docker.compose.network", "foo", n.Labels) ||
+			!mapEquals("com.docker.compose.project", "test", n.Labels) {
+			return fmt.Errorf("Network Labels is wrong: %v", n.Labels)
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkConfigFull"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccNetwork(resourceName, &n),
+					testCheckNetworkInspect,
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 // TODO mavogel: add full network config test in #219
 
 func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
