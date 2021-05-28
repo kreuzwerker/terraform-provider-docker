@@ -1,12 +1,15 @@
 package provider
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func Test_getDockerPluginEnv(t *testing.T) {
@@ -287,6 +290,51 @@ func TestAccDockerPlugin_basic(t *testing.T) {
 	})
 }
 
+func TestAccDockerPlugin_full(t *testing.T) {
+	const resourceName = "docker_plugin.test"
+	var p types.Plugin
+
+	testCheckPluginInspect := func(*terraform.State) error {
+		if p.Enabled != false {
+			return fmt.Errorf("Plugin Enabled is wrong: %v", p.Enabled)
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				ResourceName: resourceName,
+				Config:       loadTestConfiguration(t, RESOURCE, "docker_plugin", "testAccDockerPluginFull"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", "docker.io/tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
+					resource.TestCheckResourceAttr(resourceName, "alias", "sample:latest"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "force_destroy", "true"),
+					resource.TestCheckResourceAttr(resourceName, "enable_timeout", "60"),
+					resource.TestCheckResourceAttr(resourceName, "force_disable", "true"),
+					resource.TestCheckResourceAttr(resourceName, "env.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "env.0", "DEBUG=1"),
+					resource.TestCheckResourceAttr(resourceName, "grant_permissions.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "grant_permissions.0.name", "network"),
+					resource.TestCheckResourceAttr(resourceName, "grant_permissions.0.value.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "grant_permissions.0.value.0", "host"),
+					testAccPluginCreated(resourceName, &p),
+					testCheckPluginInspect,
+				),
+			},
+			{
+				ResourceName: resourceName,
+				ImportState:  true,
+			},
+		},
+	})
+}
+
 func TestAccDockerPlugin_grantAllPermissions(t *testing.T) {
 	const resourceName = "docker_plugin.test"
 	resource.Test(t, resource.TestCase{
@@ -332,4 +380,30 @@ func TestAccDockerPlugin_grantPermissions(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccPluginCreated(resourceName string, plugin *types.Plugin) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ctx := context.Background()
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		inspectedPlugin, _, err := client.PluginInspectWithRaw(ctx, rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("Plugin with ID '%s': %w", rs.Primary.ID, err)
+		}
+
+		// we set the value to the pointer to be able to use the value
+		// outside of the function
+		plugin = inspectedPlugin
+		return nil
+
+	}
 }
