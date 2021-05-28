@@ -723,14 +723,10 @@ func TestAccDockerContainer_upload(t *testing.T) {
 					testCheck,
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
-					// NOTE mavogel: current the terraform-plugin-sdk it's likely that
-					// the acceptance testing framework shims (still using the older flatmap-style addressing)
-					// are missing a conversion with the hashes.
-					// See https://github.com/hashicorp/terraform-plugin-sdk/issues/196
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
 				),
 			},
 		},
@@ -787,14 +783,11 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 					testCheck,
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
-					// NOTE mavogel: current the terraform-plugin-sdk it's likely that
-					// the acceptance testing framework shims (still using the older flatmap-style addressing)
-					// are missing a conversion with the hashes.
-					// See https://github.com/hashicorp/terraform-plugin-sdk/issues/196
+					// TODO mavogel: should be content of the source be written to this attribute?
 					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
 				),
 			},
 		},
@@ -896,15 +889,15 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 					testCheck("/terraform/test2.txt", "foobar", "100644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "2"),
-					// NOTE: see comment above
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", "ODk0ZmMzZjU2ZWRmMmQzYTRjNWZiNWNiNzFkZjkxMGY5NThhMmVkOA=="),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test1.txt"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", "ODk0ZmMzZjU2ZWRmMmQzYTRjNWZiNWNiNzFkZjkxMGY5NThhMmVkOA=="),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test1.txt"),
+					// TODO mavogel: should be content of the source be written to this attribute?
 					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.content", "foo"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.content_base64", ""),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.executable", "false"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.file", "/terraform/test2.txt"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.1.content_base64", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.1.executable", "false"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.1.file", "/terraform/test2.txt"),
 				),
 			},
 			// We add a second on purpose to detect if there is a dirty plan
@@ -918,15 +911,15 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 					testCheck("/terraform/test2.txt", "foobar", "100644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "2"),
-					// NOTE: see comment above
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", "ODk0ZmMzZjU2ZWRmMmQzYTRjNWZiNWNiNzFkZjkxMGY5NThhMmVkOA=="),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test1.txt"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", "ODk0ZmMzZjU2ZWRmMmQzYTRjNWZiNWNiNzFkZjkxMGY5NThhMmVkOA=="),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test1.txt"),
+					// TODO mavogel: should be content of the source be written to this attribute?
 					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.content", "foo"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.content_base64", ""),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.executable", "false"),
-					// resource.TestCheckResourceAttr("docker_container.foo", "upload.1.file", "/terraform/test2.txt"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.1.content_base64", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.1.executable", "false"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.1.file", "/terraform/test2.txt"),
 				),
 			},
 		},
