@@ -73,7 +73,7 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	d.SetId(retNetwork.ID)
-	// d.Set("check_duplicate") TODO
+	// d.Set("check_duplicate") TODO mavogel
 	return resourceDockerNetworkRead(ctx, d, meta)
 }
 

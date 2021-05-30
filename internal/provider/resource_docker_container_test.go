@@ -94,7 +94,7 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"remove_volumes",
 					"init",
 
-					// TODO mavogel: Will be done in #219
+					// TODO mavogel: Will be done in #74 (import resources)
 					"volumes",
 					"network_alias",
 					"networks",
@@ -135,7 +135,7 @@ func TestAccDockerContainer_init(t *testing.T) {
 					"upload",
 					"remove_volumes",
 
-					// TODO mavogel: Will be done in #219
+					// TODO mavogel: Will be done in #74 (import resources)
 					"volumes",
 					"network_alias",
 					"networks",
@@ -1582,6 +1582,9 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 	})
 }
 
+///////////
+// HELPERS
+///////////
 func testAccContainerRunning(resourceName string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
@@ -1673,12 +1676,9 @@ func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) 
 
 		select {
 		case err := <-errC:
-			{
-				if err != nil {
-					return fmt.Errorf("Container is still running")
-				}
+			if err != nil {
+				return fmt.Errorf("Container is still running")
 			}
-
 		case <-statusC:
 		}
 
@@ -1705,12 +1705,9 @@ func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *typ
 
 		select {
 		case err := <-errC:
-			{
-				if err != nil {
-					return fmt.Errorf("Container has not been removed")
-				}
+			if err != nil {
+				return fmt.Errorf("Container has not been removed")
 			}
-
 		case <-statusC:
 		}
 
