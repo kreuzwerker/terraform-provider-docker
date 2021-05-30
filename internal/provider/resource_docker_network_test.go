@@ -119,7 +119,7 @@ func TestAccDockerNetwork_full(t *testing.T) {
 	})
 }
 
-// TODO mavogel: add full network config test in #219
+// TODO mavogel: add full network config test in #74 (import resources)
 
 func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -220,33 +220,74 @@ func testAccNetworkAttachable(network *types.NetworkResource, attachable bool) r
 	}
 }
 
-//func TestAccDockerNetwork_ingress(t *testing.T) {
-//	var n types.NetworkResource
-//
-//	resource.Test(t, resource.TestCase{
-//		PreCheck:  func() { testAccPreCheck(t) },
-//		ProviderFactories: providerFactories,
-//		Steps: []resource.TestStep{
-//			resource.TestStep{
-//				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkIngressConfig"),
-//				Check: resource.ComposeTestCheckFunc(
-//					testAccNetwork("docker_network.foo", &n),
-//					testAccNetworkIngress(&n, true),
-//				),
-//			},
-//		},
-//	})
-//}
-//
-//func testAccNetworkIngress(network *types.NetworkResource, internal bool) resource.TestCheckFunc {
-//	return func(s *terraform.State) error {
-//		if network.Internal != internal {
-//			return fmt.Errorf("Bad value for attribute 'ingress': %t", network.Ingress)
-//		}
-//		return nil
-//	}
-//}
-//
+func TestAccDockerNetwork_ingress(t *testing.T) {
+	ctx := context.Background()
+	var n types.NetworkResource
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// as we join the swarm an ingress network is created by default
+			// As only one can exist, we remove it for the test
+			removeSwarmIngressNetwork(ctx, t)
+		},
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkIngressConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccNetwork("docker_network.foo", &n),
+					testAccNetworkIngress(&n, true),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			// we leave the swarm because in the next testAccPreCheck
+			// the node will join the swarm again
+			// and so recreate the default swarm ingress network
+			return nodeLeaveSwarm(ctx, t)
+		},
+	})
+}
+
+func removeSwarmIngressNetwork(ctx context.Context, t *testing.T) {
+	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	networks, err := client.NetworkList(ctx, types.NetworkListOptions{})
+	if err != nil {
+		t.Errorf("failed to list swarm networks: %v", err)
+	}
+	var ingressNetworkID string
+	for _, network := range networks {
+		if network.Ingress {
+			ingressNetworkID = network.ID
+			break
+		}
+	}
+	err = client.NetworkRemove(ctx, ingressNetworkID)
+	if err != nil {
+		t.Errorf("failed to remove swarm ingress network '%s': %v", ingressNetworkID, err)
+	}
+}
+
+func nodeLeaveSwarm(ctx context.Context, t *testing.T) error {
+	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+
+	force := true
+	err := client.SwarmLeave(ctx, force)
+	if err != nil {
+		t.Errorf("node failed to leave the swarm: %v", err)
+	}
+	return nil
+}
+
+func testAccNetworkIngress(network *types.NetworkResource, ingress bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if network.Ingress != ingress {
+			return fmt.Errorf("Bad value for attribute 'ingress': %t", network.Ingress)
+		}
+		return nil
+	}
+}
 
 func TestAccDockerNetwork_ipv4(t *testing.T) {
 	var n types.NetworkResource
@@ -285,7 +326,7 @@ func testAccNetworkIPv4(network *types.NetworkResource, internal bool) resource.
 }
 
 func TestAccDockerNetwork_ipv6(t *testing.T) {
-	t.Skip("mavogel: need to fix ipv6 network state")
+	t.Skip("TODO mavogel: need to fix ipv6 network state")
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"
 
@@ -301,7 +342,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 				),
 			},
 			// TODO mavogel: ipam config goes from 2->1
-			// probably suppress diff -> #219
+			// probably suppress diff -> #74 (import resources)
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
@@ -353,13 +394,4 @@ func TestAccDockerNetwork_labels(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccNetworkLabel(network *types.NetworkResource, name string, value string) resource.TestCheckFunc { //nolint:deadcode,unused
-	return func(s *terraform.State) error {
-		if network.Labels[name] != value {
-			return fmt.Errorf("Bad value for label '%s': %s", name, network.Labels[name])
-		}
-		return nil
-	}
 }
