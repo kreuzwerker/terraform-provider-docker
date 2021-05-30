@@ -24,7 +24,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 		RemoteRef:            pluginName,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
 		Disabled:             !d.Get("enabled").(bool),
-		// TODO support other settings
+		// TODO suzuki-shunsuke: support other settings
 		Args: getDockerPluginEnv(d.Get("env")),
 	}
 	if v, ok := d.GetOk("grant_permissions"); ok {
@@ -166,7 +166,7 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 	d.Set("alias", plugin.Name)
 	d.Set("name", plugin.PluginReference)
 	d.Set("enabled", plugin.Enabled)
-	// TODO support other settings
+	// TODO suzuki-shunsuke support other settings
 	// https://docs.docker.com/engine/reference/commandline/plugin_set/#extended-description
 	// source of mounts .Settings.Mounts
 	// path of devices .Settings.Devices
