@@ -120,7 +120,6 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testDockerRegistryImageNotInRegistry(pushOptions),
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
@@ -129,18 +128,18 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 				),
 			},
 		},
+		CheckDestroy: testDockerRegistryImageNotInRegistry(pushOptions),
 	})
 }
 
 func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
-	t.Skip("mavogel: need to check")
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
 	wd, _ := os.Getwd()
 	context := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context"), "\\", "\\\\")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testDockerRegistryImageInRegistry(pushOptions, true),
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
@@ -149,6 +148,9 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 				),
 			},
 		},
+		// as the providerConfig obtained from testAccProvider.Meta().(*ProviderConfig)
+		// is empty after the test the credetials are passed here manually
+		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
 	})
 }
 
@@ -177,20 +179,16 @@ func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) res
 	}
 }
 
-// TODO mavogel
-//nolint:unused
-func testDockerRegistryImageInRegistry(pushOpts internalPushImageOptions, cleanup bool) resource.TestCheckFunc {
+func testDockerRegistryImageInRegistry(username, password string, pushOpts internalPushImageOptions, cleanup bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		providerConfig := testAccProvider.Meta().(*ProviderConfig)
-		username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
 		digest, err := getImageDigestWithFallback(pushOpts, username, password, true)
 		if err != nil || len(digest) < 1 {
-			return fmt.Errorf("image not found")
+			return fmt.Errorf("image '%s' with credentials('%s' - '%s') not found: %w", pushOpts.Name, username, password, err)
 		}
 		if cleanup {
 			err := deleteDockerRegistryImage(pushOpts, digest, username, password, true, false)
 			if err != nil {
-				return fmt.Errorf("Unable to remove test image. %s", err)
+				return fmt.Errorf("Unable to remove test image '%s': %w", pushOpts.Name, err)
 			}
 		}
 		return nil
