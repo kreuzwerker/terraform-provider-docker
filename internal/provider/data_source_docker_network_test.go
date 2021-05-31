@@ -16,10 +16,7 @@ func TestAccDockerNetworkDataSource_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-				data "docker_network" "bridge" {
-					name = "bridge"
-				}`,
+				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_network", "testAccDockerNetworkDataSourceBasic"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_network.bridge", "name", "bridge"),
 					testAccDockerNetworkDataSourceIPAMRead,
