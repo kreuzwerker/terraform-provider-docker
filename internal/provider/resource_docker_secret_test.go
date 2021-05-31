@@ -5,12 +5,27 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerSecret_basic(t *testing.T) {
 	ctx := context.Background()
+	var s swarm.Secret
+
+	testCheckSecretInspect := func(*terraform.State) error {
+		if s.Spec.Name == "" {
+			return fmt.Errorf("Secret Spec.Name is wrong: %v", s.Spec.Name)
+		}
+
+		if len(s.Spec.Labels) != 1 || !mapEquals("foo", "bar", s.Spec.Labels) {
+			return fmt.Errorf("Secret Spec.Labels is wrong: %v", s.Spec.Labels)
+		}
+
+		return nil
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -23,11 +38,18 @@ func TestAccDockerSecret_basic(t *testing.T) {
 				resource "docker_secret" "foo" {
 					name = "foo-secret"
 					data = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
+					
+					labels {
+						label = "foo"
+						value = "bar"
+					}
 				}
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("docker_secret.foo", "name", "foo-secret"),
 					resource.TestCheckResourceAttr("docker_secret.foo", "data", "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="),
+					testAccServiceSecretCreated("docker_secret.foo", &s),
+					testCheckSecretInspect,
 				),
 			},
 		},
@@ -50,7 +72,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 					data 			 = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
 
 					lifecycle {
-						ignore_changes = ["name"]
+						ignore_changes        = ["name"]
 						create_before_destroy = true
 					}
 				}
@@ -66,7 +88,7 @@ func TestAccDockerSecret_basicUpdatable(t *testing.T) {
 					data 			 = "U3VuIDI1IE1hciAyMDE4IDE0OjUzOjIxIENFU1QK"
 
 					lifecycle {
-						ignore_changes = ["name"]
+						ignore_changes        = ["name"]
 						create_before_destroy = true
 					}
 				}
@@ -133,4 +155,30 @@ func testCheckDockerSecretDestroy(ctx context.Context, s *terraform.State) error
 		return nil
 	}
 	return nil
+}
+
+func testAccServiceSecretCreated(resourceName string, secret *swarm.Secret) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ctx := context.Background()
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		inspectedSecret, _, err := client.SecretInspectWithRaw(ctx, rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("Secret with ID '%s': %w", rs.Primary.ID, err)
+		}
+
+		// we set the value to the pointer to be able to use the value
+		// outside of the function
+		*secret = inspectedSecret
+		return nil
+
+	}
 }

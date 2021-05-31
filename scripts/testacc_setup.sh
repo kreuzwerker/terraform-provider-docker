@@ -35,7 +35,7 @@ sleep 5
 docker login -u testuser -p testpwd 127.0.0.1:15000
 # Build private images
 for i in $(seq 1 3); do 
-  docker build -t tftest-service --build-arg JS_FILE_PATH=server_v${i}.js "$(pwd)"/scripts/testing -f "$(pwd)"/scripts/testing/Dockerfile
+  docker build -t tftest-service --build-arg MAIN_FILE_PATH=v${i}/main.go "$(pwd)"/scripts/testing -f "$(pwd)"/scripts/testing/Dockerfile
   docker tag tftest-service 127.0.0.1:15000/tftest-service:v${i}
   docker push 127.0.0.1:15000/tftest-service:v${i}
   docker tag tftest-service 127.0.0.1:15000/tftest-service

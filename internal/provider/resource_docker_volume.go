@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"strings"
 	"time"
@@ -110,19 +111,20 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	var err error
-	var retVolume types.Volume
-	retVolume, err = client.VolumeInspect(ctx, d.Id())
+	volume, err := client.VolumeInspect(ctx, d.Id())
 
 	if err != nil {
 		return diag.Errorf("Unable to inspect volume: %s", err)
 	}
 
-	d.Set("name", retVolume.Name)
-	d.Set("labels", mapToLabelSet(retVolume.Labels))
-	d.Set("driver", retVolume.Driver)
-	d.Set("driver_opts", retVolume.Options)
-	d.Set("mountpoint", retVolume.Mountpoint)
+	jsonObj, _ := json.MarshalIndent(volume, "", "\t")
+	log.Printf("[DEBUG] Docker volume inspect from readFunc: %s", jsonObj)
+
+	d.Set("name", volume.Name)
+	d.Set("labels", mapToLabelSet(volume.Labels))
+	d.Set("driver", volume.Driver)
+	d.Set("driver_opts", volume.Options)
+	d.Set("mountpoint", volume.Mountpoint)
 
 	return nil
 }

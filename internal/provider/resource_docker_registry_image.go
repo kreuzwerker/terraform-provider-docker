@@ -30,6 +30,13 @@ func resourceDockerRegistryImage() *schema.Resource {
 				Optional:    true,
 			},
 
+			"insecure_skip_verify": {
+				Type:        schema.TypeBool,
+				Description: "If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`",
+				Optional:    true,
+				Default:     false,
+			},
+
 			"build": {
 				Type:        schema.TypeList,
 				Description: "Definition for building the image",

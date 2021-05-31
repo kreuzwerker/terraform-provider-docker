@@ -18,9 +18,13 @@ func TestAccDockerVolume_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerVolumeConfig,
+				Config: `
+				resource "docker_volume" "foo" {
+					name = "testAccDockerVolume_basic"
+				}
+				`,
 				Check: resource.ComposeTestCheckFunc(
-					checkDockerVolume("docker_volume.foo", &v),
+					checkDockerVolumeCreated("docker_volume.foo", &v),
 					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_basic"),
 					resource.TestCheckResourceAttr("docker_volume.foo", "name", "testAccDockerVolume_basic"),
 				),
@@ -34,7 +38,96 @@ func TestAccDockerVolume_basic(t *testing.T) {
 	})
 }
 
-func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
+func TestAccDockerVolume_full(t *testing.T) {
+	var v types.Volume
+
+	testCheckVolumeInspect := func(*terraform.State) error {
+		if v.Driver != "local" {
+			return fmt.Errorf("Volume Driver is wrong: %v", v.Driver)
+		}
+
+		if v.Labels == nil ||
+			!mapEquals("com.docker.compose.project", "test", v.Labels) ||
+			!mapEquals("com.docker.compose.volume", "foo", v.Labels) {
+			return fmt.Errorf("Volume Labels is wrong: %v", v.Labels)
+		}
+
+		if v.Options == nil ||
+			!mapEquals("device", "/dev/sda2", v.Options) ||
+			!mapEquals("type", "btrfs", v.Options) {
+			return fmt.Errorf("Volume Options is wrong: %v", v.Options)
+		}
+
+		if v.Scope != "local" {
+			return fmt.Errorf("Volume Scope is wrong: %v", v.Scope)
+		}
+
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_volume", "testAccDockerVolumeFull"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_full"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "name", "testAccDockerVolume_full"),
+					checkDockerVolumeCreated("docker_volume.foo", &v),
+					testCheckVolumeInspect,
+				),
+			},
+			{
+				ResourceName:      "docker_volume.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccDockerVolume_labels(t *testing.T) {
+	var v types.Volume
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				resource "docker_volume" "foo" {
+					name = "test_foo"
+					labels {
+					  label = "com.docker.compose.project"
+					  value = "test"
+					}
+					labels {
+					  label = "com.docker.compose.volume"
+					  value = "foo"
+					}
+				  }
+				`,
+				Check: resource.ComposeTestCheckFunc(
+					checkDockerVolumeCreated("docker_volume.foo", &v),
+					testCheckLabelMap("docker_volume.foo", "labels",
+						map[string]string{
+							"com.docker.compose.project": "test",
+							"com.docker.compose.volume":  "foo",
+						},
+					),
+				),
+			},
+			{
+				ResourceName:      "docker_volume.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func checkDockerVolumeCreated(n string, volume *types.Volume) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -57,60 +150,3 @@ func checkDockerVolume(n string, volume *types.Volume) resource.TestCheckFunc {
 		return nil
 	}
 }
-
-const testAccDockerVolumeConfig = `
-resource "docker_volume" "foo" {
-	name = "testAccDockerVolume_basic"
-}
-`
-
-func TestAccDockerVolume_labels(t *testing.T) {
-	var v types.Volume
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDockerVolumeLabelsConfig,
-				Check: resource.ComposeTestCheckFunc(
-					checkDockerVolume("docker_volume.foo", &v),
-					testCheckLabelMap("docker_volume.foo", "labels",
-						map[string]string{
-							"com.docker.compose.project": "test",
-							"com.docker.compose.volume":  "foo",
-						},
-					),
-				),
-			},
-			{
-				ResourceName:      "docker_volume.foo",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
-func testAccVolumeLabel(volume *types.Volume, name string, value string) resource.TestCheckFunc { //nolint:deadcode,unused
-	return func(s *terraform.State) error {
-		if volume.Labels[name] != value {
-			return fmt.Errorf("Bad value for label '%s': %s", name, volume.Labels[name])
-		}
-		return nil
-	}
-}
-
-const testAccDockerVolumeLabelsConfig = `
-resource "docker_volume" "foo" {
-  name = "test_foo"
-  labels {
-    label = "com.docker.compose.project"
-    value = "test"
-  }
-  labels {
-    label = "com.docker.compose.volume"
-    value = "foo"
-  }
-}
-`

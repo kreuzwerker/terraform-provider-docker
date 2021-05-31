@@ -2,15 +2,35 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerConfig_basic(t *testing.T) {
 	ctx := context.Background()
+	var c swarm.Config
+
+	testCheckConfigInspect := func(*terraform.State) error {
+		if c.Spec.Name == "" {
+			return errors.New("Config Spec.Name is empty")
+		}
+
+		if len(c.Spec.Data) == 0 {
+			return errors.New("Config Spec.Data is empty")
+		}
+
+		if len(c.Spec.Labels) != 0 {
+			return fmt.Errorf("Config Spec.Labels is wrong: %v", c.Spec.Labels)
+		}
+
+		return nil
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -28,6 +48,8 @@ func TestAccDockerConfig_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("docker_config.foo", "name", "foo-config"),
 					resource.TestCheckResourceAttr("docker_config.foo", "data", "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="),
+					testAccServiceConfigCreated("docker_config.foo", &c),
+					testCheckConfigInspect,
 				),
 			},
 			{
@@ -55,7 +77,7 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 					data 			 = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
 
 					lifecycle {
-						ignore_changes = ["name"]
+						ignore_changes        = ["name"]
 						create_before_destroy = true
 					}
 				}
@@ -71,7 +93,7 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 					data 			 = "U3VuIDI1IE1hciAyMDE4IDE0OjQ2OjE5IENFU1QK"
 
 					lifecycle {
-						ignore_changes = ["name"]
+						ignore_changes        = ["name"]
 						create_before_destroy = true
 					}
 				}
@@ -108,4 +130,30 @@ func testCheckDockerConfigDestroy(ctx context.Context, s *terraform.State) error
 		return nil
 	}
 	return nil
+}
+
+func testAccServiceConfigCreated(resourceName string, config *swarm.Config) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ctx := context.Background()
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Resource with name '%s' not found in state", resourceName)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		inspectedConfig, _, err := client.ConfigInspectWithRaw(ctx, rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("Config with ID '%s': %w", rs.Primary.ID, err)
+		}
+
+		// we set the value to the pointer to be able to use the value
+		// outside of the function
+		*config = inspectedConfig
+		return nil
+
+	}
 }
