@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -16,11 +17,11 @@ func TestAccDockerConfig_basic(t *testing.T) {
 
 	testCheckConfigInspect := func(*terraform.State) error {
 		if c.Spec.Name == "" {
-			return fmt.Errorf("Config Spec.Name is wrong: %v", c.Spec.Name)
+			return errors.New("Config Spec.Name is empty")
 		}
 
 		if len(c.Spec.Data) == 0 {
-			return fmt.Errorf("Config Spec.Data is wrong: %v", c.Spec.Data)
+			return errors.New("Config Spec.Data is empty")
 		}
 
 		if len(c.Spec.Labels) != 0 {
