@@ -1,5 +1,5 @@
 provider "docker" {
-  version = "~> 2.12.0"
+  version = "~> 2.12.2"
   host    = "unix:///var/run/docker.sock"
 }
 

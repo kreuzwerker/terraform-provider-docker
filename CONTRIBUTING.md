@@ -62,7 +62,10 @@ make test
 make testacc_setup
 
 ## run a single test
-TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerImage_data_private_config_file$ -timeout 360s
+TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -timeout 60s -run ^TestAccDockerImage_data_private_config_file$
+
+## run all test for a resource, e.g docker_container
+TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -timeout 360s -run TestAccDockerContainer 
 
 ## cleanup the local testing resources
 make testacc_cleanup
@@ -181,6 +184,6 @@ pull request against the master branch.
 
 ## Releasing
 - Update the `CHANGELOG.md` by hand by [comparing](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.11.0...master) with the latest release, e.g. `v2.11.0`
-- Replace all occurences of the latest release, e.g. `v2.11.0` with the new one, e.g. `v2.12.0`, execpt in the files `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**/*`
+- Replace all occurences of the latest release, e.g. `v2.11.0` with the new one, e.g. `v2.12.2`, execpt in the files `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**/*`
 - regenerate the website: `make website-generation`
-- run `git tag v2.12.0 && git push origin master v2.12.0`
+- run `git tag v2.12.2 && git push origin master v2.12.2`

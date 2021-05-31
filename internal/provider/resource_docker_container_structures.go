@@ -169,7 +169,7 @@ func ulimitsToDockerUlimits(extraUlimits *schema.Set) []*units.Ulimit {
 	return retExtraUlimits
 }
 
-func extraHostsSetToDockerExtraHosts(extraHosts *schema.Set) []string {
+func extraHostsSetToContainerExtraHosts(extraHosts *schema.Set) []string {
 	retExtraHosts := []string{}
 
 	for _, hostInt := range extraHosts.List() {

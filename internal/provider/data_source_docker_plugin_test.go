@@ -23,7 +23,7 @@ func TestAccDockerPluginDataSource_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerPluginDataSourceTest,
+				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_plugin", "testAccDockerPluginDataSourceBasic"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_plugin.test", "plugin_reference", "docker.io/tiborvass/sample-volume-plugin:latest"),
 				),
@@ -31,9 +31,3 @@ func TestAccDockerPluginDataSource_basic(t *testing.T) {
 		},
 	})
 }
-
-const testAccDockerPluginDataSourceTest = `
-data "docker_plugin" "test" {
-  alias = "tiborvass/sample-volume-plugin:latest"
-}
-`

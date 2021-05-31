@@ -16,7 +16,7 @@ func TestAccDockerNetworkDataSource_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDockerNetworkDataSourceConfig,
+				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_network", "testAccDockerNetworkDataSourceBasic"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_network.bridge", "name", "bridge"),
 					testAccDockerNetworkDataSourceIPAMRead,
@@ -44,9 +44,3 @@ func testAccDockerNetworkDataSourceIPAMRead(state *terraform.State) error {
 	}
 	return nil
 }
-
-const testAccDockerNetworkDataSourceConfig = `
-data "docker_network" "bridge" {
-	name = "bridge"
-}
-`

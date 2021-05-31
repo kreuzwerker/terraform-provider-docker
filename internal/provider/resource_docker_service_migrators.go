@@ -9,7 +9,7 @@ import (
 func resourceDockerServiceStateUpgradeV2(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	taskSpec, _ := rawState["task_spec"].([]interface{})[0].(map[string]interface{})
 	r, ok := taskSpec["restart_policy"]
-	if !ok && r == nil {
+	if !ok || r == nil {
 		taskSpec["restart_policy"] = []interface{}{}
 	} else {
 		restartPolicy := r.(map[string]interface{})
@@ -20,7 +20,7 @@ func resourceDockerServiceStateUpgradeV2(ctx context.Context, rawState map[strin
 	}
 
 	a, ok := rawState["auth"]
-	if !ok && a == nil {
+	if !ok || a == nil {
 		rawState["auth"] = []interface{}{}
 	} else {
 		auth := a.(map[string]interface{})

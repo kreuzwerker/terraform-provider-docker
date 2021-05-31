@@ -104,7 +104,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				Config: testBuildDockerRegistryImageMappingConfig,
+				Config: loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageMappingConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
 				),
@@ -120,35 +120,37 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testDockerRegistryImageNotInRegistry(pushOptions),
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testBuildDockerRegistryImageNoKeepConfig, pushOptions.Registry, pushOptions.Name, context),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
 				),
 			},
 		},
+		CheckDestroy: testDockerRegistryImageNotInRegistry(pushOptions),
 	})
 }
 
 func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
-	t.Skip("mavogel: need to check")
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
 	wd, _ := os.Getwd()
 	context := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context"), "\\", "\\\\")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
-		CheckDestroy:      testDockerRegistryImageInRegistry(pushOptions, true),
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testBuildDockerRegistryImageKeepConfig, pushOptions.Registry, pushOptions.Name, context),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
 				),
 			},
 		},
+		// as the providerConfig obtained from testAccProvider.Meta().(*ProviderConfig)
+		// is empty after the test the credetials are passed here manually
+		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
 	})
 }
 
@@ -158,7 +160,7 @@ func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testDockerRegistryImagePushMissingConfig,
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImagePushMissingConfig"),
 				ExpectError: regexp.MustCompile("An image does not exist locally"),
 			},
 		},
@@ -169,7 +171,7 @@ func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) res
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)
 		username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-		digest, _ := getImageDigestWithFallback(pushOpts, username, password)
+		digest, _ := getImageDigestWithFallback(pushOpts, username, password, true)
 		if digest != "" {
 			return fmt.Errorf("image found")
 		}
@@ -177,132 +179,18 @@ func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) res
 	}
 }
 
-// TODO mavogel
-//nolint:unused
-func testDockerRegistryImageInRegistry(pushOpts internalPushImageOptions, cleanup bool) resource.TestCheckFunc {
+func testDockerRegistryImageInRegistry(username, password string, pushOpts internalPushImageOptions, cleanup bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		providerConfig := testAccProvider.Meta().(*ProviderConfig)
-		username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-		digest, err := getImageDigestWithFallback(pushOpts, username, password)
+		digest, err := getImageDigestWithFallback(pushOpts, username, password, true)
 		if err != nil || len(digest) < 1 {
-			return fmt.Errorf("image not found")
+			return fmt.Errorf("image '%s' with credentials('%s' - '%s') not found: %w", pushOpts.Name, username, password, err)
 		}
 		if cleanup {
-			err := deleteDockerRegistryImage(pushOpts, digest, username, password, false)
+			err := deleteDockerRegistryImage(pushOpts, digest, username, password, true, false)
 			if err != nil {
-				return fmt.Errorf("Unable to remove test image. %s", err)
+				return fmt.Errorf("Unable to remove test image '%s': %w", pushOpts.Name, err)
 			}
 		}
 		return nil
 	}
 }
-
-const testBuildDockerRegistryImageMappingConfig = `
-resource "docker_registry_image" "foo" {
-	name = "localhost:15000/foo:1.0"
-	build {
-		suppress_output = true
-		remote_context = "fooRemoteContext"
-		no_cache = true
-		remove = true
-		force_remove = true
-		pull_parent = true
-		isolation = "hyperv"
-		cpu_set_cpus = "fooCpuSetCpus"
-		cpu_set_mems = "fooCpuSetMems"
-		cpu_shares = 4
-		cpu_quota = 5
-		cpu_period = 6
-		memory = 1
-		memory_swap = 2
-		cgroup_parent = "fooCgroupParent"
-		network_mode = "fooNetworkMode"
-		shm_size = 3
-		dockerfile = "fooDockerfile"
-		ulimit {
-			name = "foo"
-			hard = 1
-			soft = 2
-		}
-		auth_config {
-			host_name = "foo.host"
-			user_name = "fooUserName"
-			password = "fooPassword"
-			auth = "fooAuth"
-			email = "fooEmail"
-			server_address = "fooServerAddress"
-			identity_token = "fooIdentityToken"
-			registry_token = "fooRegistryToken"
-
-		}
-		build_args = {
-			"HTTP_PROXY" = "http://10.20.30.2:1234"
-		}
-		context = "context"
-		labels = {
-			foo =  "bar"
-		}
-		squash = true
-		cache_from = ["fooCacheFrom", "barCacheFrom"]
-		security_opt = ["fooSecurityOpt", "barSecurityOpt"]
-		extra_hosts = ["fooExtraHost", "barExtraHost"]
-		target = "fooTarget"
-		session_id = "fooSessionId"
-		platform = "fooPlatform"
-		version = "1"
-		build_id = "fooBuildId"
-	}
-}
-`
-
-const testBuildDockerRegistryImageNoKeepConfig = `
-provider "docker" {
-	alias = "private"
-	registry_auth {
-		address  = 	"%s"
-	}
-}
-resource "docker_registry_image" "foo" {
-	provider = "docker.private"
-	name = "%s"
-	build {
-		context = "%s"
-		remove = true
-		force_remove = true
-		no_cache = true
-	}
-}
-`
-
-const testBuildDockerRegistryImageKeepConfig = `
-provider "docker" {
-	alias = "private"
-	registry_auth {
-		address  = 	"%s"
-	}
-}
-resource "docker_registry_image" "foo" {
-	provider = "docker.private"
-	name = "%s"
-	keep_remotely = true
-	build {
-		context = "%s"
-		remove = true
-		force_remove = true
-		no_cache = true
-	}
-}
-`
-
-const testDockerRegistryImagePushMissingConfig = `
-provider "docker" {
-	alias = "private"
-	registry_auth {
-		address  = 	"127.0.0.1:15000"
-	}
-}
-resource "docker_registry_image" "foo" {
-	provider = "docker.private"
-	name = "127.0.0.1:15000/nonexistent:1.0"
-}
-`

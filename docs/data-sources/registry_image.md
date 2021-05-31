@@ -33,6 +33,7 @@ resource "docker_image" "ubuntu" {
 ### Optional
 
 - **id** (String) The ID of this resource.
+- **insecure_skip_verify** (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
 
 ### Read-Only
 

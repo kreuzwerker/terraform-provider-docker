@@ -25,7 +25,7 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.12.0"
+      version = "2.12.2"
     }
   }
 }
@@ -50,7 +50,7 @@ Terraform 0.12 and earlier:
 
 ```terraform
 provider "docker" {
-  version = "~> 2.12.0"
+  version = "~> 2.12.2"
   host    = "unix:///var/run/docker.sock"
 }
 
@@ -71,28 +71,8 @@ You can also use the `ssh` protocol to connect to the docker host on a remote ma
 The configuration would look as follows:
 
 ```terraform
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "2.12.0"
-    }
-  }
-}
-
 provider "docker" {
-  host = "unix:///var/run/docker.sock"
-}
-
-# Pulls the image
-resource "docker_image" "ubuntu" {
-  name = "ubuntu:latest"
-}
-
-# Create a container
-resource "docker_container" "foo" {
-  image = docker_image.ubuntu.latest
-  name  = "foo"
+  host = "ssh://user@remote-host:22"
 }
 ```
 

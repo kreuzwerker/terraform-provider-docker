@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// TODO 2: seems like we can replace the set hash generation with plain lists -> #219
+// TODO 2: seems like we can replace the set hash generation with plain lists -> #74 (import resources)
 func flattenIpamConfigSpec(in []network.IPAMConfig) *schema.Set { // []interface{} {
 	out := make([]interface{}, len(in))
 	for i, v := range in {

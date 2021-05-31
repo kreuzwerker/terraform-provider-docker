@@ -1,3 +1,13 @@
+## 2.12.2 (May 26, 2021)
+
+DOCS
+- update documentation and website for the release which was forgotten in `v2.12.1`
+## 2.12.1 (May 26, 2021)
+
+BUG FIXES
+- `resource.docker_service.task_spec.container_spec.hosts` is ignored (#202)
+- service state upgradeV2 crashes for empty `auth` block (#203)
+
 ## 2.12.0 (May 23, 2021)
 
 IMPROVEMENTS
