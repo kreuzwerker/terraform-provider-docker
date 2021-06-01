@@ -80,7 +80,7 @@ func resourceDockerService() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"image": {
 										Type:        schema.TypeString,
-										Description: "The image name to use for the containers of the service. Use the `docker_image` resource for this, as shown in the examples. Altough direct image names like `nginx:latest` works it is not recommend to trigger updates",
+										Description: "The image name to use for the containers of the service. Use the `docker_image` resource for this, as shown in the examples. Although direct image names like `nginx:latest` works it is not recommend to trigger updates",
 										Required:    true,
 									},
 									"labels": {
