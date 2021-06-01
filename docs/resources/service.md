@@ -24,12 +24,17 @@ The following configuration starts a Docker Service with
 - moreover, uses the `container` runtime
 
 ```terraform
+resource "docker_image" "foo" {
+  name         = "repo.mycompany.com:8080/foo-service:v1"
+  keep_locally = true
+}
+
 resource "docker_service" "foo" {
   name = "foo-service"
 
   task_spec {
     container_spec {
-      image = "repo.mycompany.com:8080/foo-service:v1"
+      image = docker_image.foo.latest
     }
   }
 
@@ -73,12 +78,17 @@ resource "docker_network" "test_network" {
   driver = "overlay"
 }
 
+resource "docker_image" "foo" {
+  name         = "repo.mycompany.com:8080/foo-service:v1"
+  keep_locally = true
+}
+
 resource "docker_service" "foo" {
   name = "tftest-service-basic"
 
   task_spec {
     container_spec {
-      image = "repo.mycompany.com:8080/foo-service:v1"
+      image = docker_image.foo.latest
 
       labels {
         label = "foo.bar"
@@ -307,7 +317,7 @@ Optional:
 
 Required:
 
-- **image** (String) The image name to use for the containers of the service
+- **image** (String) The image name to use for the containers of the service. Use the `docker_image` resource for this, as shown in the examples. Altough direct image names like `nginx:latest` works it is not recommend to trigger updates
 
 Optional:
 
