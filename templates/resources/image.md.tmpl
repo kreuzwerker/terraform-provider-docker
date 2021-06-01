@@ -21,14 +21,14 @@ for further updates of the image
 
 ### Dynamic updates
 
-To be able to update an update dynamically when the `sha256` sum changes,
+To be able to update an image dynamically when the `sha256` sum changes,
 you need to use it in combination with `docker_registry_image` as follows:
 
 {{tffile "examples/resources/docker_image/resource-dynamic.tf"}}
 
 ### Build
 
-You can also use the resource to build and image.
+You can also use the resource to build an image.
 In thid case the image "zoo" and "zoo:develop" are built.
 
 {{tffile "examples/resources/docker_image/resource-build.tf"}}
