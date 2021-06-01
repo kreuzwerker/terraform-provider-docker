@@ -1,11 +1,11 @@
 # Contributing
 
-By participating to this project, you agree to abide our [code of conduct](/CODE_OF_CONDUCT.md).
+By participating in this project, you agree to abide our [code of conduct](/CODE_OF_CONDUCT.md).
 
 ## Write Issue
 
 When you have a bug report or feature request or something, please create an issue from [here](https://github.com/kreuzwerker/terraform-provider-docker/issues/new/choose).
-Before creating an issue, please check whether same or releated issues exist.
+Before creating an issue, please check whether same or related issues exist.
 Please use issue templates as much as possible.
 
 ### Guide of Bug report
@@ -18,7 +18,7 @@ Please use issue templates as much as possible.
   * Don't include unneeded resources to reproduce the problem
   * Don't set unneeded attributes to reproduce the problem
 
-## Setup your machine
+## Set up your machine
 
 `terraform-provider-docker` is written in [Go](https://golang.org/).
 
@@ -148,7 +148,7 @@ resource "docker_container" "foo" {
 }
 ```
 
-As the next step we can init terraform by provider a local plugin directory:
+As the next step we can init terraform by providing a local plugin directory:
 ```sh
 # Which reflects the convention mentioned before
 # See https://www.terraform.io/docs/commands/init.html#plugin-installation
@@ -184,6 +184,6 @@ pull request against the master branch.
 
 ## Releasing
 - Update the `CHANGELOG.md` by hand by [comparing](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.11.0...master) with the latest release, e.g. `v2.11.0`
-- Replace all occurences of the latest release, e.g. `v2.11.0` with the new one, e.g. `v2.12.2`, execpt in the files `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**/*`
+- Replace all occurrences of the latest release, e.g. `v2.11.0` with the new one, e.g. `v2.12.2`, except in the files `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**/*`
 - regenerate the website: `make website-generation`
 - run `git tag v2.12.2 && git push origin master v2.12.2`
