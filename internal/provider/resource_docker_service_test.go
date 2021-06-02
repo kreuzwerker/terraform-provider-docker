@@ -294,7 +294,7 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 				),
 			},
 			{
@@ -566,7 +566,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
 					testCheckLabelMap("docker_service.foo", "labels", map[string]string{"servicelabel": "true"}),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.labels", map[string]string{"foo": "bar"}),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.command.0", "ls"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.args.0", "-las"),
@@ -667,7 +667,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "1"),
 				),
 			},
@@ -676,7 +676,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "1"),
 				),
 			},
@@ -685,7 +685,7 @@ func TestAccDockerService_partialReplicationConfig(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 				),
 			},
@@ -712,7 +712,7 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256@sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.global", "true"),
 				),
 			},
@@ -777,7 +777,7 @@ func TestAccDockerService_privateImageConverge(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-foo"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 				),
 			},
 		},
@@ -830,7 +830,7 @@ func TestAccDockerService_convergeAndStopGracefully(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic-converge"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 					testValueHigherEqualThan("docker_service.foo", "endpoint_spec.0.ports.0.target_port", 8080),
 					testValueHigherEqualThan("docker_service.foo", "endpoint_spec.0.ports.0.published_port", 30000),
@@ -857,7 +857,7 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-updateFailsAndRollbackConverge"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 				),
 			},
@@ -867,7 +867,7 @@ func TestAccDockerService_updateFailsAndRollbackConverge(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-updateFailsAndRollbackConverge"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", "2"),
 				),
 			},
@@ -1013,7 +1013,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-fnf-service-up-crihiadr"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v1@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", strconv.Itoa(replicas)),
 					resource.TestCheckResourceAttr("docker_service.foo", "update_config.0.parallelism", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "update_config.0.delay", "3s"),
@@ -1059,7 +1059,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-fnf-service-up-crihiadr"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v2.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", strconv.Itoa(replicas2)),
 					resource.TestCheckResourceAttr("docker_service.foo", "update_config.0.parallelism", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "update_config.0.delay", "3s"),
@@ -1107,7 +1107,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-fnf-service-up-crihiadr"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`127.0.0.1:15000/tftest-service:v2.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.replicated.0.replicas", strconv.Itoa(replicas3)),
 					resource.TestCheckResourceAttr("docker_service.foo", "update_config.0.parallelism", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "update_config.0.delay", "3s"),
@@ -1160,6 +1160,10 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 const updateMultiplePropertiesConfigConverge = `
   provider "docker" {
 	alias = "private"
+
+	registry_auth {
+		address = "127.0.0.1:15000"
+	}
   }
   
   resource "docker_volume" "foo" {
@@ -1189,19 +1193,26 @@ const updateMultiplePropertiesConfigConverge = `
 	  create_before_destroy = true
 	}
   }
+
+  data "docker_registry_image" "tftest_image" {
+	provider             = "docker.private"
+	name                 = "%s"
+	insecure_skip_verify = true
+  }
+  resource "docker_image" "tftest_image" {
+	provider      = "docker.private"
+	name          = data.docker_registry_image.tftest_image.name
+	keep_locally  = true
+	pull_triggers = [data.docker_registry_image.tftest_image.sha256_digest]
+  }
   
   resource "docker_service" "foo" {
 	provider = "docker.private"
 	name     = "tftest-fnf-service-up-crihiadr"
-	auth {
-		server_address	= "127.0.0.1:15000"
-		username		= "testuser"
-		password		= "testpwd"
-	}
   
 	task_spec {
 	  container_spec {
-		image = "%s"
+		image = docker_image.tftest_image.latest
   
 		%s
   

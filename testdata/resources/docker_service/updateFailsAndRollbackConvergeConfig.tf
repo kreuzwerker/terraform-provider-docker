@@ -5,12 +5,24 @@ provider "docker" {
   }
 }
 
+data "docker_registry_image" "tftest_image" {
+  provider             = "docker.private"
+  name                 = "%s"
+  insecure_skip_verify = true
+}
+resource "docker_image" "tftest_image" {
+  provider      = "docker.private"
+  name          = data.docker_registry_image.tftest_image.name
+  keep_locally  = true
+  pull_triggers = [data.docker_registry_image.tftest_image.sha256_digest]
+}
+
 resource "docker_service" "foo" {
   provider = "docker.private"
   name     = "tftest-service-updateFailsAndRollbackConverge"
   task_spec {
     container_spec {
-      image             = "%s"
+      image             = docker_image.tftest_image.latest
       stop_grace_period = "10s"
 
       healthcheck {
