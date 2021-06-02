@@ -120,6 +120,47 @@ func TestAccDockerImageDataSource_withTagAndSha256Digest(t *testing.T) {
 	})
 }
 
+func TestAccDockerImageDataSource_withNonExistentImage(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				data "docker_image" "foo" {
+					name = "image-does-not-exist"
+				}
+				`,
+				ExpectError: regexp.MustCompile(`.*did not find docker image.*`),
+			},
+			{
+				Config: `
+				data "docker_image" "foo" {
+					name = "nginx:tag-does-not-exist"
+				}
+				`,
+				ExpectError: regexp.MustCompile(`.*did not find docker image.*`),
+			},
+			{
+				Config: `
+				data "docker_image" "foo" {
+					name = "nginx@shaDoesNotExist"
+				}
+				`,
+				ExpectError: regexp.MustCompile(`.*did not find docker image.*`),
+			},
+			{
+				Config: `
+				data "docker_image" "foo" {
+					name = "nginx:1.19.1@shaDoesNotExist"
+				}
+				`,
+				ExpectError: regexp.MustCompile(`.*did not find docker image.*`),
+			},
+		},
+	})
+}
+
 // Helpers
 func pullImageForTest(t *testing.T, imageName string) {
 	cmd := exec.Command("docker", "pull", imageName)
