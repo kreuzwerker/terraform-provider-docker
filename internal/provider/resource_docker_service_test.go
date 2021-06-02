@@ -712,7 +712,7 @@ func TestAccDockerService_globalReplicationMode(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_service.foo", "id", serviceIDRegex),
 					resource.TestCheckResourceAttr("docker_service.foo", "name", "tftest-service-basic"),
-					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256@sha256.*`)),
+					resource.TestMatchResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
 					resource.TestCheckResourceAttr("docker_service.foo", "mode.0.global", "true"),
 				),
 			},
@@ -1199,16 +1199,24 @@ const updateMultiplePropertiesConfigConverge = `
 	name                 = "%s"
 	insecure_skip_verify = true
   }
+
   resource "docker_image" "tftest_image" {
 	provider      = "docker.private"
 	name          = data.docker_registry_image.tftest_image.name
-	keep_locally  = true
+	keep_locally  = false
+	force_remove  = true
 	pull_triggers = [data.docker_registry_image.tftest_image.sha256_digest]
   }
   
   resource "docker_service" "foo" {
 	provider = "docker.private"
 	name     = "tftest-fnf-service-up-crihiadr"
+
+	auth {
+		server_address = "127.0.0.1:15000"
+		username 	   = "testuser"
+		password 	   = "testpwd"
+	}
   
 	task_spec {
 	  container_spec {
