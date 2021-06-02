@@ -27,7 +27,7 @@ resource "docker_image" "ubuntu" {
 
 ### Dynamic updates
 
-To be able to update an update dynamically when the `sha256` sum changes,
+To be able to update an image dynamically when the `sha256` sum changes,
 you need to use it in combination with `docker_registry_image` as follows:
 
 ```terraform
@@ -43,8 +43,8 @@ resource "docker_image" "ubuntu" {
 
 ### Build
 
-You can also use the resource to build and image.
-In thid case the image "zoo" and "zoo:develop" are built.
+You can also use the resource to build an image.
+In this case the image "zoo" and "zoo:develop" are built.
 
 ```terraform
 resource "docker_image" "zoo" {
