@@ -20,10 +20,15 @@ func dataSourceDockerImage() *schema.Resource {
 				Description: "The name of the Docker image, including any tags or SHA256 repo digests.",
 				Required:    true,
 			},
-
 			"latest": {
 				Type:        schema.TypeString,
 				Description: "The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.",
+				Computed:    true,
+				Deprecated:  "Use `sha256_digest` instead",
+			},
+			"sha256_digest": {
+				Type:        schema.TypeString,
+				Description: "The image sha256 digest in the form of `sha256:<hash>`.",
 				Computed:    true,
 			},
 		},
@@ -51,6 +56,7 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 	d.SetId(foundImage.ID)
 	d.Set("name", imageName)
 	d.Set("latest", foundImage.ID)
+	d.Set("sha256_digest", foundImage.ID)
 
 	return nil
 }

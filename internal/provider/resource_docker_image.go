@@ -24,6 +24,13 @@ func resourceDockerImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.",
 				Computed:    true,
+				Deprecated:  "Use sha256_digest instead",
+			},
+
+			"sha256_digest": {
+				Type:        schema.TypeString,
+				Description: "The image sha256 digest in the form of `sha256:<hash>`.",
+				Computed:    true,
 			},
 
 			"keep_locally": {

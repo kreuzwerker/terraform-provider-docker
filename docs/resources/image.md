@@ -80,8 +80,9 @@ resource "docker_image" "zoo" {
 
 ### Read-Only
 
-- **latest** (String) The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.
+- **latest** (String, Deprecated) The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.
 - **output** (String, Deprecated)
+- **sha256_digest** (String) The image sha256 digest in the form of `sha256:<hash>`.
 
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`

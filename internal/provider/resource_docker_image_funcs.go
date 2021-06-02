@@ -66,6 +66,7 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 	// TODO mavogel: remove the appended name from the ID
 	d.SetId(foundImage.ID + d.Get("name").(string))
 	d.Set("latest", foundImage.ID)
+	d.Set("sha256_digest", foundImage.ID)
 	return nil
 }
 

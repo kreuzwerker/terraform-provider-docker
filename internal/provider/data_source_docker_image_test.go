@@ -33,6 +33,7 @@ func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
 					resource.TestCheckResourceAttr("data.docker_image.foo", "latest", "sha256:f7bb5701a33c0e572ed06ca554edca1bee96cbbc1f76f3b01c985de7e19d0657"),
+					resource.TestCheckResourceAttr("data.docker_image.foo", "sha256_digest", "sha256:f7bb5701a33c0e572ed06ca554edca1bee96cbbc1f76f3b01c985de7e19d0657"),
 				),
 			},
 		},
@@ -58,6 +59,7 @@ func TestAccDockerImageDataSource_withDefaultTag(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
 					resource.TestMatchResourceAttr("data.docker_image.foo", "latest", imageDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_image.foo", "sha256_digest", imageDigestRegexp),
 				),
 			},
 		},
@@ -83,6 +85,7 @@ func TestAccDockerImageDataSource_withSha256Digest(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
 					resource.TestMatchResourceAttr("data.docker_image.foo", "latest", imageDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_image.foo", "sha256_digest", imageDigestRegexp),
 				),
 			},
 		},
@@ -107,6 +110,7 @@ func TestAccDockerImageDataSource_withTagAndSha256Digest(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
 					resource.TestMatchResourceAttr("data.docker_image.foo", "latest", imageDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_image.foo", "sha256_digest", imageDigestRegexp),
 				),
 			},
 		},

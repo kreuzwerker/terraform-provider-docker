@@ -82,6 +82,7 @@ func TestAccDockerImage_private(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAddDockerPrivateImageConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foobar", "sha256_digest", contentDigestRegexp),
 					testAccImageCreated("docker_image.foobar", &i),
 					testCheckImageInspect,
 				),
@@ -114,6 +115,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageKeepLocallyConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobarzoo", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foobarzoo", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -130,6 +132,7 @@ func TestAccDockerImage_data(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobarbaz", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foobarbaz", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -146,6 +149,7 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataConfigWithPullTrigger"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobarbazoo", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foobarbazoo", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -166,6 +170,7 @@ func TestAccDockerImage_data_private(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataPrivateConfig"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foo_private", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -191,6 +196,7 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataPrivateConfigFile"), registry, dockerConfig, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foo_private", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -216,6 +222,7 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataPrivateConfigFileContent"), registry, dockerConfig, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foo_private", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -238,6 +245,7 @@ func TestAccDockerImage_sha265(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAddDockerImageWithSHA256RepoDigest"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foobar", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
@@ -272,6 +280,7 @@ func TestAccDockerImage_tag_sha265(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageWithTagAndSHA256RepoDigest"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.nginx", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.nginx", "sha256_digest", contentDigestRegexp),
 				),
 			},
 		},
