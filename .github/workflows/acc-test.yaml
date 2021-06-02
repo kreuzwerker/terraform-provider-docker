@@ -25,9 +25,9 @@ jobs:
       matrix:
         terraform_version: 
         - "0.12.31"
-        - "0.13.7"
-        - "0.14.11"
-        - "0.15.2"
+        #- "0.13.7"
+        #- "0.14.11"
+        #- "0.15.2"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -48,6 +48,8 @@ jobs:
           docker version
           sudo service docker restart
       - name: Run acceptance tests
-        run: make testacc
+        run: |
+          make testacc_setup
+          TF_LOG=DEBUG TF_ACC=1 go test -v ./internal/provider -run ^TestAccDockerService_updateMultiplePropertiesConverge$
         env: 
           TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
