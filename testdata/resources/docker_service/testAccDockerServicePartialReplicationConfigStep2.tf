@@ -7,6 +7,7 @@ provider "docker" {
 resource "docker_image" "tftest_image" {
   name         = "127.0.0.1:15000/tftest-service:v1"
   keep_locally = false
+  force_remove = true
 }
 
 resource "docker_service" "foo" {
