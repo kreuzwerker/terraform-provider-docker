@@ -86,6 +86,7 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
+	// TODO mavogel: add retries. see e.g. service updateFailsAndRollbackConvergeConfig test
 	err := removeImage(ctx, d, client)
 	if err != nil {
 		return diag.Errorf("Unable to remove Docker image: %s", err)
