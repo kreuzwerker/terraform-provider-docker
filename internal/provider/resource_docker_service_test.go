@@ -1005,7 +1005,15 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 	portsSpec3 := portsSpec2
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			// Note mavogel: we download all images upfront and use a data_source then
+			// becausee the test is only flaky in CI. See
+			// https://github.com/kreuzwerker/terraform-provider-docker/runs/2732063570
+			pullImageForTest(t, image)
+			pullImageForTest(t, image2)
+			pullImageForTest(t, image3)
+		},
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
@@ -1194,18 +1202,8 @@ const updateMultiplePropertiesConfigConverge = `
 	}
   }
 
-  data "docker_registry_image" "tftest_image" {
-	provider             = "docker.private"
-	name                 = "%s"
-	insecure_skip_verify = true
-  }
-
-  resource "docker_image" "tftest_image" {
-	provider      = "docker.private"
-	name          = data.docker_registry_image.tftest_image.name
-	keep_locally  = false
-	force_remove  = true
-	pull_triggers = [data.docker_registry_image.tftest_image.sha256_digest]
+  data "docker_image" "tftest_image" {
+	name = "%s"
   }
   
   resource "docker_service" "foo" {
@@ -1220,7 +1218,7 @@ const updateMultiplePropertiesConfigConverge = `
   
 	task_spec {
 	  container_spec {
-		image = docker_image.tftest_image.latest
+		image = data.docker_image.tftest_image.latest
   
 		%s
   
