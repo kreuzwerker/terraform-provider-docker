@@ -63,10 +63,15 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 		return nil
 	}
 
+	repoDigest, err := determineRepoDigest(imageName, foundImage, foundImage.ID)
+	if err != nil {
+		return diag.Errorf("did not determine docker image repo digest for image name '%s' - repo digests: %v", imageName, foundImage.RepoDigests)
+	}
+
 	// TODO mavogel: remove the appended name from the ID
 	d.SetId(foundImage.ID + d.Get("name").(string))
 	d.Set("latest", foundImage.ID)
-	d.Set("sha256_digest", foundImage.ID)
+	d.Set("repo_digest", repoDigest)
 	return nil
 }
 

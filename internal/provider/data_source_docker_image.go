@@ -2,8 +2,11 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -26,9 +29,9 @@ func dataSourceDockerImage() *schema.Resource {
 				Computed:    true,
 				Deprecated:  "Use `sha256_digest` instead",
 			},
-			"sha256_digest": {
+			"repo_digest": {
 				Type:        schema.TypeString,
-				Description: "The image sha256 digest in the form of `sha256:<hash>`.",
+				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.",
 				Computed:    true,
 			},
 		},
@@ -53,10 +56,33 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("did not find docker image '%s'", imageName)
 	}
 
+	repoDigest, err := determineRepoDigest(imageName, foundImage, foundImage.ID)
+	if err != nil {
+		return diag.Errorf("did not determine docker image repo digest for image name '%s' - repo digests: %v", imageName, foundImage.RepoDigests)
+	}
+
 	d.SetId(foundImage.ID)
 	d.Set("name", imageName)
 	d.Set("latest", foundImage.ID)
-	d.Set("sha256_digest", foundImage.ID)
+	d.Set("repo_digest", repoDigest)
 
 	return nil
+}
+
+func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary, fallbackDigest string) (string, error) {
+	if len(imageToQuery.RepoDigests) == 1 {
+		return imageToQuery.RepoDigests[0], nil
+	}
+
+	for _, repoDigest := range imageToQuery.RepoDigests {
+		if strings.Contains(repoDigest, imageName) {
+			return repoDigest, nil
+		}
+	}
+
+	if fallbackDigest != "" {
+		return fallbackDigest, nil
+	}
+
+	return "", fmt.Errorf("could not determine repo digest for imageName. Fallback was empty as well")
 }

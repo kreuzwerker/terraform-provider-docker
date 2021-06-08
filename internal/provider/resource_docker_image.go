@@ -27,9 +27,9 @@ func resourceDockerImage() *schema.Resource {
 				Deprecated:  "Use sha256_digest instead",
 			},
 
-			"sha256_digest": {
+			"repo_digest": {
 				Type:        schema.TypeString,
-				Description: "The image sha256 digest in the form of `sha256:<hash>`.",
+				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.",
 				Computed:    true,
 			},
 
