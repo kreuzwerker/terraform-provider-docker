@@ -48,6 +48,6 @@ data "docker_image" "tag_and_digest" {
 ### Read-Only
 
 - **latest** (String, Deprecated) The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.
-- **sha256_digest** (String) The image sha256 digest in the form of `sha256:<hash>`.
+- **repo_digest** (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.
 
 

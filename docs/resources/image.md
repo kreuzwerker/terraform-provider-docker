@@ -82,7 +82,7 @@ resource "docker_image" "zoo" {
 
 - **latest** (String, Deprecated) The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.
 - **output** (String, Deprecated)
-- **sha256_digest** (String) The image sha256 digest in the form of `sha256:<hash>`.
+- **repo_digest** (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.
 
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`
