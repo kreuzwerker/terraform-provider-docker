@@ -734,7 +734,6 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 		if container.State.Running ||
 			!container.State.Running && !d.Get("must_run").(bool) {
 			log.Printf("[DEBUG] Container %s is running: %v", containerID, container.State.Running)
-			// break
 			return container, "running", nil
 		}
 
@@ -752,6 +751,18 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 			log.Printf("[INFO] Container %s exited immediately: started: %v - finished: %v", containerID, creationTime, finishTime)
 			return container, "pending", errContainerExitedImmediately
 		}
+
+		// TODO mavogel wait until all properties are exposed from the API
+		// dns               = []
+		// dns_opts          = []
+		// dns_search        = []
+		// group_add         = []
+		// id                = "9e6d9e987923e2c3a99f17e8781c7ce3515558df0e45f8ab06f6adb2dda0de50"
+		// links             = []
+		// log_opts          = {}
+		// name              = "nginx"
+		// sysctls           = {}
+		// tmpfs             = {}
 
 		return container, "running", nil
 	}
