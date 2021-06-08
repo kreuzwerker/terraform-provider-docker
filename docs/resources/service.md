@@ -24,17 +24,12 @@ The following configuration starts a Docker Service with
 - moreover, uses the `container` runtime
 
 ```terraform
-resource "docker_image" "foo" {
-  name         = "repo.mycompany.com:8080/foo-service:v1"
-  keep_locally = true
-}
-
 resource "docker_service" "foo" {
   name = "foo-service"
 
   task_spec {
     container_spec {
-      image = docker_image.foo.latest
+      image = "repo.mycompany.com:8080/foo-service:v1"
     }
   }
 
@@ -55,7 +50,7 @@ docker service create -d -p 8080 --name foo-service repo.mycompany.com:8080/foo-
 
 ### Basic with Datasource
 
-Alternatively, if the image is already present on the Docker Host and not managd
+Alternatively, if the image is already present on the Docker Host and not managed
 by `terraform`, you can also use the `docker_image` datasource:
 
 ```terraform
@@ -105,17 +100,12 @@ resource "docker_network" "test_network" {
   driver = "overlay"
 }
 
-resource "docker_image" "foo" {
-  name         = "repo.mycompany.com:8080/foo-service:v1"
-  keep_locally = true
-}
-
 resource "docker_service" "foo" {
   name = "tftest-service-basic"
 
   task_spec {
     container_spec {
-      image = docker_image.foo.latest
+      image = "repo.mycompany.com:8080/foo-service:v1"
 
       labels {
         label = "foo.bar"

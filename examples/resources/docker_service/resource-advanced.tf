@@ -17,17 +17,12 @@ resource "docker_network" "test_network" {
   driver = "overlay"
 }
 
-resource "docker_image" "foo" {
-  name         = "repo.mycompany.com:8080/foo-service:v1"
-  keep_locally = true
-}
-
 resource "docker_service" "foo" {
   name = "tftest-service-basic"
 
   task_spec {
     container_spec {
-      image = docker_image.foo.latest
+      image = "repo.mycompany.com:8080/foo-service:v1"
 
       labels {
         label = "foo.bar"
