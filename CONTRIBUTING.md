@@ -144,7 +144,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name    = "foo"
-  image   = docker_image.foo.id
+  image   = docker_image.foo.latest
 }
 ```
 

@@ -63,7 +63,7 @@ resource "docker_service" "foo" {
 
   task_spec {
     container_spec {
-      image = data.docker_image.foo.id
+      image = data.docker_image.foo.latest
     }
   }
 

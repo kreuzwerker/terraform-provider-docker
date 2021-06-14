@@ -15,5 +15,5 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
   provider = "docker.private"
   name     = "tf-test"
-  image    = docker_image.foo.id
+  image    = docker_image.foo.latest
 }

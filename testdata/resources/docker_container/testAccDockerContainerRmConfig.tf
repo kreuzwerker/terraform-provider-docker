@@ -4,7 +4,7 @@ resource "docker_image" "foo" {
 }
 resource "docker_container" "foo" {
   name    = "tf-test"
-  image   = docker_image.foo.id
+  image   = docker_image.foo.latest
   command = ["/bin/sleep", "15"]
   rm      = true
 }
