@@ -940,7 +940,7 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 				
 				resource "docker_container" "foo" {
 					name     = "tf-test"
-					image    = docker_image.foo.latest
+					image    = docker_image.foo.id
 					must_run = "false"
 				
 					upload {
@@ -971,7 +971,7 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 				
 				resource "docker_container" "foo" {
 					name     = "tf-test"
-					image    = docker_image.foo.latest
+					image    = docker_image.foo.id
 					must_run = "false"
 				
 					upload {
