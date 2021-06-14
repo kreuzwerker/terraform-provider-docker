@@ -50,9 +50,9 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("did not find docker image '%s'", imageName)
 	}
 
-	repoDigest, err := determineRepoDigest(imageName, foundImage, foundImage.ID)
+	repoDigest, err := determineRepoDigest(imageName, foundImage)
 	if err != nil {
-		return diag.Errorf("did not determine docker image repo digest for image name '%s' - repo digests: %v", imageName, foundImage.RepoDigests)
+		return diag.Errorf("failed to determine repo digest for image data source: %v", err)
 	}
 
 	d.SetId(foundImage.ID)
@@ -62,20 +62,26 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary, fallbackDigest string) (string, error) {
+// determineRepoDigest determines the repo digest for a local image name
+// see https://github.com/kreuzwerker/terraform-provider-docker/pull/212#discussion_r646025706 for details
+func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) (string, error) {
+	// the edge case where the local image was pulled from a repo, tagged locally,
+	// and then referred to in the data source by that local name/tag...
+	if len(imageToQuery.RepoDigests) == 0 {
+		return "", nil
+	}
+
+	// the standard case when there is only one digest
 	if len(imageToQuery.RepoDigests) == 1 {
 		return imageToQuery.RepoDigests[0], nil
 	}
 
+	// the special case when the same image is in multiple registries
 	for _, repoDigest := range imageToQuery.RepoDigests {
 		if strings.Contains(repoDigest, imageName) {
 			return repoDigest, nil
 		}
 	}
 
-	if fallbackDigest != "" {
-		return fallbackDigest, nil
-	}
-
-	return "", fmt.Errorf("could not determine repo digest for imageName. Fallback was empty as well")
+	return "", fmt.Errorf("could not determine repo digest for image name '%s' - repo digests: %v", imageName, imageToQuery.RepoDigests)
 }
