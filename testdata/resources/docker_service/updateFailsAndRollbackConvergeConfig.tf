@@ -23,7 +23,7 @@ resource "docker_service" "foo" {
   name     = "tftest-service-updateFailsAndRollbackConverge"
   task_spec {
     container_spec {
-      image             = docker_image.tftest_image.latest
+      image             = docker_image.tftest_image.id
       stop_grace_period = "10s"
 
       healthcheck {
