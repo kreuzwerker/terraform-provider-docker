@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var imageDigestRegexp = regexp.MustCompile(`^sha256:[A-Fa-f0-9]+$`)
 var imageRepoDigestRegexp = regexp.MustCompile(`^.*@sha256:[A-Fa-f0-9]+$`)
 var imageNameWithTagAndDigestRegexp = regexp.MustCompile(`^.*:.*@sha256:[A-Fa-f0-9]+$`)
 
