@@ -13,7 +13,7 @@ resource "docker_service" "foo" {
   name = "tftest-service-basic-converge"
   task_spec {
     container_spec {
-      image             = docker_image.tftest_image.id
+      image             = docker_image.tftest_image.latest
       stop_grace_period = "10s"
       healthcheck {
         test         = ["CMD", "curl", "-f", "localhost:8080/health"]

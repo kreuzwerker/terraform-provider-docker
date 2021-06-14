@@ -1218,7 +1218,7 @@ const updateMultiplePropertiesConfigConverge = `
   
 	task_spec {
 	  container_spec {
-		image = data.docker_image.tftest_image.id
+		image = data.docker_image.tftest_image.latest
   
 		%s
   
