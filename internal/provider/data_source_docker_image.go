@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strings"
 
@@ -50,10 +49,7 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("did not find docker image '%s'", imageName)
 	}
 
-	repoDigest, err := determineRepoDigest(imageName, foundImage)
-	if err != nil {
-		return diag.Errorf("failed to determine repo digest for image data source: %v", err)
-	}
+	repoDigest := determineRepoDigest(imageName, foundImage)
 
 	d.SetId(foundImage.ID)
 	d.Set("name", imageName)
@@ -62,18 +58,19 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-// determineRepoDigest determines the repo digest for a local image name
-// see https://github.com/kreuzwerker/terraform-provider-docker/pull/212#discussion_r646025706 for details
-func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) (string, error) {
+// determineRepoDigest determines the repo digest for a local image name.
+// It will always return a digest and if none was found it returns an empty string.
+// See https://github.com/kreuzwerker/terraform-provider-docker/pull/212#discussion_r646025706 for details
+func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) string {
 	// the edge case where the local image was pulled from a repo, tagged locally,
 	// and then referred to in the data source by that local name/tag...
 	if len(imageToQuery.RepoDigests) == 0 {
-		return "", nil
+		return ""
 	}
 
 	// the standard case when there is only one digest
 	if len(imageToQuery.RepoDigests) == 1 {
-		return imageToQuery.RepoDigests[0], nil
+		return imageToQuery.RepoDigests[0]
 	}
 
 	// the special case when the same image is in multiple registries
@@ -93,9 +90,12 @@ func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) (st
 		//     "nginx@sha256:36b74457bccb56fbf8b05f79c85569501b721d4db813b684391d63e02287c0b2"
 		// ],
 		if strings.HasPrefix(repoDigest, imageNameWithoutTag) {
-			return repoDigest, nil
+			return repoDigest
 		}
 	}
 
-	return "", fmt.Errorf("could not determine repo digest for image name '%s' - repo digests: %v", imageName, imageToQuery.RepoDigests)
+	// another edge case where the image was pulled from somewhere, pushed somewhere else,
+	// but the tag being referenced in the data is that local-only tag
+	log.Printf("[WARN] could not determine repo digest for image name '%s' and repo digests: %v. Will fall back to '%s'", imageName, imageToQuery.RepoDigests, imageToQuery.RepoDigests[0])
+	return imageToQuery.RepoDigests[0]
 }
