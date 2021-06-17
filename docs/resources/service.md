@@ -63,7 +63,7 @@ resource "docker_service" "foo" {
 
   task_spec {
     container_spec {
-      image = data.docker_image.foo.latest
+      image = data.docker_image.foo.repo_digest
     }
   }
 
@@ -334,7 +334,7 @@ Optional:
 
 Required:
 
-- **image** (String) The image name to use for the containers of the service. Use the `docker_image` resource for this, as shown in the examples. Although direct image names like `nginx:latest` works it is not recommend to trigger updates
+- **image** (String) The image name to use for the containers of the service, like `nginx:1.17.6`. Also use the data-source or resource of `docker_image` with the `repo_digest` or `docker_registry_image` with the `name` attribute for this, as shown in the examples.
 
 Optional:
 
