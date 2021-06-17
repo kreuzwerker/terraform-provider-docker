@@ -77,8 +77,22 @@ func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) (st
 	}
 
 	// the special case when the same image is in multiple registries
+	// we first need to strip a possible tag because the digest do not contain it
+	imageNameWithoutTag := imageName
+	tagColonIndex := strings.Index(imageName, ":")
+	// we have a tag
+	if tagColonIndex != -1 {
+		imageNameWithoutTag = imageName[:tagColonIndex]
+	}
+
 	for _, repoDigest := range imageToQuery.RepoDigests {
-		if strings.Contains(repoDigest, imageName) {
+		// we look explicitly at the beginning of the digest
+		// as the image name is e.g. nginx:1.19.1 or 127.0.0.1/nginx:1.19.1 and the digests are
+		// "RepoDigests": [
+		//     "127.0.0.1:15000/nginx@sha256:a5a1e8e5148de5ebc9697b64e4edb2296b5aac1f05def82efdc00ccb7b457171",
+		//     "nginx@sha256:36b74457bccb56fbf8b05f79c85569501b721d4db813b684391d63e02287c0b2"
+		// ],
+		if strings.HasPrefix(repoDigest, imageNameWithoutTag) {
 			return repoDigest, nil
 		}
 	}
