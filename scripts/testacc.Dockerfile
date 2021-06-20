@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG DOCKER_CE_VERSION="5:20.10.5~3-0~ubuntu-focal"
+ARG DOCKER_CE_VERSION="5:20.10.7~3-0~ubuntu-focal"
 ARG GOLANG_VERSION="1.16"
 ARG TERRAFORM_VERSION="0.15.2"
 
@@ -21,7 +21,7 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 # see listed docker versions: 'apt-cache policy docker-ce'
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && \
-    apt-get update \
+    apt-get update && \
     apt-cache policy docker-ce
 RUN apt-get -y install docker-ce=${DOCKER_CE_VERSION}
 
