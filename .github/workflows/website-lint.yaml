@@ -11,7 +11,7 @@ on:
       - docs/**
 
 env:
-  GOPROXY: https://proxy.golang.org,https://gocenter.io,direct
+  GOPROXY: https://proxy.golang.org,direct
   GO_VERSION: "1.16"
 
 jobs:
