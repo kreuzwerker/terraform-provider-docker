@@ -13,7 +13,7 @@ resource "docker_service" "foo" {
   name = "tftest-service-basic"
   task_spec {
     container_spec {
-      image             = docker_image.tftest_image.latest
+      image             = docker_image.tftest_image.repo_digest
       stop_grace_period = "10s"
     }
   }

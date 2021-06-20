@@ -38,7 +38,7 @@ resource "docker_service" "foo" {
 
   task_spec {
     container_spec {
-      image = docker_image.tftest_image.latest
+      image = docker_image.tftest_image.repo_digest
 
       labels {
         label = "foo"
