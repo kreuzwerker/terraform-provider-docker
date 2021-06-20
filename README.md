@@ -59,7 +59,7 @@ resource "docker_service" "nginx_service" {
   name = "nginx-service"
   task_spec {
     container_spec {
-      image = docker_image.nginx.latest
+      image = docker_image.nginx.repo_digest
     }
   }
 
