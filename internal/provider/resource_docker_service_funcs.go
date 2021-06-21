@@ -298,7 +298,11 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 				}
 				log.Printf("[INFO] Container with ID '%s' exited with code '%v'", containerID, containerWaitResult.StatusCode)
 			case containerWaitErrResult := <-containerWaitErrChan:
-				return fmt.Errorf("failed to wait for container with ID '%s': %v", containerID, containerWaitErrResult)
+				// We ignore those types of errors because the container might be already removed before
+				// the containerWait returns
+				if !(strings.Contains(containerWaitErrResult.Error(), "No such container")) {
+					return fmt.Errorf("error on wait for container with ID '%s': %v", containerID, containerWaitErrResult)
+				}
 			}
 
 			removeOpts := types.ContainerRemoveOptions{
