@@ -249,7 +249,7 @@ func fetchDockerService(ctx context.Context, ID string, name string, client *cli
 func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData, client *client.Client) error {
 	// get containerIDs of the running service because they do not exist after the service is deleted
 	serviceContainerIds := make([]string, 0)
-	if _, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok {
+	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
 		filters := filters.NewArgs()
 		filters.Add("service", d.Get("name").(string))
 		tasks, err := client.TaskList(ctx, types.TaskListOptions{
@@ -264,7 +264,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 			if task.Status.ContainerStatus != nil {
 				containerID = task.Status.ContainerStatus.ContainerID
 			}
-			log.Printf("[INFO] Found container ['%s'] for destroying: '%s'", task.Status.State, containerID)
+			log.Printf("[INFO] Found container with ID ['%s'] in state '%s' for destroying", containerID, task.Status.State)
 			if strings.TrimSpace(containerID) != "" && task.Status.State != swarm.TaskStateShutdown {
 				serviceContainerIds = append(serviceContainerIds, containerID)
 			}
@@ -272,31 +272,41 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 	}
 
 	// delete the service
-	log.Printf("[INFO] Deleting service: '%s'", serviceID)
+	log.Printf("[INFO] Deleting service with ID: '%s'", serviceID)
 	if err := client.ServiceRemove(ctx, serviceID); err != nil {
-		return fmt.Errorf("Error deleting service %s: %s", serviceID, err)
+		return fmt.Errorf("Error deleting service with ID '%s': %s", serviceID, err)
 	}
 
 	// destroy each container after a grace period if specified
-	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok {
+	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
 		for _, containerID := range serviceContainerIds {
-			destroyGraceSeconds, _ := time.ParseDuration(v.(string))
-			log.Printf("[INFO] Waiting for container: '%s' to exit: max %v", containerID, destroyGraceSeconds)
-			ctx, cancel := context.WithTimeout(ctx, destroyGraceSeconds)
+			destroyGraceTime, _ := time.ParseDuration(v.(string))
+			log.Printf("[INFO] Waiting for container with ID: '%s' to exit: max %v", containerID, destroyGraceTime)
+			ctx, cancel := context.WithTimeout(ctx, destroyGraceTime)
 			// TODO why defer? see container_resource with handling return channels! why not remove then wait?
 			defer cancel()
-			exitCode, _ := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
-			log.Printf("[INFO] Container exited with code [%v]: '%s'", exitCode, containerID)
+			containerWaitChan, containerWaitErrChan := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
+			select {
+			case containerWaitResult := <-containerWaitChan:
+				if containerWaitResult.Error != nil {
+					if !(strings.Contains(containerWaitResult.Error.Message, "No such container")) {
+						return fmt.Errorf("failed to wait for container with ID '%s': '%v'", containerID, containerWaitResult.Error.Message)
+					}
+				}
+				log.Printf("[INFO] Container with ID '%s' exited with code '%v'", containerID, containerWaitResult.StatusCode)
+			case containerWaitErrResult := <-containerWaitErrChan:
+				return fmt.Errorf("failed to wait for container with ID '%s': %v", containerID, containerWaitErrResult)
+			}
 
 			removeOpts := types.ContainerRemoveOptions{
 				RemoveVolumes: true,
 				Force:         true,
 			}
 
-			log.Printf("[INFO] Removing container: '%s'", containerID)
+			log.Printf("[INFO] Removing container with ID: '%s'", containerID)
 			if err := client.ContainerRemove(ctx, containerID, removeOpts); err != nil {
 				if !(strings.Contains(err.Error(), "No such container") || strings.Contains(err.Error(), "is already in progress")) {
-					return fmt.Errorf("Error deleting container %s: %s", containerID, err)
+					return fmt.Errorf("Error deleting container with ID '%s': %s", containerID, err)
 				}
 			}
 		}
