@@ -22,7 +22,14 @@ func resourceDockerImage() *schema.Resource {
 
 			"latest": {
 				Type:        schema.TypeString,
-				Description: "The ID of the image.",
+				Description: "The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.",
+				Computed:    true,
+				Deprecated:  "Use repo_digest instead",
+			},
+
+			"repo_digest": {
+				Type:        schema.TypeString,
+				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.",
 				Computed:    true,
 			},
 

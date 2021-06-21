@@ -48,6 +48,33 @@ The following command is the equivalent:
 docker service create -d -p 8080 --name foo-service repo.mycompany.com:8080/foo-service:v1
 ```
 
+### Basic with Datasource
+
+Alternatively, if the image is already present on the Docker Host and not managed
+by `terraform`, you can also use the `docker_image` datasource:
+
+```terraform
+data "docker_image" "foo" {
+  name = "repo.mycompany.com:8080/foo-service:v1"
+}
+
+resource "docker_service" "foo" {
+  name = "foo-service"
+
+  task_spec {
+    container_spec {
+      image = data.docker_image.foo.repo_digest
+    }
+  }
+
+  endpoint_spec {
+    ports {
+      target_port = "8080"
+    }
+  }
+}
+```
+
 ### Advanced
 
 The following configuration shows the full capabilities of a Docker Service,
@@ -307,7 +334,7 @@ Optional:
 
 Required:
 
-- **image** (String) The image name to use for the containers of the service
+- **image** (String) The image name to use for the containers of the service, like `nginx:1.17.6`. Also use the data-source or resource of `docker_image` with the `repo_digest` or `docker_registry_image` with the `name` attribute for this, as shown in the examples.
 
 Optional:
 
