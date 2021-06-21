@@ -283,12 +283,15 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 			destroyGraceTime, _ := time.ParseDuration(v.(string))
 			log.Printf("[INFO] Waiting for container with ID: '%s' to exit: max %v", containerID, destroyGraceTime)
 			ctx, cancel := context.WithTimeout(ctx, destroyGraceTime)
-			// TODO why defer? see container_resource with handling return channels! why not remove then wait?
+			// We defer explicitly to avoid context leaks
 			defer cancel()
+
 			containerWaitChan, containerWaitErrChan := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
 			select {
 			case containerWaitResult := <-containerWaitChan:
 				if containerWaitResult.Error != nil {
+					// We ignore those types of errors because the container might be already removed before
+					// the containerWait returns
 					if !(strings.Contains(containerWaitResult.Error.Message, "No such container")) {
 						return fmt.Errorf("failed to wait for container with ID '%s': '%v'", containerID, containerWaitResult.Error.Message)
 					}
@@ -305,6 +308,8 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 
 			log.Printf("[INFO] Removing container with ID: '%s'", containerID)
 			if err := client.ContainerRemove(ctx, containerID, removeOpts); err != nil {
+				// We ignore those types of errors because the container might be already removed of the removal is in progress
+				// before the containerRemove call happens
 				if !(strings.Contains(err.Error(), "No such container") || strings.Contains(err.Error(), "is already in progress")) {
 					return fmt.Errorf("Error deleting container with ID '%s': %s", containerID, err)
 				}
