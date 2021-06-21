@@ -67,7 +67,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 			if deleteErr := deleteService(ctx, service.ID, d, client); deleteErr != nil {
 				return diag.FromErr(deleteErr)
 			}
-			if strings.Contains(err.Error(), "timeout while waiting for state") {
+			if containsIgnorableErrorMessage(err.Error(), "timeout while waiting for state") {
 				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout})
 			}
 			return diag.FromErr(err)
@@ -205,7 +205,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		state, err := stateConf.WaitForStateContext(ctx)
 		log.Printf("[INFO] State awaited: %v with error: %v", state, err)
 		if err != nil {
-			if strings.Contains(err.Error(), "timeout while waiting for state") {
+			if containsIgnorableErrorMessage(err.Error(), "timeout while waiting for state") {
 				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout})
 			}
 			return diag.FromErr(err)
@@ -292,7 +292,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 				if containerWaitResult.Error != nil {
 					// We ignore those types of errors because the container might be already removed before
 					// the containerWait returns
-					if !(strings.Contains(containerWaitResult.Error.Message, "No such container")) {
+					if !(containsIgnorableErrorMessage(containerWaitResult.Error.Message, "No such container")) {
 						return fmt.Errorf("failed to wait for container with ID '%s': '%v'", containerID, containerWaitResult.Error.Message)
 					}
 				}
@@ -300,7 +300,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 			case containerWaitErrResult := <-containerWaitErrChan:
 				// We ignore those types of errors because the container might be already removed before
 				// the containerWait returns
-				if !(strings.Contains(containerWaitErrResult.Error(), "No such container")) {
+				if !(containsIgnorableErrorMessage(containerWaitErrResult.Error(), "No such container")) {
 					return fmt.Errorf("error on wait for container with ID '%s': %v", containerID, containerWaitErrResult)
 				}
 			}
@@ -314,7 +314,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 			if err := client.ContainerRemove(ctx, containerID, removeOpts); err != nil {
 				// We ignore those types of errors because the container might be already removed of the removal is in progress
 				// before the containerRemove call happens
-				if !(strings.Contains(err.Error(), "No such container") || strings.Contains(err.Error(), "is already in progress")) {
+				if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 					return fmt.Errorf("Error deleting container with ID '%s': %s", containerID, err)
 				}
 			}
