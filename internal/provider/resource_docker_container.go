@@ -120,7 +120,6 @@ func resourceDockerContainer() *schema.Resource {
 				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.",
 				Required:    true,
 				ForceNew:    true,
-				// DiffSuppressFunc: suppressIfSHAwasAdded(), // TODO mvogel
 			},
 
 			"hostname": {

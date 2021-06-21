@@ -63,9 +63,12 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 		return nil
 	}
 
+	repoDigest := determineRepoDigest(imageName, foundImage)
+
 	// TODO mavogel: remove the appended name from the ID
 	d.SetId(foundImage.ID + d.Get("name").(string))
 	d.Set("latest", foundImage.ID)
+	d.Set("repo_digest", repoDigest)
 	return nil
 }
 
@@ -86,6 +89,7 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
+	// TODO mavogel: add retries. see e.g. service updateFailsAndRollbackConvergeConfig test
 	err := removeImage(ctx, d, client)
 	if err != nil {
 		return diag.Errorf("Unable to remove Docker image: %s", err)

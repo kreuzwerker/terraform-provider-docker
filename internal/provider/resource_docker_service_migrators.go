@@ -99,10 +99,9 @@ func resourceDockerServiceV1() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"image": {
-										Type:             schema.TypeString,
-										Description:      "The image name to use for the containers of the service",
-										Required:         true,
-										DiffSuppressFunc: suppressIfSHAwasAdded(),
+										Type:        schema.TypeString,
+										Description: "The image name to use for the containers of the service",
+										Required:    true,
 									},
 									"labels": {
 										Type:        schema.TypeSet,
@@ -1021,10 +1020,9 @@ func resourceDockerServiceV0() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"image": {
-										Type:             schema.TypeString,
-										Description:      "The image name to use for the containers of the service",
-										Required:         true,
-										DiffSuppressFunc: suppressIfSHAwasAdded(),
+										Type:        schema.TypeString,
+										Description: "The image name to use for the containers of the service",
+										Required:    true,
 									},
 									"labels": {
 										Type:        schema.TypeMap,
