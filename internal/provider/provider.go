@@ -134,6 +134,7 @@ func New(version string) func() *schema.Provider {
 				"docker_registry_image": dataSourceDockerRegistryImage(),
 				"docker_network":        dataSourceDockerNetwork(),
 				"docker_plugin":         dataSourceDockerPlugin(),
+				"docker_image":          dataSourceDockerImage(),
 			},
 		}
 
