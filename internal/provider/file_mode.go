@@ -30,11 +30,6 @@ func convertStrToFileMode(s string) (os.FileMode, error) {
 	return os.FileMode(a), nil
 }
 
-func convertFileModeToStr(fileMode os.FileMode) string {
-	// e.g. 288 (10) => "0440" (8)
-	return "0" + strconv.FormatInt(int64(fileMode), 8)
-}
-
 func fileModeDiffSuppressFunc(k, oldV, newV string, d *schema.ResourceData) bool {
 	log.Printf("[DEBUG] DiffSuppressFunc(key: %s, old value: %s, new value: %s)", k, oldV, newV)
 	if oldV == newV {
