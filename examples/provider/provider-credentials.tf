@@ -2,7 +2,7 @@ provider "docker" {
   host = "tcp://localhost:2376"
 
   registry_auth {
-    address     = "registry.hub.docker.com"
+    address     = "index.docker.io"
     config_file = pathexpand("~/.docker/config.json")
   }
 

@@ -516,7 +516,7 @@ func getImageDigestWithFallback(opts internalPushImageOptions, username, passwor
 func createPushImageOptions(image string) internalPushImageOptions {
 	pullOpts := parseImageOptions(image)
 	if pullOpts.Registry == "" {
-		pullOpts.Registry = "registry.hub.docker.com"
+		pullOpts.Registry = "index.docker.io"
 	} else {
 		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
 	}
