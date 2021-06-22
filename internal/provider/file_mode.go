@@ -24,8 +24,8 @@ func convertStrToFileMode(s string) (os.FileMode, error) {
 	if a < 0 {
 		return 0, fmt.Errorf("file_mode must be greater equal than 0: %d", a)
 	}
-	if a > 0o777 {
-		return 0, fmt.Errorf("file_mode must be less equal than 0o777: %d", a)
+	if a > 0o4777 {
+		return 0, fmt.Errorf("file_mode must be less equal than 0o4777: %d", a)
 	}
 	return os.FileMode(a), nil
 }
