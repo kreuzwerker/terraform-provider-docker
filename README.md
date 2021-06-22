@@ -25,7 +25,7 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.12.2"
+      version = "2.13.0"
     }
   }
 }

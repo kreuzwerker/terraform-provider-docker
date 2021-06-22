@@ -1,3 +1,33 @@
+## 2.13.0 (June 22, 2021)
+
+
+IMPROVEMENTS
+- service image name fix and new data-source `docker_image` ([#212](https://github.com/kreuzwerker/terraform-provider-docker/issues/212))
+
+BUG FIXES
+- internal/provider include image name in error message ([#223](https://github.com/kreuzwerker/terraform-provider-docker/issues/223))
+- service delete deadline ([#227](https://github.com/kreuzwerker/terraform-provider-docker/issues/227))
+
+DOCS
+- contributing: add oneline cli git cmd to get the changes since the last tag
+- fix a few typos ([#216](https://github.com/kreuzwerker/terraform-provider-docker/issues/216))
+- fix typos in docker_image example usage ([#213](https://github.com/kreuzwerker/terraform-provider-docker/issues/213))
+
+CHORE
+- refactor tests ([#201](https://github.com/kreuzwerker/terraform-provider-docker/issues/201))
+- update module github.com/docker/docker to v20.10.7 ([#218](https://github.com/kreuzwerker/terraform-provider-docker/issues/218))
+- update module github.com/docker/cli to v20.10.7 ([#217](https://github.com/kreuzwerker/terraform-provider-docker/issues/217))
+- update module github.com/golangci/golangci-lint to v1.41.1 ([#226](https://github.com/kreuzwerker/terraform-provider-docker/issues/226))
+- update module github.com/golangci/golangci-lint to v1.40.1 ([#194](https://github.com/kreuzwerker/terraform-provider-docker/issues/194))
+- update alpine docker tag to v3.14.0 ([#225](https://github.com/kreuzwerker/terraform-provider-docker/issues/225))
+- update stocard/gotthard docker digest to 38c2216
+- update nginx docker tag to v1.21.0
+- update nginx:1.18.0-alpine docker digest to 93baf2e
+- update nginx docker tag to v1.21.0
+- update alpine docker tag to v3.13.5
+- update stocard/gotthard docker digest to 38c2216
+- update nginx:1.18.0-alpine docker digest to 93baf2e
+
 ## 2.12.2 (May 26, 2021)
 
 DOCS
