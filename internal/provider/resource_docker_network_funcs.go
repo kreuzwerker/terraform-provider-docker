@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -201,7 +200,7 @@ func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context,
 		}
 
 		if err := client.NetworkRemove(ctx, networkID); err != nil {
-			if strings.Contains(err.Error(), "has active endpoints") {
+			if containsIgnorableErrorMessage(err.Error(), "has active endpoints") {
 				return networkID, "pending", nil
 			}
 			return networkID, "other", err
