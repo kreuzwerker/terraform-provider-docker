@@ -355,7 +355,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	// Still support the deprecated properties
 	if v, ok := d.GetOk("networks"); ok {
 		if err := client.NetworkDisconnect(ctx, "bridge", retContainer.ID, false); err != nil {
-			if !strings.Contains(err.Error(), "is not connected to the network bridge") {
+			if !containsIgnorableErrorMessage(err.Error(), "is not connected to the network bridge") {
 				return diag.Errorf("Unable to disconnect the default network: %s", err)
 			}
 		}
@@ -375,7 +375,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	// But overwrite them with the future ones, if set
 	if v, ok := d.GetOk("networks_advanced"); ok {
 		if err := client.NetworkDisconnect(ctx, "bridge", retContainer.ID, false); err != nil {
-			if !strings.Contains(err.Error(), "is not connected to the network bridge") {
+			if !containsIgnorableErrorMessage(err.Error(), "is not connected to the network bridge") {
 				return diag.Errorf("Unable to disconnect the default network: %s", err)
 			}
 		}
@@ -848,7 +848,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 	case waitOk := <-waitOkC:
 		log.Printf("[INFO] Container exited with code [%v]: '%s'", waitOk.StatusCode, d.Id())
 	case err := <-errorC:
-		if !(strings.Contains(err.Error(), "No such container") || strings.Contains(err.Error(), "is already in progress")) {
+		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
 	}

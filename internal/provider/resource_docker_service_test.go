@@ -6,7 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -1328,7 +1327,7 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 			Force: true,
 		})
 		if err != nil {
-			if strings.Contains(err.Error(), "image is being used by running container") {
+			if containsIgnorableErrorMessage(err.Error(), "image is being used by running container") {
 				if retryDeleteCount == maxRetryDeleteCount {
 					return fmt.Errorf("could not delete image '%s' after %d retries", image.ID, maxRetryDeleteCount)
 				}

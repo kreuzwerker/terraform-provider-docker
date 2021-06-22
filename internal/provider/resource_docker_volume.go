@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -158,7 +157,7 @@ func resourceDockerVolumeRemoveRefreshFunc(
 		forceDelete := true
 
 		if err := client.VolumeRemove(context.Background(), volumeID, forceDelete); err != nil {
-			if strings.Contains(err.Error(), "volume is in use") { // store.IsInUse(err)
+			if containsIgnorableErrorMessage(err.Error(), "volume is in use") {
 				log.Printf("[INFO] Volume with id '%v' is still in use", volumeID)
 				return volumeID, "in_use", nil
 			}

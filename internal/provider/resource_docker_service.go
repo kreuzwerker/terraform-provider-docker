@@ -303,7 +303,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"stop_grace_period": {
 										Type:             schema.TypeString,
-										Description:      "Amount of time to wait for the container to terminate before forcefully removing it (ms|s|m|h)",
+										Description:      "Amount of time to wait for the container to terminate before forcefully removing it (ms|s|m|h). If not specified or '0s' the destroy will not check if all tasks/containers of the service terminate.",
 										Optional:         true,
 										Computed:         true,
 										ValidateDiagFunc: validateDurationGeq0(),
