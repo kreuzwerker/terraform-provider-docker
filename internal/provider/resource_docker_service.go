@@ -235,6 +235,7 @@ func resourceDockerService() *schema.Resource {
 															"propagation": {
 																Type:             schema.TypeString,
 																Description:      "A propagation mode with the value",
+																Default:          "rprivate",
 																Optional:         true,
 																ValidateDiagFunc: validateStringMatchesPattern(`^(private|rprivate|shared|rshared|slave|rslave)$`),
 															},
