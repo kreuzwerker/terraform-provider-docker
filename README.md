@@ -1,9 +1,14 @@
-<a href="https://terraform.io">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="50" />
+<a href="https://kreuzwerker.de">
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/xw-logo.png" alt="Kreuzwerker logo" title="Docker" align="right" height="100" />
 </a>
+
 <a href="https://terraform.io">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/docker-logo.png" alt="Docker logo" title="Docker" align="right" height="50" />
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="100" />
 </a>
+<a href="https://docker.com">
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/docker-logo.png" alt="Docker logo" title="Docker" align="right" height="100" />
+</a>
+
 
 # Terraform Provider for Docker
 
