@@ -17,7 +17,7 @@
 
 ## Requirements
 -	[Terraform](https://www.terraform.io/downloads.html) >=0.12.x
--	[Go](https://golang.org/doc/install) 1.15.x (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.16.x (to build the provider plugin)
 
 ## Building The Provider
 
@@ -27,6 +27,11 @@ $ make build
 ```
 
 ## Example usage
+
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/2.13.0/docs) of the registry
+or use the following example:
+
+
 ```hcl
 # Set the required provider and versions
 terraform {
@@ -87,3 +92,9 @@ resource "docker_service" "nginx_service" {
   }
 }
 ```
+
+## Contributing
+
+The Terraform Docker Provider is the work of many of contributors. We appreciate your help!
+
+To contribute, please read the contribution guidelines: [Contributing to Terraform - Docker Provider](CONTRIBUTING.md)
