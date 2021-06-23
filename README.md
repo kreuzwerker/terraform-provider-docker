@@ -1,4 +1,11 @@
-# Terraform Provider
+<a href="https://terraform.io">
+    <img src="https://cdn.rawgit.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="50" />
+</a>
+<a href="https://terraform.io">
+    <img src="https://cdn.rawgit.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/docker-logo.png" alt="Docker logo" title="Docker" align="right" height="50" />
+</a>
+
+# Terraform Provider for Docker
 
 - Website: https://www.terraform.io
 - Provider: [kreuzwerker/docker](https://registry.terraform.io/providers/kreuzwerker/docker/latest)
