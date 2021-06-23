@@ -85,6 +85,10 @@ resource "docker_volume" "test_volume" {
   name = "tftest-volume"
 }
 
+resource "docker_volume" "test_volume_2" {
+  name = "tftest-volume2"
+}
+
 resource "docker_config" "service_config" {
   name = "tftest-full-myconfig"
   data = "ewogICJwcmVmaXgiOiAiMTIzIgp9"
@@ -139,16 +143,31 @@ resource "docker_service" "foo" {
       mounts {
         target    = "/mount/test"
         source    = docker_volume.test_volume.name
-        type      = "volume"
+        type      = "bind"
         read_only = true
 
         bind_options {
-          propagation = "private"
+          propagation = "rprivate"
         }
       }
 
       mounts {
-        # another mount
+        target    = "/mount/test2"
+        source    = docker_volume.test_volume_2.name
+        type      = "volume"
+        read_only = true
+
+        volume_options {
+          no_copy = true
+          labels {
+            label = "foo"
+            value = "bar"
+          }
+          driver_name = "random-driver"
+          driver_options = {
+            op1 = "val1"
+          }
+        }
       }
 
       stop_signal       = "SIGTERM"
@@ -441,7 +460,7 @@ Optional:
 
 Optional:
 
-- **propagation** (String) A propagation mode with the value
+- **propagation** (String) Bind propagation refers to whether or not mounts created within a given bind-mount or named volume can be propagated to replicas of that mount. See the [docs](https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation) for details.
 
 
 <a id="nestedblock--task_spec--container_spec--mounts--tmpfs_options"></a>
