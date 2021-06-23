@@ -13,6 +13,10 @@ resource "docker_volume" "test_volume" {
   name = "tftest-volume"
 }
 
+resource "docker_volume" "test_volume_2" {
+  name = "tftest-volume-2"
+}
+
 resource "docker_config" "service_config" {
   name = "tftest-full-myconfig"
   data = "ewogICJwcmVmaXgiOiAiMTIzIgp9"
@@ -86,6 +90,18 @@ resource "docker_service" "foo" {
           driver_options = {
             op1 = "val1"
           }
+        }
+
+      }
+
+      mounts {
+        target    = "/mount/test2"
+        source    = docker_volume.test_volume_2.name
+        type      = "bind"
+        read_only = true
+
+        bind_options {
+          propagation = "rprivate"
         }
       }
 

@@ -380,17 +380,23 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.ReadOnly is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.ReadOnly)
 		}
 
-		if len(s.Spec.TaskTemplate.ContainerSpec.Mounts) != 1 ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Type != "volume" ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Source != "tftest-volume" ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Target != "/mount/test" ||
+		if len(s.Spec.TaskTemplate.ContainerSpec.Mounts) != 2 ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Type != "bind" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Source != "tftest-volume-2" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Target != "/mount/test2" ||
 			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].ReadOnly != true ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].BindOptions != nil ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].Consistency != mount.Consistency("") ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.NoCopy != true ||
-			!mapEquals("foo", "bar", s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.Labels) ||
-			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.DriverConfig.Name != "random-driver" ||
-			!mapEquals("op1", "val1", s.Spec.TaskTemplate.ContainerSpec.Mounts[0].VolumeOptions.DriverConfig.Options) {
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].BindOptions == nil ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[0].BindOptions.Propagation != mount.PropagationRPrivate ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].Type != "volume" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].Source != "tftest-volume" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].Target != "/mount/test" ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].ReadOnly != true ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].BindOptions != nil ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].Consistency != mount.Consistency("") ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].VolumeOptions.NoCopy != true ||
+			!mapEquals("foo", "bar", s.Spec.TaskTemplate.ContainerSpec.Mounts[1].VolumeOptions.Labels) ||
+			s.Spec.TaskTemplate.ContainerSpec.Mounts[1].VolumeOptions.DriverConfig.Name != "random-driver" ||
+			!mapEquals("op1", "val1", s.Spec.TaskTemplate.ContainerSpec.Mounts[1].VolumeOptions.DriverConfig.Options) {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Mounts is wrong: %#v", s.Spec.TaskTemplate.ContainerSpec.Mounts)
 		}
 
@@ -582,14 +588,19 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.type", "type-label"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.level", "level-label"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.read_only", "true"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.target", "/mount/test"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.source", "tftest-volume"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.type", "volume"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.target", "/mount/test2"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.source", "tftest-volume-2"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.type", "bind"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.read_only", "true"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.no_copy", "true"),
-					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.labels", map[string]string{"foo": "bar"}),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.driver_name", "random-driver"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.volume_options.0.driver_options.op1", "val1"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.bind_options.0.propagation", "rprivate"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.target", "/mount/test"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.source", "tftest-volume"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.type", "volume"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.read_only", "true"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.volume_options.0.no_copy", "true"),
+					testCheckLabelMap("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.volume_options.0.labels", map[string]string{"foo": "bar"}),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.volume_options.0.driver_name", "random-driver"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.1.volume_options.0.driver_options.op1", "val1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_signal", "SIGTERM"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.stop_grace_period", "10s"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.healthcheck.0.test.0", "CMD"),
