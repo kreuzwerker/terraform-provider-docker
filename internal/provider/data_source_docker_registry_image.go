@@ -50,13 +50,13 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 
 	// Use the official Docker Hub if a registry isn't specified
 	if pullOpts.Registry == "" {
-		pullOpts.Registry = "index.docker.io"
+		pullOpts.Registry = "registry-1.docker.io"
 	} else {
 		// Otherwise, filter the registry name out of the repo name
 		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
 	}
 
-	if pullOpts.Registry == "index.docker.io" {
+	if pullOpts.Registry == "registry-1.docker.io" {
 		// Docker prefixes 'library' to official images in the path; 'consul' becomes 'library/consul'
 		if !strings.Contains(pullOpts.Repository, "/") {
 			pullOpts.Repository = "library/" + pullOpts.Repository

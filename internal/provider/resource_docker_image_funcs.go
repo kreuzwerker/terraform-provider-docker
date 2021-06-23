@@ -185,7 +185,7 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 		}
 	} else {
 		// Try to find an auth config for the public docker hub if a registry wasn't given
-		if authConfig, ok := authConfig.Configs["https://index.docker.io"]; ok {
+		if authConfig, ok := authConfig.Configs["https://registry-1.docker.io"]; ok {
 			auth = authConfig
 		}
 	}
