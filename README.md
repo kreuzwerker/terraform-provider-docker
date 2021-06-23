@@ -1,6 +1,8 @@
 <a href="https://kreuzwerker.de">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/xw-logo.png" alt="Kreuzwerker logo" title="Docker" align="right" height="100" />
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/xw-logo.png" alt="Kreuzwerker logo" title="Docker" align="left" height="50" />
 </a>
+
+<br>
 
 <a href="https://terraform.io">
     <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="100" />
