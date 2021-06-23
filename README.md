@@ -1,11 +1,11 @@
 <a href="https://docker.com">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/docker-logo.png" alt="Docker logo" title="Docker" align="right" height="100" />
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/docker-logo.png" alt="Docker logo" title="Docker" align="right" height="100" />
 </a>
 <a href="https://terraform.io">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="100" />
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="100" />
 </a>
 <a href="https://kreuzwerker.de">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/docs-update-readme/assets/xw-logo.png" alt="Kreuzwerker logo" title="Kreuzwerker" align="right" height="100" />
+    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/xw-logo.png" alt="Kreuzwerker logo" title="Kreuzwerker" align="right" height="100" />
 </a>
 
 # Terraform Provider for Docker
@@ -98,3 +98,7 @@ resource "docker_service" "nginx_service" {
 The Terraform Docker Provider is the work of many of contributors. We appreciate your help!
 
 To contribute, please read the contribution guidelines: [Contributing to Terraform - Docker Provider](CONTRIBUTING.md)
+
+## License
+
+The Terraform Provider Docker is available to everyone under the terms of the Mozilla Public License Version 2.0. [Take a look the LICENSE file](LICENSE).
