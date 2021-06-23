@@ -1289,6 +1289,50 @@ const updateMultiplePropertiesConfigConverge = `
   }
 `
 
+func TestAccDockerService_mounts_issue222(t *testing.T) {
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceMounts"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_service.foo_empty", "id", serviceIDRegex),
+					resource.TestCheckResourceAttr("docker_service.foo_empty", "name", "tftest-service-mount-bind-empty"),
+					resource.TestMatchResourceAttr("docker_service.foo_empty", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
+					resource.TestCheckResourceAttr("docker_service.foo_empty", "task_spec.0.container_spec.0.mounts.0.target", "/mount/test"),
+					resource.TestCheckResourceAttr("docker_service.foo_empty", "task_spec.0.container_spec.0.mounts.0.source", "tftest-volume"),
+					resource.TestCheckResourceAttr("docker_service.foo_empty", "task_spec.0.container_spec.0.mounts.0.type", "bind"),
+					resource.TestCheckResourceAttr("docker_service.foo_empty", "task_spec.0.container_spec.0.mounts.0.read_only", "true"),
+					resource.TestCheckResourceAttr("docker_service.foo_empty", "task_spec.0.container_spec.0.mounts.0.bind_options.0.propagation", "rprivate"),
+					resource.TestMatchResourceAttr("docker_service.foo_null", "id", serviceIDRegex),
+					resource.TestCheckResourceAttr("docker_service.foo_null", "name", "tftest-service-mount-bind-null"),
+					resource.TestMatchResourceAttr("docker_service.foo_null", "task_spec.0.container_spec.0.image", regexp.MustCompile(`sha256.*`)),
+					resource.TestCheckResourceAttr("docker_service.foo_null", "task_spec.0.container_spec.0.mounts.0.target", "/mount/test"),
+					resource.TestCheckResourceAttr("docker_service.foo_null", "task_spec.0.container_spec.0.mounts.0.source", "tftest-volume"),
+					resource.TestCheckResourceAttr("docker_service.foo_null", "task_spec.0.container_spec.0.mounts.0.type", "bind"),
+					resource.TestCheckResourceAttr("docker_service.foo_null", "task_spec.0.container_spec.0.mounts.0.read_only", "true"),
+					resource.TestCheckResourceAttr("docker_service.foo_null", "task_spec.0.container_spec.0.mounts.0.bind_options.0.propagation", "rprivate"),
+				),
+			},
+			{
+				ResourceName:      "docker_service.foo_empty",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName:      "docker_service.foo_null",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
+
 // Helpers
 // isServiceRemoved checks if a service was removed successfully
 func isServiceRemoved(serviceName string) resource.TestCheckFunc {
