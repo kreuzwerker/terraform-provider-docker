@@ -29,7 +29,7 @@ jobs:
       - name: Generate the website
         run: make website-generation
       - name: Verify Changed files
-        uses: tj-actions/verify-changed-files@v6.2
+        uses: tj-actions/verify-changed-files@v7.1
         id: verify-changed-files
         with:
           files: |
