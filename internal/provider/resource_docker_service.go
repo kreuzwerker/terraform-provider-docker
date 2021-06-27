@@ -234,7 +234,8 @@ func resourceDockerService() *schema.Resource {
 														Schema: map[string]*schema.Schema{
 															"propagation": {
 																Type:             schema.TypeString,
-																Description:      "A propagation mode with the value",
+																Description:      "Bind propagation refers to whether or not mounts created within a given bind-mount or named volume can be propagated to replicas of that mount. See the [docs](https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation) for details. Defaults to `rprivate`",
+																Default:          "rprivate",
 																Optional:         true,
 																ValidateDiagFunc: validateStringMatchesPattern(`^(private|rprivate|shared|rshared|slave|rslave)$`),
 															},
