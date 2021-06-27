@@ -460,7 +460,7 @@ Optional:
 
 Optional:
 
-- **propagation** (String) Bind propagation refers to whether or not mounts created within a given bind-mount or named volume can be propagated to replicas of that mount. See the [docs](https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation) for details.
+- **propagation** (String) Bind propagation refers to whether or not mounts created within a given bind-mount or named volume can be propagated to replicas of that mount. See the [docs](https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation) for details. Defaults to `rprivate`
 
 
 <a id="nestedblock--task_spec--container_spec--mounts--tmpfs_options"></a>
