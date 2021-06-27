@@ -760,62 +760,62 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 						Target: rawMount["target"].(string),
 						Source: rawMount["source"].(string),
 					}
+
 					if value, ok := rawMount["read_only"]; ok {
 						mountInstance.ReadOnly = value.(bool)
 					}
 
-					if mountType == mount.TypeBind {
-						if value, ok := rawMount["bind_options"]; ok {
-							if len(value.([]interface{})) > 0 {
-								mountInstance.BindOptions = &mount.BindOptions{}
-								for _, rawBindOptions := range value.([]interface{}) {
-									rawBindOptions := rawBindOptions.(map[string]interface{})
-									if value, ok := rawBindOptions["propagation"]; ok {
-										mountInstance.BindOptions.Propagation = mount.Propagation(value.(string))
-									}
+					if value, ok := rawMount["bind_options"]; ok {
+						// it always has 1 item (MaxItems = 1): the map: [map[propagation:]] even if the block is empty
+						if len(value.([]interface{})) > 0 {
+							mountInstance.BindOptions = &mount.BindOptions{}
+							for _, rawBindOptions := range value.([]interface{}) {
+								rawBindOptions := rawBindOptions.(map[string]interface{})
+								if value, ok := rawBindOptions["propagation"]; ok {
+									mountInstance.BindOptions.Propagation = mount.Propagation(value.(string))
 								}
 							}
 						}
-					} else if mountType == mount.TypeVolume {
-						if value, ok := rawMount["volume_options"]; ok {
-							if len(value.([]interface{})) > 0 {
-								mountInstance.VolumeOptions = &mount.VolumeOptions{}
-								for _, rawVolumeOptions := range value.([]interface{}) {
-									rawVolumeOptions := rawVolumeOptions.(map[string]interface{})
-									if value, ok := rawVolumeOptions["no_copy"]; ok {
-										mountInstance.VolumeOptions.NoCopy = value.(bool)
+					}
+
+					if value, ok := rawMount["volume_options"]; ok {
+						if len(value.([]interface{})) > 0 {
+							mountInstance.VolumeOptions = &mount.VolumeOptions{}
+							for _, rawVolumeOptions := range value.([]interface{}) {
+								rawVolumeOptions := rawVolumeOptions.(map[string]interface{})
+								if value, ok := rawVolumeOptions["no_copy"]; ok {
+									mountInstance.VolumeOptions.NoCopy = value.(bool)
+								}
+								if value, ok := rawVolumeOptions["labels"]; ok {
+									mountInstance.VolumeOptions.Labels = labelSetToMap(value.(*schema.Set))
+								}
+								// because it is not possible to nest maps
+								if value, ok := rawVolumeOptions["driver_name"]; ok {
+									if mountInstance.VolumeOptions.DriverConfig == nil {
+										mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
 									}
-									if value, ok := rawVolumeOptions["labels"]; ok {
-										mountInstance.VolumeOptions.Labels = labelSetToMap(value.(*schema.Set))
+									mountInstance.VolumeOptions.DriverConfig.Name = value.(string)
+								}
+								if value, ok := rawVolumeOptions["driver_options"]; ok {
+									if mountInstance.VolumeOptions.DriverConfig == nil {
+										mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
 									}
-									// because it is not possible to nest maps
-									if value, ok := rawVolumeOptions["driver_name"]; ok {
-										if mountInstance.VolumeOptions.DriverConfig == nil {
-											mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
-										}
-										mountInstance.VolumeOptions.DriverConfig.Name = value.(string)
-									}
-									if value, ok := rawVolumeOptions["driver_options"]; ok {
-										if mountInstance.VolumeOptions.DriverConfig == nil {
-											mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
-										}
-										mountInstance.VolumeOptions.DriverConfig.Options = mapTypeMapValsToString(value.(map[string]interface{}))
-									}
+									mountInstance.VolumeOptions.DriverConfig.Options = mapTypeMapValsToString(value.(map[string]interface{}))
 								}
 							}
 						}
-					} else if mountType == mount.TypeTmpfs {
-						if value, ok := rawMount["tmpfs_options"]; ok {
-							if len(value.([]interface{})) > 0 {
-								mountInstance.TmpfsOptions = &mount.TmpfsOptions{}
-								for _, rawTmpfsOptions := range value.([]interface{}) {
-									rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
-									if value, ok := rawTmpfsOptions["size_bytes"]; ok {
-										mountInstance.TmpfsOptions.SizeBytes = value.(int64)
-									}
-									if value, ok := rawTmpfsOptions["mode"]; ok {
-										mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
-									}
+					}
+
+					if value, ok := rawMount["tmpfs_options"]; ok {
+						if len(value.([]interface{})) > 0 {
+							mountInstance.TmpfsOptions = &mount.TmpfsOptions{}
+							for _, rawTmpfsOptions := range value.([]interface{}) {
+								rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
+								if value, ok := rawTmpfsOptions["size_bytes"]; ok {
+									mountInstance.TmpfsOptions.SizeBytes = value.(int64)
+								}
+								if value, ok := rawTmpfsOptions["mode"]; ok {
+									mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
 								}
 							}
 						}
