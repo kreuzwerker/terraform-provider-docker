@@ -1,3 +1,3 @@
 resource "docker_image" "nginx" {
-  name = "nginx:1.21.0@sha256:d1b8ff2be479db870cb05403196edfbdf2fc767e33f240a84d82de1d5e131cd3"
+  name = "nginx:1.21.0@sha256:47ae43cdfc7064d28800bc42e79a429540c7c80168e8c8952778c0d5af1c09db"
 }
