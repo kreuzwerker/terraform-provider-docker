@@ -489,7 +489,9 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 		}
 
 		if len(s.Spec.TaskTemplate.Networks) != 1 ||
-			s.Spec.TaskTemplate.Networks[0].Target == "" {
+			s.Spec.TaskTemplate.Networks[0].Target == "" ||
+			len(s.Spec.TaskTemplate.Networks[0].Aliases) == 0 ||
+			s.Spec.TaskTemplate.Networks[0].Aliases[0] != "tftest-foobar" {
 			return fmt.Errorf("Service Spec.TaskTemplate.Networks is wrong: %s", s.Spec.TaskTemplate.Networks)
 		}
 
@@ -627,7 +629,8 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.prefs.0", "spread=node.role.manager"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.max_replicas", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.force_update", "0"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "1"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks_advanced.#", "1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.name", "json-file"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-file", "3"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-size", "10m"),

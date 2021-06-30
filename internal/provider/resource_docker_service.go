@@ -675,11 +675,37 @@ func resourceDockerService() *schema.Resource {
 							ValidateDiagFunc: validateStringMatchesPattern("^(container|plugin)$"),
 						},
 						"networks": {
-							Type:        schema.TypeSet,
-							Description: "Ids of the networks in which the  container will be put in",
-							Optional:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Set:         schema.HashString,
+							Type:          schema.TypeSet,
+							Description:   "Ids of the networks in which the  container will be put in",
+							Optional:      true,
+							Elem:          &schema.Schema{Type: schema.TypeString},
+							Set:           schema.HashString,
+							Deprecated:    "Use networks_advanced instead",
+							ConflictsWith: []string{"task_spec.0.networks_advanced"},
+						},
+						"networks_advanced": {
+							Type:          schema.TypeSet,
+							Description:   "The networks the container is attached to",
+							Optional:      true,
+							ConflictsWith: []string{"task_spec.0.networks"},
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:        schema.TypeString,
+										Description: "The name/id of the network.",
+										Required:    true,
+										ForceNew:    true,
+									},
+									"aliases": {
+										Type:        schema.TypeSet,
+										Description: "The network aliases of the container in the specific network.",
+										Optional:    true,
+										ForceNew:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Set:         schema.HashString,
+									},
+								},
+							},
 						},
 						"log_driver": {
 							Type:        schema.TypeList,
