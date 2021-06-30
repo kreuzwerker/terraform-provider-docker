@@ -154,6 +154,59 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 	})
 }
 
+func TestAccDockerRegistryImageResource_buildWithDockerignore(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-ignore:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
+				Check: func(*terraform.State) error {
+					// we will modify the ignored file
+					f, err := os.OpenFile(context+"/empty_to_ignore", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					if err != nil {
+						return fmt.Errorf("failed to open file: %w", err)
+					}
+					defer f.Close()
+
+					_, err = f.WriteString("modify-me")
+					if err != nil {
+						return fmt.Errorf("failed to write to file: %w", err)
+					}
+					return nil
+				},
+			},
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+				),
+			},
+		},
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testDockerRegistryImageNotInRegistry(pushOptions),
+			func(*terraform.State) error {
+				// the 0 specifies the file will be empty afterwards
+				err := os.Truncate(context+"/empty_to_ignore", 0)
+				if err != nil {
+					return fmt.Errorf("failed to truncate the ignored file: %w", err)
+				}
+				return nil
+			},
+		),
+	})
+}
+
 func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
