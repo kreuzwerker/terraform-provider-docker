@@ -3,9 +3,8 @@ module github.com/terraform-providers/terraform-provider-docker
 require (
 	github.com/Microsoft/hcsshim v0.8.15 // indirect
 	github.com/containerd/continuity v0.0.0-20210208174643-50096c924a4e // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v20.10.7+incompatible
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/cli v20.10.6+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
