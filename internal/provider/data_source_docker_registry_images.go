@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/docker/api/types"
@@ -110,9 +111,16 @@ func (r Repo) sha256() string {
 	return fmt.Sprintf("%x", id)
 }
 
-func getRepositories(registry, username, password string) ([]Repo, error) {
-	log.Println("[###############] fetching repos...")
-	var repos []Repo
+type ErrHttp struct {
+	status int
+	url    string
+}
+
+func (e ErrHttp) Error() string {
+	return fmt.Sprintf("GET %s resulted in %d", e.url, e.status)
+}
+
+func Get(url, username, password string, extract func(resp *http.Response) error) error {
 	client := http.DefaultClient
 
 	// Allow insecure registries only for ACC tests
@@ -129,15 +137,15 @@ func getRepositories(registry, username, password string) ([]Repo, error) {
 		}
 	}
 
-	req, err := http.NewRequest("GET", registry+"/v2/_catalog", nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return repos, fmt.Errorf("Error creating registry request: %s", err)
+		return fmt.Errorf("error creating request: %s", err)
 	}
 
 	/* Can introduce some kind of filtering here if we wanted to:
-	q := req.URL.Query()
-	q.Add("n", "10")
-	req.URL.RawQuery = q.Encode()
+	   q := req.URL.Query()
+	   q.Add("n", "10")
+	   req.URL.RawQuery = q.Encode()
 	*/
 
 	if username != "" {
@@ -149,44 +157,64 @@ func getRepositories(registry, username, password string) ([]Repo, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return repos, fmt.Errorf("Error during registry request: %s", err)
+		return fmt.Errorf("error during registry request: %s", err)
 	}
 
 	switch resp.StatusCode {
 	// Basic auth was valid or not needed
 	case http.StatusOK:
-		log.Println("[###############] Got a positive reponse from AWS")
-		return getReposFrom(resp)
+		log.Println("[###############] Got a positive response from AWS")
+		return extract(resp)
 
-    case http.StatusNotFound:
-        return []Repo{}, nil
+	case http.StatusNotFound:
+		return ErrHttp{http.StatusNotFound, url}
 	case http.StatusUnauthorized:
 		authHeader := resp.Header.Get("www-authenticate")
 		if strings.HasPrefix(authHeader, "Bearer") {
 
 			token, err := getBearerToken(client, authHeader, username, password)
 			if err != nil {
-				return repos, err
+				return fmt.Errorf("unable to get bearer token: %w", err)
 			}
 
 			req.Header.Set("Authorization", "Bearer "+token)
 			resp, err := client.Do(req)
 			if err != nil {
-				return repos, fmt.Errorf("Error during registry request: %s", err)
+				return fmt.Errorf("error during registry request: %s", err)
 			}
 
 			if resp.StatusCode != http.StatusOK {
-				return repos, fmt.Errorf("Got bad response from registry: " + resp.Status)
+				return ErrHttp{status: resp.StatusCode, url: url}
 			}
 
-			return getReposFrom(resp)
+			return extract(resp)
 		}
 
-		return repos, fmt.Errorf("Bad credentials: " + resp.Status)
+		return ErrHttp{status: resp.StatusCode, url: url}
 
 	default:
-		return repos, fmt.Errorf("Got bad response from registry: " + resp.Status)
+		return ErrHttp{status: resp.StatusCode, url: url}
 	}
+}
+
+func getRepositories(registry, username, password string) ([]Repo, error) {
+	log.Println("[###############] fetching repos...")
+
+	var repos []Repo
+	var err error
+
+	// error already assigned
+	_ = Get(registry+"/v2/_catalog", username, password, func(resp *http.Response) error {
+		repos, err = getReposFrom(resp)
+		return err
+	})
+
+	var errHttp ErrHttp
+	if errors.As(err, &errHttp) && errHttp.status == http.StatusNotFound {
+		return []Repo{}, nil
+	}
+
+	return repos, err
 }
 
 func getReposFrom(response *http.Response) ([]Repo, error) {
@@ -252,79 +280,21 @@ func getBearerToken(client *http.Client, authHeader, username, password string) 
 
 func getTagsOfImage(registry, image, username, password string) ([]string, error) {
 	log.Println("[###############] fetching tags...")
+
 	var tags []string
-	client := http.DefaultClient
+	var err error
 
-	// Allow insecure registries only for ACC tests
-	// cuz we don't have a valid certs for this case
-	if env, okEnv := os.LookupEnv("TF_ACC"); okEnv {
-		if i, errConv := strconv.Atoi(env); errConv == nil && i >= 1 {
-			// DevSkim: ignore DS440000
-			cfg := &tls.Config{
-				InsecureSkipVerify: true,
-			}
-			client.Transport = &http.Transport{
-				TLSClientConfig: cfg,
-			}
-		}
+	_ = Get(registry+"/v2/"+image+"/tags/list", username, password, func(resp *http.Response) error {
+		tags, err = getTagsFrom(resp)
+		return err
+	})
+
+	var errHttp ErrHttp
+	if errors.As(err, &errHttp) && errHttp.status == http.StatusNotFound {
+		return []string{}, nil
 	}
 
-	req, err := http.NewRequest("GET", registry+"/v2/"+image+"/tags/list", nil)
-	if err != nil {
-		return tags, fmt.Errorf("Error creating registry request: %s", err)
-	}
-
-	/* Can introduce some kind of filtering here if we wanted to:
-	   q := req.URL.Query()
-	   q.Add("n", "10")
-	   req.URL.RawQuery = q.Encode()
-	*/
-
-	if username != "" {
-		req.SetBasicAuth(username, password)
-	}
-
-	// We accept schema v2 manifests and manifest lists, and also OCI types
-	req.Header.Add("Accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return tags, fmt.Errorf("Error during registry request: %s", err)
-	}
-
-	switch resp.StatusCode {
-	// Basic auth was valid or not needed
-	case http.StatusOK:
-		log.Println("[###############] Got a positive reponse from AWS")
-		return getTagsFrom(resp)
-
-	case http.StatusUnauthorized:
-		authHeader := resp.Header.Get("www-authenticate")
-		if strings.HasPrefix(authHeader, "Bearer") {
-
-			token, err := getBearerToken(client, authHeader, username, password)
-			if err != nil {
-				return tags, err
-			}
-
-			req.Header.Set("Authorization", "Bearer "+token)
-			resp, err := client.Do(req)
-			if err != nil {
-				return tags, fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if resp.StatusCode != http.StatusOK {
-				return tags, fmt.Errorf("Got bad response from registry: " + resp.Status)
-			}
-
-			return getTagsFrom(resp)
-		}
-
-		return tags, fmt.Errorf("Bad credentials: " + resp.Status)
-
-	default:
-		return tags, fmt.Errorf("Got bad response from registry: " + resp.Status)
-	}
+	return tags, err
 }
 func getTagsFrom(response *http.Response) ([]string, error) {
 	var noTags []string
