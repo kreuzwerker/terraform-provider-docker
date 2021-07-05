@@ -28,6 +28,7 @@ jobs:
         - "0.13.7"
         - "0.14.11"
         - "0.15.2"
+        - "1.0.1"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
