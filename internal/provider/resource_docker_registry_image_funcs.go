@@ -20,9 +20,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -245,9 +247,10 @@ func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildO
 	if lastIndex := strings.LastIndexByte(buildContext, ':'); (lastIndex > -1) && (buildContext[lastIndex+1] != filepath.Separator) {
 		buildContext = buildContext[:lastIndex]
 	}
+
 	dockerContextTarPath, err := buildDockerImageContextTar(buildContext)
 	if err != nil {
-		return fmt.Errorf("unable to build context %v", err)
+		return fmt.Errorf("unable to build context: %v", err)
 	}
 	defer os.Remove(dockerContextTarPath)
 	dockerBuildContext, err := os.Open(dockerContextTarPath)
@@ -282,6 +285,16 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		return "", fmt.Errorf("unable to read build context - %v", err.Error())
 	}
 
+	excludes, err := build.ReadDockerignore(buildContext)
+	if err != nil {
+		return "", fmt.Errorf("unable to read .dockerignore file - %v", err.Error())
+	}
+
+	pm, err := fileutils.NewPatternMatcher(excludes)
+	if err != nil {
+		return "", fmt.Errorf("unable to create pattern matcher from .dockerignore exlcudes - %v", err.Error())
+	}
+
 	tw := tar.NewWriter(tmpFile)
 	defer tw.Close()
 
@@ -289,6 +302,46 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		// return on any error
 		if err != nil {
 			return err
+		}
+
+		// if .dockerignore is present, ignore files from there
+		skip, err := pm.Matches(file)
+		if err != nil {
+			return err
+		}
+
+		// adapted from https://github.com/moby/moby/blob/v20.10.7/pkg/archive/archive.go#L851
+		if skip {
+			log.Printf("[DEBUG] Skipping file/dir from image build '%v'", file)
+			// If we want to skip this file and its a directory
+			// then we should first check to see if there's an
+			// excludes pattern (e.g. !dir/file) that starts with this
+			// dir. If so then we can't skip this dir.
+
+			// Its not a dir then so we can just return/skip.
+			if !info.IsDir() {
+				return nil
+			}
+
+			// No exceptions (!...) in patterns so just skip dir
+			if !pm.Exclusions() {
+				return filepath.SkipDir
+			}
+
+			dirSlash := file + string(filepath.Separator)
+
+			for _, pat := range pm.Patterns() {
+				if !pat.Exclusion() {
+					continue
+				}
+				if strings.HasPrefix(pat.String()+string(filepath.Separator), dirSlash) {
+					// found a match - so can't skip this dir
+					return nil
+				}
+			}
+
+			// No matching exclusion dir so just skip dir
+			return filepath.SkipDir
 		}
 
 		// create a new dir/file header
