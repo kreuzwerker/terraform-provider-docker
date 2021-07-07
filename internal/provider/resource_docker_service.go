@@ -91,7 +91,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"command": {
 										Type:        schema.TypeList,
-										Description: "The command to be run in the image",
+										Description: "The command/entrypoint to be run in the image. According to the [docker cli](https://github.com/docker/cli/blob/v20.10.7/cli/command/service/opts.go#L705) the override of the entrypoint is also passed to the `command` property and there is no `entrypoint` attribute in the `ContainerSpec` of the service.",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 									},
