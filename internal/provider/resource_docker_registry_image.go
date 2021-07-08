@@ -241,7 +241,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"context": {
 							Type:        schema.TypeString,
-							Description: "The path to the context folder",
+							Description: "The absolute path to the context folder. You can use the helper function '${path.cwd}/context-dir'.",
 							Required:    true,
 							ForceNew:    true,
 							StateFunc: func(val interface{}) string {
