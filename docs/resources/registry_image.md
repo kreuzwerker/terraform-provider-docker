@@ -17,7 +17,7 @@ resource "docker_registry_image" "helloworld" {
   name = "helloworld:1.0"
 
   build {
-    context = "pathToContextFolder"
+    context = "${path.cwd}/absolutePathToContextFolder"
   }
 }
 ```
@@ -45,7 +45,7 @@ resource "docker_registry_image" "helloworld" {
 
 Required:
 
-- **context** (String) The path to the context folder
+- **context** (String) The absolute path to the context folder. You can use the helper function '${path.cwd}/context-dir'.
 
 Optional:
 
