@@ -1,3 +1,23 @@
+## 2.14.0 (JuLy 09, 2021)
+
+IMPROVEMENTS
+- support terraform v1 ([#242](https://github.com/kreuzwerker/terraform-provider-docker/issues/242))
+
+BUG FIXES
+- registry_image): consider .dockerignore in image build ([#240](https://github.com/kreuzwerker/terraform-provider-docker/issues/240))
+- Update the URL of the docker hub registry ([#230](https://github.com/kreuzwerker/terraform-provider-docker/issues/230))
+- service bind options ([#234](https://github.com/kreuzwerker/terraform-provider-docker/issues/234))
+- deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.7.0 ([#236](https://github.com/kreuzwerker/terraform-provider-docker/issues/236))
+
+DOCS
+- update to absolute path for registry image context ([#246](https://github.com/kreuzwerker/terraform-provider-docker/issues/246))
+- service entrypoint ([#244](https://github.com/kreuzwerker/terraform-provider-docker/issues/244))
+- update readme with logos and subsections ([#235](https://github.com/kreuzwerker/terraform-provider-docker/issues/235))
+
+CHORE
+- deps: update nginx docker tag to v1.21.1 ([#243](https://github.com/kreuzwerker/terraform-provider-docker/issues/243))
+- deps: update tj-actions/verify-changed-files action to v7 ([#237](https://github.com/kreuzwerker/terraform-provider-docker/issues/237))
+- deps: update nginx:1.21.0 docker digest to d1b8ff2 ([#232](https://github.com/kreuzwerker/terraform-provider-docker/issues/232))
 ## 2.13.0 (June 22, 2021)
 
 

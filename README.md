@@ -28,7 +28,7 @@ $ make build
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/2.13.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/2.14.0/docs) of the registry
 or use the following example:
 
 
@@ -40,7 +40,7 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.13.0"
+      version = "2.14.0"
     }
   }
 }
