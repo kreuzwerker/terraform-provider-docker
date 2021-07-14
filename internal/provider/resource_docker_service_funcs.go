@@ -131,7 +131,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 		d.Set("name", service.Spec.Name)
 		d.Set("labels", mapToLabelSet(service.Spec.Labels))
 
-		if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate)); err != nil {
+		if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate, d)); err != nil {
 			log.Printf("[WARN] failed to set task spec from API: %s", err)
 		}
 		if err = d.Set("mode", flattenServiceMode(service.Spec.Mode)); err != nil {
