@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestAccDockerContainerDataSource_withName(t *testing.T) {
-	containerName := "/tf-test-nginx"
+	containerName := "tf-test-nginx"
 	containerId := new(string)
 
 	resource.Test(t, resource.TestCase{
@@ -25,7 +26,7 @@ func TestAccDockerContainerDataSource_withName(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_container", "testAccDockerContainerDataSourceWithName"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.docker_container.foo", "name", containerName),
+					resource.TestCheckResourceAttr("data.docker_container.foo", "name", fmt.Sprintf("/%s", containerName)),
 					resource.TestCheckResourceAttrPtr("data.docker_container.foo", "id", containerId),
 				),
 			},
