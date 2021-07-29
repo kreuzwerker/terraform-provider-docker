@@ -57,7 +57,7 @@ func dataSourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, 
 
 	client := meta.(*ProviderConfig).DockerClient
 	filters := filters.NewArgs()
-	if name != ""  {
+	if name != "" {
 		filters.Add("name", name.(string))
 	}
 	if id != "" {

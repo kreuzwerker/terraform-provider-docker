@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"errors"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -44,7 +45,7 @@ func TestAccDockerContainerDataSource_withMissingName(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_container", "testAccDockerContainerDataSourceWithName"),
+				Config:      loadTestConfiguration(t, DATA_SOURCE, "docker_container", "testAccDockerContainerDataSourceWithName"),
 				ExpectError: regexp.MustCompile(`Could not find*`),
 			},
 		},
@@ -61,13 +62,16 @@ func TestAccDockerContainerDataSource_withNameWildcard(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_container", "testAccDockerContainerDataSourceWithNameWildcard"),
+				Config:      loadTestConfiguration(t, DATA_SOURCE, "docker_container", "testAccDockerContainerDataSourceWithNameWildcard"),
 				ExpectError: regexp.MustCompile(`Found multiple containers*`),
 			},
 		},
 		CheckDestroy: func(state *terraform.State) error {
-			removeContainerForTest(t, "tf-test-nginx-wildcard-1")
-			removeContainerForTest(t, "tf-test-nginx-wildcard-2")
+			err1 := removeContainerForTest(t, "tf-test-nginx-wildcard-1")
+			err2 := removeContainerForTest(t, "tf-test-nginx-wildcard-2")
+			if err1 != nil || err2 != nil {
+				return errors.New("error tearing down containers")
+			}
 			return nil
 		},
 	})
