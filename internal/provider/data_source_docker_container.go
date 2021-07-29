@@ -19,7 +19,7 @@ func dataSourceDockerContainer() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Description: "Filter value for finding a container by name. Multiple results will return an error.",
+				Description: "Regex for finding container by name. Multiple results will return an error, and container names almost always start with a forward slash. For example, `^/mycontainername$`",
 				Optional:    true,
 				Computed:    true,
 			},

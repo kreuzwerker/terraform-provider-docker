@@ -43,3 +43,10 @@ for i in $(seq 1 3); do
 done
 # Remove images from host machine before starting the tests
 for i in $(docker images -aq 127.0.0.1:15000/tftest-service); do docker rmi -f "$i"; done
+
+#start containers for testing data calls to docker_container
+#these are running a specific version of nginx so as not to conflict
+#with other tests that want to remove nginx images.
+docker run -d --name tf-test-data-container nginx:1.20.1
+docker run -d --name tf-test-data-container-multiple-1 nginx:1.20.1
+docker run -d --name tf-test-data-container-multiple-2 nginx:1.20.1

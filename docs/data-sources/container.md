@@ -18,7 +18,7 @@ description: |-
 ### Optional
 
 - **id** (String) The ID of the container
-- **name** (String) Filter value for finding a container by name. Multiple results will return an error.
+- **name** (String) Regex for finding container by name. Multiple results will return an error, and container names almost always start with a forward slash. For example, `^/mycontainername$`
 
 ### Read-Only
 

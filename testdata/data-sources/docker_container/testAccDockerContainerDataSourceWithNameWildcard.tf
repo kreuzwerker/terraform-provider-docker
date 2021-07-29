@@ -1,3 +1,3 @@
 data "docker_container" "foo" {
-  name = "tf-test-nginx-wildcard-*"
+  name = "tf-test-data-container-multiple-*"
 }

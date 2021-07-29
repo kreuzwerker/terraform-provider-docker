@@ -22,3 +22,7 @@ done
 
 for i in $(docker images -aq 127.0.0.1:15000/tftest-service); do docker rmi -f "$i"; done
 echo "### removed service images ###"
+
+docker rm --force tf-test-data-container
+docker rm --force tf-test-data-container-multiple-1
+docker rm --force tf-test-data-container-multiple-2
