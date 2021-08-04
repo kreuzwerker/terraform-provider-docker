@@ -45,6 +45,13 @@ resource "docker_container" "foo" {
   }
   network_mode = "bridge"
 
+  # Disabled for tests due to
+  # --storage-opt is supported only for overlay over xfs with 'pquota' mount option
+  # see https://github.com/kreuzwerker/terraform-provider-docker/issues/177
+  # storage_opts = {
+  #   size = "120Gi"
+  # }
+
   networks_advanced {
     name    = docker_network.test_network.name
     aliases = ["tftest"]
