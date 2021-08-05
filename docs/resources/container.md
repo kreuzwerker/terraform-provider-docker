@@ -81,6 +81,7 @@ resource "docker_image" "ubuntu" {
 - **shm_size** (Number) Size of `/dev/shm` in MBs.
 - **start** (Boolean) If `true`, then the Docker container will be started after creation. If `false`, then the container is only created. Defaults to `true`.
 - **stdin_open** (Boolean) If `true`, keep STDIN open even if not attached (`docker run -i`). Defaults to `false`.
+- **storage_opts** (Map of String) Key/value pairs for the storage driver options, e.g. `size`: `120G`
 - **sysctls** (Map of String) A map of kernel parameters (sysctls) to set in the container.
 - **tmpfs** (Map of String) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
 - **tty** (Boolean) If `true`, allocate a pseudo-tty (`docker run -t`). Defaults to `false`.
