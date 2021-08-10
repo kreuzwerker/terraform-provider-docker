@@ -455,9 +455,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				mode = 0o644
 			}
 			hdr := &tar.Header{
-				Name: file,
-				Mode: mode,
-				Size: int64(len(contentToUpload)),
+				Name:    file,
+				Mode:    mode,
+				Size:    int64(len(contentToUpload)),
+				ModTime: time.Now(),
 			}
 			if err := tw.WriteHeader(hdr); err != nil {
 				return diag.Errorf("Error creating tar archive: %s", err)
