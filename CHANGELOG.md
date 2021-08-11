@@ -1,4 +1,28 @@
-## 2.14.0 (JuLy 09, 2021)
+## 2.15.0 (JuLy 09, 2021)
+
+IMPROVEMENTS
+* add container storage opts ([#258](https://github.com/kreuzwerker/terraform-provider-docker/issues/258))
+
+BUG FIXES
+* add current timestamp for file upload to container ([#259](https://github.com/kreuzwerker/terraform-provider-docker/issues/259))
+
+DOCS
+
+* docs: corrects authentication misspell ([#264](https://github.com/kreuzwerker/terraform-provider-docker/issues/264))
+* docs(readme): add badges
+
+CHORE
+* ci: adapt acc test docker version ([#266](https://github.com/kreuzwerker/terraform-provider-docker/issues/266))
+* deps: update alpine docker tag to v3.14.1 ([#263](https://github.com/kreuzwerker/terraform-provider-docker/issues/263))
+* re go gets terraform-plugin-docs
+* deps: update module github.com/docker/docker to v20.10.8 ([#256](https://github.com/kreuzwerker/terraform-provider-docker/issues/256))
+* deps: update module github.com/docker/cli to v20.10.8 ([#255](https://github.com/kreuzwerker/terraform-provider-docker/issues/255))
+* deps: update nginx:1.21.1 docker digest to 8f33576 ([#252](https://github.com/kreuzwerker/terraform-provider-docker/issues/252))
+* deps: update nginx:1.21.1 docker digest to 11d4e59 ([#251](https://github.com/kreuzwerker/terraform-provider-docker/issues/251))
+* deps: update actions/stale action to v4 ([#250](https://github.com/kreuzwerker/terraform-provider-docker/issues/250))
+* deps: update nginx:1.21.1 docker digest to 353c20f ([#248](https://github.com/kreuzwerker/terraform-provider-docker/issues/248))
+
+## 2.14.0 (July 09, 2021)
 
 IMPROVEMENTS
 - support terraform v1 ([#242](https://github.com/kreuzwerker/terraform-provider-docker/issues/242))
@@ -18,8 +42,8 @@ CHORE
 - deps: update nginx docker tag to v1.21.1 ([#243](https://github.com/kreuzwerker/terraform-provider-docker/issues/243))
 - deps: update tj-actions/verify-changed-files action to v7 ([#237](https://github.com/kreuzwerker/terraform-provider-docker/issues/237))
 - deps: update nginx:1.21.0 docker digest to d1b8ff2 ([#232](https://github.com/kreuzwerker/terraform-provider-docker/issues/232))
-## 2.13.0 (June 22, 2021)
 
+## 2.13.0 (June 22, 2021)
 
 IMPROVEMENTS
 - service image name fix and new data-source `docker_image` ([#212](https://github.com/kreuzwerker/terraform-provider-docker/issues/212))
