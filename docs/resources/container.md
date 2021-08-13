@@ -57,7 +57,7 @@ resource "docker_image" "ubuntu" {
 - **ipc_mode** (String) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
 - **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 - **links** (Set of String, Deprecated) Set of links for link based connectivity between containers that are running on the same host.
-- **log_driver** (String) The logging driver to use for the container. Defaults to `json-file`.
+- **log_driver** (String) The logging driver to use for the container.
 - **log_opts** (Map of String) Key/value pairs to use as options for the logging driver.
 - **logs** (Boolean) Save the container logs (`attach` must be enabled). Defaults to `false`.
 - **max_retry_count** (Number) The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'.
