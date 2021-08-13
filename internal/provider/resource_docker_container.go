@@ -709,7 +709,7 @@ func resourceDockerContainer() *schema.Resource {
 			"log_driver": {
 				Type:        schema.TypeString,
 				Description: "The logging driver to use for the container. Defaults to `json-file`.",
-				Default:     "json-file",
+				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
 			},
