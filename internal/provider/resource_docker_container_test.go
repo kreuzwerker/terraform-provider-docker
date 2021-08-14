@@ -665,7 +665,10 @@ func TestAccDockerContainer_customized(t *testing.T) {
 
 func testAccCheckSwapLimit(t *testing.T) {
 	ctx := context.Background()
-	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		return
+	}
 	info, err := client.Info(ctx)
 	if err != nil {
 		t.Fatalf("Failed to check swap limit capability: %s", err)
@@ -681,7 +684,10 @@ func TestAccDockerContainer_upload(t *testing.T) {
 	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 
 		srcPath := "/terraform/test.txt"
 		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
@@ -742,7 +748,10 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	testFileContent, _ := ioutil.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 
 		srcPath := "/terraform/test.txt"
 		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
@@ -845,7 +854,10 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 
 	testCheck := func(srcPath, wantedContent, filePerm string) func(*terraform.State) error {
 		return func(*terraform.State) error {
-			client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+			client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+			if err != nil {
+				return err
+			}
 
 			r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
 			if err != nil {
@@ -991,7 +1003,10 @@ func TestAccDockerContainer_device(t *testing.T) {
 	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 
 		createExecOpts := types.ExecConfig{
 			Cmd: []string{"dd", "if=/dev/zero_test", "of=/tmp/test.txt", "count=10", "bs=1"},
@@ -1597,7 +1612,10 @@ func testAccContainerRunning(resourceName string, container *types.ContainerJSON
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 		containers, err := client.ContainerList(ctx, types.ContainerListOptions{})
 		if err != nil {
 			return err
@@ -1630,7 +1648,10 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 		containers, err := client.ContainerList(ctx, types.ContainerListOptions{
 			All: true,
 		})
@@ -1668,7 +1689,10 @@ func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) 
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
@@ -1697,7 +1721,10 @@ func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *typ
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 

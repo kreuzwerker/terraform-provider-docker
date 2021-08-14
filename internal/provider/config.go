@@ -1,10 +1,12 @@
 package provider
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -25,6 +27,16 @@ type Config struct {
 	Cert     string
 	Key      string
 	CertPath string
+}
+
+func NewConfig(d *schema.ResourceData) *Config {
+	return &Config{
+		Host:     d.Get("host").(string),
+		Ca:       d.Get("ca_material").(string),
+		Cert:     d.Get("cert_material").(string),
+		Key:      d.Get("key_material").(string),
+		CertPath: d.Get("cert_path").(string),
+	}
 }
 
 // buildHTTPClientFromBytes builds the http client from bytes (content of the files)
@@ -144,8 +156,93 @@ type Data struct {
 
 // ProviderConfig for the custom registry provider
 type ProviderConfig struct {
-	DockerClient *client.Client
-	AuthConfigs  *AuthConfigs
+	DefaultConfig *Config
+	AuthConfigs   *AuthConfigs
+	clientCache   map[Config]*client.Client
+}
+
+func (c *ProviderConfig) getConfig(d *schema.ResourceData) *Config {
+	config := c.DefaultConfig
+
+	if d != nil {
+		resourceConfig := NewConfig(d)
+		if resourceConfig.Host != "" {
+			config = resourceConfig
+		}
+	}
+	return config
+}
+
+func (c *ProviderConfig) MakeClient(ctx context.Context, d *schema.ResourceData) (*client.Client, error) {
+	var dockerClient *client.Client
+	var err error
+
+	config := c.getConfig(d)
+	dockerClient, found := c.clientCache[*config]
+	if found {
+		return dockerClient, nil
+	}
+	if config.Cert != "" || config.Key != "" {
+		if config.Cert == "" || config.Key == "" {
+			return nil, fmt.Errorf("cert_material, and key_material must be specified")
+		}
+
+		if config.CertPath != "" {
+			return nil, fmt.Errorf("cert_path must not be specified")
+		}
+
+		httpClient, err := buildHTTPClientFromBytes([]byte(config.Ca), []byte(config.Cert), []byte(config.Key))
+		if err != nil {
+			return nil, err
+		}
+
+		// Note: don't change the order here, because the custom client
+		// needs to be set first them we overwrite the other options: host, version
+		dockerClient, err = client.NewClientWithOpts(
+			client.WithHTTPClient(httpClient),
+			client.WithHost(config.Host),
+			client.WithAPIVersionNegotiation(),
+		)
+	} else if config.CertPath != "" {
+		// If there is cert information, load it and use it.
+		ca := filepath.Join(config.CertPath, "ca.pem")
+		cert := filepath.Join(config.CertPath, "cert.pem")
+		key := filepath.Join(config.CertPath, "key.pem")
+		dockerClient, err = client.NewClientWithOpts(
+			client.WithHost(config.Host),
+			client.WithTLSClientConfig(ca, cert, key),
+			client.WithAPIVersionNegotiation(),
+		)
+	} else if strings.HasPrefix(config.Host, "ssh://") {
+		// If there is no cert information, then check for ssh://
+		helper, err := connhelper.GetConnectionHelper(config.Host)
+		if err != nil {
+			return nil, err
+		}
+		if helper != nil {
+			dockerClient, err = client.NewClientWithOpts(
+				client.WithHost(helper.Host),
+				client.WithDialContext(helper.Dialer),
+				client.WithAPIVersionNegotiation(),
+			)
+		}
+	} else {
+		// If there is no ssh://, then just return the direct client
+		dockerClient, err = client.NewClientWithOpts(
+			client.WithHost(config.Host),
+			client.WithAPIVersionNegotiation(),
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+	_, err = dockerClient.Ping(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error pinging Docker server: %s", err)
+	}
+	c.clientCache[*config] = dockerClient
+
+	return dockerClient, nil
 }
 
 // The registry address can be referenced in various places (registry auth, docker config file, image name)

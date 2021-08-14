@@ -15,8 +15,11 @@ import (
 )
 
 func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return err
+	}
 	pluginName := d.Get("name").(string)
 	alias := d.Get("alias").(string)
 	log.Printf("[DEBUG] Install a Docker plugin " + pluginName)
@@ -48,8 +51,11 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return err
+	}
 	pluginID := d.Id()
 	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
 	if err != nil {
@@ -66,8 +72,11 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return err
+	}
 	pluginID := d.Id()
 	log.Printf("[DEBUG] Remove a Docker plugin " + pluginID)
 	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
@@ -212,7 +221,10 @@ func pluginSet(ctx context.Context, d *schema.ResourceData, cl *client.Client) e
 }
 
 func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) (gErr error) {
-	cl := meta.(*ProviderConfig).DockerClient
+	cl, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return err
+	}
 	o, n := d.GetChange("enabled")
 	oldEnabled, newEnabled := o.(bool), n.(bool)
 	if d.HasChange("env") {

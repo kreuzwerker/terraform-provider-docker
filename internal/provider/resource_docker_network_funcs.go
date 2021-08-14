@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -23,7 +24,10 @@ const (
 )
 
 func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf(fmt.Sprint(err))
+	}
 
 	createOpts := types.NetworkCreate{}
 	if v, ok := d.GetOk("labels"); ok {
@@ -145,7 +149,10 @@ func ipamConfigSetToIpamConfigs(ipamConfigSet *schema.Set) []network.IPAMConfig 
 func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+		if err != nil {
+			return nil, "", err
+		}
 		networkID := d.Id()
 
 		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
@@ -190,10 +197,13 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context,
 	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+		if err != nil {
+			return nil, "", err
+		}
 		networkID := d.Id()
 
-		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
+		_, _, err = client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
 		if err != nil {
 			log.Printf("[INFO] Network (%s) not found. Already removed", networkID)
 			return networkID, "removed", nil

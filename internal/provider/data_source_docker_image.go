@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 
@@ -32,7 +33,10 @@ func dataSourceDockerImage() *schema.Resource {
 }
 
 func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf(fmt.Sprint(err))
+	}
 
 	var data Data
 	if err := fetchLocalImages(ctx, &data, client); err != nil {

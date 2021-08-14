@@ -139,7 +139,10 @@ func checkDockerVolumeCreated(n string, volume *types.Volume) resource.TestCheck
 		}
 
 		ctx := context.Background()
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return err
+		}
 		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {
 			return err

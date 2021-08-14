@@ -146,7 +146,7 @@ func New(version string) func() *schema.Provider {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		config := Config{
+		defaultConfig := Config{
 			Host:     d.Get("host").(string),
 			Ca:       d.Get("ca_material").(string),
 			Cert:     d.Get("cert_material").(string),
@@ -154,17 +154,8 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			CertPath: d.Get("cert_path").(string),
 		}
 
-		client, err := config.NewClient()
-		if err != nil {
-			return nil, diag.Errorf("Error initializing Docker client: %s", err)
-		}
-
-		_, err = client.Ping(ctx)
-		if err != nil {
-			return nil, diag.Errorf("Error pinging Docker server: %s", err)
-		}
-
 		authConfigs := &AuthConfigs{}
+		var err error
 
 		if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
 			authConfigs, err = providerSetToRegistryAuth(v.([]interface{}))
@@ -175,8 +166,8 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		}
 
 		providerConfig := ProviderConfig{
-			DockerClient: client,
-			AuthConfigs:  authConfigs,
+			DefaultConfig: &defaultConfig,
+			AuthConfigs:   authConfigs,
 		}
 
 		return &providerConfig, nil

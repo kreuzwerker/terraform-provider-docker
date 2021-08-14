@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -77,8 +76,11 @@ func dataSourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return err
+	}
 	plugin, _, err := client.PluginInspectWithRaw(ctx, key)
 	if err != nil {
 		return fmt.Errorf("inspect a Docker plugin "+key+": %w", err)

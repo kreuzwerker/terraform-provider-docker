@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -78,7 +79,10 @@ func resourceDockerVolume() *schema.Resource {
 }
 
 func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf(fmt.Sprint(err))
+	}
 
 	createOpts := volume.VolumeCreateBody{}
 
@@ -95,7 +99,6 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 		createOpts.DriverOpts = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
-	var err error
 	var retVolume types.Volume
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
@@ -108,7 +111,10 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf(fmt.Sprint(err))
+	}
 
 	volume, err := client.VolumeInspect(ctx, d.Id())
 
@@ -153,7 +159,10 @@ func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, met
 func resourceDockerVolumeRemoveRefreshFunc(
 	volumeID string, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := meta.(*ProviderConfig).MakeClient(context.TODO(), nil)
+		if err != nil {
+			return nil, "", err
+		}
 		forceDelete := true
 
 		if err := client.VolumeRemove(context.Background(), volumeID, forceDelete); err != nil {
