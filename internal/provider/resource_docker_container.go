@@ -946,6 +946,12 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"storage_opts": {
+				Type:        schema.TypeMap,
+				Description: "Key/value pairs for the storage driver options, e.g. `size`: `120G`",
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }

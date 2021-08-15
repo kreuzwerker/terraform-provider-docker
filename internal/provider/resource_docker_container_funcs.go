@@ -346,6 +346,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	init := d.Get("init").(bool)
 	hostConfig.Init = &init
 
+	if v, ok := d.GetOk("storage_opts"); ok {
+		hostConfig.StorageOpt = mapTypeMapValsToString(v.(map[string]interface{}))
+	}
+
 	var retContainer container.ContainerCreateCreatedBody
 
 	// TODO mavogel add platform later which comes from API v1.41. Currently we pass nil
@@ -454,9 +458,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				mode = 0o644
 			}
 			hdr := &tar.Header{
-				Name: file,
-				Mode: mode,
-				Size: int64(len(contentToUpload)),
+				Name:    file,
+				Mode:    mode,
+				Size:    int64(len(contentToUpload)),
+				ModTime: time.Now(),
 			}
 			if err := tw.WriteHeader(hdr); err != nil {
 				return diag.Errorf("Error creating tar archive: %s", err)
@@ -695,6 +700,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
 	d.Set("log_opts", container.HostConfig.LogConfig.Config)
+	d.Set("storage_opts", container.HostConfig.StorageOpt)
 	// "network_alias" is deprecated
 	d.Set("network_mode", container.HostConfig.NetworkMode)
 	// networks

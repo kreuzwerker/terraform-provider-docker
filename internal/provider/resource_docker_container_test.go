@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -644,6 +645,13 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have a correct ipc mode")
 		}
 
+		// Disabled for tests due to
+		// --storage-opt is supported only for overlay over xfs with 'pquota' mount option
+		// see https://github.com/kreuzwerker/terraform-provider-docker/issues/177
+		// if c.HostConfig.StorageOpt["size"] != "100Mi" {
+		// 	return fmt.Errorf("Container does not have the correct size storage option: %v", c.HostConfig.StorageOpt["size"])
+		// }
+
 		return nil
 	}
 
@@ -776,6 +784,22 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 		content := fbuf.String()
 		if content != string(testFileContent) {
 			return fmt.Errorf("file content is invalid")
+		}
+
+		// we directly exec the container and print the creation timestamp
+		// which is easier to use the native docker sdk, by creating, running and attaching a reader to the command.
+		execReponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
+		if err != nil {
+			return fmt.Errorf("Unable to exec command: %s", err)
+		}
+
+		fileCreationTime, err := time.Parse("2006-01-02", string(execReponse))
+		if err != nil {
+			return fmt.Errorf("Unable to parse file creation time into format: %s", err)
+		}
+
+		if fileCreationTime.IsZero() {
+			return fmt.Errorf("file creation time is zero: %s", err)
 		}
 
 		return nil

@@ -192,7 +192,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"auth_config": {
 							Type:        schema.TypeList,
-							Description: "The configuration for the autentication",
+							Description: "The configuration for the authentication",
 							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
