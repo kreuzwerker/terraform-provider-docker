@@ -15,7 +15,7 @@ env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.8~3-0~ubuntu-focal"
-  GO_VERSION: "1.16"
+  GO_VERSION: "1.17"
 
 jobs:
   acc-test:
