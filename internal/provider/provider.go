@@ -43,7 +43,12 @@ func New(version string) func() *schema.Provider {
 					DefaultFunc: schema.EnvDefaultFunc("DOCKER_HOST", "unix:///var/run/docker.sock"),
 					Description: "The Docker daemon address",
 				},
-
+				"ssh_opts": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_SSH_OPTS", ""),
+					Description: "Addtional SSH option flags to be appended when using ssh:// protocol",
+				},
 				"ca_material": {
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -148,6 +153,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		config := Config{
 			Host:     d.Get("host").(string),
+			SSHOpts:  d.Get("ssh_opts").(string),
 			Ca:       d.Get("ca_material").(string),
 			Cert:     d.Get("cert_material").(string),
 			Key:      d.Get("key_material").(string),

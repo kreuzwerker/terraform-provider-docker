@@ -21,6 +21,7 @@ import (
 // Docker API compatible host.
 type Config struct {
 	Host     string
+	SSHOpts  string
 	Ca       string
 	Cert     string
 	Key      string
@@ -118,7 +119,8 @@ func (c *Config) NewClient() (*client.Client, error) {
 	}
 
 	// If there is no cert information, then check for ssh://
-	helper, err := connhelper.GetConnectionHelper(c.Host)
+	ssh_opts_fields := strings.Fields(c.SSHOpts)
+	helper, err := connhelper.GetConnectionHelperWithSSHOpts(c.Host, ssh_opts_fields)
 	if err != nil {
 		return nil, err
 	}
