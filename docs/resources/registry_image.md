@@ -51,7 +51,7 @@ Optional:
 
 - **auth_config** (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
 - **build_args** (Map of String) Pairs for build-time variables in the form TODO
-- **build_id** (String) BuildID is an optional identifier that can be passed together with the build request. The
+- **build_id** (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - **cache_from** (List of String) Images to consider as cache sources
 - **cgroup_parent** (String) Optional parent cgroup for the container
 - **cpu_period** (Number) The length of a CPU period in microseconds
