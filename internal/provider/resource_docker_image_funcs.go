@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -25,19 +27,25 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
 
+	var apiImage *types.ImageSummary
+	var err error
 	if value, ok := d.GetOk("build"); ok {
 		for _, rawBuild := range value.(*schema.Set).List() {
 			rawBuild := rawBuild.(map[string]interface{})
 
-			err := buildDockerImage(ctx, rawBuild, imageName, client)
+			iid, err := buildDockerImage(ctx, rawBuild, imageName, client)
 			if err != nil {
 				return diag.FromErr(err)
 			}
+			// We know precisely which image we built, so fetch it immediately
+			apiImage, _ = findImage(ctx, iid, client, meta.(*ProviderConfig).AuthConfigs)
 		}
 	}
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
-	if err != nil {
-		return diag.Errorf("Unable to read Docker image into resource: %s", err)
+	if apiImage == nil {
+		apiImage, err = findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
+		if err != nil {
+			return diag.Errorf("Unable to read Docker image into resource: %s", err)
+		}
 	}
 
 	d.SetId(apiImage.ID + d.Get("name").(string))
@@ -287,7 +295,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 	return nil, fmt.Errorf("unable to find or pull image %s", imageName)
 }
 
-func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
+func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) (string, error) {
 	buildOptions := types.ImageBuildOptions{}
 
 	buildOptions.Version = types.BuilderV1
@@ -322,22 +330,42 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	contextDir := rawBuild["path"].(string)
 	excludes, err := build.ReadDockerignore(contextDir)
 	if err != nil {
-		return err
+		return "", err
 	}
 	excludes = build.TrimBuildFilesFromExcludes(excludes, buildOptions.Dockerfile, false)
 
 	var response types.ImageBuildResponse
 	response, err = client.ImageBuild(ctx, getBuildContext(contextDir, excludes), buildOptions)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer response.Body.Close()
 
-	buildResult, err := decodeBuildMessages(response)
-	if err != nil {
-		return fmt.Errorf("%s\n\n%s", err, buildResult)
+	imageID := ""
+	aux := func(msg jsonmessage.JSONMessage) {
+		var result types.BuildResult
+		if err := json.Unmarshal(*msg.Aux, &result); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse aux message: %s", err)
+		} else {
+			imageID = result.ID
+		}
 	}
-	return nil
+
+	buildBuff := bytes.NewBuffer(nil)
+
+	err = jsonmessage.DisplayJSONMessagesStream(response.Body, buildBuff, os.Stdout.Fd(), false, aux)
+	if err != nil {
+		if jerr, ok := err.(*jsonmessage.JSONError); ok {
+			// If no error code is set, default to 1
+			if jerr.Code == 0 {
+				jerr.Code = 1
+			}
+			fmt.Fprintf(os.Stderr, "%s", buildBuff)
+			return "", cli.StatusError{Status: jerr.Message, StatusCode: jerr.Code}
+		}
+		return "", err
+	}
+	return imageID, nil
 }
 
 func getBuildContext(filePath string, excludes []string) io.Reader {
@@ -351,29 +379,4 @@ func getBuildContext(filePath string, excludes []string) io.Reader {
 		ExcludePatterns: excludes,
 	})
 	return ctx
-}
-
-func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
-	buf := new(bytes.Buffer)
-	buildErr := error(nil)
-
-	dec := json.NewDecoder(response.Body)
-	for dec.More() {
-		var m jsonmessage.JSONMessage
-		err := dec.Decode(&m)
-		if err != nil {
-			return buf.String(), fmt.Errorf("problem decoding message from docker daemon: %s", err)
-		}
-
-		if err := m.Display(buf, false); err != nil {
-			return "", err
-		}
-
-		if m.Error != nil {
-			buildErr = fmt.Errorf("unable to build image")
-		}
-	}
-	log.Printf("[DEBUG] %s", buf.String())
-
-	return buf.String(), buildErr
 }
