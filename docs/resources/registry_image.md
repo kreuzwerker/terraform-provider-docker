@@ -79,7 +79,7 @@ Optional:
 - **suppress_output** (Boolean) Suppress the build output and print image ID on success
 - **target** (String) Set the target build stage to build
 - **ulimit** (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
-- **version** (String) Version of the unerlying builder to use
+- **version** (String) Version of the underlying builder to use
 
 <a id="nestedblock--build--auth_config"></a>
 ### Nested Schema for `build.auth_config`
