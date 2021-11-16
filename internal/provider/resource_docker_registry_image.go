@@ -318,13 +318,13 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"version": {
 							Type:        schema.TypeString,
-							Description: "Version of the unerlying builder to use",
+							Description: "Version of the underlying builder to use",
 							Optional:    true,
 							ForceNew:    true,
 						},
 						"build_id": {
 							Type:        schema.TypeString,
-							Description: "BuildID is an optional identifier that can be passed together with the build request. The ",
+							Description: "BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.",
 							Optional:    true,
 							ForceNew:    true,
 						},
