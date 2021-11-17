@@ -49,7 +49,7 @@ Required:
 
 Optional:
 
-- **auth_config** (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
+- **auth_config** (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config)). Please note that this auth configuration is used during image building but not during image pushing. Auth used during image pushing will be that of the docker provider configuration.
 - **build_args** (Map of String) Pairs for build-time variables in the form TODO
 - **build_id** (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - **cache_from** (List of String) Images to consider as cache sources
