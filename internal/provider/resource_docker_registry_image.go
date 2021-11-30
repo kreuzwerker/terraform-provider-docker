@@ -318,7 +318,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"version": {
 							Type:        schema.TypeString,
-							Description: "Version of the unerlying builder to use",
+							Description: "Version of the underlying builder to use",
 							Optional:    true,
 							ForceNew:    true,
 						},
