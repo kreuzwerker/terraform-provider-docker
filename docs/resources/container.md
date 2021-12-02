@@ -76,7 +76,7 @@ resource "docker_image" "ubuntu" {
 - **read_only** (Boolean) If `true`, the container will be started as readonly. Defaults to `false`.
 - **remove_volumes** (Boolean) If `true`, it will remove anonymous volumes associated with the container. Defaults to `true`.
 - **restart** (String) The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'. Defaults to `no`.
-- **rm** (Boolean) If `true`, then the container will be automatically removed after his execution. Terraform won't check this container after creation. Defaults to `false`.
+- **rm** (Boolean) If `true`, then the container will be automatically removed when it exits. Defaults to `false`.
 - **security_opts** (Set of String) List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration.
 - **shm_size** (Number) Size of `/dev/shm` in MBs.
 - **start** (Boolean) If `true`, then the Docker container will be started after creation. If `false`, then the container is only created. Defaults to `true`.
