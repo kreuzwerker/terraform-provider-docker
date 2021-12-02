@@ -1730,7 +1730,9 @@ func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *typ
 		select {
 		case err := <-errC:
 			if err != nil {
-				return fmt.Errorf("Container has not been removed")
+				if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
+					return fmt.Errorf("Container has not been removed: '%s'", err.Error())
+				}
 			}
 		case <-statusC:
 		}
