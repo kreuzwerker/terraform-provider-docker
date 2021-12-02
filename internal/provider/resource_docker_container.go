@@ -44,7 +44,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"rm": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the container will be automatically removed after his execution. Terraform won't check this container after creation. Defaults to `false`.",
+				Description: "If `true`, then the container will be automatically removed when it exits. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
