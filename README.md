@@ -109,3 +109,8 @@ To contribute, please read the contribution guidelines: [Contributing to Terrafo
 ## License
 
 The Terraform Provider Docker is available to everyone under the terms of the Mozilla Public License Version 2.0. [Take a look the LICENSE file](LICENSE).
+
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/kreuzwerker/terraform-provider-docker.svg)](https://starchart.cc/kreuzwerker/terraform-provider-docker)
