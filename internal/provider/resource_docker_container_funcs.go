@@ -824,32 +824,39 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	if d.Get("rm").(bool) {
-		d.SetId("")
-		return nil
-	}
-
 	if !d.Get("attach").(bool) {
 		// Stop the container before removing if destroy_grace_seconds is defined
+		var timeout time.Duration
 		if d.Get("destroy_grace_seconds").(int) > 0 {
-			timeout := time.Duration(int32(d.Get("destroy_grace_seconds").(int))) * time.Second
+			timeout = time.Duration(int32(d.Get("destroy_grace_seconds").(int))) * time.Second
+		}
 
-			if err := client.ContainerStop(ctx, d.Id(), &timeout); err != nil {
-				return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
-			}
+		log.Printf("[INFO] Stopping Container '%s' with timeout %v", d.Id(), timeout)
+		if err := client.ContainerStop(ctx, d.Id(), &timeout); err != nil {
+			return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
 		}
 	}
 
 	removeOpts := types.ContainerRemoveOptions{
 		RemoveVolumes: d.Get("remove_volumes").(bool),
+		RemoveLinks:   d.Get("rm").(bool),
 		Force:         true,
 	}
 
+	log.Printf("[INFO] Removing Container '%s'", d.Id())
 	if err := client.ContainerRemove(ctx, d.Id(), removeOpts); err != nil {
-		return diag.Errorf("Error deleting container %s: %s", d.Id(), err)
+		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
+			return diag.Errorf("Error deleting container %s: %s", d.Id(), err)
+		}
 	}
 
-	waitOkC, errorC := client.ContainerWait(ctx, d.Id(), container.WaitConditionRemoved)
+	waitCondition := container.WaitConditionNotRunning
+	if d.Get("rm").(bool) {
+		waitCondition = container.WaitConditionRemoved
+	}
+
+	log.Printf("[INFO] Waiting for Container '%s' with condition '%s'", d.Id(), waitCondition)
+	waitOkC, errorC := client.ContainerWait(ctx, d.Id(), waitCondition)
 	select {
 	case waitOk := <-waitOkC:
 		log.Printf("[INFO] Container exited with code [%v]: '%s'", waitOk.StatusCode, d.Id())
@@ -857,6 +864,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
+		log.Printf("[INFO] Waiting for Container '%s' errord: '%s'", d.Id(), err.Error())
 	}
 
 	d.SetId("")
