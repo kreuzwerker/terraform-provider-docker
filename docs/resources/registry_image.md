@@ -3,14 +3,16 @@
 page_title: "docker_registry_image Resource - terraform-provider-docker"
 subcategory: ""
 description: |-
-  Manages the lifecycle of docker image/tag in a registry.
+  Manages the lifecycle of docker image/tag in a registry means it can store one or more version of specific docker images and identified by their tags.
 ---
 <!-- Bug: Type and Name are switched -->
 # docker_registry_image (Resource)
 
-Manages the lifecycle of docker image/tag in a registry.
+Manages the lifecycle of docker image/tag in a registry means it can store one or more version of specific docker images and identified by their tags.
 
 ## Example Usage
+
+To be able to update an image itself when an updated image arrives.
 
 ```terraform
 resource "docker_registry_image" "helloworld" {
