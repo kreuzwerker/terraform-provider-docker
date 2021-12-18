@@ -136,7 +136,7 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	if preventDestroy := d.Get("prevent_destroy").(bool); preventDestroy {
+	if d.Get("prevent_destroy").(bool) {
 		return nil
 	}
 
