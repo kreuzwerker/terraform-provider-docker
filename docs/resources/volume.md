@@ -28,6 +28,7 @@ resource "docker_volume" "shared_volume" {
 - **id** (String) The ID of this resource.
 - **labels** (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 - **name** (String) The name of the Docker volume (will be generated if not provided).
+- **prevent_destroy** (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the volume from the docker local storage on destroy operation.
 
 ### Read-Only
 

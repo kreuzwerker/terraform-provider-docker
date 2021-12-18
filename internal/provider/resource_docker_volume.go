@@ -63,6 +63,12 @@ func resourceDockerVolume() *schema.Resource {
 				Description: "The mountpoint of the volume.",
 				Computed:    true,
 			},
+			"prevent_destroy": {
+				Type:        schema.TypeBool,
+				Description: "If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the volume from the docker local storage on destroy operation.",
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -129,6 +135,11 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	if preventDestroy := d.Get("prevent_destroy").(bool); preventDestroy {
+		return nil
+	}
+
 	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), volumeReadRefreshTimeout)
 
 	stateConf := &resource.StateChangeConf{
