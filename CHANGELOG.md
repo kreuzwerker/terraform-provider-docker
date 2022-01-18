@@ -2,6 +2,7 @@
 
 IMPROVEMENTS
 * add container storage opts ([#258](https://github.com/kreuzwerker/terraform-provider-docker/issues/258))
+* add ssh_opts parameter to provider config. Allows passing additional ssh arguments when connecting via ssh. ([#29](https://github.com/kreuzwerker/terraform-provider-docker/issues/29))
 
 BUG FIXES
 * add current timestamp for file upload to container ([#259](https://github.com/kreuzwerker/terraform-provider-docker/issues/259))
