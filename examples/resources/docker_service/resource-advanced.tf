@@ -180,7 +180,7 @@ resource "docker_service" "foo" {
     log_driver {
       name = "json-file"
 
-      options {
+      options = {
         max-size = "10m"
         max-file = "3"
       }

@@ -263,7 +263,7 @@ resource "docker_service" "foo" {
     log_driver {
       name = "json-file"
 
-      options {
+      options = {
         max-size = "10m"
         max-file = "3"
       }
@@ -361,7 +361,7 @@ Optional:
 - **command** (List of String) The command/entrypoint to be run in the image. According to the [docker cli](https://github.com/docker/cli/blob/v20.10.7/cli/command/service/opts.go#L705) the override of the entrypoint is also passed to the `command` property and there is no `entrypoint` attribute in the `ContainerSpec` of the service.
 - **configs** (Block Set) References to zero or more configs that will be exposed to the service (see [below for nested schema](#nestedblock--task_spec--container_spec--configs))
 - **dir** (String) The working directory for commands to run in
-- **dns_config** (Block List, Max: 1) Specification for DNS related configurations in resolver configuration file (resolv.conf) (see [below for nested schema](#nestedblock--task_spec--container_spec--dns_config))
+- **dns_config** (Block List, Max: 1) Specification for DNS related configurations in resolver configuration file (`resolv.conf`) (see [below for nested schema](#nestedblock--task_spec--container_spec--dns_config))
 - **env** (Map of String) A list of environment variables in the form VAR="value"
 - **groups** (List of String) A list of additional groups that the container process will run as
 - **healthcheck** (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--task_spec--container_spec--healthcheck))
@@ -402,7 +402,7 @@ Required:
 
 Optional:
 
-- **options** (List of String) A list of internal resolver variables to be modified (e.g., debug, ndots:3, etc.)
+- **options** (List of String) A list of internal resolver variables to be modified (e.g., `debug`, `ndots:3`, etc.)
 - **search** (List of String) A search list for host-name lookup
 
 
@@ -560,7 +560,7 @@ Optional:
 - **constraints** (Set of String) An array of constraints. e.g.: `node.role==manager`
 - **max_replicas** (Number) Maximum number of replicas for per node (default value is `0`, which is unlimited)
 - **platforms** (Block Set) Platforms stores all the platforms that the service's image can run on (see [below for nested schema](#nestedblock--task_spec--placement--platforms))
-- **prefs** (Set of String) Preferences provide a way to make the scheduler aware of factors such as topology. They are provided in order from highest to lowest precedence, e.g.: spread=node.role.manager
+- **prefs** (Set of String) Preferences provide a way to make the scheduler aware of factors such as topology. They are provided in order from highest to lowest precedence, e.g.: `spread=node.role.manager`
 
 <a id="nestedblock--task_spec--placement--platforms"></a>
 ### Nested Schema for `task_spec.placement.platforms`
@@ -586,7 +586,7 @@ Optional:
 Optional:
 
 - **memory_bytes** (Number) The amounf of memory in bytes the container allocates
-- **nano_cpus** (Number) CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least 1000000
+- **nano_cpus** (Number) CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least `1000000`
 
 
 <a id="nestedblock--task_spec--resources--reservation"></a>
@@ -596,7 +596,7 @@ Optional:
 
 - **generic_resources** (Block List, Max: 1) User-defined resources can be either Integer resources (e.g, `SSD=3`) or String resources (e.g, GPU=UUID1) (see [below for nested schema](#nestedblock--task_spec--resources--reservation--generic_resources))
 - **memory_bytes** (Number) The amounf of memory in bytes the container allocates
-- **nano_cpus** (Number) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000
+- **nano_cpus** (Number) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least `1000000`
 
 <a id="nestedblock--task_spec--resources--reservation--generic_resources"></a>
 ### Nested Schema for `task_spec.resources.reservation.nano_cpus`
@@ -639,8 +639,8 @@ Optional:
 
 Optional:
 
-- **delay** (String) The interval to check if the desired state is reached (ms|s). Defaults to `7s`.
-- **timeout** (String) The timeout of the service to reach the desired state (s|m). Defaults to `3m`
+- **delay** (String) The interval to check if the desired state is reached `(ms|s)`. Defaults to `7s`.
+- **timeout** (String) The timeout of the service to reach the desired state `(s|m)`. Defaults to `3m`
 
 
 <a id="nestedblock--endpoint_spec"></a>
@@ -661,7 +661,7 @@ Required:
 Optional:
 
 - **name** (String) A random name for the port
-- **protocol** (String) Rrepresents the protocol of a port: 'tcp', 'udp' or 'sctp'. Defaults to `tcp`.
+- **protocol** (String) Rrepresents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.
 - **publish_mode** (String) Represents the mode in which the port is to be published: 'ingress' or 'host'. Defaults to `ingress`.
 - **published_port** (Number) The port on the swarm hosts
 
@@ -711,8 +711,8 @@ Optional:
 
 Optional:
 
-- **delay** (String) Delay between task updates (ns|us|ms|s|m|h). Defaults to `0s`.
-- **failure_action** (String) Action on update failure: pause | continue | rollback. Defaults to `pause`.
+- **delay** (String) Delay between task updates `(ns|us|ms|s|m|h)`. Defaults to `0s`.
+- **failure_action** (String) Action on update failure: `pause`, `continue` or `rollback`. Defaults to `pause`.
 - **max_failure_ratio** (String) Failure rate to tolerate during an update. Defaults to `0.0`.
 - **monitor** (String) Duration after each task update to monitor for failure (ns|us|ms|s|m|h). Defaults to `5s`.
 - **order** (String) Update order: either 'stop-first' or 'start-first'. Defaults to `stop-first`.
