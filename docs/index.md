@@ -166,6 +166,7 @@ provider "docker" {
 - **host** (String) The Docker daemon address
 - **key_material** (String) PEM-encoded content of Docker client private key
 - **registry_auth** (Block List, Max: 1) (see [below for nested schema](#nestedblock--registry_auth))
+- **ssh_opts** (List of String) Addtional SSH option flags to be appended when using `ssh://` protocol
 
 <a id="nestedblock--registry_auth"></a>
 ### Nested Schema for `registry_auth`
