@@ -54,7 +54,7 @@ func New(version string) func() *schema.Provider {
 
 						return nil, nil
 					},
-					Description: "Addtional SSH option flags to be appended when using ssh:// protocol",
+					Description: "Additional SSH option flags to be appended when using `ssh://` protocol",
 				},
 				"ca_material": {
 					Type:        schema.TypeString,
