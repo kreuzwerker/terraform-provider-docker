@@ -1,4 +1,47 @@
-## 2.15.0 (JuLy 09, 2021)
+## 2.16.0 (January 24, 2022)
+
+IMPROVEMENTS
+* add parameter for SSH options ([#335](https://github.com/kreuzwerker/terraform-provider-docker/issues/335))
+
+BUG FIXES
+* add nil check of DriverConfig ([#315](https://github.com/kreuzwerker/terraform-provider-docker/issues/315))
+* container: remove log_driver's default value and make log_driver `computed` ([#270](https://github.com/kreuzwerker/terraform-provider-docker/issues/270))
+* pass container rm flag ([#322](https://github.com/kreuzwerker/terraform-provider-docker/issues/322))
+
+DOCS
+* fix service options ([#337](https://github.com/kreuzwerker/terraform-provider-docker/issues/337))
+* update registry_image.md ([#321](https://github.com/kreuzwerker/terraform-provider-docker/issues/321))
+* fix r/registry_image truncated docs ([#304](https://github.com/kreuzwerker/terraform-provider-docker/issues/304))
+
+CHORE
+* fixed typo ([#310](https://github.com/kreuzwerker/terraform-provider-docker/issues/310))
+* fmt of go files for go 1.17
+* ci: update workflows and docs to go 1.17
+* deps: update nginx docker tag to v1.21.4 ([#309](https://github.com/kreuzwerker/terraform-provider-docker/issues/309))
+* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.10.1 ([#323](https://github.com/kreuzwerker/terraform-provider-docker/issues/323))
+* deps: update module github.com/golangci/golangci-lint to v1.43.0 ([#306](https://github.com/kreuzwerker/terraform-provider-docker/issues/306))
+* deps: update tj-actions/verify-changed-files action to v8.8 ([#308](https://github.com/kreuzwerker/terraform-provider-docker/issues/308))
+* deps: update tj-actions/verify-changed-files action to v8.3 ([#303](https://github.com/kreuzwerker/terraform-provider-docker/issues/303))
+* deps: update module github.com/hashicorp/terraform-plugin-docs to v0.5.1 ([#311](https://github.com/kreuzwerker/terraform-provider-docker/issues/311))
+* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.9.0 ([#317](https://github.com/kreuzwerker/terraform-provider-docker/issues/317))
+* deps: update module github.com/docker/cli to v20.10.11 ([#316](https://github.com/kreuzwerker/terraform-provider-docker/issues/316))
+* deps: update module github.com/docker/docker to v20.10.10 ([#297](https://github.com/kreuzwerker/terraform-provider-docker/issues/297))
+* deps: update module github.com/docker/cli to v20.10.10 ([#296](https://github.com/kreuzwerker/terraform-provider-docker/issues/296))
+* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.8.0 ([#298](https://github.com/kreuzwerker/terraform-provider-docker/issues/298))
+* deps: update tj-actions/verify-changed-files action to v8 ([#299](https://github.com/kreuzwerker/terraform-provider-docker/issues/299))
+* deps: update nginx:1.21.3 docker digest to 644a705 ([#295](https://github.com/kreuzwerker/terraform-provider-docker/issues/295))
+* deps: update nginx docker tag to v1.21.3 ([#287](https://github.com/kreuzwerker/terraform-provider-docker/issues/287))
+* deps: update module github.com/hashicorp/terraform-plugin-docs to v0.5.0 ([#286](https://github.com/kreuzwerker/terraform-provider-docker/issues/286))
+* deps: unify require sections in go.mod files
+* deps: update golang to v1.17 ([#272](https://github.com/kreuzwerker/terraform-provider-docker/issues/272))
+* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.7.1 ([#279](https://github.com/kreuzwerker/terraform-provider-docker/issues/279))
+* deps: update nginx:1.21.1 docker digest to a05b0cd ([#273](https://github.com/kreuzwerker/terraform-provider-docker/issues/273))
+* deps: update module github.com/golangci/golangci-lint to v1.42.1 ([#284](https://github.com/kreuzwerker/terraform-provider-docker/issues/284))
+* deps: update tj-actions/verify-changed-files action to v7.2 ([#285](https://github.com/kreuzwerker/terraform-provider-docker/issues/285))
+* deps: update alpine docker tag to v3.14.2 ([#277](https://github.com/kreuzwerker/terraform-provider-docker/issues/277))
+* deps: update module github.com/golangci/golangci-lint to v1.42.0 ([#274](https://github.com/kreuzwerker/terraform-provider-docker/issues/274))
+
+## 2.15.0 (August 01, 2021)
 
 IMPROVEMENTS
 * add container storage opts ([#258](https://github.com/kreuzwerker/terraform-provider-docker/issues/258))
@@ -8,7 +51,6 @@ BUG FIXES
 * add current timestamp for file upload to container ([#259](https://github.com/kreuzwerker/terraform-provider-docker/issues/259))
 
 DOCS
-
 * docs: corrects authentication misspell ([#264](https://github.com/kreuzwerker/terraform-provider-docker/issues/264))
 * docs(readme): add badges
 
