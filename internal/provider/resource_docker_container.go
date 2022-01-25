@@ -717,7 +717,7 @@ func resourceDockerContainer() *schema.Resource {
 			"log_opts": {
 				Type:        schema.TypeMap,
 				Description: "Key/value pairs to use as options for the logging driver.",
-				Optional:    true,
+				Computed:    true,
 				ForceNew:    true,
 			},
 
