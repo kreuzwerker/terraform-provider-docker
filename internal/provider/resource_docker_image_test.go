@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -307,6 +308,41 @@ func TestAccDockerImage_build(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("docker_image.test", "name", contentDigestRegexp),
 				),
+			},
+		},
+	})
+}
+
+func TestAccDockerImage_buildTimeout(t *testing.T) {
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+
+	createTimeout := time.Duration(1 * time.Second)
+	buildSleep := time.Duration(2 * time.Second)
+	if buildSleep < createTimeout {
+		t.Errorf("assertion failed: build sleep can't be shorter than the timeout")
+	}
+
+	dfPath := filepath.Join(wd, "Dockerfile")
+	dfContent := []byte(fmt.Sprintf("FROM alpine\nRUN sleep %d", int(buildSleep.Seconds())))
+	if err := ioutil.WriteFile(dfPath, dfContent, 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(
+					loadTestConfiguration(t, RESOURCE, "docker_image", "testCreateDockerImageCreateTimeout"),
+					createTimeout,
+				),
+				ExpectError: regexp.MustCompile("deadline exceeded"),
 			},
 		},
 	})
