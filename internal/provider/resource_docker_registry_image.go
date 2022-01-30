@@ -2,8 +2,15 @@ package provider
 
 import (
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerRegistryImageCreateDefaultTimeout = 20 * time.Minute
+	dockerRegistryImageUpdateDefaultTimeout = 20 * time.Minute
+	dockerRegistryImageDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerRegistryImage() *schema.Resource {
@@ -14,6 +21,12 @@ func resourceDockerRegistryImage() *schema.Resource {
 		ReadContext:   resourceDockerRegistryImageRead,
 		DeleteContext: resourceDockerRegistryImageDelete,
 		UpdateContext: resourceDockerRegistryImageUpdate,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerRegistryImageCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerRegistryImageUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerRegistryImageDeleteDefaultTimeout),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {

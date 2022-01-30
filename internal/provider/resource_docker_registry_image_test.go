@@ -3,12 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -216,6 +218,48 @@ func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 				Config:      loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImagePushMissingConfig"),
 				ExpectError: regexp.MustCompile("An image does not exist locally"),
 			},
+		},
+	})
+}
+
+func TestAccDockerRegistryImageResource_pushTimeout(t *testing.T) {
+	ctx := context.Background()
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-fat:1.0")
+
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "Dockerfile")
+	dfContent := []byte("FROM alpine\nRUN fallocate -l 1G foo")
+	if err := ioutil.WriteFile(dfPath, dfContent, 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+
+	// Assuming pushing an 1G image to a registry takes longer than 1 second.
+	registryImageCreateTimeout := time.Duration(1 * time.Second)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(
+					loadTestConfiguration(t, RESOURCE, "docker_image", "testCreateDockerImageNamed"),
+					pushOptions.Name,
+				),
+				Check: resource.TestCheckResourceAttrSet("docker_image.test", "name"),
+			},
+			{
+				Config: fmt.Sprintf(
+					loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImageCreateTimeout"),
+					pushOptions.Registry,
+					pushOptions.Name,
+					registryImageCreateTimeout,
+				),
+				ExpectError: regexp.MustCompile("context deadline exceeded"),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
 		},
 	})
 }
