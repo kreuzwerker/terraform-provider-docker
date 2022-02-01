@@ -84,8 +84,6 @@ func New(version string) func() *schema.Provider {
 
 				"registry_auth": {
 					Type:     schema.TypeList,
-					MinItems: 0,
-					PromoteSingle: true,
 					Optional: true,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
