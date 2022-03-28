@@ -53,6 +53,11 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("Unable to create container with image %s: %s", image, err)
 	}
+	var stopTimeout *int
+	if v, ok := d.GetOk("stop_timeout"); ok {
+		tmp := v.(int)
+		stopTimeout = &tmp
+	}
 
 	config := &container.Config{
 		Image:       image,
@@ -61,7 +66,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		Tty:         d.Get("tty").(bool),
 		OpenStdin:   d.Get("stdin_open").(bool),
 		StopSignal:  d.Get("stop_signal").(string),
-		StopTimeout: d.Get("stop_timeout").(*int),
+		StopTimeout: stopTimeout,
 	}
 
 	if v, ok := d.GetOk("env"); ok {
