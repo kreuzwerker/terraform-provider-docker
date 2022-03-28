@@ -219,6 +219,12 @@ func resourceDockerContainerV1() *schema.Resource {
 					},
 				},
 			},
+			"runtime": {
+				Type:        schema.TypeString,
+				Description: "Runtime to use for the container.",
+				Optional:    true,
+				ForceNew:    true,
+			},
 			"mounts": {
 				Type:        schema.TypeSet,
 				Description: "Specification for mounts to be added to containers created as part of the service",

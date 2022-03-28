@@ -229,6 +229,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
+		Runtime:        d.Get("runtime").(string),
 		Mounts:         mounts,
 		AutoRemove:     d.Get("rm").(bool),
 		ReadonlyRootfs: d.Get("read_only").(bool),
@@ -660,6 +661,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
+	d.Set("runtime", container.HostConfig.Runtime)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)

@@ -77,6 +77,7 @@ resource "docker_image" "ubuntu" {
 - **remove_volumes** (Boolean) If `true`, it will remove anonymous volumes associated with the container. Defaults to `true`.
 - **restart** (String) The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'. Defaults to `no`.
 - **rm** (Boolean) If `true`, then the container will be automatically removed when it exits. Defaults to `false`.
+- **runtime** (String) Runtime to use for the container.
 - **security_opts** (Set of String) List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration.
 - **shm_size** (Number) Size of `/dev/shm` in MBs.
 - **start** (Boolean) If `true`, then the Docker container will be started after creation. If `false`, then the container is only created. Defaults to `true`.
