@@ -55,11 +55,13 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	config := &container.Config{
-		Image:      image,
-		Hostname:   d.Get("hostname").(string),
-		Domainname: d.Get("domainname").(string),
-		Tty:        d.Get("tty").(bool),
-		OpenStdin:  d.Get("stdin_open").(bool),
+		Image:       image,
+		Hostname:    d.Get("hostname").(string),
+		Domainname:  d.Get("domainname").(string),
+		Tty:         d.Get("tty").(bool),
+		OpenStdin:   d.Get("stdin_open").(bool),
+		StopSignal:  d.Get("stop_signal").(string),
+		StopTimeout: d.Get("stop_timeout").(*int),
 	}
 
 	if v, ok := d.GetOk("env"); ok {
@@ -720,6 +722,8 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("group_add", container.HostConfig.GroupAdd)
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
+	d.Set("stop_signal", container.Config.StopSignal)
+	d.Set("stop_timeout", container.Config.StopTimeout)
 
 	return nil
 }

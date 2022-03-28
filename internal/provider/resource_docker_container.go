@@ -280,6 +280,18 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"stop_signal": {
+				Type:        schema.TypeString,
+				Description: "Signal to stop a container (default `SIGTERM`).",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"stop_timeout": {
+				Type:        schema.TypeInt,
+				Description: "Timeout (in seconds) to stop a container.",
+				Optional:    true,
+				ForceNew:    true,
+			},
 			"mounts": {
 				Type:        schema.TypeSet,
 				Description: "Specification for mounts to be added to containers created as part of the service.",
