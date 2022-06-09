@@ -20,6 +20,7 @@ env:
 jobs:
   acc-test:
     runs-on: ubuntu-20.04
+    timeout-minutes: 10
     strategy:
       fail-fast: true
       matrix:
@@ -29,6 +30,16 @@ jobs:
         - "0.14.11"
         - "0.15.5"
         - "1.0.1"
+        resource_type: 
+        - "TestAccDockerConfig"
+        - "TestAccDockerContainer"
+        - "TestAccDockerImage"
+        - "TestAccDockerNetwork"
+        - "TestAccDockerPlugin"
+        - "TestAccDockerRegistryImage"
+        - "TestAccDockerSecret"
+        - "TestAccDockerService"
+        - "TestAccDockerVolume"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -48,7 +59,14 @@ jobs:
           sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
           docker version
           sudo service docker restart
+      - name: Setup acceptance tests
+        run: make testacc_setup
       - name: Run acceptance tests
-        run: make testacc
         env: 
           TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
+          TF_LOG: INFO 
+          TF_ACC: 1
+        run: |
+          go test -v ./internal/provider -timeout 180s -run ${{ matrix.resource_type }} 
+      - name: Cleanup acceptance tests
+        run: make testacc_cleanup
