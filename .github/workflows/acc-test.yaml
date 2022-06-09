@@ -16,6 +16,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.10~3-0~ubuntu-focal"
   GO_VERSION: "1.17"
+  TESTSUITE: "180s"
 
 jobs:
   acc-test:
@@ -56,13 +57,16 @@ jobs:
           sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
           docker version
           sudo service docker restart
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ matrix.terraform_version }}
+          terraform_wrapper: false
       - name: Setup acceptance tests
         run: make testacc_setup
       - name: Run acceptance tests
         env: 
-          TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
           TF_LOG: INFO 
           TF_ACC: 1
-        run: go test -v ./internal/provider -timeout 180s -run ${{ matrix.resource_type }} 
+        run: go test -v ./internal/provider -timeout ${{ env.TESTSUITE_TIMEOUT }} -run ${{ matrix.resource_type }} 
       - name: Cleanup acceptance tests
         run: make testacc_cleanup
