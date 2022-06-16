@@ -389,7 +389,7 @@ Optional:
 
 - **config_name** (String) Name of the config that this references, but this is just provided for lookup/display purposes. The config in the reference will be identified by its ID
 - **file_gid** (String) Represents the file GID. Defaults to `0`.
-- **file_mode** (Number) Represents represents the FileMode of the file. Defaults to `0o444`.
+- **file_mode** (String) Represents represents the FileMode of the file. Defaults to `0o444`.
 - **file_uid** (String) Represents the file UID. Defaults to `0`.
 
 
@@ -534,7 +534,7 @@ Required:
 Optional:
 
 - **file_gid** (String) Represents the file GID. Defaults to `0`
-- **file_mode** (Number) Represents represents the FileMode of the file. Defaults to `0o444`
+- **file_mode** (String) Represents represents the FileMode of the file. Defaults to `0o444`
 - **file_uid** (String) Represents the file UID. Defaults to `0`
 - **secret_name** (String) Name of the secret that this references, but this is just provided for lookup/display purposes. The config in the reference will be identified by its ID
 
