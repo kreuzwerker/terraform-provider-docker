@@ -160,24 +160,24 @@ provider "docker" {
 
 ### Optional
 
-- **ca_material** (String) PEM-encoded content of Docker host CA certificate
-- **cert_material** (String) PEM-encoded content of Docker client certificate
-- **cert_path** (String) Path to directory with Docker TLS config
-- **host** (String) The Docker daemon address
-- **key_material** (String) PEM-encoded content of Docker client private key
-- **registry_auth** (Block List, Max: 1) (see [below for nested schema](#nestedblock--registry_auth))
-- **ssh_opts** (List of String) Additional SSH option flags to be appended when using `ssh://` protocol
+- `ca_material` (String) PEM-encoded content of Docker host CA certificate
+- `cert_material` (String) PEM-encoded content of Docker client certificate
+- `cert_path` (String) Path to directory with Docker TLS config
+- `host` (String) The Docker daemon address
+- `key_material` (String) PEM-encoded content of Docker client private key
+- `registry_auth` (Block List, Max: 1) (see [below for nested schema](#nestedblock--registry_auth))
+- `ssh_opts` (List of String) Additional SSH option flags to be appended when using `ssh://` protocol
 
 <a id="nestedblock--registry_auth"></a>
 ### Nested Schema for `registry_auth`
 
 Required:
 
-- **address** (String) Address of the registry
+- `address` (String) Address of the registry
 
 Optional:
 
-- **config_file** (String) Path to docker json file for registry auth
-- **config_file_content** (String) Plain content of the docker json file for registry auth
-- **password** (String, Sensitive) Password for the registry
-- **username** (String) Username for the registry
+- `config_file` (String) Path to docker json file for registry auth
+- `config_file_content` (String) Plain content of the docker json file for registry auth
+- `password` (String, Sensitive) Password for the registry
+- `username` (String) Username for the registry
