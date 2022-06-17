@@ -8,18 +8,23 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"path/filepath"
 	"strings"
 
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
+	"github.com/moby/buildkit/session"
 )
+
+const minBuildkitDockerVersion = "1.39"
 
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
@@ -290,7 +295,6 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
 	buildOptions := types.ImageBuildOptions{}
 
-	buildOptions.Version = types.BuilderV1
 	buildOptions.Dockerfile = rawBuild["dockerfile"].(string)
 
 	tags := []string{imageName}
@@ -318,6 +322,30 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	}
 	buildOptions.Labels = labels
 	log.Printf("[DEBUG] Labels: %v\n", labels)
+
+	dockerClientVersion := client.ClientVersion()
+	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
+
+	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
+		// docker client supports BuildKit
+		log.Printf("[DEBUG] Enabling BuildKit")
+		s, _ := session.NewSession(ctx, "docker-provider", "")
+
+		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
+			return client.DialHijack(ctx, "/session", proto, meta)
+		}
+
+		err := s.Run(ctx, dialSession)
+		if err != nil {
+			return err
+		}
+		defer s.Close()
+
+		buildOptions.SessionID = s.ID()
+		buildOptions.Version = types.BuilderBuildKit
+	} else {
+		buildOptions.Version = types.BuilderV1
+	}
 
 	contextDir := rawBuild["path"].(string)
 	excludes, err := build.ReadDockerignore(contextDir)
