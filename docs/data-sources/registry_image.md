@@ -28,15 +28,15 @@ resource "docker_image" "ubuntu" {
 
 ### Required
 
-- **name** (String) The name of the Docker image, including any tags. e.g. `alpine:latest`
+- `name` (String) The name of the Docker image, including any tags. e.g. `alpine:latest`
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **insecure_skip_verify** (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
+- `insecure_skip_verify` (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
 
 ### Read-Only
 
-- **sha256_digest** (String) The content digest of the image, as stored in the registry.
+- `id` (String) The ID of this resource.
+- `sha256_digest` (String) The content digest of the image, as stored in the registry.
 
 
