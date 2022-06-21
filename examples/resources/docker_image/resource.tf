@@ -1,3 +1,3 @@
 resource "docker_image" "ubuntu" {
-  name = "ubuntu:precise"
+  name = "ubuntu:jammy"
 }

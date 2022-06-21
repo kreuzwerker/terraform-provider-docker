@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ARG DOCKER_CE_VERSION="5:20.10.10~3-0~ubuntu-focal"
