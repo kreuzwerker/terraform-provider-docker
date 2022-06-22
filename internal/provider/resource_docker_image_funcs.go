@@ -333,6 +333,7 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
 			return client.DialHijack(ctx, "/session", proto, meta)
 		}
+		//nolint
 		go s.Run(ctx, dialSession)
 		defer s.Close()
 		buildOptions.SessionID = s.ID()
