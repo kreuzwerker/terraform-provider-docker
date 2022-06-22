@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"path/filepath"
 	"strings"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
-	"github.com/moby/buildkit/session"
 )
 
 const minBuildkitDockerVersion = "1.39"
@@ -329,24 +327,10 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
 		// docker client supports BuildKit
 		log.Printf("[DEBUG] Enabling BuildKit")
-		s, _ := session.NewSession(ctx, "docker-provider", "")
-
-		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
-			return client.DialHijack(ctx, "/session", proto, meta)
-		}
-
-		err := s.Run(ctx, dialSession)
-		if err != nil {
-			return err
-		}
-		defer s.Close()
-
-		buildOptions.SessionID = s.ID()
 		buildOptions.Version = types.BuilderBuildKit
 	} else {
 		buildOptions.Version = types.BuilderV1
 	}
-
 	contextDir := rawBuild["path"].(string)
 	excludes, err := build.ReadDockerignore(contextDir)
 	if err != nil {
