@@ -1,3 +1,3 @@
 data "docker_image" "foo" {
-  name = "nginx:1.19.1@sha256:36b74457bccb56fbf8b05f79c85569501b721d4db813b684391d63e02287c0b2"
+  name = "busybox:1.35.0@sha256:8c40df61d40166f5791f44b3d90b77b4c7f59ed39a992fd9046886d3126ffa68"
 }
