@@ -1,3 +1,3 @@
 resource "docker_image" "foobar" {
-  name = "stocard/gotthard@sha256:38c221641daa2035839da6aea7d0fbad4a1bef91f7ba1024ef953a747dc6108d"
+  name = "busybox@sha256:8cde9b8065696b65d7b7ffaefbab0262d47a5a9852bfd849799559d296d2e0cd"
 }

@@ -1,4 +1,4 @@
 resource "docker_image" "foobarzoo" {
-  name         = "crux:3.1"
+  name         = "busybox:1.35.0"
   keep_locally = true
 }

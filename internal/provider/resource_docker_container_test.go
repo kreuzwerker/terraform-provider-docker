@@ -958,7 +958,7 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 			{
 				Config: `
 				resource "docker_image" "foo" {
-					name         = "nginx:latest"
+					name         = "busybox:1.35.0"
 					keep_locally = true
 				}
 				
@@ -989,7 +989,7 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 			{
 				Config: `
 				resource "docker_image" "foo" {
-					name         = "nginx:latest"
+					name         = "busybox:1.35.0"
 					keep_locally = true
 				}
 				
