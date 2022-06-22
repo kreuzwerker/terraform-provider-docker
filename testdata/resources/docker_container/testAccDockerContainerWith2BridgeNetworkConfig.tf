@@ -7,7 +7,7 @@ resource "docker_network" "tftest_2" {
 }
 
 resource "docker_image" "foo" {
-  name = "nginx:latest"
+  name = "busybox:1.35.0"
 }
 
 resource "docker_container" "foo" {

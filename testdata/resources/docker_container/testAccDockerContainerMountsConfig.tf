@@ -1,5 +1,5 @@
 resource "docker_image" "foo_mounts" {
-  name = "nginx:latest"
+  name = "busybox:1.35.0"
 }
 
 resource "docker_volume" "foo_mounts" {

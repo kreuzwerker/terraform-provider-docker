@@ -5,7 +5,7 @@ resource "docker_network" "test" {
   }
 }
 resource "docker_image" "foo" {
-  name         = "nginx:latest"
+  name         = "busybox:1.35.0"
   keep_locally = true
 }
 resource "docker_container" "foo" {
