@@ -1,3 +1,20 @@
+## 2.17.0 (June 23, 2022)
+
+IMPROVEMENTS
+* Add Buildkit support ([#387](https://github.com/kreuzwerker/terraform-provider-docker/issues/387))
+
+BUG FIXES
+* Correct authentication for ghcr.io registry([#349](https://github.com/kreuzwerker/terraform-provider-docker/issues/349))
+
+CHORE
+* ci: Exclude examples directory from renovate (37b4032)
+* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.17.0 ([#357](https://github.com/kreuzwerker/terraform-provider-docker/issues/357))
+* deps: update module github.com/docker/cli to v20.10.17 ([#324](https://github.com/kreuzwerker/terraform-provider-docker/issues/324))
+* ci: Update website-generation workflow ([#386](https://github.com/kreuzwerker/terraform-provider-docker/issues/386))
+* src: improve image delete error message ([#359](https://github.com/kreuzwerker/terraform-provider-docker/issues/359))
+* ci: split acc test into resources ([#382](https://github.com/kreuzwerker/terraform-provider-docker/issues/382))
+* deps: update golangci/golangci-lint-action action to v3([#352](https://github.com/kreuzwerker/terraform-provider-docker/issues/352))
+
 ## 2.16.0 (January 24, 2022)
 
 IMPROVEMENTS
