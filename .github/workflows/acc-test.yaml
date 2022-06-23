@@ -16,7 +16,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.10~3-0~ubuntu-focal"
   GO_VERSION: "1.17"
-  TESTSUITE_TIMEOUT: "480s"
+  TESTSUITE_TIMEOUT: "720s"
 
 jobs:
   acc-test:
