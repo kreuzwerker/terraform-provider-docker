@@ -16,19 +16,28 @@ env:
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.10~3-0~ubuntu-focal"
   GO_VERSION: "1.17"
+  TESTSUITE_TIMEOUT: "720s"
 
 jobs:
   acc-test:
     runs-on: ubuntu-20.04
+    timeout-minutes: 15
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         terraform_version: 
-        - "0.12.31"
-        - "0.13.7"
-        - "0.14.11"
-        - "0.15.5"
-        - "1.0.1"
+        - "0.15.x"
+        - "1.1.x"
+        resource_type: 
+        - "TestAccDockerConfig"
+        - "TestAccDockerContainer"
+        - "TestAccDockerImage"
+        - "TestAccDockerNetwork"
+        - "TestAccDockerPlugin"
+        - "TestAccDockerRegistryImage"
+        - "TestAccDockerSecret"
+        - "TestAccDockerService"
+        - "TestAccDockerVolume"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -48,7 +57,16 @@ jobs:
           sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
           docker version
           sudo service docker restart
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ matrix.terraform_version }}
+          terraform_wrapper: false
+      - name: Setup acceptance tests
+        run: make testacc_setup
       - name: Run acceptance tests
-        run: make testacc
         env: 
-          TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
+          TF_LOG: INFO 
+          TF_ACC: 1
+        run: go test -v ./internal/provider -timeout ${{ env.TESTSUITE_TIMEOUT }} -run ${{ matrix.resource_type }} 
+      - name: Cleanup acceptance tests
+        run: make testacc_cleanup

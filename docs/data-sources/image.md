@@ -39,14 +39,11 @@ data "docker_image" "tag_and_digest" {
 
 ### Required
 
-- **name** (String) The name of the Docker image, including any tags or SHA256 repo digests.
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) The name of the Docker image, including any tags or SHA256 repo digests.
 
 ### Read-Only
 
-- **repo_digest** (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. It may be empty in the edge case where the local image was pulled from a repo, tagged locally, and then referred to in the data source by that local name/tag.
+- `id` (String) The ID of this resource.
+- `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. It may be empty in the edge case where the local image was pulled from a repo, tagged locally, and then referred to in the data source by that local name/tag.
 
 

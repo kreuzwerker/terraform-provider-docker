@@ -29,15 +29,15 @@ data "docker_plugin" "by_id" {
 
 ### Optional
 
-- **alias** (String) The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.
-- **id** (String) The ID of the plugin, which has precedence over the `alias` of both are given
+- `alias` (String) The alias of the Docker plugin. If the tag is omitted, `:latest` is complemented to the attribute value.
+- `id` (String) The ID of the plugin, which has precedence over the `alias` of both are given
 
 ### Read-Only
 
-- **enabled** (Boolean) If `true` the plugin is enabled
-- **env** (Set of String) The environment variables in the form of `KEY=VALUE`, e.g. `DEBUG=0`
-- **grant_all_permissions** (Boolean) If true, grant all permissions necessary to run the plugin
-- **name** (String) The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.
-- **plugin_reference** (String) The Docker Plugin Reference
+- `enabled` (Boolean) If `true` the plugin is enabled
+- `env` (Set of String) The environment variables in the form of `KEY=VALUE`, e.g. `DEBUG=0`
+- `grant_all_permissions` (Boolean) If true, grant all permissions necessary to run the plugin
+- `name` (String) The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.
+- `plugin_reference` (String) The Docker Plugin Reference
 
 

@@ -91,7 +91,7 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		err = deleteDockerRegistryImage(pushOpts, pushOpts.Tag, username, password, true, true)
 		if err != nil {
-			return diag.Errorf("Got error getting registry image digest: %s", err)
+			return diag.Errorf("Got error deleting registry image: %s", err)
 		}
 	}
 	return nil
