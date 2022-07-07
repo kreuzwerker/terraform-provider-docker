@@ -292,7 +292,7 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 
 	pm, err := fileutils.NewPatternMatcher(excludes)
 	if err != nil {
-		return "", fmt.Errorf("unable to create pattern matcher from .dockerignore exlcudes - %v", err.Error())
+		return "", fmt.Errorf("unable to create pattern matcher from .dockerignore excludes - %v", err.Error())
 	}
 
 	tw := tar.NewWriter(tmpFile)
@@ -305,7 +305,8 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		}
 
 		// if .dockerignore is present, ignore files from there
-		skip, err := pm.Matches(file)
+		rel, _ := filepath.Rel(buildContext, file)
+		skip, err := pm.Matches(rel)
 		if err != nil {
 			return err
 		}
