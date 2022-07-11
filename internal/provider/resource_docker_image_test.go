@@ -22,7 +22,7 @@ func TestAccDockerImage_basic(t *testing.T) {
 	// run a Docker container which refers the Docker image to test "force_remove" option
 	containerName := "test-docker-image-force-remove"
 	ctx := context.Background()
-	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, "alpine:3.11.5", "tail", "-f", "/dev/null").Run(); err != nil {
+	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, "alpine:3.16.0", "tail", "-f", "/dev/null").Run(); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {

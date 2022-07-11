@@ -15,5 +15,6 @@
       "matchUpdateTypes": ["digest"],
       "enabled": false,
     }
-  ]
+  ],
+  "ignorePaths": ["**/testdata/**", "**/examples/**", "**/scripts/**"]
 }
