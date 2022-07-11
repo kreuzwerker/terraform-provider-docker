@@ -83,7 +83,7 @@ func New(version string) func() *schema.Provider {
 				},
 
 				"registry_auth": {
-					Type:     schema.TypeList,
+					Type:     schema.TypeSet,
 					Optional: true,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
@@ -94,35 +94,35 @@ func New(version string) func() *schema.Provider {
 							},
 
 							"username": {
-								Type:          schema.TypeString,
-								Optional:      true,
-								ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
-								DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
-								Description:   "Username for the registry",
+								Type:     schema.TypeString,
+								Optional: true,
+								// ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
+								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
+								Description: "Username for the registry",
 							},
 
 							"password": {
-								Type:          schema.TypeString,
-								Optional:      true,
-								Sensitive:     true,
-								ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
-								DefaultFunc:   schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
-								Description:   "Password for the registry",
+								Type:      schema.TypeString,
+								Optional:  true,
+								Sensitive: true,
+								// ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
+								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
+								Description: "Password for the registry",
 							},
 
 							"config_file": {
-								Type:          schema.TypeString,
-								Optional:      true,
-								ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file_content"},
-								DefaultFunc:   schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
-								Description:   "Path to docker json file for registry auth",
+								Type:     schema.TypeString,
+								Optional: true,
+								// ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file_content"},
+								DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
+								Description: "Path to docker json file for registry auth",
 							},
 
 							"config_file_content": {
-								Type:          schema.TypeString,
-								Optional:      true,
-								ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file"},
-								Description:   "Plain content of the docker json file for registry auth",
+								Type:     schema.TypeString,
+								Optional: true,
+								// ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file"},
+								Description: "Plain content of the docker json file for registry auth",
 							},
 						},
 					},
@@ -184,8 +184,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		authConfigs := &AuthConfigs{}
 
 		if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
-			authConfigs, err = providerSetToRegistryAuth(v.([]interface{}))
-
+			authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
 			if err != nil {
 				return nil, diag.Errorf("Error loading registry auth config: %s", err)
 			}
@@ -207,30 +206,30 @@ type AuthConfigs struct {
 }
 
 // Take the given registry_auth schemas and return a map of registry auth configurations
-func providerSetToRegistryAuth(authList []interface{}) (*AuthConfigs, error) {
+func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 	authConfigs := AuthConfigs{
 		Configs: make(map[string]types.AuthConfig),
 	}
 
-	for _, authInt := range authList {
-		auth := authInt.(map[string]interface{})
+	for _, auth := range authList.List() {
 		authConfig := types.AuthConfig{}
-		authConfig.ServerAddress = normalizeRegistryAddress(auth["address"].(string))
+		address := auth.(map[string]interface{})["address"].(string)
+		authConfig.ServerAddress = normalizeRegistryAddress(address)
 		registryHostname := convertToHostname(authConfig.ServerAddress)
 
 		// For each registry_auth block, generate an AuthConfiguration using either
 		// username/password or the given config file
-		if username, ok := auth["username"]; ok && username.(string) != "" {
+		if username, ok := auth.(map[string]interface{})["username"].(string); ok && username != "" {
 			log.Println("[DEBUG] Using username for registry auths:", username)
-			authConfig.Username = auth["username"].(string)
-			authConfig.Password = auth["password"].(string)
+			authConfig.Username = username
+			authConfig.Password = auth.(map[string]interface{})["password"].(string)
 
 			// Note: check for config_file_content first because config_file has a default which would be used
 			// nevertheless config_file_content is set or not. The default has to be kept to check for the
 			// environment variable and to be backwards compatible
-		} else if configFileContent, ok := auth["config_file_content"]; ok && configFileContent.(string) != "" {
-			log.Println("[DEBUG] Parsing file content for registry auths:", configFileContent.(string))
-			r := strings.NewReader(configFileContent.(string))
+		} else if configFileContent, ok := auth.(map[string]interface{})["config_file_content"].(string); ok && configFileContent != "" {
+			log.Println("[DEBUG] Parsing file content for registry auths:", configFileContent)
+			r := strings.NewReader(configFileContent)
 
 			c, err := loadConfigFile(r)
 			if err != nil {
@@ -244,8 +243,8 @@ func providerSetToRegistryAuth(authList []interface{}) (*AuthConfigs, error) {
 			authConfig.Password = authFileConfig.Password
 
 			// As last step we check if a config file path is given
-		} else if configFile, ok := auth["config_file"]; ok && configFile.(string) != "" {
-			filePath := configFile.(string)
+		} else if configFile, ok := auth.(map[string]interface{})["config_file"].(string); ok && configFile != "" {
+			filePath := configFile
 			log.Println("[DEBUG] Parsing file for registry auths:", filePath)
 
 			// We manually expand the path and do not use the 'pathexpand' interpolation function
