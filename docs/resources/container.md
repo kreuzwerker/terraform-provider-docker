@@ -76,10 +76,13 @@ resource "docker_image" "ubuntu" {
 - `remove_volumes` (Boolean) If `true`, it will remove anonymous volumes associated with the container. Defaults to `true`.
 - `restart` (String) The restart policy for the container. Must be one of 'no', 'on-failure', 'always', 'unless-stopped'. Defaults to `no`.
 - `rm` (Boolean) If `true`, then the container will be automatically removed when it exits. Defaults to `false`.
+- `runtime` (String) Runtime to use for the container.
 - `security_opts` (Set of String) List of string values to customize labels for MLS systems, such as SELinux. See https://docs.docker.com/engine/reference/run/#security-configuration.
 - `shm_size` (Number) Size of `/dev/shm` in MBs.
 - `start` (Boolean) If `true`, then the Docker container will be started after creation. If `false`, then the container is only created. Defaults to `true`.
 - `stdin_open` (Boolean) If `true`, keep STDIN open even if not attached (`docker run -i`). Defaults to `false`.
+- `stop_signal` (String) Signal to stop a container (default `SIGTERM`).
+- `stop_timeout` (Number) Timeout (in seconds) to stop a container.
 - `storage_opts` (Map of String) Key/value pairs for the storage driver options, e.g. `size`: `120G`
 - `sysctls` (Map of String) A map of kernel parameters (sysctls) to set in the container.
 - `tmpfs` (Map of String) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
