@@ -459,7 +459,7 @@ Optional:
 - `volume_options` (Block List, Max: 1) Optional configuration for the volume type (see [below for nested schema](#nestedblock--task_spec--container_spec--mounts--volume_options))
 
 <a id="nestedblock--task_spec--container_spec--mounts--bind_options"></a>
-### Nested Schema for `task_spec.container_spec.mounts.volume_options`
+### Nested Schema for `task_spec.container_spec.mounts.bind_options`
 
 Optional:
 
@@ -467,7 +467,7 @@ Optional:
 
 
 <a id="nestedblock--task_spec--container_spec--mounts--tmpfs_options"></a>
-### Nested Schema for `task_spec.container_spec.mounts.volume_options`
+### Nested Schema for `task_spec.container_spec.mounts.tmpfs_options`
 
 Optional:
 
@@ -505,7 +505,7 @@ Optional:
 - `se_linux_context` (Block List, Max: 1) SELinux labels of the container (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges--se_linux_context))
 
 <a id="nestedblock--task_spec--container_spec--privileges--credential_spec"></a>
-### Nested Schema for `task_spec.container_spec.privileges.se_linux_context`
+### Nested Schema for `task_spec.container_spec.privileges.credential_spec`
 
 Optional:
 
@@ -602,7 +602,7 @@ Optional:
 - `nano_cpus` (Number) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least `1000000`
 
 <a id="nestedblock--task_spec--resources--reservation--generic_resources"></a>
-### Nested Schema for `task_spec.resources.reservation.nano_cpus`
+### Nested Schema for `task_spec.resources.reservation.generic_resources`
 
 Optional:
 
