@@ -8,6 +8,9 @@ build: fmtcheck
 	go install
 
 setup:
+	go install github.com/katbyte/terrafmt
+	go install github.com/client9/misspell/cmd/misspell
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	rm -f .git/hooks/commit-msg \
 	&& curl --fail -o .git/hooks/commit-msg https://raw.githubusercontent.com/hazcod/semantic-commit-hook/master/commit-msg \
 	&& chmod 500 .git/hooks/commit-msg
