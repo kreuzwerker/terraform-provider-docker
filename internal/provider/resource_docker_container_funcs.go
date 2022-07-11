@@ -53,13 +53,20 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("Unable to create container with image %s: %s", image, err)
 	}
+	var stopTimeout *int
+	if v, ok := d.GetOk("stop_timeout"); ok {
+		tmp := v.(int)
+		stopTimeout = &tmp
+	}
 
 	config := &container.Config{
-		Image:      image,
-		Hostname:   d.Get("hostname").(string),
-		Domainname: d.Get("domainname").(string),
-		Tty:        d.Get("tty").(bool),
-		OpenStdin:  d.Get("stdin_open").(bool),
+		Image:       image,
+		Hostname:    d.Get("hostname").(string),
+		Domainname:  d.Get("domainname").(string),
+		Tty:         d.Get("tty").(bool),
+		OpenStdin:   d.Get("stdin_open").(bool),
+		StopSignal:  d.Get("stop_signal").(string),
+		StopTimeout: stopTimeout,
 	}
 
 	if v, ok := d.GetOk("env"); ok {
@@ -229,6 +236,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
+		Runtime:        d.Get("runtime").(string),
 		Mounts:         mounts,
 		AutoRemove:     d.Get("rm").(bool),
 		ReadonlyRootfs: d.Get("read_only").(bool),
@@ -660,6 +668,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
+	d.Set("runtime", container.HostConfig.Runtime)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
@@ -718,6 +727,8 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("group_add", container.HostConfig.GroupAdd)
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
+	d.Set("stop_signal", container.Config.StopSignal)
+	d.Set("stop_timeout", container.Config.StopTimeout)
 
 	return nil
 }
