@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 	"github.com/moby/buildkit/session"
+	"github.com/pkg/errors"
 )
 
 const minBuildkitDockerVersion = "1.39"
@@ -293,6 +295,10 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 }
 
 func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
+	var (
+		err error
+	)
+
 	buildOptions := types.ImageBuildOptions{}
 
 	buildOptions.Dockerfile = rawBuild["dockerfile"].(string)
@@ -323,11 +329,32 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	buildOptions.Labels = labels
 	log.Printf("[DEBUG] Labels: %v\n", labels)
 
+	enableBuildKitIfSupported(ctx, client, &buildOptions)
+
+	buildCtx, relDockerfile, err := prepareBuildContext(rawBuild["path"].(string), buildOptions.Dockerfile)
+	if err != nil {
+		return err
+	}
+	buildOptions.Dockerfile = relDockerfile
+
+	var response types.ImageBuildResponse
+	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	buildResult, err := decodeBuildMessages(response)
+	if err != nil {
+		return fmt.Errorf("%s\n\n%s", err, buildResult)
+	}
+	return nil
+}
+
+func enableBuildKitIfSupported(ctx context.Context, client *client.Client, buildOptions *types.ImageBuildOptions) {
 	dockerClientVersion := client.ClientVersion()
 	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
-
 	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
-		// docker client supports BuildKit
 		log.Printf("[DEBUG] Enabling BuildKit")
 		s, _ := session.NewSession(ctx, "docker-provider", "")
 		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
@@ -341,28 +368,46 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	} else {
 		buildOptions.Version = types.BuilderV1
 	}
-	contextDir := rawBuild["path"].(string)
-	excludes, err := build.ReadDockerignore(contextDir)
-	if err != nil {
-		return err
-	}
-	excludes = build.TrimBuildFilesFromExcludes(excludes, buildOptions.Dockerfile, false)
-
-	var response types.ImageBuildResponse
-	response, err = client.ImageBuild(ctx, getBuildContext(contextDir, excludes), buildOptions)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	buildResult, err := decodeBuildMessages(response)
-	if err != nil {
-		return fmt.Errorf("%s\n\n%s", err, buildResult)
-	}
-	return nil
 }
 
-func getBuildContext(filePath string, excludes []string) io.Reader {
+func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (io.ReadCloser, string, error) {
+	var (
+		dockerfileCtx io.ReadCloser
+		contextDir    string
+		relDockerfile string
+		err           error
+	)
+	contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, specifiedDockerfile)
+	if err == nil && strings.HasPrefix(relDockerfile, ".."+string(filepath.Separator)) {
+		// Dockerfile is outside of build-context; read the Dockerfile and pass it as dockerfileCtx
+		log.Printf("[DEBUG] Dockerfile is outside of build-context")
+		dockerfileCtx, err = os.Open(specifiedDockerfile)
+		if err != nil {
+			return nil, "", errors.Errorf("unable to open Dockerfile: %v", err)
+		}
+		defer dockerfileCtx.Close()
+	}
+	excludes, err := build.ReadDockerignore(contextDir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	excludes = build.TrimBuildFilesFromExcludes(excludes, relDockerfile, false)
+
+	buildCtx := getBuildContext(contextDir, excludes)
+
+	// replace Dockerfile if it was added from stdin or a file outside the build-context, and there is archive context
+	if dockerfileCtx != nil && buildCtx != nil {
+		log.Printf("[DEBUG] Adding dockerfile to build context")
+		buildCtx, relDockerfile, err = build.AddDockerfileToBuildContext(dockerfileCtx, buildCtx)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+	return buildCtx, relDockerfile, nil
+}
+
+func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	filePath, _ = homedir.Expand(filePath)
 	//TarWithOptions works only with absolute paths in Windows.
 	filePath, err := filepath.Abs(filePath)
