@@ -324,6 +324,31 @@ RUN echo ${test_arg} > test_arg.txt
 RUN apt-get update -qq
 `
 
+func TestAccDockerImage_buildOutsideContext(t *testing.T) {
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "..", "Dockerfile")
+	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageDockerfileOutsideContext"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.outside_context", "name", regexp.MustCompile(`\Aoutside-context:latest\z`)),
+				),
+			},
+		},
+	})
+}
+
 func testAccImageCreated(resourceName string, image *types.ImageInspect) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
