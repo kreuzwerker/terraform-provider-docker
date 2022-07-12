@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -243,6 +244,30 @@ func TestAccDockerRegistryImageResource_whitelistDockerignore(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImageFilePermissions"), pushOptions.Registry, pushOptions.Name, context, "Dockerfile"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.file_permissions", "sha256_digest"),
+				),
+			},
+		},
+	})
+}
+
+// Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
+func TestAccDockerRegistryImageResource_DockerfileOutsideContext(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-dockerfileoutsidecontext:1.0")
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "..", "Dockerfile")
+	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_file_permissions")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImageDockerfileOutsideContext"), pushOptions.Registry, pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.outside_context", "sha256_digest"),
 				),
 			},
 		},

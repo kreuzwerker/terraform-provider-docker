@@ -324,6 +324,7 @@ RUN echo ${test_arg} > test_arg.txt
 RUN apt-get update -qq
 `
 
+// Test for implementation of https://github.com/kreuzwerker/terraform-provider-docker/issues/401
 func TestAccDockerImage_buildOutsideContext(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()

@@ -378,6 +378,8 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		err           error
 	)
 	contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, specifiedDockerfile)
+	log.Printf("[DEBUG] contextDir %s", contextDir)
+	log.Printf("[DEBUG] relDockerfile %s", relDockerfile)
 	if err == nil && strings.HasPrefix(relDockerfile, ".."+string(filepath.Separator)) {
 		// Dockerfile is outside of build-context; read the Dockerfile and pass it as dockerfileCtx
 		log.Printf("[DEBUG] Dockerfile is outside of build-context")
@@ -392,8 +394,9 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		return nil, "", err
 	}
 
-	excludes = build.TrimBuildFilesFromExcludes(excludes, relDockerfile, false)
-
+	specifiedDockerfile = archive.CanonicalTarNameForPath(specifiedDockerfile)
+	excludes = build.TrimBuildFilesFromExcludes(excludes, specifiedDockerfile, false)
+	log.Printf("[DEBUG] Excludes: %v", excludes)
 	buildCtx := getBuildContext(contextDir, excludes)
 
 	// replace Dockerfile if it was added from stdin or a file outside the build-context, and there is archive context
@@ -403,8 +406,9 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		if err != nil {
 			return nil, "", err
 		}
+		return buildCtx, relDockerfile, nil
 	}
-	return buildCtx, relDockerfile, nil
+	return buildCtx, specifiedDockerfile, nil
 }
 
 func getBuildContext(filePath string, excludes []string) io.ReadCloser {
