@@ -1,3 +1,13 @@
+## 2.18.0 (July 11, 2022)
+
+IMPROVEMENTS
+* add `runtime`, `stop_signal` and `stop_timeout` properties to the docker_container resource ([#364](https://github.com/kreuzwerker/terraform-provider-docker/issues/364))
+
+BUG FIXES
+* Various fixes to `docker_registry_image` to correctly handle build files and file permissions ([#398](https://github.com/kreuzwerker/terraform-provider-docker/pull/398))
+* Fix `website-generation` Github-Action ([#399](https://github.com/kreuzwerker/terraform-provider-docker/pull/399))
+
+
 ## 2.17.0 (June 23, 2022)
 
 IMPROVEMENTS
