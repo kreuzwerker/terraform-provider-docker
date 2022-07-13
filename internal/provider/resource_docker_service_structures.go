@@ -1083,17 +1083,14 @@ func createServiceNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, erro
 func createLogDriver(v interface{}) (*swarm.Driver, error) {
 	logDriver := swarm.Driver{}
 	if len(v.([]interface{})) > 0 {
-		for _, rawLogging := range v.([]interface{}) {
-			rawLogging := rawLogging.(map[string]interface{})
-			if rawName, ok := rawLogging["name"]; ok {
-				logDriver.Name = rawName.(string)
-			}
-			if rawOptions, ok := rawLogging["options"]; ok {
-				logDriver.Options = mapTypeMapValsToString(rawOptions.(map[string]interface{}))
-			}
-			// TODO SA4004: the surrounding loop is unconditionally terminated (staticcheck)
-			return &logDriver, nil //nolint:staticcheck
+		rawLogging := v.([]interface{})[0].(map[string]interface{})
+		if rawName, ok := rawLogging["name"]; ok {
+			logDriver.Name = rawName.(string)
 		}
+		if rawOptions, ok := rawLogging["options"]; ok {
+			logDriver.Options = mapTypeMapValsToString(rawOptions.(map[string]interface{}))
+		}
+		return &logDriver, nil //nolint:staticcheck
 	}
 	return nil, nil
 }

@@ -325,48 +325,6 @@ func testAccNetworkIPv4(network *types.NetworkResource, internal bool) resource.
 	}
 }
 
-func TestAccDockerNetwork_ipv6(t *testing.T) {
-	t.Skip("TODO mavogel: need to fix ipv6 network state")
-	var n types.NetworkResource
-	resourceName := "docker_network.foo"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: loadTestConfiguration(t, RESOURCE, "docker_network", "testAccDockerNetworkIPv6Config"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccNetwork(resourceName, &n),
-					testAccNetworkIPv6(&n, true),
-				),
-			},
-			// TODO mavogel: ipam config goes from 2->1
-			// probably suppress diff -> #74 (import resources)
-			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
-func testAccNetworkIPv6(network *types.NetworkResource, internal bool) resource.TestCheckFunc { //nolint:unused
-	return func(s *terraform.State) error {
-		if !network.EnableIPv6 {
-			return fmt.Errorf("Bad value for attribute 'ipv6': %t", network.EnableIPv6)
-		}
-		if len(network.IPAM.Config) != 2 {
-			return fmt.Errorf("Bad value for IPAM configuration count: %d", len(network.IPAM.Config))
-		}
-		if network.IPAM.Config[1].Subnet != "fd00::1/64" {
-			return fmt.Errorf("Bad value for attribute 'subnet': %v", network.IPAM.Config[1].Subnet)
-		}
-		return nil
-	}
-}
-
 func TestAccDockerNetwork_labels(t *testing.T) {
 	var n types.NetworkResource
 	resourceName := "docker_network.foo"

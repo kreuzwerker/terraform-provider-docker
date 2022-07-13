@@ -2,10 +2,6 @@ package provider
 
 import (
 	"context"
-	"log"
-	"net"
-	"regexp"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -153,53 +149,5 @@ func resourceDockerNetwork() *schema.Resource {
 				},
 			},
 		},
-	}
-}
-
-func suppressIfIPAMConfigWithIpv6Changes() schema.SchemaDiffSuppressFunc { //nolint:deadcode,unused
-	return func(k, old, new string, d *schema.ResourceData) bool {
-		// the initial case when the resource is created
-		if old == "" && new != "" {
-			return false
-		}
-
-		// if ipv6 is not given we do not consider
-		ipv6, ok := d.GetOk("ipv6")
-		if !ok {
-			return false
-		}
-
-		// if ipv6 is given but false we do not consider
-		isIPv6 := ipv6.(bool)
-		if !isIPv6 {
-			return false
-		}
-		if k == "ipam_config.#" {
-			log.Printf("[INFO] ipam_config: k: %q, old: %s, new: %s\n", k, old, new)
-			oldVal, _ := strconv.Atoi(string(old))
-			newVal, _ := strconv.Atoi(string(new))
-			log.Printf("[INFO] ipam_config: oldVal: %d, newVal: %d\n", oldVal, newVal)
-			if newVal <= oldVal {
-				log.Printf("[INFO] suppressingDiff for ipam_config: oldVal: %d, newVal: %d\n", oldVal, newVal)
-				return true
-			}
-		}
-		if regexp.MustCompile(`ipam_config\.\d+\.gateway`).MatchString(k) {
-			ip := net.ParseIP(old)
-			ipv4Address := ip.To4()
-			log.Printf("[INFO] ipam_config.gateway: k: %q, old: %s, new: %s - %v\n", k, old, new, ipv4Address != nil)
-			// is an ipv4Address and content changed from non-empty to empty
-			if ipv4Address != nil && old != "" && new == "" {
-				log.Printf("[INFO] suppressingDiff for ipam_config.gateway %q: oldVal: %s, newVal: %s\n", ipv4Address.String(), old, new)
-				return true
-			}
-		}
-		if regexp.MustCompile(`ipam_config\.\d+\.subnet`).MatchString(k) {
-			if old != "" && new == "" {
-				log.Printf("[INFO] suppressingDiff for ipam_config.subnet: oldVal: %s, newVal: %s\n", old, new)
-				return true
-			}
-		}
-		return false
 	}
 }

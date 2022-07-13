@@ -885,7 +885,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 func fetchDockerContainer(ctx context.Context, ID string, client *client.Client) (*types.Container, error) {
 	apiContainers, err := client.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching container information from Docker: %s\n", err)
+		return nil, fmt.Errorf("error fetching container information from Docker: %s", err)
 	}
 
 	for _, apiContainer := range apiContainers {

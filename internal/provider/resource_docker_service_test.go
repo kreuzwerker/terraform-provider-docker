@@ -437,7 +437,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.UID != "0" ||
 			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.GID != "0" ||
 			// nolint: staticcheck
-			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.Mode != os.FileMode(777) {
+			s.Spec.TaskTemplate.ContainerSpec.Secrets[0].File.Mode != os.FileMode(0777) {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Secrets is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Secrets)
 		}
 
