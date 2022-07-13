@@ -63,7 +63,11 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	imageName := d.Get("name").(string)
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return diag.Errorf("error looking up local image %q: %s", imageName, err)
+	}
+
 	if foundImage == nil {
 		log.Printf("[DEBUG] did not find image with name: %v", imageName)
 		d.SetId("")
@@ -106,20 +110,23 @@ func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 // Helpers
-func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) *types.ImageSummary {
+func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) (*types.ImageSummary, error) {
 	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("unable to inspect imave %s: %w", imageName, err)
 	}
 
-	jsonObj, _ := json.MarshalIndent(imageInspect, "", "\t")
+	jsonObj, err := json.MarshalIndent(imageInspect, "", "\t")
+	if err != nil {
+		return nil, fmt.Errorf("error parsing inspect response: %w", err)
+	}
 	log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
 
 	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
 		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
-		return apiImage
+		return apiImage, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Client) error {
@@ -138,7 +145,10 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 		return fmt.Errorf("empty image name is not allowed")
 	}
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return fmt.Errorf("error looking up local image %q: %w", imageName, err)
+	}
 
 	if foundImage != nil {
 		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
@@ -157,7 +167,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) error {
 	images, err := client.ImageList(ctx, types.ImageListOptions{All: false})
 	if err != nil {
-		return fmt.Errorf("unable to list Docker images: %s", err)
+		return fmt.Errorf("unable to list Docker images: %w", err)
 	}
 
 	if data.DockerImages == nil {
@@ -206,7 +216,7 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
 	})
 	if err != nil {
-		return fmt.Errorf("error pulling image %s: %s", image, err)
+		return fmt.Errorf("error pulling image %s: %w", image, err)
 	}
 	defer out.Close()
 
@@ -272,7 +282,11 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("error looking up local image %q: %w", imageName, err)
+	}
+
 	if foundImage != nil {
 		return foundImage, nil
 	}
@@ -286,7 +300,11 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage = searchLocalImages(ctx, client, data, imageName)
+	foundImage, err = searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("error looking up local image %q: %w", imageName, err)
+	}
+
 	if foundImage != nil {
 		return foundImage, nil
 	}
