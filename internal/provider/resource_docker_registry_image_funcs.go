@@ -248,20 +248,17 @@ func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildO
 		buildContext = buildContext[:lastIndex]
 	}
 
-	dockerContextTarPath, err := buildDockerImageContextTar(buildContext)
-	if err != nil {
-		return fmt.Errorf("unable to build context: %v", err)
-	}
-	defer os.Remove(dockerContextTarPath)
-	dockerBuildContext, err := os.Open(dockerContextTarPath)
-	if err != nil {
-		return err
-	}
-	defer dockerBuildContext.Close()
+	enableBuildKitIfSupported(ctx, client, &imageBuildOptions)
 
-	buildResponse, err := client.ImageBuild(ctx, dockerBuildContext, imageBuildOptions)
+	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, imageBuildOptions.Dockerfile)
 	if err != nil {
 		return err
+	}
+	imageBuildOptions.Dockerfile = relDockerfile
+
+	buildResponse, err := client.ImageBuild(ctx, buildCtx, imageBuildOptions)
+	if err != nil {
+		return fmt.Errorf("unable to build image for docker_registry_image: %v", err)
 	}
 	defer buildResponse.Body.Close()
 
