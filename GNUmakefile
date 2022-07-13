@@ -21,7 +21,7 @@ golangci-lint:
 test: fmtcheck
 	go test -i $(TEST) || exit 1
 	echo $(TEST) | \
-		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+		xargs -t -n4 go test $(TESTARGS) -timeout=40s -parallel=4
 
 testacc_setup: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/testacc_setup.sh'"
