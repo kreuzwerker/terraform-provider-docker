@@ -2,10 +2,21 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 PKG_NAME=internal/provider
 
+HOSTNAME=github.com
+NAMESPACE=aucloud
+NAME=docker
+BINARY=terraform-provider-${NAME}
+VERSION=2.16.1
+OS_ARCH=darwin_amd64
+
 default: build
 
 build: fmtcheck
-	go install
+	go build -o ${BINARY}
+
+install: build
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 setup:
 	go install github.com/katbyte/terrafmt
