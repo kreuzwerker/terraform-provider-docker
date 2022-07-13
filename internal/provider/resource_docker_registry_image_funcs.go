@@ -248,13 +248,15 @@ func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildO
 		buildContext = buildContext[:lastIndex]
 	}
 
-	excludes, err := build.ReadDockerignore(buildContext)
+	enableBuildKitIfSupported(ctx, client, &imageBuildOptions)
+
+	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, imageBuildOptions.Dockerfile)
 	if err != nil {
-		return fmt.Errorf("unable to read dockerignore: %v", err)
+		return err
 	}
-	excludes = build.TrimBuildFilesFromExcludes(excludes, imageBuildOptions.Dockerfile, false)
-	log.Printf("[DEBUG] Excludes: %v", excludes)
-	buildResponse, err := client.ImageBuild(ctx, getBuildContext(buildContext, excludes), imageBuildOptions)
+	imageBuildOptions.Dockerfile = relDockerfile
+
+	buildResponse, err := client.ImageBuild(ctx, buildCtx, imageBuildOptions)
 	if err != nil {
 		return fmt.Errorf("unable to build image for docker_registry_image: %v", err)
 	}
