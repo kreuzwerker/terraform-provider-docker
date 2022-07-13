@@ -3,6 +3,8 @@
 
 **/.envrc
 
+/terraform-provider-docker
+
 *.dll
 *.exe
 .DS_Store
