@@ -952,6 +952,12 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"gpus": {
+				Type:        schema.TypeString,
+				Description: "GPU devices to add to the container (`all` to pass all GPUs)",
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }

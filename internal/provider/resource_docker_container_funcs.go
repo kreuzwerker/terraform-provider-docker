@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -338,6 +339,18 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	if v, ok := d.GetOk("group_add"); ok {
 		hostConfig.GroupAdd = stringSetToStringSlice(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("gpus"); ok {
+		if client.ClientVersion() >= "1.40" {
+			var gpu opts.GpuOpts
+			err := gpu.Set(v.(string))
+			if err != nil {
+				return diag.Errorf("Error setting gpus: %s", err)
+			}
+			hostConfig.DeviceRequests = gpu.Value()
+		} else {
+			log.Printf("[WARN] GPU support requires docker version 1.40 or higher")
+		}
 	}
 
 	init := d.Get("init").(bool)
@@ -718,6 +731,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("group_add", container.HostConfig.GroupAdd)
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
+	if len(container.HostConfig.DeviceRequests) > 0 {
+		// TODO pass the original gpus property string back to the resource
+		// var gpuOpts opts.GpuOpts
+		// gpuOpts = opts.GpuOpts{container.HostConfig.DeviceRequests}
+		d.Set("gpus", "all")
+	}
 
 	return nil
 }
