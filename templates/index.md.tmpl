@@ -47,6 +47,9 @@ When passing in a config file either the corresponding `auth` string of the repo
 [credential helpers](https://github.com/docker/docker-credential-helpers#available-programs) are
 used to retrieve the authentication credentials.
 
+-> **Note**
+`config_file` has predence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
+
 You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
 An example content of the file `~/.docker/config.json` on macOS may look like follows:

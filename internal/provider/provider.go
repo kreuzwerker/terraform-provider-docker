@@ -14,6 +14,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func init() {
@@ -88,41 +89,38 @@ func New(version string) func() *schema.Provider {
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"address": {
-								Type:        schema.TypeString,
-								Required:    true,
-								Description: "Address of the registry",
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.StringIsNotEmpty,
+								Description:  "Address of the registry",
 							},
 
 							"username": {
-								Type:     schema.TypeString,
-								Optional: true,
-								// ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
+								Type:        schema.TypeString,
+								Optional:    true,
 								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
-								Description: "Username for the registry",
+								Description: "Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.",
 							},
 
 							"password": {
-								Type:      schema.TypeString,
-								Optional:  true,
-								Sensitive: true,
-								// ConflictsWith: []string{"registry_auth.config_file", "registry_auth.config_file_content"},
+								Type:        schema.TypeString,
+								Optional:    true,
+								Sensitive:   true,
 								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
-								Description: "Password for the registry",
+								Description: "Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.",
 							},
 
 							"config_file": {
-								Type:     schema.TypeString,
-								Optional: true,
-								// ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file_content"},
+								Type:        schema.TypeString,
+								Optional:    true,
 								DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
-								Description: "Path to docker json file for registry auth",
+								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
 							},
 
 							"config_file_content": {
-								Type:     schema.TypeString,
-								Optional: true,
-								// ConflictsWith: []string{"registry_auth.username", "registry_auth.password", "registry_auth.config_file"},
-								Description: "Plain content of the docker json file for registry auth",
+								Type:        schema.TypeString,
+								Optional:    true,
+								Description: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
 							},
 						},
 					},
@@ -258,15 +256,15 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			}
 			r, err := os.Open(filePath)
 			if err != nil {
-				return nil, fmt.Errorf("Could not open config file from filePath: %s. Error: %v", filePath, err)
+				return nil, fmt.Errorf("could not open config file from filePath: %s. Error: %v", filePath, err)
 			}
 			c, err := loadConfigFile(r)
 			if err != nil {
-				return nil, fmt.Errorf("Could not read and load config file: %v", err)
+				return nil, fmt.Errorf("could not read and load config file: %v", err)
 			}
 			authFileConfig, err := c.GetAuthConfig(registryHostname)
 			if err != nil {
-				return nil, fmt.Errorf("Could not get auth config (the credentialhelper did not work or was not found): %v", err)
+				return nil, fmt.Errorf("could not get auth config (the credentialhelper did not work or was not found): %v", err)
 			}
 			authConfig.Username = authFileConfig.Username
 			authConfig.Password = authFileConfig.Password
