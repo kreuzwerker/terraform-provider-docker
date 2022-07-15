@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -16,12 +17,14 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 	"github.com/moby/buildkit/session"
+	"github.com/pkg/errors"
 )
 
 const minBuildkitDockerVersion = "1.39"
@@ -61,7 +64,10 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	imageName := d.Get("name").(string)
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return diag.Errorf("resourceDockerImageRead: error looking up local image %q: %s", imageName, err)
+	}
 	if foundImage == nil {
 		log.Printf("[DEBUG] did not find image with name: %v", imageName)
 		d.SetId("")
@@ -104,20 +110,26 @@ func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 // Helpers
-func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) *types.ImageSummary {
+func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) (*types.ImageSummary, error) {
 	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
 	if err != nil {
-		return nil
+		if errdefs.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("unable to inspect image %s: %w", imageName, err)
 	}
 
-	jsonObj, _ := json.MarshalIndent(imageInspect, "", "\t")
+	jsonObj, err := json.MarshalIndent(imageInspect, "", "\t")
+	if err != nil {
+		return nil, fmt.Errorf("error parsing inspect response: %w", err)
+	}
 	log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
 
 	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
 		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
-		return apiImage
+		return apiImage, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Client) error {
@@ -136,7 +148,10 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 		return fmt.Errorf("empty image name is not allowed")
 	}
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return fmt.Errorf("removeImage: error looking up local image %q: %w", imageName, err)
+	}
 
 	if foundImage != nil {
 		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
@@ -155,7 +170,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) error {
 	images, err := client.ImageList(ctx, types.ImageListOptions{All: false})
 	if err != nil {
-		return fmt.Errorf("unable to list Docker images: %s", err)
+		return fmt.Errorf("unable to list Docker images: %w", err)
 	}
 
 	if data.DockerImages == nil {
@@ -197,14 +212,14 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 
 	encodedJSON, err := json.Marshal(auth)
 	if err != nil {
-		return fmt.Errorf("error creating auth config: %s", err)
+		return fmt.Errorf("error creating auth config: %w", err)
 	}
 
 	out, err := client.ImagePull(ctx, image, types.ImagePullOptions{
 		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
 	})
 	if err != nil {
-		return fmt.Errorf("error pulling image %s: %s", image, err)
+		return fmt.Errorf("error pulling image %s: %w", image, err)
 	}
 	defer out.Close()
 
@@ -270,7 +285,10 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("findImage1: error looking up local image %q: %w", imageName, err)
+	}
 	if foundImage != nil {
 		return foundImage, nil
 	}
@@ -284,7 +302,10 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return nil, err
 	}
 
-	foundImage = searchLocalImages(ctx, client, data, imageName)
+	foundImage, err = searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return nil, fmt.Errorf("findImage2: error looking up local image %q: %w", imageName, err)
+	}
 	if foundImage != nil {
 		return foundImage, nil
 	}
@@ -293,6 +314,10 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 }
 
 func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
+	var (
+		err error
+	)
+
 	buildOptions := types.ImageBuildOptions{}
 
 	buildOptions.Dockerfile = rawBuild["dockerfile"].(string)
@@ -323,11 +348,32 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	buildOptions.Labels = labels
 	log.Printf("[DEBUG] Labels: %v\n", labels)
 
+	enableBuildKitIfSupported(ctx, client, &buildOptions)
+
+	buildCtx, relDockerfile, err := prepareBuildContext(rawBuild["path"].(string), buildOptions.Dockerfile)
+	if err != nil {
+		return err
+	}
+	buildOptions.Dockerfile = relDockerfile
+
+	var response types.ImageBuildResponse
+	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	buildResult, err := decodeBuildMessages(response)
+	if err != nil {
+		return fmt.Errorf("%s\n\n%s", err, buildResult)
+	}
+	return nil
+}
+
+func enableBuildKitIfSupported(ctx context.Context, client *client.Client, buildOptions *types.ImageBuildOptions) {
 	dockerClientVersion := client.ClientVersion()
 	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
-
 	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
-		// docker client supports BuildKit
 		log.Printf("[DEBUG] Enabling BuildKit")
 		s, _ := session.NewSession(ctx, "docker-provider", "")
 		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
@@ -341,28 +387,50 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	} else {
 		buildOptions.Version = types.BuilderV1
 	}
-	contextDir := rawBuild["path"].(string)
-	excludes, err := build.ReadDockerignore(contextDir)
-	if err != nil {
-		return err
-	}
-	excludes = build.TrimBuildFilesFromExcludes(excludes, buildOptions.Dockerfile, false)
-
-	var response types.ImageBuildResponse
-	response, err = client.ImageBuild(ctx, getBuildContext(contextDir, excludes), buildOptions)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	buildResult, err := decodeBuildMessages(response)
-	if err != nil {
-		return fmt.Errorf("%s\n\n%s", err, buildResult)
-	}
-	return nil
 }
 
-func getBuildContext(filePath string, excludes []string) io.Reader {
+func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (io.ReadCloser, string, error) {
+	var (
+		dockerfileCtx io.ReadCloser
+		contextDir    string
+		relDockerfile string
+		err           error
+	)
+	contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, specifiedDockerfile)
+	log.Printf("[DEBUG] contextDir %s", contextDir)
+	log.Printf("[DEBUG] relDockerfile %s", relDockerfile)
+	if err == nil && strings.HasPrefix(relDockerfile, ".."+string(filepath.Separator)) {
+		// Dockerfile is outside of build-context; read the Dockerfile and pass it as dockerfileCtx
+		log.Printf("[DEBUG] Dockerfile is outside of build-context")
+		dockerfileCtx, err = os.Open(specifiedDockerfile)
+		if err != nil {
+			return nil, "", errors.Errorf("unable to open Dockerfile: %v", err)
+		}
+		defer dockerfileCtx.Close()
+	}
+	excludes, err := build.ReadDockerignore(contextDir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	specifiedDockerfile = archive.CanonicalTarNameForPath(specifiedDockerfile)
+	excludes = build.TrimBuildFilesFromExcludes(excludes, specifiedDockerfile, false)
+	log.Printf("[DEBUG] Excludes: %v", excludes)
+	buildCtx := getBuildContext(contextDir, excludes)
+
+	// replace Dockerfile if it was added from stdin or a file outside the build-context, and there is archive context
+	if dockerfileCtx != nil && buildCtx != nil {
+		log.Printf("[DEBUG] Adding dockerfile to build context")
+		buildCtx, relDockerfile, err = build.AddDockerfileToBuildContext(dockerfileCtx, buildCtx)
+		if err != nil {
+			return nil, "", err
+		}
+		return buildCtx, relDockerfile, nil
+	}
+	return buildCtx, specifiedDockerfile, nil
+}
+
+func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	filePath, _ = homedir.Expand(filePath)
 	//TarWithOptions works only with absolute paths in Windows.
 	filePath, err := filepath.Abs(filePath)

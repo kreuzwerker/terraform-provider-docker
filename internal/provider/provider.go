@@ -258,15 +258,15 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			}
 			r, err := os.Open(filePath)
 			if err != nil {
-				continue
+				return nil, fmt.Errorf("Could not open config file from filePath: %s. Error: %v", filePath, err)
 			}
 			c, err := loadConfigFile(r)
 			if err != nil {
-				continue
+				return nil, fmt.Errorf("Could not read and load config file: %v", err)
 			}
 			authFileConfig, err := c.GetAuthConfig(registryHostname)
 			if err != nil {
-				continue
+				return nil, fmt.Errorf("Could not get auth config (the credentialhelper did not work or was not found): %v", err)
 			}
 			authConfig.Username = authFileConfig.Username
 			authConfig.Password = authFileConfig.Password
