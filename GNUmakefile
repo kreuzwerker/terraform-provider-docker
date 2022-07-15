@@ -2,10 +2,27 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 PKG_NAME=internal/provider
 
+# Values to isntall the provider locally for testing purposes
+HOSTNAME=registry.terraform.io
+NAMESPACE=kreuzwerker
+NAME=docker
+BINARY=terraform-provider-${NAME}
+VERSION=9.9.9
+OS_ARCH=darwin_arm64
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
+
 default: build
 
 build: fmtcheck
 	go install
+
+local-build:
+	go build -o ${BINARY}
+
+local-install: local-build
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 setup:
 	go install github.com/katbyte/terrafmt
