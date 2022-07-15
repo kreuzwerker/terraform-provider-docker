@@ -219,8 +219,12 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 		// username/password or the given config file
 		if username, ok := auth.(map[string]interface{})["username"].(string); ok && username != "" {
 			log.Println("[DEBUG] Using username for registry auths:", username)
+			password := auth["password"].(string)
+			if isECRRepositoryURL(registryHostname) {
+				password = normalizeECRPasswordForDockerCLIUsage(password)
+			}
 			authConfig.Username = username
-			authConfig.Password = auth.(map[string]interface{})["password"].(string)
+			authConfig.Password = password
 
 			// Note: check for config_file_content first because config_file has a default which would be used
 			// nevertheless config_file_content is set or not. The default has to be kept to check for the
