@@ -102,10 +102,15 @@ func getImageDigest(registry, image, tag, username, password string, insecureSki
 	}
 
 	if username != "" {
-		if registry != "ghcr.io" {
+		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && registry != "gcr.io" {
 			req.SetBasicAuth(username, password)
 		} else {
-			req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
+			if isECRRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
+			}
 		}
 	}
 
