@@ -44,7 +44,10 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 
 	imageName := d.Get("name").(string)
 
-	foundImage := searchLocalImages(ctx, client, data, imageName)
+	foundImage, err := searchLocalImages(ctx, client, data, imageName)
+	if err != nil {
+		return diag.Errorf("dataSourceDockerImageRead: error looking up local image %q: %s", imageName, err)
+	}
 	if foundImage == nil {
 		return diag.Errorf("did not find docker image '%s'", imageName)
 	}

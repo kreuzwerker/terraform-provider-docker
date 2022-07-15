@@ -92,3 +92,40 @@ website-lint-fix:
 
 .PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
 
+chlog-%:
+	@echo "Generating CHANGELOG.md"
+	git-chglog --next-tag $* -o CHANGELOG.md
+	@echo "Version updated to $*!"
+	@echo
+	@echo "Review the changes made by this script then execute the following:"
+
+
+replace-occurences-%:
+	@echo "Replace occurences of old version strings..."
+	sed -i '' "s/$(shell (svu --strip-prefix current))/$*/g" README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf
+
+release-%:
+	@echo "Review the changes made by this script then execute the following:"
+	@${MAKE} website-generation
+	@echo "Review the changes made by this script then execute the following:"
+	@echo
+	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf && git commit -m 'Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
+	@echo
+	@echo "Finally, push the changes:"
+	@echo
+	@echo "git push; git push origin ${TAG_PREFIX}$*"
+
+patch:
+	@${MAKE} chlog-$(shell (svu patch))
+	@${MAKE} replace-occurences-$(shell (svu --strip-prefix patch))
+	@${MAKE} release-$(shell (svu patch))
+
+minor:
+	@${MAKE} chlog-$(shell (svu minor))
+	@${MAKE} replace-occurences-$(shell (svu --strip-prefix minor))
+	@${MAKE} release-$(shell (svu patch))
+
+major:
+	@${MAKE} chlog-$(shell (svu major))
+	@${MAKE} replace-occurences-$(shell (svu --strip-prefix major))
+	@${MAKE} release-$(shell (svu patch))
