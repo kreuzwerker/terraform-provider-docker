@@ -1,9 +1,23 @@
 
+<a name="v2.19.0"></a>
+## [v2.19.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.18.1...v2.19.0) (2022-07-15)
+
+### Feat
+
+* Add gpu flag to docker_container resource ([#405](https://github.com/kreuzwerker/terraform-provider-docker/issues/405))
+
+### Fix
+
+* Enable authentication to multiple registries again. ([#400](https://github.com/kreuzwerker/terraform-provider-docker/issues/400))
+* ECR authentication ([#409](https://github.com/kreuzwerker/terraform-provider-docker/issues/409))
+
+
 <a name="v2.18.1"></a>
 ## [v2.18.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.18.0...v2.18.1) (2022-07-14)
 
 ### Chore
 
+* Prepare release v2.18.1
 * Automate changelog generation [skip ci]
 
 ### Fix
