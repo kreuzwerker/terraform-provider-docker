@@ -2,7 +2,7 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 PKG_NAME=internal/provider
 
-# Values to isntall the provider locally for testing purposes
+# Values to install the provider locally for testing purposes
 HOSTNAME=registry.terraform.io
 NAMESPACE=kreuzwerker
 NAME=docker
@@ -106,8 +106,6 @@ website-lint-fix:
 	@misspell -w -source=text docs/
 	@docker run --rm -v $(PWD):/markdown 06kellyjac/markdownlint-cli --fix docs/
 	@terrafmt fmt ./docs --pattern '*.md'
-
-.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
 
 chlog-%:
 	@echo "Generating CHANGELOG.md"
