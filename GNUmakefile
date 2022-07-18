@@ -124,7 +124,7 @@ release-%:
 	@${MAKE} website-generation
 	@echo "Review the changes made by this script then execute the following:"
 	@echo
-	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf && git commit -m 'Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
+	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf && git commit -m 'chore: Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
 	@echo
 	@echo "Finally, push the changes:"
 	@echo
@@ -138,9 +138,9 @@ patch:
 minor:
 	@${MAKE} chlog-$(shell (svu minor))
 	@${MAKE} replace-occurences-$(shell (svu --strip-prefix minor))
-	@${MAKE} release-$(shell (svu patch))
+	@${MAKE} release-$(shell (svu minor))
 
 major:
 	@${MAKE} chlog-$(shell (svu major))
 	@${MAKE} replace-occurences-$(shell (svu --strip-prefix major))
-	@${MAKE} release-$(shell (svu patch))
+	@${MAKE} release-$(shell (svu major))
