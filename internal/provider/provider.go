@@ -274,7 +274,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			authConfig.Password = authFileConfig.Password
 		}
 
-		authConfigs.Configs[authConfig.ServerAddress] = authConfig
+		authConfigs.Configs[registryHostname] = authConfig
 	}
 
 	return &authConfigs, nil
