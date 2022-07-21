@@ -49,7 +49,12 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 
 	authConfig, err := getAuthConfigForRegistry(pullOpts.Registry, meta.(*ProviderConfig))
 	if err != nil {
-		return diag.Errorf("dataSourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+		// The user did not provide a credential for this registry.
+		// But there are many registries where you can pull without a credential.
+		// We are setting default values for the authConfig here.
+		authConfig.Username = ""
+		authConfig.Password = ""
+		authConfig.ServerAddress = "https://" + pullOpts.Registry
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
