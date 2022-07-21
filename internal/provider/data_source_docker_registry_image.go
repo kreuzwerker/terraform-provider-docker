@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -47,20 +46,16 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 
 func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	pullOpts := parseImageOptions(d.Get("name").(string))
-	authConfig := meta.(*ProviderConfig).AuthConfigs
 
-	username := ""
-	password := ""
-
-	if auth, ok := authConfig.Configs[normalizeRegistryAddress(pullOpts.Registry)]; ok {
-		username = auth.Username
-		password = auth.Password
+	authConfig, err := getAuthConfigForRegistry(pullOpts.Registry, meta.(*ProviderConfig))
+	if err != nil {
+		return diag.Errorf("dataSourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, false)
+	digest, err := getImageDigest(pullOpts.Registry, authConfig.ServerAddress, pullOpts.Repository, pullOpts.Tag, authConfig.Username, authConfig.Password, insecureSkipVerify, false)
 	if err != nil {
-		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, true)
+		digest, err = getImageDigest(pullOpts.Registry, authConfig.ServerAddress, pullOpts.Repository, pullOpts.Tag, authConfig.Username, authConfig.Password, insecureSkipVerify, true)
 		if err != nil {
 			return diag.Errorf("Got error when attempting to fetch image version %s:%s from registry: %s", pullOpts.Repository, pullOpts.Tag, err)
 		}
@@ -72,12 +67,10 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func getImageDigest(registry, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
-	client := http.DefaultClient
-	// DevSkim: ignore DS440000
-	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+func getImageDigest(registry string, registryWithProtocol string, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
+	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("GET", "https://"+registry+"/v2/"+image+"/manifests/"+tag, nil)
+	req, err := http.NewRequest("GET", registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
 	if err != nil {
 		return "", fmt.Errorf("Error creating registry request: %s", err)
 	}
