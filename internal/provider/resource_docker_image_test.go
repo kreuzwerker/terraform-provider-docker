@@ -391,6 +391,13 @@ func TestParseImageOptions(t *testing.T) {
 			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
 		}
 	})
+	t.Run("Should parse image name with registryPort", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com:8080", Repository: "image", Tag: "tag"}
+		result := parseImageOptions("registry.com:8080/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
 	t.Run("Should parse image name with registry and proper repository", func(t *testing.T) {
 		expected := internalPullImageOptions{Registry: "registry.com", Repository: "repo/image", Tag: "tag"}
 		result := parseImageOptions("registry.com/repo/image:tag")

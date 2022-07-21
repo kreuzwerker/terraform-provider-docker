@@ -197,17 +197,9 @@ func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) er
 func pullImage(ctx context.Context, data *Data, client *client.Client, authConfig *AuthConfigs, image string) error {
 	pullOpts := parseImageOptions(image)
 
-	// If a registry was specified in the image name, try to find auth for it
 	auth := types.AuthConfig{}
-	if pullOpts.Registry != "" {
-		if authConfig, ok := authConfig.Configs[normalizeRegistryAddress(pullOpts.Registry)]; ok {
-			auth = authConfig
-		}
-	} else {
-		// Try to find an auth config for the public docker hub if a registry wasn't given
-		if authConfig, ok := authConfig.Configs["https://registry-1.docker.io"]; ok {
-			auth = authConfig
-		}
+	if authConfig, ok := authConfig.Configs[pullOpts.Registry]; ok {
+		auth = authConfig
 	}
 
 	encodedJSON, err := json.Marshal(auth)
@@ -243,6 +235,9 @@ type internalPullImageOptions struct {
 	Registry string
 }
 
+// Parses an image name into a PullImageOptions struct.
+// If the name has no registry, the registry-1.docker.io is used
+// If the name has no tag, the tag "latest" is used
 func parseImageOptions(image string) internalPullImageOptions {
 	pullOpts := internalPullImageOptions{}
 
