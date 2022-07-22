@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -380,4 +381,42 @@ func testAccImageCreated(resourceName string, image *types.ImageInspect) resourc
 		return nil
 
 	}
+}
+
+func TestParseImageOptions(t *testing.T) {
+	t.Run("Should parse image name with registry", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com", Repository: "image", Tag: "tag"}
+		result := parseImageOptions("registry.com/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image name with registryPort", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com:8080", Repository: "image", Tag: "tag"}
+		result := parseImageOptions("registry.com:8080/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image name with registry and proper repository", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com", Repository: "repo/image", Tag: "tag"}
+		result := parseImageOptions("registry.com/repo/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image with no tag", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com", Repository: "repo/image", Tag: "latest"}
+		result := parseImageOptions("registry.com/repo/image")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image name without registry and default to docker registry", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry-1.docker.io", Repository: "library/image", Tag: "tag"}
+		result := parseImageOptions("image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
 }

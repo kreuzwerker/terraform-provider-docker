@@ -46,13 +46,16 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	if err := pushDockerRegistryImage(ctx, client, pushOpts, username, password); err != nil {
+	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
+	}
+	if err := pushDockerRegistryImage(ctx, client, pushOpts, authConfig.Username, authConfig.Password); err != nil {
 		return diag.Errorf("Error pushing docker image: %s", err)
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigestWithFallback(pushOpts, username, password, insecureSkipVerify)
+	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
 		return diag.Errorf("Unable to create image, image not found: %s", err)
 	}
@@ -65,10 +68,13 @@ func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
+	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigestWithFallback(pushOpts, username, password, insecureSkipVerify)
+	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
 		log.Printf("Got error getting registry image digest: %s", err)
 		d.SetId("")
@@ -85,11 +91,15 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	digest := d.Get("sha256_digest").(string)
-	err := deleteDockerRegistryImage(pushOpts, digest, username, password, true, false)
+	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
 	if err != nil {
-		err = deleteDockerRegistryImage(pushOpts, pushOpts.Tag, username, password, true, true)
+		return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
+	}
+
+	digest := d.Get("sha256_digest").(string)
+	err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
+	if err != nil {
+		err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, pushOpts.Tag, authConfig.Username, authConfig.Password, true, true)
 		if err != nil {
 			return diag.Errorf("Got error deleting registry image: %s", err)
 		}
@@ -446,26 +456,28 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 	return nil
 }
 
-func getDockerRegistryImageRegistryUserNameAndPassword(
-	pushOpts internalPushImageOptions,
-	providerConfig *ProviderConfig) (string, string) {
-	registry := pushOpts.NormalizedRegistry
-	username := ""
-	password := ""
-	if authConfig, ok := providerConfig.AuthConfigs.Configs[registry]; ok {
-		username = authConfig.Username
-		password = authConfig.Password
+func getAuthConfigForRegistry(
+	registryWithoutProtocol string,
+	providerConfig *ProviderConfig) (types.AuthConfig, error) {
+	if authConfig, ok := providerConfig.AuthConfigs.Configs[registryWithoutProtocol]; ok {
+		return authConfig, nil
 	}
-	return username, password
+	return types.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
 }
 
-func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
+func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkipVerify bool) *http.Client {
 	client := http.DefaultClient
 
-	// DevSkim: ignore DS440000
-	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+	if strings.HasPrefix(registryAddressWithProtocol, "https://") {
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+	}
+	return client
+}
 
-	req, err := http.NewRequest("DELETE", pushOpts.NormalizedRegistry+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
+func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithProtocol string, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
+	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
+
+	req, err := http.NewRequest("DELETE", registryWithProtocol+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
 	if err != nil {
 		return fmt.Errorf("Error deleting registry image: %s", err)
 	}
@@ -474,16 +486,7 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 		req.SetBasicAuth(username, password)
 	}
 
-	// We accept schema v2 manifests and manifest lists, and also OCI types
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-
-	if fallback {
-		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
-		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
-	}
+	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -553,10 +556,10 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 	}
 }
 
-func getImageDigestWithFallback(opts internalPushImageOptions, username, password string, insecureSkipVerify bool) (string, error) {
-	digest, err := getImageDigest(opts.Registry, opts.Repository, opts.Tag, username, password, insecureSkipVerify, false)
+func getImageDigestWithFallback(opts internalPushImageOptions, serverAddress string, username, password string, insecureSkipVerify bool) (string, error) {
+	digest, err := getImageDigest(opts.Registry, serverAddress, opts.Repository, opts.Tag, username, password, insecureSkipVerify, false)
 	if err != nil {
-		digest, err = getImageDigest(opts.Registry, opts.Repository, opts.Tag, username, password, insecureSkipVerify, true)
+		digest, err = getImageDigest(opts.Registry, serverAddress, opts.Repository, opts.Tag, username, password, insecureSkipVerify, true)
 		if err != nil {
 			return "", fmt.Errorf("unable to get digest: %s", err)
 		}
@@ -566,11 +569,6 @@ func getImageDigestWithFallback(opts internalPushImageOptions, username, passwor
 
 func createPushImageOptions(image string) internalPushImageOptions {
 	pullOpts := parseImageOptions(image)
-	if pullOpts.Registry == "" {
-		pullOpts.Registry = "registry-1.docker.io"
-	} else {
-		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
-	}
 	pushOpts := internalPushImageOptions{
 		Name:               image,
 		Registry:           pullOpts.Registry,

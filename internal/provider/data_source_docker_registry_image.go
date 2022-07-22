@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -47,39 +46,21 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 
 func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	pullOpts := parseImageOptions(d.Get("name").(string))
-	authConfig := meta.(*ProviderConfig).AuthConfigs
 
-	// Use the official Docker Hub if a registry isn't specified
-	if pullOpts.Registry == "" {
-		pullOpts.Registry = "registry-1.docker.io"
-	} else {
-		// Otherwise, filter the registry name out of the repo name
-		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
-	}
-
-	if pullOpts.Registry == "registry-1.docker.io" {
-		// Docker prefixes 'library' to official images in the path; 'consul' becomes 'library/consul'
-		if !strings.Contains(pullOpts.Repository, "/") {
-			pullOpts.Repository = "library/" + pullOpts.Repository
-		}
-	}
-
-	if pullOpts.Tag == "" {
-		pullOpts.Tag = "latest"
-	}
-
-	username := ""
-	password := ""
-
-	if auth, ok := authConfig.Configs[normalizeRegistryAddress(pullOpts.Registry)]; ok {
-		username = auth.Username
-		password = auth.Password
+	authConfig, err := getAuthConfigForRegistry(pullOpts.Registry, meta.(*ProviderConfig))
+	if err != nil {
+		// The user did not provide a credential for this registry.
+		// But there are many registries where you can pull without a credential.
+		// We are setting default values for the authConfig here.
+		authConfig.Username = ""
+		authConfig.Password = ""
+		authConfig.ServerAddress = "https://" + pullOpts.Registry
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, false)
+	digest, err := getImageDigest(pullOpts.Registry, authConfig.ServerAddress, pullOpts.Repository, pullOpts.Tag, authConfig.Username, authConfig.Password, insecureSkipVerify, false)
 	if err != nil {
-		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, true)
+		digest, err = getImageDigest(pullOpts.Registry, authConfig.ServerAddress, pullOpts.Repository, pullOpts.Tag, authConfig.Username, authConfig.Password, insecureSkipVerify, true)
 		if err != nil {
 			return diag.Errorf("Got error when attempting to fetch image version %s:%s from registry: %s", pullOpts.Repository, pullOpts.Tag, err)
 		}
@@ -91,12 +72,10 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func getImageDigest(registry, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
-	client := http.DefaultClient
-	// DevSkim: ignore DS440000
-	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+func getImageDigest(registry string, registryWithProtocol string, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
+	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("GET", "https://"+registry+"/v2/"+image+"/manifests/"+tag, nil)
+	req, err := http.NewRequest("GET", registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
 	if err != nil {
 		return "", fmt.Errorf("Error creating registry request: %s", err)
 	}
@@ -114,16 +93,7 @@ func getImageDigest(registry, image, tag, username, password string, insecureSki
 		}
 	}
 
-	// We accept schema v2 manifests and manifest lists, and also OCI types
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-
-	if fallback {
-		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
-		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
-	}
+	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {

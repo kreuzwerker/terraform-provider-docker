@@ -620,7 +620,7 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 	// No auth given and image name has no slash like 'alpine:3.1'
 	if lastBin != -1 {
 		serverAddress := image[0:lastBin]
-		if fromRegistryAuth, ok := authConfigs[normalizeRegistryAddress(serverAddress)]; ok {
+		if fromRegistryAuth, ok := authConfigs[serverAddress]; ok {
 			return fromRegistryAuth
 		}
 	}

@@ -81,9 +81,10 @@ provider "docker" {
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
+If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**
-The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+The config file is loaded from the machine `terraform` runs on. This also applies when the specified docker host is on another machine.
 
 ```terraform
 provider "docker" {

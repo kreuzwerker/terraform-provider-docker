@@ -3,6 +3,7 @@ package provider
 import (
 	b64 "encoding/base64"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -34,7 +35,7 @@ func normalizeECRPasswordForDockerCLIUsage(password string) string {
 		if err != nil {
 			log.Fatalf("Error creating registry request: %s", err)
 		}
-		password = string(decodedPassword)
+		return string(decodedPassword)
 	}
 
 	return password[4:]
@@ -47,4 +48,17 @@ func isECRRepositoryURL(url string) bool {
 	// Regexp is based on the ecr urls shown in https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html
 	var ecrRexp = regexp.MustCompile(`^.*?dkr\.ecr\..*?\.amazonaws\.com$`)
 	return ecrRexp.MatchString(url)
+}
+
+func setupHTTPHeadersForRegistryRequests(req *http.Request, fallback bool) {
+	// We accept schema v2 manifests and manifest lists, and also OCI types
+	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
+	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
+
+	if fallback {
+		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
+		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
+	}
 }

@@ -151,7 +151,11 @@ type ProviderConfig struct {
 
 // The registry address can be referenced in various places (registry auth, docker config file, image name)
 // with or without the http(s):// prefix; this function is used to standardize the inputs
+// To support insecure (http) registries, if the address explicitly states "http://" we do not change it.
 func normalizeRegistryAddress(address string) string {
+	if strings.HasPrefix(address, "http://") {
+		return address
+	}
 	if !strings.HasPrefix(address, "https://") && !strings.HasPrefix(address, "http://") {
 		return "https://" + address
 	}

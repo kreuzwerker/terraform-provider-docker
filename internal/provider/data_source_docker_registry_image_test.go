@@ -66,6 +66,27 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 	})
 }
 
+func TestAccDockerRegistryImage_httpAuth(t *testing.T) {
+	registry := "http://127.0.0.1:15001"
+	image := "127.0.0.1:15001/tftest-service:v1"
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceAuthConfig"), registry, image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
+
 func TestGetDigestFromResponse(t *testing.T) {
 	headerContent := "sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
 	respWithHeaders := &http.Response{
