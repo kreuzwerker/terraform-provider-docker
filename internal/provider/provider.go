@@ -181,7 +181,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 
 		authConfigs := &AuthConfigs{}
 
-		if v, ok := d.GetOk("registry_auth"); ok { // TODO load them anyway
+		if v, ok := d.GetOk("registry_auth"); ok {
 			authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
 			if err != nil {
 				return nil, diag.Errorf("Error loading registry auth config: %s", err)

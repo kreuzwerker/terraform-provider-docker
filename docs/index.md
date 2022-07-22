@@ -80,7 +80,7 @@ provider "docker" {
 ## Registry credentials
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
-field, passing either a config file or the username/password directly. 
+field, passing either a config file or the username/password directly.
 If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**
