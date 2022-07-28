@@ -1,6 +1,23 @@
 
+<a name="v2.20.0"></a>
+## [v2.20.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.19.0...v2.20.0) (2022-07-28)
+
+### Chore
+
+* Fix release targets in Makefile.
+
+### Feat
+
+* Implementation of `docker_tag` resource. ([#418](https://github.com/kreuzwerker/terraform-provider-docker/issues/418))
+* Implement support for insecure registries ([#414](https://github.com/kreuzwerker/terraform-provider-docker/issues/414))
+
+
 <a name="v2.19.0"></a>
 ## [v2.19.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.18.1...v2.19.0) (2022-07-15)
+
+### Chore
+
+* Prepare release v2.19.0
 
 ### Feat
 
