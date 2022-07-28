@@ -36,9 +36,10 @@ The configuration would look as follows:
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
+If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**
-The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+The config file is loaded from the machine `terraform` runs on. This also applies when the specified docker host is on another machine.
 
 {{tffile "examples/provider/provider-credentials.tf"}}
 
@@ -46,6 +47,9 @@ The location of the config file is on the machine terraform runs on, nevertheles
 When passing in a config file either the corresponding `auth` string of the repository is read or the os specific
 [credential helpers](https://github.com/docker/docker-credential-helpers#available-programs) are
 used to retrieve the authentication credentials.
+
+-> **Note**
+`config_file` has predence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
 
 You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 

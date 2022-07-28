@@ -25,7 +25,7 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.18.0"
+      version = "2.19.0"
     }
   }
 }
@@ -50,7 +50,7 @@ Terraform 0.12 and earlier:
 
 ```terraform
 provider "docker" {
-  version = "~> 2.18.0"
+  version = "~> 2.19.0"
   host    = "unix:///var/run/docker.sock"
 }
 
@@ -81,9 +81,10 @@ provider "docker" {
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
+If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**
-The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+The config file is loaded from the machine `terraform` runs on. This also applies when the specified docker host is on another machine.
 
 ```terraform
 provider "docker" {
@@ -119,6 +120,9 @@ data "docker_registry_image" "quay" {
 When passing in a config file either the corresponding `auth` string of the repository is read or the os specific
 [credential helpers](https://github.com/docker/docker-credential-helpers#available-programs) are
 used to retrieve the authentication credentials.
+
+-> **Note**
+`config_file` has predence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
 
 You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
@@ -165,7 +169,7 @@ provider "docker" {
 - `cert_path` (String) Path to directory with Docker TLS config
 - `host` (String) The Docker daemon address
 - `key_material` (String) PEM-encoded content of Docker client private key
-- `registry_auth` (Block List, Max: 1) (see [below for nested schema](#nestedblock--registry_auth))
+- `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--registry_auth))
 - `ssh_opts` (List of String) Additional SSH option flags to be appended when using `ssh://` protocol
 
 <a id="nestedblock--registry_auth"></a>
@@ -177,7 +181,7 @@ Required:
 
 Optional:
 
-- `config_file` (String) Path to docker json file for registry auth
-- `config_file_content` (String) Plain content of the docker json file for registry auth
-- `password` (String, Sensitive) Password for the registry
-- `username` (String) Username for the registry
+- `config_file` (String) Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.
+- `config_file_content` (String) Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.
+- `password` (String, Sensitive) Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.
+- `username` (String) Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.

@@ -18,8 +18,8 @@ jobs:
   website-generation:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Get dependencies
@@ -33,8 +33,8 @@ jobs:
   website-lint-spellcheck-tffmt:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - run: docker version
@@ -45,7 +45,7 @@ jobs:
   markdown-lint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: avto-dev/markdown-lint@v1
         with:
           args: 'docs'
