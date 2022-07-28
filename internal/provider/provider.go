@@ -137,6 +137,7 @@ func New(version string) func() *schema.Provider {
 				"docker_secret":         resourceDockerSecret(),
 				"docker_service":        resourceDockerService(),
 				"docker_plugin":         resourceDockerPlugin(),
+				"docker_tag":            resourceDockerTag(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
