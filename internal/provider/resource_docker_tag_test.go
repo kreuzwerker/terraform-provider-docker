@@ -20,9 +20,9 @@ func TestAccDockerTag_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "nginx:1.17.6", "nginx:new_tag"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "nginx:1.17.6@sha256:36b77d8bb27ffca25c7f6f53cadd059aca2747d46fb6ef34064e31727325784e", "nginx:new_tag"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:bfbe0b456268eb8d8cc7b4134ec0111587994831ee2a9d17ba9cacddb800f562"),
+					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:f7bb5701a33c0e572ed06ca554edca1bee96cbbc1f76f3b01c985de7e19d0657"),
 				),
 			},
 		},
@@ -60,15 +60,15 @@ func TestAccDockerTag_source_image_changed(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "nginx:1.17.6", "nginx:new_tag"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "nginx:1.17.6@sha256:36b77d8bb27ffca25c7f6f53cadd059aca2747d46fb6ef34064e31727325784e", "nginx:new_tag"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:bfbe0b456268eb8d8cc7b4134ec0111587994831ee2a9d17ba9cacddb800f562"),
+					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:f7bb5701a33c0e572ed06ca554edca1bee96cbbc1f76f3b01c985de7e19d0657"),
 				),
 			},
 			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "busybox:1.35.0", "nginx:new_tag"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "busybox:1.35.0@sha256:8cde9b8065696b65d7b7ffaefbab0262d47a5a9852bfd849799559d296d2e0cd", "nginx:new_tag"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:4e294bde6038c93e7cf8a9e94ce74f3f759a865a62e88bdc54945d0426e9aea6"),
+					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:d8c0f97fc6a6ac400e43342e67d06222b27cecdb076cbf8a87f3a2a25effe81c"),
 				),
 			},
 		},
