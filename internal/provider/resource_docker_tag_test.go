@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"os/exec"
 	"regexp"
 	"testing"
 
@@ -55,6 +56,9 @@ func TestAccDockerTag_wrong_names(t *testing.T) {
 }
 
 func TestAccDockerTag_source_image_changed(t *testing.T) {
+	if err := exec.Command("docker", "pull", "nginx:1.17.6").Run(); err != nil {
+		t.Fatal(err)
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
