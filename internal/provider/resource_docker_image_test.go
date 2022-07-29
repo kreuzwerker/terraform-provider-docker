@@ -242,17 +242,17 @@ func TestAccDockerImage_name_attr_change(t *testing.T) {
 		PreventPostDestroyRefresh: true,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu@sha256:18305429afa14ea462f810146ba44d4363ae76e4c8dfc38288cf73aa07485005"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:precise@sha256:18305429afa14ea462f810146ba44d4363ae76e4c8dfc38288cf73aa07485005"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_image.ubuntu", "latest", "sha256:5b117edd0b767986092e9f721ba2364951b0a271f53f1f41aff9dd1861c2d4fe"),
-					resource.TestCheckResourceAttr("docker_image.ubuntu", "repo_digest", "ubuntu@sha256:18305429afa14ea462f810146ba44d4363ae76e4c8dfc38288cf73aa07485005"),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
 			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu@sha256:b6b83d3c331794420340093eb706a6f152d9c1fa51b262d9bf34594887c2c7ac"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:jammy@sha256:b6b83d3c331794420340093eb706a6f152d9c1fa51b262d9bf34594887c2c7ac"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_image.ubuntu", "latest", "sha256:a7870fd478f437287beee208fe5579ce43b03fae2821d39f77b350f7da51b1bf"),
-					resource.TestCheckResourceAttr("docker_image.ubuntu", "repo_digest", "ubuntu@sha256:b6b83d3c331794420340093eb706a6f152d9c1fa51b262d9bf34594887c2c7ac"),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
 		},
