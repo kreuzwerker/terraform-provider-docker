@@ -233,6 +233,32 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	})
 }
 
+// Changing the name attribute should also force a change of the dependent docker container
+// This test fails, if we remove the ForceTrue: true from the name attribute
+func TestAccDockerImage_name_attr_change(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                  func() { testAccPreCheck(t) },
+		ProviderFactories:         providerFactories,
+		PreventPostDestroyRefresh: true,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:precise@sha256:18305429afa14ea462f810146ba44d4363ae76e4c8dfc38288cf73aa07485005"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
+				),
+			},
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:jammy@sha256:b6b83d3c331794420340093eb706a6f152d9c1fa51b262d9bf34594887c2c7ac"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerImage_sha265(t *testing.T) {
 	ctx := context.Background()
 	resource.Test(t, resource.TestCase{

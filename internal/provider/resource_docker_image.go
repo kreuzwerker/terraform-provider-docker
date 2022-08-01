@@ -18,6 +18,7 @@ func resourceDockerImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The name of the Docker image, including any tags or SHA256 repo digests.",
 				Required:    true,
+				ForceNew:    true,
 			},
 
 			"latest": {
