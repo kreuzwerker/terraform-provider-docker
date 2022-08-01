@@ -3,12 +3,12 @@
 page_title: "Resource docker_network - terraform-provider-docker"
 subcategory: ""
 description: |-
-  docker_network provides details about a specific Docker Network.
+  docker_network provides a docker network resource.
 ---
 <!-- Bug: Type and Name are switched -->
 # Resource (docker_network)
 
-`docker_network` provides details about a specific Docker Network.
+`docker_network` provides a docker network resource.
 
 ## Example Usage
 

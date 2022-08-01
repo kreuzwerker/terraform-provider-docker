@@ -220,7 +220,7 @@ Required:
 
 Required:
 
-- `name` (String) The name of the network.
+- `name` (String) The name or id of the network to use. You can use `name` or `id` attribute from a `docker_network` resource.
 
 Optional:
 

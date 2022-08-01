@@ -12,7 +12,7 @@ import (
 
 func resourceDockerNetwork() *schema.Resource {
 	return &schema.Resource{
-		Description: "`docker_network` provides details about a specific Docker Network.",
+		Description: "`docker_network` provides a docker network resource.",
 
 		CreateContext: resourceDockerNetworkCreate,
 		ReadContext:   resourceDockerNetworkRead,
