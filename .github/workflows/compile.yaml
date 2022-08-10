@@ -4,12 +4,16 @@ on:
     branches:
       - master
       - "release/**"
+    tags-ignore:
+      - '*'
   pull_request:
     types: ['opened', 'synchronize']
     paths:
       - '**.go'
       - go.mod
       - '.github/workflows/**'
+    paths-ignore:
+      - '**_test.go'
 
 env:
   GOPROXY: https://proxy.golang.org,direct
