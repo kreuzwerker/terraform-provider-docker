@@ -10,9 +10,10 @@ on:
     types: ['opened', 'synchronize']
     paths:
       - '**.go'
-      - '!**_test.go'
       - go.mod
       - '.github/workflows/**'
+    paths-ignore:
+      - '**_test.go'
 
 env:
   GOPROXY: https://proxy.golang.org,direct
