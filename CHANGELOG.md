@@ -1,9 +1,30 @@
 
+<a name="v2.20.1"></a>
+## [v2.20.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.0...v2.20.1) (2022-08-10)
+
+### Chore
+
+* Reduce time to setup AccTests ([#430](https://github.com/kreuzwerker/terraform-provider-docker/issues/430))
+
+### Docs
+
+* Improve docker network usage documentation [skip-ci]
+
+### Feat
+
+* Implement triggers attribute for docker_image. ([#425](https://github.com/kreuzwerker/terraform-provider-docker/issues/425))
+
+### Fix
+
+* Add ForceTrue to docker_image name attribute. ([#421](https://github.com/kreuzwerker/terraform-provider-docker/issues/421))
+
+
 <a name="v2.20.0"></a>
 ## [v2.20.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.19.0...v2.20.0) (2022-07-28)
 
 ### Chore
 
+* Prepare release v2.20.0
 * Fix release targets in Makefile.
 
 ### Feat
