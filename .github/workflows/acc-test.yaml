@@ -51,10 +51,6 @@ jobs:
           bash scripts/gogetcookie.sh
       - name: Setup docker version ${{ env.DOCKER_CE_VERSION }}
         run: |
-          curl https://download.docker.com/linux/static/stable/x86_64/docker-${{ env.DOCKER_VERSION }}.tgz --output docker.tgz
-          tar xzvf docker.tgz
-          sudo cp docker/* /usr/bin/
-          sudo dockerd &
           docker version
       - uses: hashicorp/setup-terraform@v2
         with:
