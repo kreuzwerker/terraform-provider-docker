@@ -1,9 +1,22 @@
 
+<a name="v2.20.2"></a>
+## [v2.20.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.1...v2.20.2) (2022-08-10)
+
+### Fix
+
+* Check the operating system for determining the default Docker socket ([#427](https://github.com/kreuzwerker/terraform-provider-docker/issues/427))
+
+### Reverts
+
+* fix(deps): update module github.com/golangci/golangci-lint to v1.48.0 ([#423](https://github.com/kreuzwerker/terraform-provider-docker/issues/423))
+
+
 <a name="v2.20.1"></a>
 ## [v2.20.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.0...v2.20.1) (2022-08-10)
 
 ### Chore
 
+* Prepare release v2.20.1
 * Reduce time to setup AccTests ([#430](https://github.com/kreuzwerker/terraform-provider-docker/issues/430))
 
 ### Docs
