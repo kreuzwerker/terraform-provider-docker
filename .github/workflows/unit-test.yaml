@@ -27,8 +27,6 @@ jobs:
         run: |
           cat /etc/issue
           bash scripts/gogetcookie.sh
-      - name: Running vet
-        run: make vet
       - name: Running unit tests
         run: make test
 
