@@ -40,6 +40,15 @@ jobs:
         - "TestAccDockerService"
         - "TestAccDockerVolume"
         - "TestAccDockerTag"
+        include:
+          - resource_type: TestAccDockerImage
+            registry: true
+          - resource_type: TestAccDockerContainer
+            registry: true
+          - resource_type: TestAccDockerRegistryImage
+            registry: true
+          - resource_type: TestAccDockerService
+            registry: true
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -58,6 +67,7 @@ jobs:
           terraform_wrapper: false
       - name: Setup acceptance tests
         run: make testacc_setup
+        if: ${{ matrix.registry }}
       - name: Run acceptance tests
         env: 
           TF_LOG: INFO 
@@ -65,3 +75,4 @@ jobs:
         run: go test -v ./internal/provider -timeout ${{ env.TESTSUITE_TIMEOUT }} -run ${{ matrix.resource_type }} 
       - name: Cleanup acceptance tests
         run: make testacc_cleanup
+        if: ${{ matrix.registry }}
