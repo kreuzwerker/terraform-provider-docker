@@ -144,6 +144,12 @@ func resourceDockerImage() *schema.Resource {
 					},
 				},
 			},
+			"triggers": {
+				Description: "A map of arbitrary strings that, when changed, will force the `docker_image` resource to be replaced. This can be used to rebuild an image when contents of source code folders change",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }
