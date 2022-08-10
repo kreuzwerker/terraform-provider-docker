@@ -14,8 +14,6 @@ on:
 env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
-  DOCKER_CE_VERSION: "5:20.10.10~3-0~ubuntu-focal"
-  DOCKER_VERSION: "20.10.10"
   GO_VERSION: "1.17"
   TESTSUITE_TIMEOUT: "720s"
 
@@ -58,7 +56,7 @@ jobs:
         run: |
           cat /etc/issue
           bash scripts/gogetcookie.sh
-      - name: Setup docker version ${{ env.DOCKER_CE_VERSION }}
+      - name: Used docker version
         run: |
           docker version
       - uses: hashicorp/setup-terraform@v2
