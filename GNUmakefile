@@ -10,7 +10,7 @@ BINARY=terraform-provider-${NAME}
 VERSION=9.9.9
 OS_ARCH=darwin_arm64
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck test-compile website-link-check website-lint website-lint-fix
+.PHONY: build test testacc fmt fmtcheck test-compile website-link-check website-lint website-lint-fix
 
 default: build
 
@@ -52,24 +52,11 @@ testacc_cleanup: fmtcheck
 compile: fmtcheck
 	@sh -c "curl -sL https://git.io/goreleaser | bash -s -- --rm-dist --skip-publish --snapshot --skip-sign"
 
-vet:
-	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Vet found suspicious constructs. Please check the reported constructs"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
-
 fmt:
 	gofmt -s -w $(GOFMT_FILES)
 
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
-
-errcheck:
-	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
-
 
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
