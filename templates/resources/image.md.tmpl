@@ -33,4 +33,8 @@ In this case the image "zoo" and "zoo:develop" are built.
 
 {{tffile "examples/resources/docker_image/resource-build.tf"}}
 
+You can use the `triggers` argument to specify when the image should be rebuild. This is for example helpful when you want to rebuild the docker image whenever the source code changes.
+
+{{tffile "examples/resources/docker_image/resource-build-triggers.tf"}}
+
 {{ .SchemaMarkdown | trimspace }}
