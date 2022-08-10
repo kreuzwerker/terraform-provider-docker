@@ -15,6 +15,7 @@ env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
   DOCKER_CE_VERSION: "5:20.10.10~3-0~ubuntu-focal"
+  DOCKER_VERSION: "20.10.10"
   GO_VERSION: "1.17"
   TESTSUITE_TIMEOUT: "720s"
 
@@ -50,14 +51,11 @@ jobs:
           bash scripts/gogetcookie.sh
       - name: Setup docker version ${{ env.DOCKER_CE_VERSION }}
         run: |
-          sudo apt-get update
-          sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-          sudo apt-get update
-          sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
+          curl https://download.docker.com/linux/static/stable/x86_64/docker-${{ env.DOCKER_VERSION }}.tgz --output docker.tgz
+          tar xzvf docker.tgz
+          sudo cp docker/* /usr/bin/
+          sudo dockerd &
           docker version
-          sudo service docker restart
       - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ matrix.terraform_version }}
