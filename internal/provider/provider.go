@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"runtime"
 	"strings"
 
 	"github.com/docker/cli/cli/config/configfile"
@@ -39,9 +40,17 @@ func New(version string) func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
 				"host": {
-					Type:        schema.TypeString,
-					Required:    true,
-					DefaultFunc: schema.EnvDefaultFunc("DOCKER_HOST", "unix:///var/run/docker.sock"),
+					Type:     schema.TypeString,
+					Required: true,
+					DefaultFunc: func() (interface{}, error) {
+						if v := os.Getenv("DOCKER_HOST"); v != "" {
+							return v, nil
+						}
+						if runtime.GOOS == "windows" {
+							return "npipe:////./pipe/docker_engine", nil
+						}
+						return "unix:///var/run/docker.sock", nil
+					},
 					Description: "The Docker daemon address",
 				},
 				"ssh_opts": {
