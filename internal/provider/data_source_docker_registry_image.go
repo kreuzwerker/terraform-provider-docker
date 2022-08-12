@@ -75,7 +75,7 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 func getImageDigest(registry string, registryWithProtocol string, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
 	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("GET", registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
+	req, err := http.NewRequest("HEAD", registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
 	if err != nil {
 		return "", fmt.Errorf("Error creating registry request: %s", err)
 	}
@@ -107,56 +107,37 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
-		if strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
-			auth := parseAuthHeader(resp.Header.Get("www-authenticate"))
-			params := url.Values{}
-			params.Set("service", auth["service"])
-			params.Set("scope", auth["scope"])
-			tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-			if err != nil {
-				return "", fmt.Errorf("Error creating registry request: %s", err)
-			}
-
-			if username != "" {
-				tokenRequest.SetBasicAuth(username, password)
-			}
-
-			tokenResponse, err := client.Do(tokenRequest)
-			if err != nil {
-				return "", fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if tokenResponse.StatusCode != http.StatusOK {
-				return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
-			}
-
-			body, err := ioutil.ReadAll(tokenResponse.Body)
-			if err != nil {
-				return "", fmt.Errorf("Error reading response body: %s", err)
-			}
-
-			token := &TokenResponse{}
-			err = json.Unmarshal(body, token)
-			if err != nil {
-				return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
-			}
-
-			req.Header.Set("Authorization", "Bearer "+token.Token)
-			digestResponse, err := client.Do(req)
-			if err != nil {
-				return "", fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if digestResponse.StatusCode != http.StatusOK {
-				return "", fmt.Errorf("Got bad response from registry: " + digestResponse.Status)
-			}
-
-			return getDigestFromResponse(digestResponse)
+		if !strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
+			return "", fmt.Errorf("Bad credentials: " + resp.Status)
 		}
 
-		return "", fmt.Errorf("Bad credentials: " + resp.Status)
+		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		if err != nil {
+			return "", err
+		}
 
-		// Some unexpected status was given, return an error
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		digestResponse, err := doDigestRequest(req, client)
+		if err != nil {
+			return "", err
+		}
+
+		digest, err := getDigestFromResponse(digestResponse)
+		if err == nil {
+			return digest, nil
+		}
+
+		req.Method = "GET"
+		digestResponse, err = doDigestRequest(req, client)
+
+		if err != nil {
+			return "", err
+		}
+
+		return getDigestFromResponse(digestResponse)
+
+	// Some unexpected status was given, return an error
 	default:
 		return "", fmt.Errorf("Got bad response from registry: " + resp.Status)
 	}
@@ -187,7 +168,7 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 
 	if header == "" {
 		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
+		if err != nil || len(body) == 0 {
 			return "", fmt.Errorf("Error reading registry response body: %s", err)
 		}
 
@@ -195,4 +176,54 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 	}
 
 	return header, nil
+}
+
+func getAuthToken(authHeader string, username string, password string, client *http.Client) (string, error) {
+	auth := parseAuthHeader(authHeader)
+	params := url.Values{}
+	params.Set("service", auth["service"])
+	params.Set("scope", auth["scope"])
+	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
+	if err != nil {
+		return "", fmt.Errorf("Error creating registry request: %s", err)
+	}
+
+	if username != "" {
+		tokenRequest.SetBasicAuth(username, password)
+	}
+
+	tokenResponse, err := client.Do(tokenRequest)
+	if err != nil {
+		return "", fmt.Errorf("Error during registry request: %s", err)
+	}
+
+	if tokenResponse.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
+	}
+
+	body, err := ioutil.ReadAll(tokenResponse.Body)
+	if err != nil {
+		return "", fmt.Errorf("Error reading response body: %s", err)
+	}
+
+	token := &TokenResponse{}
+	err = json.Unmarshal(body, token)
+	if err != nil {
+		return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
+	}
+
+	return token.Token, nil
+}
+
+func doDigestRequest(req *http.Request, client *http.Client) (*http.Response, error) {
+	digestResponse, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error during registry request: %s", err)
+	}
+
+	if digestResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Got bad response from registry: " + digestResponse.Status)
+	}
+
+	return digestResponse, nil
 }
