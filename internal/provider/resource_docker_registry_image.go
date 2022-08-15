@@ -332,6 +332,13 @@ func resourceDockerRegistryImage() *schema.Resource {
 				},
 			},
 
+			"triggers": {
+				Description: "A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to rebuild an image when contents of source code folders change or to repush a local image",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+			},
+
 			"sha256_digest": {
 				Type:        schema.TypeString,
 				Description: "The sha256 digest of the image.",
