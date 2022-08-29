@@ -118,6 +118,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 
 		req.Header.Set("Authorization", "Bearer "+token)
 
+		// Do a HEAD request to docker registry first (avoiding Docker Hub rate limiting)
 		digestResponse, err := doDigestRequest(req, client)
 		if err != nil {
 			return "", err
@@ -128,6 +129,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 			return digest, nil
 		}
 
+		// If previous HEAD request does not contain required info, do a GET request
 		req.Method = "GET"
 		digestResponse, err = doDigestRequest(req, client)
 
