@@ -146,7 +146,7 @@ func validateDockerContainerPath() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		value := v.(string)
 		var diags diag.Diagnostics
-		if !regexp.MustCompile(`^[a-zA-Z]:\\|^/`).MatchString(value) {
+		if !regexp.MustCompile(`^[a-zA-Z]:[\\/]|^/`).MatchString(value) {
 			diag := diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("'%v' must be an absolute path", value),
