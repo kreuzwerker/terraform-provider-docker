@@ -1,6 +1,19 @@
 
+<a name="v2.20.3"></a>
+## [v2.20.3](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.2...v2.20.3) (2022-08-29)
+
+### Fix
+
+* Docker Registry Image data source use HEAD request to query image digest ([#433](https://github.com/kreuzwerker/terraform-provider-docker/issues/433))
+* Adding Support for Windows Paths in Bash ([#438](https://github.com/kreuzwerker/terraform-provider-docker/issues/438))
+
+
 <a name="v2.20.2"></a>
 ## [v2.20.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.1...v2.20.2) (2022-08-10)
+
+### Chore
+
+* Prepare release v2.20.2
 
 ### Fix
 
