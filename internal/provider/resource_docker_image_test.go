@@ -389,16 +389,10 @@ func testAccImageCreated(resourceName string, image *types.ImageInspect) resourc
 			return fmt.Errorf("No ID is set")
 		}
 
-		name := rs.Primary.Attributes["name"]
-		// TODO mavogel: it's because we set the ID in the format:
-		// d.SetId(foundImage.ID + d.Get("name").(string))
-		// so we need to strip away the name
-		strippedID := strings.Replace(rs.Primary.ID, name, "", -1)
-
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		inspectedImage, _, err := client.ImageInspectWithRaw(ctx, strippedID)
+		inspectedImage, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("Image with ID '%s': %w", strippedID, err)
+			return fmt.Errorf("Image with ID '%s': %w", rs.Primary.ID, err)
 		}
 
 		// we set the value to the pointer to be able to use the value

@@ -48,7 +48,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
 
-	d.SetId(apiImage.ID + d.Get("name").(string))
+	d.SetId(apiImage.ID)
 	return resourceDockerImageRead(ctx, d, meta)
 }
 
@@ -76,8 +76,7 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	repoDigest := determineRepoDigest(imageName, foundImage)
 
-	// TODO mavogel: remove the appended name from the ID
-	d.SetId(foundImage.ID + d.Get("name").(string))
+	d.SetId(foundImage.ID)
 	d.Set("latest", foundImage.ID)
 	d.Set("repo_digest", repoDigest)
 	return nil
