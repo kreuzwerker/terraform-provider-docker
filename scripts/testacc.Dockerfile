@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ARG DOCKER_CE_VERSION="5:20.10.10~3-0~ubuntu-focal"
-ARG GOLANG_VERSION="1.17"
+ARG GOLANG_VERSION="1.18"
 ARG TERRAFORM_VERSION="0.15.2"
 
 # Install the baseline
