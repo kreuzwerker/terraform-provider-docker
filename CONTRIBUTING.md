@@ -25,7 +25,7 @@ Please use issue templates as much as possible.
 Prerequisites:
 
 - `make`, `git`, `bash`
-- [Go 1.16+](https://golang.org/doc/install)
+- [Go 1.18+](https://golang.org/doc/install)
 - [Docker](https://www.docker.com/)
 - [Terraform 0.12+](https://terraform.io/)
 - [git-chglog](https://github.com/git-chglog/git-chglog)

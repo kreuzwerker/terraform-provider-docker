@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine as builder
+FROM golang:1.18-alpine as builder
 ARG MAIN_FILE_PATH
 
 RUN echo "appuser:x:65534:65534:Appuser:/:" > /etc/passwd
