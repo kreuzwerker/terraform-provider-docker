@@ -94,7 +94,8 @@ resource "docker_image" "zoo" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) Unique identifier for this resource. This is not the image ID, but the ID of the resource in the Terraform state. This is used to identify the resource in the Terraform state. To reference the correct image ID, use the `image_id` attribute.
+- `image_id` (String) The ID of the image (as seen when executing `docker inspect` on the image). Can be used to reference the image via its ID in other resources.
 - `latest` (String, Deprecated) The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.
 - `output` (String, Deprecated)
 - `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.

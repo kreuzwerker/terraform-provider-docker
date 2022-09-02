@@ -14,6 +14,11 @@ func resourceDockerImage() *schema.Resource {
 		DeleteContext: resourceDockerImageDelete,
 
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Unique identifier for this resource. This is not the image ID, but the ID of the resource in the Terraform state. This is used to identify the resource in the Terraform state. To reference the correct image ID, use the `image_id` attribute.",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name of the Docker image, including any tags or SHA256 repo digests.",
@@ -26,6 +31,12 @@ func resourceDockerImage() *schema.Resource {
 				Description: "The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.",
 				Computed:    true,
 				Deprecated:  "Use repo_digest instead",
+			},
+
+			"image_id": {
+				Type:        schema.TypeString,
+				Description: "The ID of the image (as seen when executing `docker inspect` on the image). Can be used to reference the image via its ID in other resources.",
+				Computed:    true,
 			},
 
 			"repo_digest": {
