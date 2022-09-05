@@ -1,6 +1,29 @@
 
+<a name="v2.21.0"></a>
+## [v2.21.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.3...v2.21.0) (2022-09-05)
+
+### Docs
+
+* Fix docker config example.
+
+### Feat
+
+* Add image_id attribute to docker_image resource. ([#450](https://github.com/kreuzwerker/terraform-provider-docker/issues/450))
+* Update used goversion to 1.18. ([#449](https://github.com/kreuzwerker/terraform-provider-docker/issues/449))
+
+### Fix
+
+* Replace deprecated .latest attribute with new image_id. ([#453](https://github.com/kreuzwerker/terraform-provider-docker/issues/453))
+* Remove reading part of docker_tag resource. ([#448](https://github.com/kreuzwerker/terraform-provider-docker/issues/448))
+* Fix repo_digest value for DockerImageDatasource test.
+
+
 <a name="v2.20.3"></a>
-## [v2.20.3](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.2...v2.20.3) (2022-08-29)
+## [v2.20.3](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.2...v2.20.3) (2022-08-31)
+
+### Chore
+
+* Prepare release v2.20.3
 
 ### Fix
 
