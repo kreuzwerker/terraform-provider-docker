@@ -1,7 +1,7 @@
 # Start a container
 resource "docker_container" "ubuntu" {
   name  = "foo"
-  image = docker_image.ubuntu.latest
+  image = docker_image.ubuntu.image_id
 }
 
 # Find the latest Ubuntu precise image.
