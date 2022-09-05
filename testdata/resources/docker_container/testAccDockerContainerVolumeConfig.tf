@@ -8,7 +8,7 @@ resource "docker_volume" "foo" {
 
 resource "docker_container" "foo" {
   name  = "tf-test"
-  image = docker_image.foo.latest
+  image = docker_image.foo.image_id
 
   volumes {
     volume_name    = docker_volume.foo.name
