@@ -30,15 +30,5 @@ func resourceDockerTagDelete(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceDockerTagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
-	sourceImage := d.Get("source_image").(string)
-	targetImage := d.Get("target_image").(string)
-
-	imageInspect, _, err := client.ImageInspectWithRaw(ctx, sourceImage)
-	if err != nil {
-		return diag.Errorf("failed to ImageInspectWithRaw: %s", err)
-	}
-	d.Set("source_image_id", imageInspect.ID)
-	d.SetId(sourceImage + "." + targetImage)
 	return nil
 }
