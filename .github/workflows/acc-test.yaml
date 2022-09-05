@@ -14,7 +14,7 @@ on:
 env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
-  GO_VERSION: "1.17"
+  GO_VERSION: "1.18"
   TESTSUITE_TIMEOUT: "720s"
 
 jobs:

@@ -16,11 +16,9 @@ resource "docker_config" "service_config" {
 
 resource "docker_service" "service" {
   # ... other attributes omitted for brevity
-  configs = [
-    {
-      config_id   = docker_config.service_config.id
-      config_name = docker_config.service_config.name
-      file_name   = "/root/configs/configs.json"
-    },
-  ]
+  configs {
+    config_id   = docker_config.service_config.id
+    config_name = docker_config.service_config.name
+    file_name   = "/root/configs/configs.json"
+  }
 }
