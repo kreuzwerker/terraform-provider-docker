@@ -146,7 +146,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 }
 
 type TokenResponse struct {
-	Token string
+	Token       string
 	AccessToken string `json:"access_token"`
 }
 

@@ -13,10 +13,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//////////////
+// ////////////
 // flatteners
 // flatten API objects to the terraform schema
-//////////////
+// ////////////
 // see https://learn.hashicorp.com/tutorials/terraform/provider-create?in=terraform/providers#add-flattening-functions
 func flattenTaskSpec(in swarm.TaskSpec) []interface{} {
 	m := make(map[string]interface{})
@@ -110,7 +110,7 @@ func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
 	return out
 }
 
-///// start TaskSpec
+// /// start TaskSpec
 func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
@@ -525,8 +525,8 @@ func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 	return out
 }
 
-///// end TaskSpec
-///// start EndpointSpec
+// /// end TaskSpec
+// /// start EndpointSpec
 func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 	out := make([]interface{}, len(in))
 	for i, v := range in {
@@ -543,10 +543,10 @@ func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 
 ///// end EndpointSpec
 
-//////////////
+// ////////////
 // Mappers
 // create API object from the terraform resource schema
-//////////////
+// ////////////
 // createServiceSpec creates the service spec: https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
 	serviceSpec := swarm.ServiceSpec{
