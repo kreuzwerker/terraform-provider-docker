@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	containerReadRefreshTimeout             = 15 * time.Second
+	// containerReadRefreshTimeout             = 15 * time.Second
 	containerReadRefreshWaitBeforeRefreshes = 100 * time.Millisecond
 	containerReadRefreshDelay               = 100 * time.Millisecond
 )
@@ -560,6 +560,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	containerReadRefreshTimeout := d.Get("container_read_refresh_timeout").(int)
 	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeout)
 	client := meta.(*ProviderConfig).DockerClient
 
@@ -577,7 +578,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		Pending:    []string{"pending"},
 		Target:     []string{"running"},
 		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
-		Timeout:    containerReadRefreshTimeout,
+		Timeout:    time.Duration(containerReadRefreshTimeout) * time.Second,
 		MinTimeout: containerReadRefreshWaitBeforeRefreshes,
 		Delay:      containerReadRefreshDelay,
 	}

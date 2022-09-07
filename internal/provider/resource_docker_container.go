@@ -926,6 +926,13 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
+			"container_read_refresh_timeout": {
+				Type:        schema.TypeInt,
+				Description: "The total number of seconds to wait for the container to reach status 'running'",
+				Optional:    true,
+				Default:     15,
+			},
+
 			"sysctls": {
 				Type:        schema.TypeMap,
 				Description: "A map of kernel parameters (sysctls) to set in the container.",
