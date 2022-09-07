@@ -926,11 +926,11 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
-			"container_read_refresh_timeout": {
+			"container_read_refresh_timeout_milliseconds": {
 				Type:        schema.TypeInt,
 				Description: "The total number of seconds to wait for the container to reach status 'running'",
 				Optional:    true,
-				Default:     15,
+				Default:     15000,
 			},
 
 			"sysctls": {
