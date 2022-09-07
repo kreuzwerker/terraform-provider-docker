@@ -29,7 +29,6 @@ import (
 )
 
 const (
-	// containerReadRefreshTimeout             = 15 * time.Second
 	containerReadRefreshWaitBeforeRefreshes = 100 * time.Millisecond
 	containerReadRefreshDelay               = 100 * time.Millisecond
 )
