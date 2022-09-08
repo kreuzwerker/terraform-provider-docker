@@ -930,7 +930,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "The total number of milliseconds to wait for the container to reach status 'running'",
 				Optional:    true,
-				Default:     15000,
+				Default:     containerReadRefreshTimeoutMillisecondsDefault,
 			},
 
 			"sysctls": {
