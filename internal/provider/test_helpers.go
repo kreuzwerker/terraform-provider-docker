@@ -38,7 +38,6 @@ const (
 // As a convention the test configurations are in
 // 'testdata/<resourceType>/<resourceName>/<testName>.tf', e.g.
 // 'testdata/resources/docker_container/testAccDockerContainerPrivateImage.tf'
-//
 func loadTestConfiguration(t *testing.T, resourceType resourceType, resourceName, testName string) string {
 	wd, err := os.Getwd()
 	if err != nil {
