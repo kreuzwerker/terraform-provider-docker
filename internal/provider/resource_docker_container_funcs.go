@@ -561,7 +561,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	containerReadRefreshTimeoutMilliseconds := d.Get("container_read_refresh_timeout_milliseconds").(int)
-	// Ensure the timeout can ever be 0, the default integer value.
+	// Ensure the timeout can never be 0, the default integer value.
 	// This also ensures imported resources will get the default of 15 seconds
 	if containerReadRefreshTimeoutMilliseconds == 0 {
 		containerReadRefreshTimeoutMilliseconds = containerReadRefreshTimeoutMillisecondsDefault
