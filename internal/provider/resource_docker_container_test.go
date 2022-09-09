@@ -820,7 +820,6 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	})
 }
 
-//
 func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 	var c types.ContainerJSON
 	var firstRunId string
@@ -1608,9 +1607,9 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 	})
 }
 
-///////////
+// /////////
 // HELPERS
-///////////
+// /////////
 func testAccContainerRunning(resourceName string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()

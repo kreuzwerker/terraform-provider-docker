@@ -50,6 +50,12 @@ func isECRRepositoryURL(url string) bool {
 	return ecrRexp.MatchString(url)
 }
 
+func isAzureCRRepositoryURL(url string) bool {
+	// Regexp is based on the azurecr urls shown https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal?tabs=azure-cli#push-image-to-registry
+	var azurecrRexp = regexp.MustCompile(`^.*\.azurecr\.io$`)
+	return azurecrRexp.MatchString(url)
+}
+
 func setupHTTPHeadersForRegistryRequests(req *http.Request, fallback bool) {
 	// We accept schema v2 manifests and manifest lists, and also OCI types
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
