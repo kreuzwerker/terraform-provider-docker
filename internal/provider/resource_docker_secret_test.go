@@ -136,9 +136,9 @@ func TestAccDockerSecret_labels(t *testing.T) {
 	})
 }
 
-/////////////
+// ///////////
 // Helpers
-/////////////
+// ///////////
 func testCheckDockerSecretDestroy(ctx context.Context, s *terraform.State) error {
 	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 	for _, rs := range s.RootModule().Resources {

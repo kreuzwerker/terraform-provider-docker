@@ -81,7 +81,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 	}
 
 	if username != "" {
-		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && registry != "gcr.io" {
+		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
 			req.SetBasicAuth(username, password)
 		} else {
 			if isECRRepositoryURL(registry) {
@@ -146,7 +146,8 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 }
 
 type TokenResponse struct {
-	Token string
+	Token       string
+	AccessToken string `json:"access_token"`
 }
 
 // Parses key/value pairs from a WWW-Authenticate header
@@ -214,7 +215,15 @@ func getAuthToken(authHeader string, username string, password string, client *h
 		return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
 	}
 
-	return token.Token, nil
+	if token.Token != "" {
+		return token.Token, nil
+	}
+
+	if token.AccessToken != "" {
+		return token.AccessToken, nil
+	}
+
+	return "", fmt.Errorf("Error unsupported OAuth response")
 }
 
 func doDigestRequest(req *http.Request, client *http.Client) (*http.Response, error) {

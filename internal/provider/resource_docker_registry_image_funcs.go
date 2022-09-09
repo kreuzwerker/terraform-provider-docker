@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -483,7 +482,16 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 	}
 
 	if username != "" {
-		req.SetBasicAuth(username, password)
+		if pushOpts.Registry != "ghcr.io" && !isECRRepositoryURL(pushOpts.Registry) && !isAzureCRRepositoryURL(pushOpts.Registry) && pushOpts.Registry != "gcr.io" {
+			req.SetBasicAuth(username, password)
+		} else {
+			if isECRRepositoryURL(pushOpts.Registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+base64.StdEncoding.EncodeToString([]byte(password)))
+			}
+		}
 	}
 
 	setupHTTPHeadersForRegistryRequests(req, fallback)
@@ -500,56 +508,26 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
-		if strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
-			auth := parseAuthHeader(resp.Header.Get("www-authenticate"))
-			params := url.Values{}
-			params.Set("service", auth["service"])
-			params.Set("scope", auth["scope"])
-			tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-			if err != nil {
-				return fmt.Errorf("Error creating registry request: %s", err)
-			}
-
-			if username != "" {
-				tokenRequest.SetBasicAuth(username, password)
-			}
-
-			tokenResponse, err := client.Do(tokenRequest)
-			if err != nil {
-				return fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if tokenResponse.StatusCode != http.StatusOK {
-				return fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
-			}
-
-			body, err := ioutil.ReadAll(tokenResponse.Body)
-			if err != nil {
-				return fmt.Errorf("Error reading response body: %s", err)
-			}
-
-			token := &TokenResponse{}
-			err = json.Unmarshal(body, token)
-			if err != nil {
-				return fmt.Errorf("Error parsing OAuth token response: %s", err)
-			}
-
-			req.Header.Set("Authorization", "Bearer "+token.Token)
-			oauthResp, err := client.Do(req)
-			if err != nil {
-				return err
-			}
-			switch oauthResp.StatusCode {
-			case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
-				return nil
-			default:
-				return fmt.Errorf("Got bad response from registry: " + resp.Status)
-			}
-
+		if !strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
+			return fmt.Errorf("Bad credentials: " + resp.Status)
 		}
 
-		return fmt.Errorf("Bad credentials: " + resp.Status)
+		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		if err != nil {
+			return err
+		}
 
+		req.Header.Set("Authorization", "Bearer "+token)
+		oauthResp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		switch oauthResp.StatusCode {
+		case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
+			return nil
+		default:
+			return fmt.Errorf("Got bad response from registry: " + resp.Status)
+		}
 		// Some unexpected status was given, return an error
 	default:
 		return fmt.Errorf("Got bad response from registry: " + resp.Status)
