@@ -1,6 +1,22 @@
 
+<a name="v2.22.0"></a>
+## [v2.22.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.21.0...v2.22.0) (2022-09-13)
+
+### Feat
+
+* Configurable timeout for docker_container resource stateChangeConf ([#454](https://github.com/kreuzwerker/terraform-provider-docker/issues/454))
+
+### Fix
+
+* oauth authorization support for azurecr ([#451](https://github.com/kreuzwerker/terraform-provider-docker/issues/451))
+
+
 <a name="v2.21.0"></a>
 ## [v2.21.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.3...v2.21.0) (2022-09-05)
+
+### Chore
+
+* Prepare release v2.21.0
 
 ### Docs
 
