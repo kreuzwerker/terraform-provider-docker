@@ -35,7 +35,7 @@ func main() {
 	opts := &plugin.ServeOpts{ProviderFunc: provider.New(version)}
 
 	if debugMode {
-		debugOpts := &plugin.ServeOpts{ProviderFunc: provider.New(version), ProviderAddr: "registry.terraform.io/kreuzwerker/terraform-provider-docker", Debug: true}
+		debugOpts := &plugin.ServeOpts{ProviderFunc: provider.New(version), ProviderAddr: "registry.terraform.io/kreuzwerker/docker", Debug: true}
 		plugin.Serve(debugOpts)
 		return
 	}
