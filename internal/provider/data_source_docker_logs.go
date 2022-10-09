@@ -32,6 +32,12 @@ func dataSourceDockerLogs() *schema.Resource {
 				Optional:    true,
 				Description: "If true populate computed value `logs_list_string`",
 			},
+			"discard_headers": {
+				Type:        schema.TypeBool,
+				Default:     true,
+				Optional:    true,
+				Description: "Discard headers that docker append to each log entry",
+			},
 			"show_stdout": {
 				Type:     schema.TypeBool,
 				Default:  true,
@@ -97,13 +103,24 @@ func dataSourceDockerLogsRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	defer readCloser.Close()
 
+	// see https://github.com/moby/moby/issues/7375#issuecomment-51462963
+	discard := d.Get("discard_headers").(bool)
+
 	// read string lines
 	if d.Get("logs_list_string_enabled").(bool) {
 		lines := make([]string, 0)
 		scanner := bufio.NewScanner(readCloser)
+
+		// scan each line
 		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
+			line := scanner.Text()
+			if discard {
+				line = line[8:]
+			}
+			lines = append(lines, line)
 		}
+
+		// set string lines
 		if err := d.Set("logs_list_string", lines); err != nil {
 			return diag.FromErr(err)
 		}
