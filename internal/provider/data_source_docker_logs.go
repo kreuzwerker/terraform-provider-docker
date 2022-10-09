@@ -21,9 +21,10 @@ func dataSourceDockerLogs() *schema.Resource {
 				Required:    true,
 			},
 			"logs_list_string": {
-				Type:     schema.TypeList,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Computed: true,
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "List of container logs, each element is a line.",
 			},
 			"logs_list_string_enabled": {
 				Type:        schema.TypeBool,
