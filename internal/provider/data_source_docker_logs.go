@@ -36,7 +36,7 @@ func dataSourceDockerLogs() *schema.Resource {
 				Type:        schema.TypeBool,
 				Default:     true,
 				Optional:    true,
-				Description: "Discard headers that docker append to each log entry",
+				Description: "Discard headers that docker appends to each log entry",
 			},
 			"show_stdout": {
 				Type:     schema.TypeBool,
