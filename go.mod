@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.21.0
 	github.com/katbyte/terrafmt v0.5.2
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/moby/buildkit v0.10.4
+	github.com/moby/buildkit v0.10.5
 	github.com/pkg/errors v0.9.1
 )
 
