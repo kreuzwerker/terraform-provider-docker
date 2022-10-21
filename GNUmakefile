@@ -2,6 +2,8 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 PKG_NAME=internal/provider
 
+GOLANGCI_VERSION = 1.49.0
+
 # Values to install the provider locally for testing purposes
 HOSTNAME=registry.terraform.io
 NAMESPACE=kreuzwerker
@@ -32,8 +34,17 @@ setup:
 	&& curl --fail -o .git/hooks/commit-msg https://raw.githubusercontent.com/hazcod/semantic-commit-hook/master/commit-msg \
 	&& chmod 500 .git/hooks/commit-msg
 
-golangci-lint:
-	@golangci-lint run ./...
+
+bin/golangci-lint: bin/golangci-lint-${GOLANGCI_VERSION}
+	@ln -sf golangci-lint-${GOLANGCI_VERSION} bin/golangci-lint
+
+bin/golangci-lint-${GOLANGCI_VERSION}:
+	@mkdir -p bin
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | BINARY=golangci-lint bash -s -- v${GOLANGCI_VERSION}
+	@mv bin/golangci-lint $@
+
+golangci-lint: bin/golangci-lint
+	@bin/golangci-lint run ./...
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
