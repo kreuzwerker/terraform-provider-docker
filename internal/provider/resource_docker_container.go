@@ -64,6 +64,20 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 			},
 
+			"wait": {
+				Type:        schema.TypeBool,
+				Description: "If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.",
+				Default:     false,
+				Optional:    true,
+			},
+
+			"wait_timeout": {
+				Type:        schema.TypeInt,
+				Description: "The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.",
+				Default:     60,
+				Optional:    true,
+			},
+
 			"attach": {
 				Type:        schema.TypeBool,
 				Description: "If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.",
