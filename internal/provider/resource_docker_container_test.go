@@ -89,6 +89,8 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"restart",
 					"rm",
 					"start",
+					"wait",
+					"wait_timeout",
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
@@ -132,6 +134,8 @@ func TestAccDockerContainer_init(t *testing.T) {
 					"restart",
 					"rm",
 					"start",
+					"wait",
+					"wait_timeout",
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
@@ -962,12 +966,12 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 					name         = "nginx:latest"
 					keep_locally = true
 				}
-				
+
 				resource "docker_container" "foo" {
 					name     = "tf-test"
 					image    = docker_image.foo.image_id
 					must_run = "false"
-				
+
 					upload {
 						content        = "foobar"
 						content_base64 = base64encode("barbaz")
@@ -993,12 +997,12 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 					name         = "nginx:latest"
 					keep_locally = true
 				}
-				
+
 				resource "docker_container" "foo" {
 					name     = "tf-test"
 					image    = docker_image.foo.image_id
 					must_run = "false"
-				
+
 					upload {
 						file           = "/terraform/test1.txt"
 						executable     = true

@@ -39,6 +39,7 @@ var (
 	errContainerFailedToBeDeleted        = errors.New("container failed to be deleted")
 	errContainerExitedImmediately        = errors.New("container exited immediately")
 	errContainerFailedToBeInRunningState = errors.New("container failed to be in running state")
+	errContainerFailedToBeInHealthyState = errors.New("container failed to be in healthy state")
 )
 
 // NOTE mavogel: we keep this global var for tracking
@@ -505,6 +506,39 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		options := types.ContainerStartOptions{}
 		if err := client.ContainerStart(ctx, retContainer.ID, options); err != nil {
 			return diag.Errorf("Unable to start container: %s", err)
+		}
+
+		if d.Get("wait").(bool) {
+			waitForHealthyState := func(result chan<- error) {
+				for {
+					infos, err := client.ContainerInspect(ctx, retContainer.ID)
+					if err != nil {
+						result <- fmt.Errorf("error inspecting container state: %s", err)
+					}
+					if infos.State.Health.Status == types.Healthy {
+						log.Printf("[DEBUG] container state is healthy")
+						break
+					}
+					log.Printf("[DEBUG] waiting for container healthy state")
+					time.Sleep(time.Second)
+				}
+				result <- nil
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(d.Get("wait_timeout").(int))*time.Second)
+			defer cancel()
+			result := make(chan error, 1)
+			go waitForHealthyState(result)
+			select {
+			case <-ctx.Done():
+				log.Printf("[ERROR] Container %s failed to be in healthy state in time", retContainer.ID)
+				return diag.FromErr(errContainerFailedToBeInHealthyState)
+
+			case err := <-result:
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
 		}
 	}
 

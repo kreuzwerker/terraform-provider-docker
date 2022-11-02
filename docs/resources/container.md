@@ -94,6 +94,8 @@ resource "docker_image" "ubuntu" {
 - `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
+- `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.
+- `wait_timeout` (Number) The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.
 - `working_dir` (String) The working directory for commands to run in.
 
 ### Read-Only
