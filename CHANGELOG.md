@@ -1,6 +1,25 @@
 
+<a name="v2.23.0"></a>
+## [v2.23.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.22.0...v2.23.0) (2022-11-02)
+
+### Feat
+
+* wait container healthy state ([#467](https://github.com/kreuzwerker/terraform-provider-docker/issues/467))
+* add docker logs data source ([#471](https://github.com/kreuzwerker/terraform-provider-docker/issues/471))
+
+### Fix
+
+* Update shasum of busybox:1.35.0 tag in test.
+* Update shasum of busybox:1.35.0 tag
+* Correct provider name to match the public registry ([#462](https://github.com/kreuzwerker/terraform-provider-docker/issues/462))
+
+
 <a name="v2.22.0"></a>
-## [v2.22.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.21.0...v2.22.0) (2022-09-13)
+## [v2.22.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.21.0...v2.22.0) (2022-09-20)
+
+### Chore
+
+* Prepare release v2.22.0
 
 ### Feat
 
