@@ -158,9 +158,12 @@ func parseAuthHeader(header string) map[string]string {
 
 	for _, part := range parts {
 		vals := strings.SplitN(part, "=", 2)
-		key := vals[0]
-		val := strings.Trim(vals[1], "\", ")
-		opts[key] = val
+
+		if len(vals) == 2 {
+			key := vals[0]
+			val := strings.Trim(vals[1], "\", ")
+			opts[key] = val
+		}
 	}
 
 	return opts
