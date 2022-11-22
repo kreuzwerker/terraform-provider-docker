@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -153,7 +154,7 @@ type TokenResponse struct {
 // Parses key/value pairs from a WWW-Authenticate header
 func parseAuthHeader(header string) map[string]string {
 	parts := strings.SplitN(header, " ", 2)
-	parts = strings.Split(parts[1], ",")
+	parts = regexp.MustCompile(`\w+\=\".*?\"|\w+[^\s\"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
 	opts := make(map[string]string)
 
 	for _, part := range parts {
