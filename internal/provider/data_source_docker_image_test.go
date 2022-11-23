@@ -32,7 +32,7 @@ func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_image", "testAccDockerImageDataSourceWithSpecificTag"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
-					resource.TestCheckResourceAttr("data.docker_image.foo", "repo_digest", "busybox@sha256:e732c9503025a01d747450b09955f8b96211902fe6ea65b28535a546dedbe82d"),
+					resource.TestCheckResourceAttr("data.docker_image.foo", "repo_digest", "busybox@sha256:ec6dc15985db1ffc5dc2b341c7bb2337cc4b54692213b41bb5647b584ebc5f6c"),
 				),
 			},
 		},
