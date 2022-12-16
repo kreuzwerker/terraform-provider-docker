@@ -1,6 +1,20 @@
 
+<a name="v2.23.1"></a>
+## [v2.23.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.0...v2.23.1) (2022-11-23)
+
+### Fix
+
+* Update shasum of busybox:1.35.0 tag in test.
+* Handle Auth Header Scopes ([#482](https://github.com/kreuzwerker/terraform-provider-docker/issues/482))
+* Set OS_ARCH from GOHOSTOS and GOHOSTARCH ([#477](https://github.com/kreuzwerker/terraform-provider-docker/issues/477))
+
+
 <a name="v2.23.0"></a>
 ## [v2.23.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.22.0...v2.23.0) (2022-11-02)
+
+### Chore
+
+* Prepare release v2.23.0
 
 ### Feat
 

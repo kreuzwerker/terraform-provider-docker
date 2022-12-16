@@ -10,7 +10,7 @@ NAMESPACE=kreuzwerker
 NAME=docker
 BINARY=terraform-provider-${NAME}
 VERSION=9.9.9
-OS_ARCH=darwin_arm64
+OS_ARCH=$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 
 .PHONY: build test testacc fmt fmtcheck test-compile website-link-check website-lint website-lint-fix
 

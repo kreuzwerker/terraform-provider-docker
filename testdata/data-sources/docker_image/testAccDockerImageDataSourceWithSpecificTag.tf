@@ -1,3 +1,3 @@
 data "docker_image" "foo" {
-  name = "busybox:1.35.0"
+  name = "busybox:1.34.0"
 }
