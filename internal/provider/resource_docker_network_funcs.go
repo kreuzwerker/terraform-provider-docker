@@ -61,6 +61,10 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 		ipamOpts.Config = ipamConfigSetToIpamConfigs(v.(*schema.Set))
 		ipamOptsSet = true
 	}
+	if v, ok := d.GetOk("ipam_options"); ok {
+		ipamOpts.Options = mapTypeMapValsToString(v.(map[string]interface{}))
+		ipamOptsSet = true
+	}
 
 	if ipamOptsSet {
 		createOpts.IPAM = ipamOpts
