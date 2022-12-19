@@ -49,6 +49,7 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
 	}
+	log.Printf("TEST")
 	if err := pushDockerRegistryImage(ctx, client, pushOpts, authConfig.Username, authConfig.Password); err != nil {
 		return diag.Errorf("Error pushing docker image: %s", err)
 	}
@@ -418,17 +419,20 @@ func getDockerImageContextTarHash(dockerContextTarPath string) (string, error) {
 
 func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpts internalPushImageOptions, username string, password string) error {
 	pushOptions := types.ImagePushOptions{}
+    // start with a dummy because no-auth requires *something*
+	auth := types.AuthConfig{Username: "yourname", Password: "pasword"}
 	if username != "" {
-		auth := types.AuthConfig{Username: username, Password: password}
-		authBytes, err := json.Marshal(auth)
-		if err != nil {
-			return fmt.Errorf("Error creating push options: %s", err)
-		}
-		authBase64 := base64.URLEncoding.EncodeToString(authBytes)
-		pushOptions.RegistryAuth = authBase64
+		auth = types.AuthConfig{Username: username, Password: password}
 	}
+	authBytes, err := json.Marshal(auth)
+	if err != nil {
+		return fmt.Errorf("Error creating push options: %s", err)
+	}
+	authBase64 := base64.URLEncoding.EncodeToString(authBytes)
+	pushOptions.RegistryAuth = authBase64
 
 	out, err := client.ImagePush(ctx, pushOpts.FqName, pushOptions)
+	log.Printf("Got past image push")
 	if err != nil {
 		return err
 	}
