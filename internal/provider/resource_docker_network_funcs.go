@@ -170,6 +170,7 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 		d.Set("ingress", retNetwork.Ingress)
 		d.Set("ipv6", retNetwork.EnableIPv6)
 		d.Set("ipam_driver", retNetwork.IPAM.Driver)
+		d.Set("ipam_options", retNetwork.IPAM.Options)
 		d.Set("scope", retNetwork.Scope)
 		if retNetwork.Scope == "overlay" {
 			if retNetwork.Options != nil && len(retNetwork.Options) != 0 {
