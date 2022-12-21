@@ -98,7 +98,7 @@ func resourceDockerNetwork() *schema.Resource {
 			},
 			"ipam_options": {
 				Type:        schema.TypeMap,
-				Description: "Only available with bridge networks. See [bridge options docs](https://docs.docker.com/engine/reference/commandline/network_create/#bridge-driver-options) for more details.",
+				Description: "Provide explicit options to the IPAM driver. Valid options vary with `ipam_driver` and refer to that driver's documentation for more details.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
