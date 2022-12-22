@@ -74,6 +74,22 @@ func TestAccDockerProvider_WithMultipleRegistryAuth(t *testing.T) {
 	})
 }
 
+func TestAccDockerProvider_WithDisabledRegistryAuth(t *testing.T) {
+	pushOptions := createPushImageOptions("http://127.0.0.1:15002/tftest-dockerregistryimage-testtest:1.0")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "provider", "testAccDockerProviderDisabledRegistryAuth"), pushOptions.NormalizedRegistry),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.docker_registry_image.foobar", "sha256_digest"),
+				),
+			},
+		},
+	})
+}
+
 func testAccPreCheck(t *testing.T) {
 	cmd := exec.Command("docker", "version")
 	if err := cmd.Run(); err != nil {
