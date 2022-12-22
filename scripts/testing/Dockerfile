@@ -4,7 +4,7 @@ ARG MAIN_FILE_PATH
 RUN echo "appuser:x:65534:65534:Appuser:/:" > /etc/passwd
 WORKDIR /build
 COPY $MAIN_FILE_PATH main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o server main.go
+RUN HOME=/root CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o server main.go
 
 FROM alpine
 

@@ -75,18 +75,18 @@ func TestAccDockerProvider_WithMultipleRegistryAuth(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	cmd := exec.Command("docker", "version")
+	cmd := exec.Command("podman", "version")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Docker must be available: %s", err)
 	}
 
-	cmd = exec.Command("docker", "node", "ls")
-	if err := cmd.Run(); err != nil {
-		cmd = exec.Command("docker", "swarm", "init")
-		if err := cmd.Run(); err != nil {
-			t.Fatalf("Docker swarm could not be initialized: %s", err)
-		}
-	}
+	// cmd = exec.Command("docker", "node", "ls")
+	// if err := cmd.Run(); err != nil {
+	// 	cmd = exec.Command("docker", "swarm", "init")
+	// 	if err := cmd.Run(); err != nil {
+	// 		t.Fatalf("Docker swarm could not be initialized: %s", err)
+	// 	}
+	// }
 
 	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
 	if err != nil {

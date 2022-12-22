@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
+
+shopt -s expand_aliases
+alias docker="podman"
   
 for p in $(docker container ls -f 'name=private_registry' -q); do docker stop $p; done
 echo "### stopped private registry ###"
