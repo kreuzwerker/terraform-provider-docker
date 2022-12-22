@@ -131,6 +131,12 @@ func New(version string) func() *schema.Provider {
 								Optional:    true,
 								Description: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
 							},
+							"auth_disabled": {
+								Type:        schema.TypeBool,
+								Optional:    true,
+								Default:     false,
+								Description: "Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.",
+							},
 						},
 					},
 				},
@@ -226,11 +232,22 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 		authConfig.ServerAddress = normalizeRegistryAddress(address)
 		registryHostname := convertToHostname(authConfig.ServerAddress)
 
+		username, ok := auth.(map[string]interface{})["username"].(string)
+		password := auth.(map[string]interface{})["password"].(string)
+
+		// If auth is disabled, set the auth config to any user/password combination
+		// See https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information
+		if auth.(map[string]interface{})["auth_disabled"].(bool) {
+			log.Printf("[DEBUG] Auth disabled for registry %s", registryHostname)
+			username = "username"
+			password = "password"
+		}
+
 		// For each registry_auth block, generate an AuthConfiguration using either
 		// username/password or the given config file
-		if username, ok := auth.(map[string]interface{})["username"].(string); ok && username != "" {
+		if ok && username != "" {
 			log.Println("[DEBUG] Using username for registry auths:", username)
-			password := auth.(map[string]interface{})["password"].(string)
+
 			if isECRRepositoryURL(registryHostname) {
 				password = normalizeECRPasswordForDockerCLIUsage(password)
 			}
