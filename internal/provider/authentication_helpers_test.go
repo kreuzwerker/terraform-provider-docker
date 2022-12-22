@@ -1,6 +1,8 @@
 package provider
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestIsECRRepositoryURL(t *testing.T) {
 
@@ -15,5 +17,21 @@ func TestIsECRRepositoryURL(t *testing.T) {
 	}
 	if !isECRRepositoryURL("public.ecr.aws") {
 		t.Fatalf("Expected true")
+	}
+}
+
+func TestParseAuthHeaders(t *testing.T) {
+	header := "Bearer realm=\"https://gcr.io/v2/token\",service=\"gcr.io\",scope=\"repository:<owner>/:<repo>/<name>:pull\""
+	result := parseAuthHeader(header)
+	wantScope := "repository:<owner>/:<repo>/<name>:pull"
+	if result["scope"] != wantScope {
+		t.Errorf("want: %#v, got: %#v", wantScope, result["scope"])
+	}
+
+	header = "Bearer realm=\"https://gcr.io/v2/token\",service=\"gcr.io\",scope=\"repository:<owner>/:<repo>/<name>:push,pull\""
+	result = parseAuthHeader(header)
+	wantScope = "repository:<owner>/:<repo>/<name>:push,pull"
+	if result["scope"] != wantScope {
+		t.Errorf("want: %#v, got: %#v", wantScope, result["scope"])
 	}
 }
