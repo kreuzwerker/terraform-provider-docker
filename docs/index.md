@@ -66,7 +66,7 @@ resource "docker_container" "foo" {
 }
 ```
 
--> **Note**
+## Remote Hosts
 You can also use the `ssh` protocol to connect to the docker host on a remote machine.
 The configuration would look as follows:
 
@@ -76,6 +76,8 @@ provider "docker" {
   ssh_opts = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
 }
 ```
+
+When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
 
 ## Registry credentials
 
