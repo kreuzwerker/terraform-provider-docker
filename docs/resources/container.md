@@ -37,6 +37,7 @@ resource "docker_image" "ubuntu" {
 
 - `attach` (Boolean) If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.
 - `capabilities` (Block Set, Max: 1) Add or drop certrain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
+- `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
 - `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.con"]`.
 - `container_read_refresh_timeout_milliseconds` (Number) The total number of milliseconds to wait for the container to reach status 'running'
 - `cpu_set` (String) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
