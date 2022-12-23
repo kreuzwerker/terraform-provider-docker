@@ -378,6 +378,7 @@ Optional:
 - `secrets` (Block Set) References to zero or more secrets that will be exposed to the service (see [below for nested schema](#nestedblock--task_spec--container_spec--secrets))
 - `stop_grace_period` (String) Amount of time to wait for the container to terminate before forcefully removing it (ms|s|m|h). If not specified or '0s' the destroy will not check if all tasks/containers of the service terminate.
 - `stop_signal` (String) Signal to stop the container
+- `sysctl` (Map of String) Sysctls config (Linux only)
 - `user` (String) The user inside the container
 
 <a id="nestedblock--task_spec--container_spec--configs"></a>
