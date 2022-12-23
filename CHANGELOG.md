@@ -1,6 +1,34 @@
 
+<a name="v2.24.0"></a>
+## [v2.24.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.1...v2.24.0) (2022-12-23)
+
+### Docs
+
+* Fix generated website.
+* Update command typo ([#487](https://github.com/kreuzwerker/terraform-provider-docker/issues/487))
+
+### Feat
+
+* cgroupns support ([#497](https://github.com/kreuzwerker/terraform-provider-docker/issues/497))
+* Add triggers attribute to docker_registry_image ([#496](https://github.com/kreuzwerker/terraform-provider-docker/issues/496))
+* Support registries with disabled auth ([#494](https://github.com/kreuzwerker/terraform-provider-docker/issues/494))
+* add IPAM options block for docker networks ([#491](https://github.com/kreuzwerker/terraform-provider-docker/issues/491))
+
+### Fix
+
+* Pin data source specific tag test to older tag.
+
+### Tests
+
+* Add test for parsing auth headers.
+
+
 <a name="v2.23.1"></a>
 ## [v2.23.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.0...v2.23.1) (2022-11-23)
+
+### Chore
+
+* Prepare release v2.23.1
 
 ### Fix
 
