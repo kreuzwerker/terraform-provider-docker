@@ -1000,6 +1000,12 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"cgroupns_mode": {
+				Type:        schema.TypeString,
+				Description: "Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.",
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }
