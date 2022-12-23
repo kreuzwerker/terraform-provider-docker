@@ -362,6 +362,19 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
+	if v, ok := d.GetOk("cgroupns_mode"); ok {
+		if client.ClientVersion() >= "1.41" {
+			cgroupnsMode := container.CgroupnsMode(v.(string))
+			if !cgroupnsMode.Valid() {
+				return diag.Errorf("cgroupns_mode: invalid CGROUP mode, must be either 'private', 'host' or empty")
+			} else {
+				hostConfig.CgroupnsMode = cgroupnsMode
+			}
+		} else {
+			log.Printf("[WARN] cgroupns_mode requires docker version 1.41 or higher")
+		}
+	}
+
 	init := d.Get("init").(bool)
 	hostConfig.Init = &init
 
