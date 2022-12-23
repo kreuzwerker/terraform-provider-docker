@@ -499,6 +499,12 @@ func resourceDockerService() *schema.Resource {
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(default|process|hyperv)$`),
 									},
+									"sysctl": {
+										Type:        schema.TypeMap,
+										Description: "Sysctls config (Linux only)",
+										Optional:    true,
+										ForceNew:    true,
+									},
 								},
 							},
 						},

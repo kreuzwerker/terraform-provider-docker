@@ -174,6 +174,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Isolation) > 0 {
 		m["isolation"] = string(in.Isolation)
 	}
+	if len(in.Sysctls) > 0 {
+		m["sysctl"] = in.Sysctls
+	}
 	out = append(out, m)
 	return out
 }
@@ -924,6 +927,9 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 			}
 			if value, ok := rawContainerSpec["isolation"]; ok {
 				containerSpec.Isolation = container.Isolation(value.(string))
+			}
+			if value, ok := rawContainerSpec["sysctl"]; ok {
+				containerSpec.Sysctls = mapTypeMapValsToString(value.(map[string]interface{}))
 			}
 		}
 	}
