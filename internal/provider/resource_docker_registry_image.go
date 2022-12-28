@@ -8,7 +8,7 @@ import (
 
 func resourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the lifecycle of docker image/tag in a registry.",
+		Description: "Manages the lifecycle of docker image/tag in a registry means it can store one or more version of specific docker images and identified by their tags.",
 
 		CreateContext: resourceDockerRegistryImageCreate,
 		ReadContext:   resourceDockerRegistryImageRead,
@@ -192,7 +192,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"auth_config": {
 							Type:        schema.TypeList,
-							Description: "The configuration for the autentication",
+							Description: "The configuration for the authentication",
 							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -241,7 +241,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"context": {
 							Type:        schema.TypeString,
-							Description: "The path to the context folder",
+							Description: "The absolute path to the context folder. You can use the helper function '${path.cwd}/context-dir'.",
 							Required:    true,
 							ForceNew:    true,
 							StateFunc: func(val interface{}) string {
@@ -318,18 +318,25 @@ func resourceDockerRegistryImage() *schema.Resource {
 						},
 						"version": {
 							Type:        schema.TypeString,
-							Description: "Version of the unerlying builder to use",
+							Description: "Version of the underlying builder to use",
 							Optional:    true,
 							ForceNew:    true,
 						},
 						"build_id": {
 							Type:        schema.TypeString,
-							Description: "BuildID is an optional identifier that can be passed together with the build request. The ",
+							Description: "BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.",
 							Optional:    true,
 							ForceNew:    true,
 						},
 					},
 				},
+			},
+
+			"triggers": {
+				Description: "A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to rebuild an image when contents of source code folders change or to repush a local image",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"sha256_digest": {

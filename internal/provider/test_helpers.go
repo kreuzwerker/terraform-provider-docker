@@ -38,18 +38,17 @@ const (
 // As a convention the test configurations are in
 // 'testdata/<resourceType>/<resourceName>/<testName>.tf', e.g.
 // 'testdata/resources/docker_container/testAccDockerContainerPrivateImage.tf'
-//
 func loadTestConfiguration(t *testing.T, resourceType resourceType, resourceName, testName string) string {
 	wd, err := os.Getwd()
 	if err != nil {
-		t.Errorf("failed to get current working directory: %w", err)
+		t.Errorf("failed to get current working directory: %v", err)
 	}
 
 	testConfig := strings.ReplaceAll(filepath.Join(wd, "..", "..", TEST_CONFIG_BASE_DIR, resourceType.String(), resourceName, fmt.Sprintf("%s.tf", testName)), "\\", "\\\\")
 
 	testConfigContent, err := ioutil.ReadFile(testConfig)
 	if err != nil {
-		t.Errorf("failed to read test configuration at '%s': %w", testConfig, err)
+		t.Errorf("failed to read test configuration at '%s': %v", testConfig, err)
 	}
 
 	return string(testConfigContent)

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/terraform-providers/terraform-provider-docker/internal/provider"
@@ -37,10 +35,8 @@ func main() {
 	opts := &plugin.ServeOpts{ProviderFunc: provider.New(version)}
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "registry.terraform.io/kreuzwerker/terraform-provider-docker", opts)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		debugOpts := &plugin.ServeOpts{ProviderFunc: provider.New(version), ProviderAddr: "registry.terraform.io/kreuzwerker/docker", Debug: true}
+		plugin.Serve(debugOpts)
 		return
 	}
 

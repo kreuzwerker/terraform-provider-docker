@@ -269,13 +269,16 @@ func getDockerContainerMounts(container types.ContainerJSON) []map[string]interf
 					"volume": v,
 				})
 			}
+			opt := map[string]interface{}{
+				"no_copy": mount.VolumeOptions.NoCopy,
+				"labels":  labels,
+			}
+			if mount.VolumeOptions.DriverConfig != nil {
+				opt["driver_name"] = mount.VolumeOptions.DriverConfig.Name
+				opt["driver_options"] = mount.VolumeOptions.DriverConfig.Options
+			}
 			m["volume_options"] = []map[string]interface{}{
-				{
-					"no_copy":        mount.VolumeOptions.NoCopy,
-					"labels":         labels,
-					"driver_name":    mount.VolumeOptions.DriverConfig.Name,
-					"driver_options": mount.VolumeOptions.DriverConfig.Options,
-				},
+				opt,
 			}
 		}
 		if mount.TmpfsOptions != nil {

@@ -19,7 +19,7 @@ var imageNameWithTagAndDigestRegexp = regexp.MustCompile(`^.*:.*@sha256:[A-Fa-f0
 
 func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 	ctx := context.Background()
-	imageName := "nginx:1.17.6"
+	imageName := "busybox:1.34.0"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -32,7 +32,7 @@ func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_image", "testAccDockerImageDataSourceWithSpecificTag"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
-					resource.TestCheckResourceAttr("data.docker_image.foo", "repo_digest", "nginx@sha256:b2d89d0a210398b4d1120b3e3a7672c16a4ba09c2c4a0395f18b9f7999b768f2"),
+					resource.TestCheckResourceAttr("data.docker_image.foo", "repo_digest", "busybox@sha256:e8e5cca392e3cf056fcdb3093e7ac2bf83fcf28b3bcf5818fe8ae71cf360c231"),
 				),
 			},
 		},
@@ -44,7 +44,7 @@ func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 
 func TestAccDockerImageDataSource_withDefaultTag(t *testing.T) {
 	ctx := context.Background()
-	imageName := "nginx"
+	imageName := "busybox"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -69,7 +69,7 @@ func TestAccDockerImageDataSource_withDefaultTag(t *testing.T) {
 
 func TestAccDockerImageDataSource_withSha256Digest(t *testing.T) {
 	ctx := context.Background()
-	imageName := "nginx@sha256:36b74457bccb56fbf8b05f79c85569501b721d4db813b684391d63e02287c0b2"
+	imageName := "busybox@sha256:8c40df61d40166f5791f44b3d90b77b4c7f59ed39a992fd9046886d3126ffa68"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -93,7 +93,7 @@ func TestAccDockerImageDataSource_withSha256Digest(t *testing.T) {
 }
 func TestAccDockerImageDataSource_withTagAndSha256Digest(t *testing.T) {
 	ctx := context.Background()
-	imageName := "nginx:1.19.1@sha256:36b74457bccb56fbf8b05f79c85569501b721d4db813b684391d63e02287c0b2"
+	imageName := "busybox:1.35.0@sha256:8c40df61d40166f5791f44b3d90b77b4c7f59ed39a992fd9046886d3126ffa68"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -140,7 +140,7 @@ func TestAccDockerImageDataSource_withNonExistentImage(t *testing.T) {
 			{
 				Config: `
 				data "docker_image" "foo" {
-					name = "nginx@shaDoesNotExist"
+					name = "nginx@sha256:3614ca5eacf0a3a1bcc361c939202a974b4902b9334ff36eb29ffe9011aaad83"
 				}
 				`,
 				ExpectError: regexp.MustCompile(`.*did not find docker image.*`),
@@ -148,7 +148,7 @@ func TestAccDockerImageDataSource_withNonExistentImage(t *testing.T) {
 			{
 				Config: `
 				data "docker_image" "foo" {
-					name = "nginx:1.19.1@shaDoesNotExist"
+					name = "nginx:1.19.1@sha256:3614ca5eacf0a3a1bcc361c939202a974b4902b9334ff36eb29ffe9011aaad83"
 				}
 				`,
 				ExpectError: regexp.MustCompile(`.*did not find docker image.*`),

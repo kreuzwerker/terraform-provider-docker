@@ -44,7 +44,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"rm": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the container will be automatically removed after his execution. Terraform won't check this container after creation. Defaults to `false`.",
+				Description: "If `true`, then the container will be automatically removed when it exits. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
@@ -61,6 +61,20 @@ func resourceDockerContainer() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "If `true`, then the Docker container will be started after creation. If `false`, then the container is only created. Defaults to `true`.",
 				Default:     true,
+				Optional:    true,
+			},
+
+			"wait": {
+				Type:        schema.TypeBool,
+				Description: "If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.",
+				Default:     false,
+				Optional:    true,
+			},
+
+			"wait_timeout": {
+				Type:        schema.TypeInt,
+				Description: "The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.",
+				Default:     60,
 				Optional:    true,
 			},
 
@@ -139,7 +153,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"command": {
 				Type:        schema.TypeList,
-				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-\",\"baz.con\"]`.",
+				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.con\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -273,6 +287,27 @@ func resourceDockerContainer() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
+			},
+			"runtime": {
+				Type:        schema.TypeString,
+				Description: "Runtime to use for the container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"stop_signal": {
+				Type:        schema.TypeString,
+				Description: "Signal to stop a container (default `SIGTERM`).",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"stop_timeout": {
+				Type:        schema.TypeInt,
+				Description: "Timeout (in seconds) to stop a container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
 			},
 			"mounts": {
 				Type:        schema.TypeSet,
@@ -708,8 +743,8 @@ func resourceDockerContainer() *schema.Resource {
 
 			"log_driver": {
 				Type:        schema.TypeString,
-				Description: "The logging driver to use for the container. Defaults to `json-file`.",
-				Default:     "json-file",
+				Description: "The logging driver to use for the container.",
+				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
 			},
@@ -767,7 +802,7 @@ func resourceDockerContainer() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:        schema.TypeString,
-							Description: "The name of the network.",
+							Description: "The name or id of the network to use. You can use `name` or `id` attribute from a `docker_network` resource.",
 							Required:    true,
 							ForceNew:    true,
 						},
@@ -905,6 +940,13 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
+			"container_read_refresh_timeout_milliseconds": {
+				Type:        schema.TypeInt,
+				Description: "The total number of milliseconds to wait for the container to reach status 'running'",
+				Optional:    true,
+				Default:     containerReadRefreshTimeoutMillisecondsDefault,
+			},
+
 			"sysctls": {
 				Type:        schema.TypeMap,
 				Description: "A map of kernel parameters (sysctls) to set in the container.",
@@ -943,6 +985,24 @@ func resourceDockerContainer() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "If `true`, keep STDIN open even if not attached (`docker run -i`). Defaults to `false`.",
 				Default:     false,
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"storage_opts": {
+				Type:        schema.TypeMap,
+				Description: "Key/value pairs for the storage driver options, e.g. `size`: `120G`",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"gpus": {
+				Type:        schema.TypeString,
+				Description: "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"cgroupns_mode": {
+				Type:        schema.TypeString,
+				Description: "Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.",
 				Optional:    true,
 				ForceNew:    true,
 			},

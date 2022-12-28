@@ -4,6 +4,6 @@ resource "docker_image" "fooinit" {
 
 resource "docker_container" "fooinit" {
   name  = "tf-test"
-  image = docker_image.fooinit.latest
+  image = docker_image.fooinit.image_id
   init  = true
 }

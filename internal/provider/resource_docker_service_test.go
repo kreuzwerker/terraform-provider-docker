@@ -228,40 +228,52 @@ func TestMigrateServiceLabelState_with_labels(t *testing.T) {
 
 func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
 	authConfigs := make(map[string]types.AuthConfig)
-	authConfigs["https://repo.my-company.com:8787"] = types.AuthConfig{
+	authConfigs["repo.my-company.com:8787"] = types.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
-		ServerAddress: "repo.my-company.com:8787",
+		ServerAddress: "https://repo.my-company.com:8787",
 	}
 
 	foundAuthConfig := fromRegistryAuth("repo.my-company.com:8787/my_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass")
 	checkAttribute(t, "Email", foundAuthConfig.Email, "")
-	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "repo.my-company.com:8787")
+	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "https://repo.my-company.com:8787")
 }
 
 func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
 	authConfigs := make(map[string]types.AuthConfig)
-	authConfigs["https://repo.my-company.com:8787"] = types.AuthConfig{
+	authConfigs["repo.my-company.com:8787"] = types.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
-		ServerAddress: "repo.my-company.com:8787",
+		ServerAddress: "https://repo.my-company.com:8787",
 	}
-	authConfigs["https://nexus.my-fancy-company.com"] = types.AuthConfig{
+	authConfigs["nexus.my-fancy-company.com"] = types.AuthConfig{
 		Username:      "myuser33",
 		Password:      "mypass123",
 		Email:         "test@example.com",
-		ServerAddress: "nexus.my-fancy-company.com",
+		ServerAddress: "https://nexus.my-fancy-company.com",
+	}
+	authConfigs["http-nexus.my-fancy-company.com"] = types.AuthConfig{
+		Username:      "myuser33",
+		Password:      "mypass123",
+		Email:         "test@example.com",
+		ServerAddress: "http://http-nexus.my-fancy-company.com",
 	}
 
 	foundAuthConfig := fromRegistryAuth("nexus.my-fancy-company.com/the_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser33")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass123")
 	checkAttribute(t, "Email", foundAuthConfig.Email, "test@example.com")
-	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "nexus.my-fancy-company.com")
+	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "https://nexus.my-fancy-company.com")
+
+	foundAuthConfig = fromRegistryAuth("http-nexus.my-fancy-company.com/the_image", authConfigs)
+	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser33")
+	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass123")
+	checkAttribute(t, "Email", foundAuthConfig.Email, "test@example.com")
+	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "http://http-nexus.my-fancy-company.com")
 
 	foundAuthConfig = fromRegistryAuth("alpine:3.1", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "")

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -28,9 +29,9 @@ import (
 )
 
 const (
-	containerReadRefreshTimeout             = 15 * time.Second
-	containerReadRefreshWaitBeforeRefreshes = 100 * time.Millisecond
-	containerReadRefreshDelay               = 100 * time.Millisecond
+	containerReadRefreshTimeoutMillisecondsDefault = 15000
+	containerReadRefreshWaitBeforeRefreshes        = 100 * time.Millisecond
+	containerReadRefreshDelay                      = 100 * time.Millisecond
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	errContainerFailedToBeDeleted        = errors.New("container failed to be deleted")
 	errContainerExitedImmediately        = errors.New("container exited immediately")
 	errContainerFailedToBeInRunningState = errors.New("container failed to be in running state")
+	errContainerFailedToBeInHealthyState = errors.New("container failed to be in healthy state")
 )
 
 // NOTE mavogel: we keep this global var for tracking
@@ -49,17 +51,24 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*ProviderConfig).DockerClient
 	authConfigs := meta.(*ProviderConfig).AuthConfigs
 	image := d.Get("image").(string)
-	_, err = findImage(ctx, image, client, authConfigs)
+	_, err = findImage(ctx, image, client, authConfigs, "")
 	if err != nil {
 		return diag.Errorf("Unable to create container with image %s: %s", image, err)
 	}
+	var stopTimeout *int
+	if v, ok := d.GetOk("stop_timeout"); ok {
+		tmp := v.(int)
+		stopTimeout = &tmp
+	}
 
 	config := &container.Config{
-		Image:      image,
-		Hostname:   d.Get("hostname").(string),
-		Domainname: d.Get("domainname").(string),
-		Tty:        d.Get("tty").(bool),
-		OpenStdin:  d.Get("stdin_open").(bool),
+		Image:       image,
+		Hostname:    d.Get("hostname").(string),
+		Domainname:  d.Get("domainname").(string),
+		Tty:         d.Get("tty").(bool),
+		OpenStdin:   d.Get("stdin_open").(bool),
+		StopSignal:  d.Get("stop_signal").(string),
+		StopTimeout: stopTimeout,
 	}
 
 	if v, ok := d.GetOk("env"); ok {
@@ -229,6 +238,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
+		Runtime:        d.Get("runtime").(string),
 		Mounts:         mounts,
 		AutoRemove:     d.Get("rm").(bool),
 		ReadonlyRootfs: d.Get("read_only").(bool),
@@ -339,9 +349,38 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("group_add"); ok {
 		hostConfig.GroupAdd = stringSetToStringSlice(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("gpus"); ok {
+		if client.ClientVersion() >= "1.40" {
+			var gpu opts.GpuOpts
+			err := gpu.Set(v.(string))
+			if err != nil {
+				return diag.Errorf("Error setting gpus: %s", err)
+			}
+			hostConfig.DeviceRequests = gpu.Value()
+		} else {
+			log.Printf("[WARN] GPU support requires docker version 1.40 or higher")
+		}
+	}
+
+	if v, ok := d.GetOk("cgroupns_mode"); ok {
+		if client.ClientVersion() >= "1.41" {
+			cgroupnsMode := container.CgroupnsMode(v.(string))
+			if !cgroupnsMode.Valid() {
+				return diag.Errorf("cgroupns_mode: invalid CGROUP mode, must be either 'private', 'host' or empty")
+			} else {
+				hostConfig.CgroupnsMode = cgroupnsMode
+			}
+		} else {
+			log.Printf("[WARN] cgroupns_mode requires docker version 1.41 or higher")
+		}
+	}
 
 	init := d.Get("init").(bool)
 	hostConfig.Init = &init
+
+	if v, ok := d.GetOk("storage_opts"); ok {
+		hostConfig.StorageOpt = mapTypeMapValsToString(v.(map[string]interface{}))
+	}
 
 	var retContainer container.ContainerCreateCreatedBody
 
@@ -451,9 +490,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				mode = 0o644
 			}
 			hdr := &tar.Header{
-				Name: file,
-				Mode: mode,
-				Size: int64(len(contentToUpload)),
+				Name:    file,
+				Mode:    mode,
+				Size:    int64(len(contentToUpload)),
+				ModTime: time.Now(),
 			}
 			if err := tw.WriteHeader(hdr); err != nil {
 				return diag.Errorf("Error creating tar archive: %s", err)
@@ -479,6 +519,39 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		options := types.ContainerStartOptions{}
 		if err := client.ContainerStart(ctx, retContainer.ID, options); err != nil {
 			return diag.Errorf("Unable to start container: %s", err)
+		}
+
+		if d.Get("wait").(bool) {
+			waitForHealthyState := func(result chan<- error) {
+				for {
+					infos, err := client.ContainerInspect(ctx, retContainer.ID)
+					if err != nil {
+						result <- fmt.Errorf("error inspecting container state: %s", err)
+					}
+					if infos.State.Health.Status == types.Healthy {
+						log.Printf("[DEBUG] container state is healthy")
+						break
+					}
+					log.Printf("[DEBUG] waiting for container healthy state")
+					time.Sleep(time.Second)
+				}
+				result <- nil
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(d.Get("wait_timeout").(int))*time.Second)
+			defer cancel()
+			result := make(chan error, 1)
+			go waitForHealthyState(result)
+			select {
+			case <-ctx.Done():
+				log.Printf("[ERROR] Container %s failed to be in healthy state in time", retContainer.ID)
+				return diag.FromErr(errContainerFailedToBeInHealthyState)
+
+			case err := <-result:
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
 		}
 	}
 
@@ -534,7 +607,13 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeout)
+	containerReadRefreshTimeoutMilliseconds := d.Get("container_read_refresh_timeout_milliseconds").(int)
+	// Ensure the timeout can never be 0, the default integer value.
+	// This also ensures imported resources will get the default of 15 seconds
+	if containerReadRefreshTimeoutMilliseconds == 0 {
+		containerReadRefreshTimeoutMilliseconds = containerReadRefreshTimeoutMillisecondsDefault
+	}
+	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeoutMilliseconds/1000)
 	client := meta.(*ProviderConfig).DockerClient
 
 	apiContainer, err := fetchDockerContainer(ctx, d.Id(), client)
@@ -551,7 +630,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		Pending:    []string{"pending"},
 		Target:     []string{"running"},
 		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
-		Timeout:    containerReadRefreshTimeout,
+		Timeout:    time.Duration(containerReadRefreshTimeoutMilliseconds) * time.Millisecond,
 		MinTimeout: containerReadRefreshWaitBeforeRefreshes,
 		Delay:      containerReadRefreshDelay,
 	}
@@ -655,6 +734,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
+	d.Set("runtime", container.HostConfig.Runtime)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
@@ -689,6 +769,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
 	d.Set("log_opts", container.HostConfig.LogConfig.Config)
+	d.Set("storage_opts", container.HostConfig.StorageOpt)
 	// "network_alias" is deprecated
 	d.Set("network_mode", container.HostConfig.NetworkMode)
 	// networks
@@ -712,6 +793,15 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("group_add", container.HostConfig.GroupAdd)
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
+	d.Set("stop_signal", container.Config.StopSignal)
+	d.Set("stop_timeout", container.Config.StopTimeout)
+
+	if len(container.HostConfig.DeviceRequests) > 0 {
+		// TODO pass the original gpus property string back to the resource
+		// var gpuOpts opts.GpuOpts
+		// gpuOpts = opts.GpuOpts{container.HostConfig.DeviceRequests}
+		d.Set("gpus", "all")
+	}
 
 	return nil
 }
@@ -818,32 +908,39 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	if d.Get("rm").(bool) {
-		d.SetId("")
-		return nil
-	}
-
 	if !d.Get("attach").(bool) {
 		// Stop the container before removing if destroy_grace_seconds is defined
+		var timeout time.Duration
 		if d.Get("destroy_grace_seconds").(int) > 0 {
-			timeout := time.Duration(int32(d.Get("destroy_grace_seconds").(int))) * time.Second
+			timeout = time.Duration(int32(d.Get("destroy_grace_seconds").(int))) * time.Second
+		}
 
-			if err := client.ContainerStop(ctx, d.Id(), &timeout); err != nil {
-				return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
-			}
+		log.Printf("[INFO] Stopping Container '%s' with timeout %v", d.Id(), timeout)
+		if err := client.ContainerStop(ctx, d.Id(), &timeout); err != nil {
+			return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
 		}
 	}
 
 	removeOpts := types.ContainerRemoveOptions{
 		RemoveVolumes: d.Get("remove_volumes").(bool),
+		RemoveLinks:   d.Get("rm").(bool),
 		Force:         true,
 	}
 
+	log.Printf("[INFO] Removing Container '%s'", d.Id())
 	if err := client.ContainerRemove(ctx, d.Id(), removeOpts); err != nil {
-		return diag.Errorf("Error deleting container %s: %s", d.Id(), err)
+		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
+			return diag.Errorf("Error deleting container %s: %s", d.Id(), err)
+		}
 	}
 
-	waitOkC, errorC := client.ContainerWait(ctx, d.Id(), container.WaitConditionRemoved)
+	waitCondition := container.WaitConditionNotRunning
+	if d.Get("rm").(bool) {
+		waitCondition = container.WaitConditionRemoved
+	}
+
+	log.Printf("[INFO] Waiting for Container '%s' with condition '%s'", d.Id(), waitCondition)
+	waitOkC, errorC := client.ContainerWait(ctx, d.Id(), waitCondition)
 	select {
 	case waitOk := <-waitOkC:
 		log.Printf("[INFO] Container exited with code [%v]: '%s'", waitOk.StatusCode, d.Id())
@@ -851,6 +948,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
+		log.Printf("[INFO] Waiting for Container '%s' errord: '%s'", d.Id(), err.Error())
 	}
 
 	d.SetId("")

@@ -5,7 +5,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name  = "tf-test"
-  image = docker_image.foo.latest
+  image = docker_image.foo.image_id
 
   upload {
     content_base64 = base64encode("894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8")

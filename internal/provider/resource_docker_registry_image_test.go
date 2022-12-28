@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -131,6 +132,24 @@ func TestAccDockerRegistryImageResource_build(t *testing.T) {
 		CheckDestroy: testDockerRegistryImageNotInRegistry(pushOptions),
 	})
 }
+func TestAccDockerRegistryImageResource_build_insecure_registry(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15001/tftest-dockerregistryimage:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), "http://127.0.0.1:15001", pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+				),
+			},
+		},
+		CheckDestroy: testDockerRegistryImageNotInRegistry(pushOptions),
+	})
+}
 
 func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
@@ -154,6 +173,125 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 	})
 }
 
+func TestAccDockerRegistryImageResource_buildWithDockerignore(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-ignore:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
+	ignoredFile := context + "/to_be_ignored"
+	expectedSha := ""
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepJustCache"), pushOptions.Registry, "one", pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.one", "sha256_digest"),
+					resource.TestCheckResourceAttrWith("docker_registry_image.one", "sha256_digest", func(value string) error {
+						expectedSha = value
+						return nil
+					}),
+				),
+			},
+			{
+				PreConfig: func() {
+					// create a file that should be ignored
+					f, err := os.OpenFile(ignoredFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					if err != nil {
+						panic("failed to create test file")
+					}
+					f.Close()
+				},
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepJustCache"), pushOptions.Registry, "two", pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("docker_registry_image.two", "sha256_digest", func(value string) error {
+						if value != expectedSha {
+							return fmt.Errorf("Image sha256_digest changed, expected %#v, got %#v", expectedSha, value)
+						}
+						return nil
+					}),
+				),
+			},
+		},
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testDockerRegistryImageNotInRegistry(pushOptions),
+			func(*terraform.State) error {
+				err := os.Remove(ignoredFile)
+				if err != nil {
+					return fmt.Errorf("failed to remove ignored file: %w", err)
+				}
+				return nil
+			},
+		),
+	})
+}
+
+// Tests for issue https://github.com/kreuzwerker/terraform-provider-docker/issues/293
+// First we check if we can build the docker_registry_image resource at all
+// TODO in a second step we want to check whether the file has the correct permissions
+func TestAccDockerRegistryImageResource_correctFilePermissions(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-filepermissions:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_file_permissions")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImageFilePermissions"), pushOptions.Registry, pushOptions.Name, context, "Dockerfile"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.file_permissions", "sha256_digest"),
+				),
+				// TODO another check which starts the the newly built docker image and checks the file permissions to see if they are correct
+			},
+		},
+	})
+}
+
+// Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
+func TestAccDockerRegistryImageResource_whitelistDockerignore(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-whitelistdockerignore:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_file_whitelist_dockerignore")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImageFilePermissions"), pushOptions.Registry, pushOptions.Name, context, "Dockerfile"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.file_permissions", "sha256_digest"),
+				),
+			},
+		},
+	})
+}
+
+// Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
+func TestAccDockerRegistryImageResource_DockerfileOutsideContext(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-dockerfileoutsidecontext:1.0")
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "..", "Dockerfile")
+	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_file_permissions")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDockerRegistryImageDockerfileOutsideContext"), pushOptions.Registry, pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.outside_context", "sha256_digest"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -170,8 +308,8 @@ func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)
-		username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-		digest, _ := getImageDigestWithFallback(pushOpts, username, password, true)
+		authConfig, _ := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		digest, _ := getImageDigestWithFallback(pushOpts, normalizeRegistryAddress(pushOpts.Registry), authConfig.Username, authConfig.Password, true)
 		if digest != "" {
 			return fmt.Errorf("image found")
 		}
@@ -181,12 +319,12 @@ func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) res
 
 func testDockerRegistryImageInRegistry(username, password string, pushOpts internalPushImageOptions, cleanup bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		digest, err := getImageDigestWithFallback(pushOpts, username, password, true)
+		digest, err := getImageDigestWithFallback(pushOpts, normalizeRegistryAddress(pushOpts.Registry), username, password, true)
 		if err != nil || len(digest) < 1 {
 			return fmt.Errorf("image '%s' with credentials('%s' - '%s') not found: %w", pushOpts.Name, username, password, err)
 		}
 		if cleanup {
-			err := deleteDockerRegistryImage(pushOpts, digest, username, password, true, false)
+			err := deleteDockerRegistryImage(pushOpts, normalizeRegistryAddress(pushOpts.Registry), digest, username, password, true, false)
 			if err != nil {
 				return fmt.Errorf("Unable to remove test image '%s': %w", pushOpts.Name, err)
 			}

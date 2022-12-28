@@ -10,14 +10,21 @@
 
 # Terraform Provider for Docker
 
+[![Release](https://img.shields.io/github/v/release/kreuzwerker/terraform-provider-docker)](https://github.com/kreuzwerker/terraform-provider-docker/releases)
+[![Installs](https://img.shields.io/badge/dynamic/json?logo=terraform&label=installs&query=$.data.attributes.downloads&url=https%3A%2F%2Fregistry.terraform.io%2Fv2%2Fproviders%2F713)](https://registry.terraform.io/providers/kreuzwerker/docker)
+[![Registry](https://img.shields.io/badge/registry-doc%40latest-lightgrey?logo=terraform)](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kreuzwerker/terraform-provider-docker/blob/main/LICENSE)  
+[![Go Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/Acc%20Tests/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
+[![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)  
+
 - Website: https://www.terraform.io
 - Provider: [kreuzwerker/docker](https://registry.terraform.io/providers/kreuzwerker/docker/latest)
 - Slack: [@gophers/terraform-provider-docker](https://gophers.slack.com/archives/C01G9TN5V36)
 
-
 ## Requirements
 -	[Terraform](https://www.terraform.io/downloads.html) >=0.12.x
--	[Go](https://golang.org/doc/install) 1.16.x (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.18.x (to build the provider plugin)
 
 ## Building The Provider
 
@@ -28,7 +35,7 @@ $ make build
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/2.13.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/2.24.0/docs) of the registry
 or use the following example:
 
 
@@ -40,7 +47,7 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.13.0"
+      version = "2.24.0"
     }
   }
 }
@@ -60,7 +67,7 @@ resource "docker_image" "nginx" {
 # -> same as 'docker run --name nginx -p8080:80 -d nginx:latest'
 resource "docker_container" "nginx" {
   name    = "nginx"
-  image   = docker_image.nginx.latest
+  image   = docker_image.nginx.image_id
 
   ports {
     external = 8080
@@ -102,3 +109,8 @@ To contribute, please read the contribution guidelines: [Contributing to Terrafo
 ## License
 
 The Terraform Provider Docker is available to everyone under the terms of the Mozilla Public License Version 2.0. [Take a look the LICENSE file](LICENSE).
+
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/kreuzwerker/terraform-provider-docker.svg)](https://starchart.cc/kreuzwerker/terraform-provider-docker)

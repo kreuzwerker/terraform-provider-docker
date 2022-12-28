@@ -13,10 +13,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//////////////
+// ////////////
 // flatteners
 // flatten API objects to the terraform schema
-//////////////
+// ////////////
 // see https://learn.hashicorp.com/tutorials/terraform/provider-create?in=terraform/providers#add-flattening-functions
 func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData) []interface{} {
 	m := make(map[string]interface{})
@@ -125,7 +125,7 @@ func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
 	return out
 }
 
-///// start TaskSpec
+// /// start TaskSpec
 func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
@@ -188,6 +188,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	}
 	if len(in.Isolation) > 0 {
 		m["isolation"] = string(in.Isolation)
+	}
+	if len(in.Sysctls) > 0 {
+		m["sysctl"] = in.Sysctls
 	}
 	out = append(out, m)
 	return out
@@ -564,8 +567,8 @@ func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 	return out
 }
 
-///// end TaskSpec
-///// start EndpointSpec
+// /// end TaskSpec
+// /// start EndpointSpec
 func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 	out := make([]interface{}, len(in))
 	for i, v := range in {
@@ -582,10 +585,10 @@ func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 
 ///// end EndpointSpec
 
-//////////////
+// ////////////
 // Mappers
 // create API object from the terraform resource schema
-//////////////
+// ////////////
 // createServiceSpec creates the service spec: https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
 	serviceSpec := swarm.ServiceSpec{
@@ -970,6 +973,9 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 			}
 			if value, ok := rawContainerSpec["isolation"]; ok {
 				containerSpec.Isolation = container.Isolation(value.(string))
+			}
+			if value, ok := rawContainerSpec["sysctl"]; ok {
+				containerSpec.Sysctls = mapTypeMapValsToString(value.(map[string]interface{}))
 			}
 		}
 	}

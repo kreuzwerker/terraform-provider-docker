@@ -4,7 +4,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name                  = "tf-test"
-  image                 = docker_image.foo.latest
+  image                 = docker_image.foo.image_id
   entrypoint            = ["/bin/bash", "-c", "cat /proc/kmsg"]
   user                  = "root:root"
   restart               = "on-failure"
@@ -44,6 +44,13 @@ resource "docker_container" "foo" {
     max-file = 20
   }
   network_mode = "bridge"
+
+  # Disabled for tests due to
+  # --storage-opt is supported only for overlay over xfs with 'pquota' mount option
+  # see https://github.com/kreuzwerker/terraform-provider-docker/issues/177
+  # storage_opts = {
+  #   size = "120Gi"
+  # }
 
   networks_advanced {
     name    = docker_network.test_network.name

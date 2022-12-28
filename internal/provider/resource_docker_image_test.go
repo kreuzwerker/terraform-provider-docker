@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -22,7 +23,7 @@ func TestAccDockerImage_basic(t *testing.T) {
 	// run a Docker container which refers the Docker image to test "force_remove" option
 	containerName := "test-docker-image-force-remove"
 	ctx := context.Background()
-	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, "alpine:3.11.5", "tail", "-f", "/dev/null").Run(); err != nil {
+	if err := exec.Command("docker", "run", "--rm", "-d", "--name", containerName, "alpine:3.16.0", "tail", "-f", "/dev/null").Run(); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
@@ -232,6 +233,32 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 	})
 }
 
+// Changing the name attribute should also force a change of the dependent docker container
+// This test fails, if we remove the ForceTrue: true from the name attribute
+func TestAccDockerImage_name_attr_change(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                  func() { testAccPreCheck(t) },
+		ProviderFactories:         providerFactories,
+		PreventPostDestroyRefresh: true,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:precise@sha256:18305429afa14ea462f810146ba44d4363ae76e4c8dfc38288cf73aa07485005"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
+				),
+			},
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:jammy@sha256:b6b83d3c331794420340093eb706a6f152d9c1fa51b262d9bf34594887c2c7ac"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerImage_sha265(t *testing.T) {
 	ctx := context.Background()
 	resource.Test(t, resource.TestCase{
@@ -287,6 +314,25 @@ func TestAccDockerImage_tag_sha265(t *testing.T) {
 	})
 }
 
+func TestAccDockerImage_platform(t *testing.T) {
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImagePlatform"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_image.foo", "image_id", "sha256:8336f9f1d0946781f428a155536995f0d8a31209d65997e2a379a23e7a441b78"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerImage_build(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()
@@ -324,6 +370,32 @@ RUN echo ${test_arg} > test_arg.txt
 RUN apt-get update -qq
 `
 
+// Test for implementation of https://github.com/kreuzwerker/terraform-provider-docker/issues/401
+func TestAccDockerImage_buildOutsideContext(t *testing.T) {
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "..", "Dockerfile")
+	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageDockerfileOutsideContext"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.outside_context", "name", regexp.MustCompile(`\Aoutside-context:latest\z`)),
+				),
+			},
+		},
+	})
+}
+
 func testAccImageCreated(resourceName string, image *types.ImageInspect) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
@@ -354,4 +426,42 @@ func testAccImageCreated(resourceName string, image *types.ImageInspect) resourc
 		return nil
 
 	}
+}
+
+func TestParseImageOptions(t *testing.T) {
+	t.Run("Should parse image name with registry", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com", Repository: "image", Tag: "tag"}
+		result := parseImageOptions("registry.com/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image name with registryPort", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com:8080", Repository: "image", Tag: "tag"}
+		result := parseImageOptions("registry.com:8080/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image name with registry and proper repository", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com", Repository: "repo/image", Tag: "tag"}
+		result := parseImageOptions("registry.com/repo/image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image with no tag", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry.com", Repository: "repo/image", Tag: "latest"}
+		result := parseImageOptions("registry.com/repo/image")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
+	t.Run("Should parse image name without registry and default to docker registry", func(t *testing.T) {
+		expected := internalPullImageOptions{Registry: "registry-1.docker.io", Repository: "library/image", Tag: "tag"}
+		result := parseImageOptions("image:tag")
+		if !reflect.DeepEqual(expected, result) {
+			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
+		}
+	})
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -88,6 +89,8 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"restart",
 					"rm",
 					"start",
+					"wait",
+					"wait_timeout",
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
@@ -99,6 +102,7 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"network_alias",
 					"networks",
 					"network_advanced",
+					"container_read_refresh_timeout_milliseconds",
 				},
 			},
 		},
@@ -130,6 +134,8 @@ func TestAccDockerContainer_init(t *testing.T) {
 					"restart",
 					"rm",
 					"start",
+					"wait",
+					"wait_timeout",
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
@@ -140,6 +146,7 @@ func TestAccDockerContainer_init(t *testing.T) {
 					"network_alias",
 					"networks",
 					"network_advanced",
+					"container_read_refresh_timeout_milliseconds",
 				},
 			},
 		},
@@ -644,6 +651,13 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have a correct ipc mode")
 		}
 
+		// Disabled for tests due to
+		// --storage-opt is supported only for overlay over xfs with 'pquota' mount option
+		// see https://github.com/kreuzwerker/terraform-provider-docker/issues/177
+		// if c.HostConfig.StorageOpt["size"] != "100Mi" {
+		// 	return fmt.Errorf("Container does not have the correct size storage option: %v", c.HostConfig.StorageOpt["size"])
+		// }
+
 		return nil
 	}
 
@@ -769,6 +783,22 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 			return fmt.Errorf("file content is invalid")
 		}
 
+		// we directly exec the container and print the creation timestamp
+		// which is easier to use the native docker sdk, by creating, running and attaching a reader to the command.
+		execReponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
+		if err != nil {
+			return fmt.Errorf("Unable to exec command: %s", err)
+		}
+
+		fileCreationTime, err := time.Parse("2006-01-02", string(execReponse))
+		if err != nil {
+			return fmt.Errorf("Unable to parse file creation time into format: %s", err)
+		}
+
+		if fileCreationTime.IsZero() {
+			return fmt.Errorf("file creation time is zero: %s", err)
+		}
+
 		return nil
 	}
 
@@ -794,7 +824,6 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	})
 }
 
-//
 func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 	var c types.ContainerJSON
 	var firstRunId string
@@ -937,12 +966,12 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 					name         = "nginx:latest"
 					keep_locally = true
 				}
-				
+
 				resource "docker_container" "foo" {
 					name     = "tf-test"
-					image    = docker_image.foo.latest
+					image    = docker_image.foo.image_id
 					must_run = "false"
-				
+
 					upload {
 						content        = "foobar"
 						content_base64 = base64encode("barbaz")
@@ -968,12 +997,12 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 					name         = "nginx:latest"
 					keep_locally = true
 				}
-				
+
 				resource "docker_container" "foo" {
 					name     = "tf-test"
-					image    = docker_image.foo.latest
+					image    = docker_image.foo.image_id
 					must_run = "false"
-				
+
 					upload {
 						file           = "/terraform/test1.txt"
 						executable     = true
@@ -1582,9 +1611,9 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 	})
 }
 
-///////////
+// /////////
 // HELPERS
-///////////
+// /////////
 func testAccContainerRunning(resourceName string, container *types.ContainerJSON) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
@@ -1706,7 +1735,9 @@ func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *typ
 		select {
 		case err := <-errC:
 			if err != nil {
-				return fmt.Errorf("Container has not been removed")
+				if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
+					return fmt.Errorf("Container has not been removed: '%s'", err.Error())
+				}
 			}
 		case <-statusC:
 		}

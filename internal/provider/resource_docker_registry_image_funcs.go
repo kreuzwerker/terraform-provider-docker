@@ -14,15 +14,16 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -44,13 +45,16 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 		}
 	}
 
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	if err := pushDockerRegistryImage(ctx, client, pushOpts, username, password); err != nil {
+	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
+	}
+	if err := pushDockerRegistryImage(ctx, client, pushOpts, authConfig.Username, authConfig.Password); err != nil {
 		return diag.Errorf("Error pushing docker image: %s", err)
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigestWithFallback(pushOpts, username, password, insecureSkipVerify)
+	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
 		return diag.Errorf("Unable to create image, image not found: %s", err)
 	}
@@ -63,10 +67,13 @@ func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
+	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigestWithFallback(pushOpts, username, password, insecureSkipVerify)
+	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
 		log.Printf("Got error getting registry image digest: %s", err)
 		d.SetId("")
@@ -83,13 +90,17 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	username, password := getDockerRegistryImageRegistryUserNameAndPassword(pushOpts, providerConfig)
-	digest := d.Get("sha256_digest").(string)
-	err := deleteDockerRegistryImage(pushOpts, digest, username, password, true, false)
+	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
 	if err != nil {
-		err = deleteDockerRegistryImage(pushOpts, pushOpts.Tag, username, password, true, true)
+		return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
+	}
+
+	digest := d.Get("sha256_digest").(string)
+	err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
+	if err != nil {
+		err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, pushOpts.Tag, authConfig.Username, authConfig.Password, true, true)
 		if err != nil {
-			return diag.Errorf("Got error getting registry image digest: %s", err)
+			return diag.Errorf("Got error deleting registry image: %s", err)
 		}
 	}
 	return nil
@@ -245,20 +256,18 @@ func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildO
 	if lastIndex := strings.LastIndexByte(buildContext, ':'); (lastIndex > -1) && (buildContext[lastIndex+1] != filepath.Separator) {
 		buildContext = buildContext[:lastIndex]
 	}
-	dockerContextTarPath, err := buildDockerImageContextTar(buildContext)
-	if err != nil {
-		return fmt.Errorf("unable to build context %v", err)
-	}
-	defer os.Remove(dockerContextTarPath)
-	dockerBuildContext, err := os.Open(dockerContextTarPath)
-	if err != nil {
-		return err
-	}
-	defer dockerBuildContext.Close()
 
-	buildResponse, err := client.ImageBuild(ctx, dockerBuildContext, imageBuildOptions)
+	enableBuildKitIfSupported(ctx, client, &imageBuildOptions)
+
+	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, imageBuildOptions.Dockerfile)
 	if err != nil {
 		return err
+	}
+	imageBuildOptions.Dockerfile = relDockerfile
+
+	buildResponse, err := client.ImageBuild(ctx, buildCtx, imageBuildOptions)
+	if err != nil {
+		return fmt.Errorf("unable to build image for docker_registry_image: %v", err)
 	}
 	defer buildResponse.Body.Close()
 
@@ -282,6 +291,16 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		return "", fmt.Errorf("unable to read build context - %v", err.Error())
 	}
 
+	excludes, err := build.ReadDockerignore(buildContext)
+	if err != nil {
+		return "", fmt.Errorf("unable to read .dockerignore file - %v", err.Error())
+	}
+
+	pm, err := fileutils.NewPatternMatcher(excludes)
+	if err != nil {
+		return "", fmt.Errorf("unable to create pattern matcher from .dockerignore excludes - %v", err.Error())
+	}
+
 	tw := tar.NewWriter(tmpFile)
 	defer tw.Close()
 
@@ -289,6 +308,47 @@ func buildDockerImageContextTar(buildContext string) (string, error) {
 		// return on any error
 		if err != nil {
 			return err
+		}
+
+		// if .dockerignore is present, ignore files from there
+		rel, _ := filepath.Rel(buildContext, file)
+		skip, err := pm.Matches(rel)
+		if err != nil {
+			return err
+		}
+
+		// adapted from https://github.com/moby/moby/blob/v20.10.7/pkg/archive/archive.go#L851
+		if skip {
+			log.Printf("[DEBUG] Skipping file/dir from image build '%v'", file)
+			// If we want to skip this file and its a directory
+			// then we should first check to see if there's an
+			// excludes pattern (e.g. !dir/file) that starts with this
+			// dir. If so then we can't skip this dir.
+
+			// Its not a dir then so we can just return/skip.
+			if !info.IsDir() {
+				return nil
+			}
+
+			// No exceptions (!...) in patterns so just skip dir
+			if !pm.Exclusions() {
+				return filepath.SkipDir
+			}
+
+			dirSlash := file + string(filepath.Separator)
+
+			for _, pat := range pm.Patterns() {
+				if !pat.Exclusion() {
+					continue
+				}
+				if strings.HasPrefix(pat.String()+string(filepath.Separator), dirSlash) {
+					// found a match - so can't skip this dir
+					return nil
+				}
+			}
+
+			// No matching exclusion dir so just skip dir
+			return filepath.SkipDir
 		}
 
 		// create a new dir/file header
@@ -395,44 +455,46 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 	return nil
 }
 
-func getDockerRegistryImageRegistryUserNameAndPassword(
-	pushOpts internalPushImageOptions,
-	providerConfig *ProviderConfig) (string, string) {
-	registry := pushOpts.NormalizedRegistry
-	username := ""
-	password := ""
-	if authConfig, ok := providerConfig.AuthConfigs.Configs[registry]; ok {
-		username = authConfig.Username
-		password = authConfig.Password
+func getAuthConfigForRegistry(
+	registryWithoutProtocol string,
+	providerConfig *ProviderConfig) (types.AuthConfig, error) {
+	if authConfig, ok := providerConfig.AuthConfigs.Configs[registryWithoutProtocol]; ok {
+		return authConfig, nil
 	}
-	return username, password
+	return types.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
 }
 
-func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
+func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkipVerify bool) *http.Client {
 	client := http.DefaultClient
 
-	// DevSkim: ignore DS440000
-	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+	if strings.HasPrefix(registryAddressWithProtocol, "https://") {
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+	}
+	return client
+}
 
-	req, err := http.NewRequest("DELETE", pushOpts.NormalizedRegistry+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
+func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithProtocol string, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
+	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
+
+	req, err := http.NewRequest("DELETE", registryWithProtocol+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
 	if err != nil {
 		return fmt.Errorf("Error deleting registry image: %s", err)
 	}
 
 	if username != "" {
-		req.SetBasicAuth(username, password)
+		if pushOpts.Registry != "ghcr.io" && !isECRRepositoryURL(pushOpts.Registry) && !isAzureCRRepositoryURL(pushOpts.Registry) && pushOpts.Registry != "gcr.io" {
+			req.SetBasicAuth(username, password)
+		} else {
+			if isECRRepositoryURL(pushOpts.Registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+base64.StdEncoding.EncodeToString([]byte(password)))
+			}
+		}
 	}
 
-	// We accept schema v2 manifests and manifest lists, and also OCI types
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-
-	if fallback {
-		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
-		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
-	}
+	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -446,66 +508,36 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, sha256Digest, 
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
-		if strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
-			auth := parseAuthHeader(resp.Header.Get("www-authenticate"))
-			params := url.Values{}
-			params.Set("service", auth["service"])
-			params.Set("scope", auth["scope"])
-			tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-			if err != nil {
-				return fmt.Errorf("Error creating registry request: %s", err)
-			}
-
-			if username != "" {
-				tokenRequest.SetBasicAuth(username, password)
-			}
-
-			tokenResponse, err := client.Do(tokenRequest)
-			if err != nil {
-				return fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if tokenResponse.StatusCode != http.StatusOK {
-				return fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
-			}
-
-			body, err := ioutil.ReadAll(tokenResponse.Body)
-			if err != nil {
-				return fmt.Errorf("Error reading response body: %s", err)
-			}
-
-			token := &TokenResponse{}
-			err = json.Unmarshal(body, token)
-			if err != nil {
-				return fmt.Errorf("Error parsing OAuth token response: %s", err)
-			}
-
-			req.Header.Set("Authorization", "Bearer "+token.Token)
-			oauthResp, err := client.Do(req)
-			if err != nil {
-				return err
-			}
-			switch oauthResp.StatusCode {
-			case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
-				return nil
-			default:
-				return fmt.Errorf("Got bad response from registry: " + resp.Status)
-			}
-
+		if !strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
+			return fmt.Errorf("Bad credentials: " + resp.Status)
 		}
 
-		return fmt.Errorf("Bad credentials: " + resp.Status)
+		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		if err != nil {
+			return err
+		}
 
+		req.Header.Set("Authorization", "Bearer "+token)
+		oauthResp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		switch oauthResp.StatusCode {
+		case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
+			return nil
+		default:
+			return fmt.Errorf("Got bad response from registry: " + resp.Status)
+		}
 		// Some unexpected status was given, return an error
 	default:
 		return fmt.Errorf("Got bad response from registry: " + resp.Status)
 	}
 }
 
-func getImageDigestWithFallback(opts internalPushImageOptions, username, password string, insecureSkipVerify bool) (string, error) {
-	digest, err := getImageDigest(opts.Registry, opts.Repository, opts.Tag, username, password, insecureSkipVerify, false)
+func getImageDigestWithFallback(opts internalPushImageOptions, serverAddress string, username, password string, insecureSkipVerify bool) (string, error) {
+	digest, err := getImageDigest(opts.Registry, serverAddress, opts.Repository, opts.Tag, username, password, insecureSkipVerify, false)
 	if err != nil {
-		digest, err = getImageDigest(opts.Registry, opts.Repository, opts.Tag, username, password, insecureSkipVerify, true)
+		digest, err = getImageDigest(opts.Registry, serverAddress, opts.Repository, opts.Tag, username, password, insecureSkipVerify, true)
 		if err != nil {
 			return "", fmt.Errorf("unable to get digest: %s", err)
 		}
@@ -515,11 +547,6 @@ func getImageDigestWithFallback(opts internalPushImageOptions, username, passwor
 
 func createPushImageOptions(image string) internalPushImageOptions {
 	pullOpts := parseImageOptions(image)
-	if pullOpts.Registry == "" {
-		pullOpts.Registry = "registry-1.docker.io"
-	} else {
-		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
-	}
 	pushOpts := internalPushImageOptions{
 		Name:               image,
 		Registry:           pullOpts.Registry,

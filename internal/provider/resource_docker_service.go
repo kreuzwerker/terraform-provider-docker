@@ -91,7 +91,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"command": {
 										Type:        schema.TypeList,
-										Description: "The command to be run in the image",
+										Description: "The command/entrypoint to be run in the image. According to the [docker cli](https://github.com/docker/cli/blob/v20.10.7/cli/command/service/opts.go#L705) the override of the entrypoint is also passed to the `command` property and there is no `entrypoint` attribute in the `ContainerSpec` of the service.",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 									},
@@ -379,7 +379,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"dns_config": {
 										Type:        schema.TypeList,
-										Description: "Specification for DNS related configurations in resolver configuration file (resolv.conf)",
+										Description: "Specification for DNS related configurations in resolver configuration file (`resolv.conf`)",
 										MaxItems:    1,
 										Optional:    true,
 										Computed:    true,
@@ -399,7 +399,7 @@ func resourceDockerService() *schema.Resource {
 												},
 												"options": {
 													Type:        schema.TypeList,
-													Description: "A list of internal resolver variables to be modified (e.g., debug, ndots:3, etc.)",
+													Description: "A list of internal resolver variables to be modified (e.g., `debug`, `ndots:3`, etc.)",
 													Optional:    true,
 													Elem:        &schema.Schema{Type: schema.TypeString},
 												},
@@ -499,6 +499,12 @@ func resourceDockerService() *schema.Resource {
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(default|process|hyperv)$`),
 									},
+									"sysctl": {
+										Type:        schema.TypeMap,
+										Description: "Sysctls config (Linux only)",
+										Optional:    true,
+										ForceNew:    true,
+									},
 								},
 							},
 						},
@@ -519,7 +525,7 @@ func resourceDockerService() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"nano_cpus": {
 													Type:        schema.TypeInt,
-													Description: "CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least 1000000",
+													Description: "CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least `1000000`",
 													Optional:    true,
 												},
 												"memory_bytes": {
@@ -538,7 +544,7 @@ func resourceDockerService() *schema.Resource {
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"nano_cpus": {
-													Description: "CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least 1000000",
+													Description: "CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least `1000000`",
 													Type:        schema.TypeInt,
 													Optional:    true,
 												},
@@ -627,7 +633,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"prefs": {
 										Type:        schema.TypeSet,
-										Description: "Preferences provide a way to make the scheduler aware of factors such as topology. They are provided in order from highest to lowest precedence, e.g.: spread=node.role.manager",
+										Description: "Preferences provide a way to make the scheduler aware of factors such as topology. They are provided in order from highest to lowest precedence, e.g.: `spread=node.role.manager`",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Set:         schema.HashString,
@@ -785,14 +791,14 @@ func resourceDockerService() *schema.Resource {
 						},
 						"delay": {
 							Type:             schema.TypeString,
-							Description:      "Delay between task updates (ns|us|ms|s|m|h). Defaults to `0s`.",
+							Description:      "Delay between task updates `(ns|us|ms|s|m|h)`. Defaults to `0s`.",
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
 						},
 						"failure_action": {
 							Type:             schema.TypeString,
-							Description:      "Action on update failure: pause | continue | rollback. Defaults to `pause`.",
+							Description:      "Action on update failure: `pause`, `continue` or `rollback`. Defaults to `pause`.",
 							Default:          "pause",
 							Optional:         true,
 							ValidateDiagFunc: validateStringMatchesPattern("^(pause|continue|rollback)$"),
@@ -901,7 +907,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"protocol": {
 										Type:             schema.TypeString,
-										Description:      "Rrepresents the protocol of a port: 'tcp', 'udp' or 'sctp'. Defaults to `tcp`.",
+										Description:      "Rrepresents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.",
 										Default:          "tcp",
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(tcp|udp|sctp)$`),
@@ -940,14 +946,14 @@ func resourceDockerService() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"delay": {
 							Type:             schema.TypeString,
-							Description:      "The interval to check if the desired state is reached (ms|s). Defaults to `7s`.",
+							Description:      "The interval to check if the desired state is reached `(ms|s)`. Defaults to `7s`.",
 							Default:          "7s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
 						},
 						"timeout": {
 							Type:             schema.TypeString,
-							Description:      "The timeout of the service to reach the desired state (s|m). Defaults to `3m`",
+							Description:      "The timeout of the service to reach the desired state `(s|m)`. Defaults to `3m`",
 							Default:          "3m",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),

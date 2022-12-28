@@ -8,7 +8,7 @@ resource "docker_volume" "foo_mounts" {
 
 resource "docker_container" "foo_mounts" {
   name  = "tf-test"
-  image = docker_image.foo_mounts.latest
+  image = docker_image.foo_mounts.image_id
 
   mounts {
     target    = "/mount/test"

@@ -23,25 +23,25 @@ data "docker_network" "main" {
 
 ### Required
 
-- **name** (String) The name of the Docker network.
+- `name` (String) The name of the Docker network.
 
 ### Read-Only
 
-- **driver** (String) The driver of the Docker network. Possible values are `bridge`, `host`, `overlay`, `macvlan`. See [network docs](https://docs.docker.com/network/#network-drivers) for more details.
-- **id** (String) The ID of this resource.
-- **internal** (Boolean) If `true`, the network is internal.
-- **ipam_config** (Set of Object) The IPAM configuration options (see [below for nested schema](#nestedatt--ipam_config))
-- **options** (Map of String) Only available with bridge networks. See [bridge options docs](https://docs.docker.com/engine/reference/commandline/network_create/#bridge-driver-options) for more details.
-- **scope** (String) Scope of the network. One of `swarm`, `global`, or `local`.
+- `driver` (String) The driver of the Docker network. Possible values are `bridge`, `host`, `overlay`, `macvlan`. See [network docs](https://docs.docker.com/network/#network-drivers) for more details.
+- `id` (String) The ID of this resource.
+- `internal` (Boolean) If `true`, the network is internal.
+- `ipam_config` (Set of Object) The IPAM configuration options (see [below for nested schema](#nestedatt--ipam_config))
+- `options` (Map of String) Only available with bridge networks. See [bridge options docs](https://docs.docker.com/engine/reference/commandline/network_create/#bridge-driver-options) for more details.
+- `scope` (String) Scope of the network. One of `swarm`, `global`, or `local`.
 
 <a id="nestedatt--ipam_config"></a>
 ### Nested Schema for `ipam_config`
 
 Read-Only:
 
-- **aux_address** (Map of String)
-- **gateway** (String)
-- **ip_range** (String)
-- **subnet** (String)
+- `aux_address` (Map of String)
+- `gateway` (String)
+- `ip_range` (String)
+- `subnet` (String)
 
 

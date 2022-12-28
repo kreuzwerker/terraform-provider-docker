@@ -1,3 +1,3 @@
 resource "docker_image" "foo" {
-  name = "alpine:3.1"
+  name = "alpine:3.15.0"
 }
