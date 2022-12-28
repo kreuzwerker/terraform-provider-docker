@@ -161,6 +161,13 @@ func resourceDockerImage() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"platform": {
+				Type:        schema.TypeString,
+				Description: "The platform to use when pulling the image. Defaults to the platform of the current machine.",
+				Optional:    true,
+				Default:     "",
+				ForceNew:    true,
+			},
 		},
 	}
 }

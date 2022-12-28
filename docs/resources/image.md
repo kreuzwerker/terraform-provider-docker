@@ -88,6 +88,7 @@ resource "docker_image" "zoo" {
 - `build` (Block Set, Max: 1) Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. (see [below for nested schema](#nestedblock--build))
 - `force_remove` (Boolean) If true, then the image is removed forcibly when the resource is destroyed.
 - `keep_locally` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
+- `platform` (String) The platform to use when pulling the image. Defaults to the platform of the current machine.
 - `pull_trigger` (String, Deprecated) A value which cause an image pull when changed
 - `pull_triggers` (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the [docker_registry_image](../data-sources/registry_image.md).
 - `triggers` (Map of String) A map of arbitrary strings that, when changed, will force the `docker_image` resource to be replaced. This can be used to rebuild an image when contents of source code folders change

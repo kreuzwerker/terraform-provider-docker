@@ -43,7 +43,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 			}
 		}
 	}
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
+	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -89,7 +89,7 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 	// the value of "latest" or others
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs)
+	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -195,7 +195,7 @@ func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) er
 	return nil
 }
 
-func pullImage(ctx context.Context, data *Data, client *client.Client, authConfig *AuthConfigs, image string) error {
+func pullImage(ctx context.Context, data *Data, client *client.Client, authConfig *AuthConfigs, image string, platform string) error {
 	pullOpts := parseImageOptions(image)
 
 	auth := types.AuthConfig{}
@@ -210,6 +210,7 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 
 	out, err := client.ImagePull(ctx, image, types.ImagePullOptions{
 		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
+		Platform:     platform,
 	})
 	if err != nil {
 		return fmt.Errorf("error pulling image %s: %w", image, err)
@@ -282,7 +283,7 @@ func parseImageOptions(image string) internalPullImageOptions {
 	return pullOpts
 }
 
-func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs) (*types.ImageSummary, error) {
+func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs, platform string) (*types.ImageSummary, error) {
 	if imageName == "" {
 		return nil, fmt.Errorf("empty image name is not allowed")
 	}
@@ -292,7 +293,6 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return nil, err
 	}
-
 	foundImage, err := searchLocalImages(ctx, client, data, imageName)
 	if err != nil {
 		return nil, fmt.Errorf("findImage1: error looking up local image %q: %w", imageName, err)
@@ -300,8 +300,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 	if foundImage != nil {
 		return foundImage, nil
 	}
-
-	if err := pullImage(ctx, &data, client, authConfig, imageName); err != nil {
+	if err := pullImage(ctx, &data, client, authConfig, imageName, platform); err != nil {
 		return nil, fmt.Errorf("unable to pull image %s: %s", imageName, err)
 	}
 
