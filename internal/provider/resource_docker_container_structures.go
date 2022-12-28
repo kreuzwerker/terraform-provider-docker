@@ -102,6 +102,21 @@ func stringSetToStringSlice(stringSet *schema.Set) []string {
 	return ret
 }
 
+func stringSetToMapStringString(stringSet *schema.Set) map[string]string {
+	ret := map[string]string{}
+	if stringSet == nil {
+		return ret
+	}
+	for _, envVal := range stringSet.List() {
+		envValSplit := strings.SplitN(envVal.(string), "=", 2)
+		if len(envValSplit) != 2 {
+			continue
+		}
+		ret[envValSplit[0]] = envValSplit[1]
+	}
+	return ret
+}
+
 func mapTypeMapValsToString(typeMap map[string]interface{}) map[string]string {
 	mapped := make(map[string]string, len(typeMap))
 	for k, v := range typeMap {

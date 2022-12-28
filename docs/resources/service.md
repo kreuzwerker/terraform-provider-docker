@@ -567,7 +567,7 @@ Required:
 Optional:
 
 - `aliases` (Set of String) The network aliases of the container in the specific network.
-- `driver_opts` (Map of String) The driver options of the network.
+- `driver_opts` (Set of String) An array of driver options for the network, e.g. `opts1=value`
 
 
 <a id="nestedblock--task_spec--placement"></a>

@@ -503,7 +503,9 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 		if len(s.Spec.TaskTemplate.Networks) != 1 ||
 			s.Spec.TaskTemplate.Networks[0].Target == "" ||
 			len(s.Spec.TaskTemplate.Networks[0].Aliases) == 0 ||
-			s.Spec.TaskTemplate.Networks[0].Aliases[0] != "tftest-foobar" {
+			s.Spec.TaskTemplate.Networks[0].Aliases[0] != "tftest-foobar" ||
+			s.Spec.TaskTemplate.Networks[0].DriverOpts == nil ||
+			!mapEquals("foo", "bar", s.Spec.TaskTemplate.Networks[0].DriverOpts) {
 			return fmt.Errorf("Service Spec.TaskTemplate.Networks is wrong: %s", s.Spec.TaskTemplate.Networks)
 		}
 
