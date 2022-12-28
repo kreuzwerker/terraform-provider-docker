@@ -314,6 +314,25 @@ func TestAccDockerImage_tag_sha265(t *testing.T) {
 	})
 }
 
+func TestAccDockerImage_platform(t *testing.T) {
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImagePlatform"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_image.foo", "image_id", "sha256:8336f9f1d0946781f428a155536995f0d8a31209d65997e2a379a23e7a441b78"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerImage_build(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()
