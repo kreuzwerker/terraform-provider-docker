@@ -41,7 +41,7 @@ docker run -d -p 15001:5000 --rm --name http_private_registry \
 # wait a bit for travis...
 sleep 5
 # Login to private registry
-docker login -u testuser -p testpwd --tls-verify=false 127.0.0.1:15000
+docker login -u testuser -p testpwd 127.0.0.1:15000
 docker login -u testuser -p testpwd --tls-verify=false 127.0.0.1:15001
 # Build private images
 for i in $(seq 1 3); do 
