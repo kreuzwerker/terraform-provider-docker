@@ -710,6 +710,12 @@ func resourceDockerService() *schema.Resource {
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Set:         schema.HashString,
 									},
+									"driver_opts": {
+										Type:        schema.TypeMap,
+										Description: "The driver options of the network.",
+										Optional:    true,
+										ForceNew:    true,
+									},
 								},
 							},
 						},
