@@ -179,6 +179,9 @@ resource "docker_service" "foo" {
     networks_advanced {
       name    = docker_network.test_network.id
       aliases = ["tftest-foobar"]
+      driver_opts = [
+        "foo=bar"
+      ]
     }
 
     log_driver {

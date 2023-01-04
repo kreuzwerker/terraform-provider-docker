@@ -672,9 +672,10 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "docker_service.foo",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "docker_service.foo",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"task_spec.0.networks_advanced"},
 			},
 		},
 		CheckDestroy: func(state *terraform.State) error {
