@@ -323,7 +323,7 @@ func resourceDockerImage() *schema.Resource {
 						"context": {
 							Type:        schema.TypeString,
 							Description: "Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.",
-							Required:    true,
+							Optional:    true,
 							ForceNew:    true,
 						},
 						"labels": {
