@@ -345,7 +345,8 @@ Optional:
 
 - `force_update` (Number) A counter that triggers an update even if no relevant parameters have been changed. See the [spec](https://github.com/docker/swarmkit/blob/master/api/specs.proto#L126).
 - `log_driver` (Block List, Max: 1) Specifies the log driver to use for tasks created from this spec. If not present, the default one for the swarm will be used, finally falling back to the engine default if not specified (see [below for nested schema](#nestedblock--task_spec--log_driver))
-- `networks` (Set of String) Ids of the networks in which the  container will be put in
+- `networks` (Set of String, Deprecated) Ids of the networks in which the  container will be put in
+- `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--task_spec--networks_advanced))
 - `placement` (Block List, Max: 1) The placement preferences (see [below for nested schema](#nestedblock--task_spec--placement))
 - `resources` (Block List, Max: 1) Resource requirements which apply to each individual container created as part of the service (see [below for nested schema](#nestedblock--task_spec--resources))
 - `restart_policy` (Block List, Max: 1) Specification for the restart policy which applies to containers created as part of this service. (see [below for nested schema](#nestedblock--task_spec--restart_policy))
@@ -554,6 +555,19 @@ Required:
 Optional:
 
 - `options` (Map of String) The options for the logging driver
+
+
+<a id="nestedblock--task_spec--networks_advanced"></a>
+### Nested Schema for `task_spec.networks_advanced`
+
+Required:
+
+- `name` (String) The name/id of the network.
+
+Optional:
+
+- `aliases` (Set of String) The network aliases of the container in the specific network.
+- `driver_opts` (Set of String) An array of driver options for the network, e.g. `opts1=value`
 
 
 <a id="nestedblock--task_spec--placement"></a>

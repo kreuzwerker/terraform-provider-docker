@@ -18,7 +18,7 @@ import (
 // flatten API objects to the terraform schema
 // ////////////
 // see https://learn.hashicorp.com/tutorials/terraform/provider-create?in=terraform/providers#add-flattening-functions
-func flattenTaskSpec(in swarm.TaskSpec) []interface{} {
+func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData) []interface{} {
 	m := make(map[string]interface{})
 	if in.ContainerSpec != nil {
 		m["container_spec"] = flattenContainerSpec(in.ContainerSpec)
@@ -37,7 +37,22 @@ func flattenTaskSpec(in swarm.TaskSpec) []interface{} {
 		m["runtime"] = in.Runtime
 	}
 	if len(in.Networks) > 0 {
-		m["networks"] = flattenTaskNetworks(in.Networks)
+		// We check which networks are set and need to retrieve the resource data
+		// therefore. See in the method 'createServiceTaskSpec'
+		v := d.Get("task_spec").([]interface{})
+		// TODO mavogel: in the last cycle run v is empty
+		// so we check but then the import state fails
+		if len(v) > 0 {
+			rawTaskSpec := v[0].(map[string]interface{})
+			if v, ok := rawTaskSpec["networks"]; ok && len(v.(*schema.Set).List()) > 0 {
+				log.Printf("[DEBUG] flatten networks with length: %d", rawTaskSpec["networks"])
+				m["networks"] = flattenTaskNetworks(in.Networks)
+			}
+			if v, ok := rawTaskSpec["networks_advanced"]; ok && len(v.(*schema.Set).List()) > 0 {
+				log.Printf("[DEBUG] flatten networks_advanced with length: %d", rawTaskSpec["networks_advanced"])
+				m["networks_advanced"] = flattenTaskNetworksAdvanced(in.Networks)
+			}
+		}
 	}
 	if in.LogDriver != nil {
 		m["log_driver"] = flattenTaskLogDriver(in.LogDriver)
@@ -513,6 +528,31 @@ func flattenTaskNetworks(in []swarm.NetworkAttachmentConfig) *schema.Set {
 	return schema.NewSet(schema.HashString, out)
 }
 
+func flattenTaskNetworksAdvanced(in []swarm.NetworkAttachmentConfig) *schema.Set {
+	out := make([]interface{}, len(in))
+	for i, v := range in {
+		m := make(map[string]interface{})
+		m["name"] = v.Target
+		m["driver_opts"] = stringSliceToSchemaSet(mapTypeMapValsToStringSlice(mapStringStringToMapStringInterface(v.DriverOpts)))
+		if len(v.Aliases) > 0 {
+			m["aliases"] = stringSliceToSchemaSet(v.Aliases)
+		}
+		out[i] = m
+	}
+	taskSpecResource := resourceDockerService().Schema["task_spec"].Elem.(*schema.Resource)
+	networksAdvancedResource := taskSpecResource.Schema["networks_advanced"].Elem.(*schema.Resource)
+	f := schema.HashResource(networksAdvancedResource)
+	return schema.NewSet(f, out)
+}
+
+func stringSliceToSchemaSet(in []string) *schema.Set {
+	out := make([]interface{}, len(in))
+	for i, v := range in {
+		out[i] = v
+	}
+	return schema.NewSet(schema.HashString, out)
+}
+
 func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 	if in == nil {
 		return make([]interface{}, 0)
@@ -651,6 +691,13 @@ func createServiceTaskSpec(d *schema.ResourceData) (swarm.TaskSpec, error) {
 				}
 				if rawNetworksSpec, ok := rawTaskSpec["networks"]; ok {
 					networks, err := createServiceNetworks(rawNetworksSpec)
+					if err != nil {
+						return taskSpec, err
+					}
+					taskSpec.Networks = networks
+				}
+				if rawNetworksSpec, ok := rawTaskSpec["networks_advanced"]; ok {
+					networks, err := createServiceAdvancedNetworks(rawNetworksSpec)
 					if err != nil {
 						return taskSpec, err
 					}
@@ -1071,13 +1118,34 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 	return &placement, nil
 }
 
-// createServiceNetworks creates the networks the service will be attachted to
+// createServiceNetworks creates the networks the service will be attachted to. Is deprecated
 func createServiceNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
 	networks := []swarm.NetworkAttachmentConfig{}
 	if len(v.(*schema.Set).List()) > 0 {
 		for _, rawNetwork := range v.(*schema.Set).List() {
 			network := swarm.NetworkAttachmentConfig{
 				Target: rawNetwork.(string),
+			}
+			networks = append(networks, network)
+		}
+	}
+	return networks, nil
+}
+
+// createServiceAdvancedNetworks creates the networks the service will be attachted to
+func createServiceAdvancedNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
+	networks := []swarm.NetworkAttachmentConfig{}
+	if len(v.(*schema.Set).List()) > 0 {
+		for _, rawNetwork := range v.(*schema.Set).List() {
+			rawNetwork := rawNetwork.(map[string]interface{})
+			networkID := rawNetwork["name"].(string)
+			networkAliases := stringSetToStringSlice(rawNetwork["aliases"].(*schema.Set))
+			network := swarm.NetworkAttachmentConfig{
+				Target:  networkID,
+				Aliases: networkAliases,
+			}
+			if driverOpts, ok := rawNetwork["driver_opts"]; ok {
+				network.DriverOpts = stringSetToMapStringString(driverOpts.(*schema.Set))
 			}
 			networks = append(networks, network)
 		}
