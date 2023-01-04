@@ -13,11 +13,114 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-units"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var contentDigestRegexp = regexp.MustCompile(`\A[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)
+
+func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
+	assert := func(condition bool, msg string) {
+		if !condition {
+			t.Errorf("assertion failed: wrong build parameter %s", msg)
+		}
+	}
+
+	dummyProvider := New("dev")()
+	dummyResource := dummyProvider.ResourcesMap["docker_image"]
+	dummyResource.CreateContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+		if value, ok := d.GetOk("build"); ok {
+			for _, rawBuild := range value.(*schema.Set).List() {
+				build := rawBuild.(map[string]interface{})
+				// build := d.Get("build").([]interface{})[0].(map[string]interface{})
+				options := createImageBuildOptions(build)
+
+				assert(options.SuppressOutput == true, "SuppressOutput")
+				assert(options.RemoteContext == "fooRemoteContext", "RemoteContext")
+				assert(options.NoCache == true, "NoCache")
+				assert(options.Remove == true, "Remove")
+				assert(options.ForceRemove == true, "ForceRemove")
+				assert(options.PullParent == true, "PullParent")
+				assert(options.Isolation == container.Isolation("hyperv"), "Isolation")
+				assert(options.CPUSetCPUs == "fooCpuSetCpus", "CPUSetCPUs")
+				assert(options.CPUSetMems == "fooCpuSetMems", "CPUSetMems")
+				assert(options.CPUShares == int64(4), "CPUShares")
+				assert(options.CPUQuota == int64(5), "CPUQuota")
+				assert(options.CPUPeriod == int64(6), "CPUPeriod")
+				assert(options.Memory == int64(1), "Memory")
+				assert(options.MemorySwap == int64(2), "MemorySwap")
+				assert(options.CgroupParent == "fooCgroupParent", "CgroupParent")
+				assert(options.NetworkMode == "fooNetworkMode", "NetworkMode")
+				assert(options.ShmSize == int64(3), "ShmSize")
+				assert(options.Dockerfile == "fooDockerfile", "Dockerfile")
+				assert(len(options.Ulimits) == 1, "Ulimits")
+				assert(reflect.DeepEqual(*options.Ulimits[0], units.Ulimit{
+					Name: "foo",
+					Hard: int64(1),
+					Soft: int64(2),
+				}), "Ulimits")
+				assert(len(options.BuildArgs) == 1, "BuildArgs")
+				// DevSkim: ignore DS137138
+				assert(*options.BuildArgs["HTTP_PROXY"] == "http://10.20.30.2:1234", "BuildArgs")
+				assert(len(options.AuthConfigs) == 1, "AuthConfigs")
+				assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], types.AuthConfig{
+					Username:      "fooUserName",
+					Password:      "fooPassword",
+					Auth:          "fooAuth",
+					Email:         "fooEmail",
+					ServerAddress: "fooServerAddress",
+					IdentityToken: "fooIdentityToken",
+					RegistryToken: "fooRegistryToken",
+				}), "AuthConfigs")
+				assert(reflect.DeepEqual(options.Labels, map[string]string{"foo": "bar"}), "Labels")
+				assert(options.Squash == true, "Squash")
+				assert(reflect.DeepEqual(options.CacheFrom, []string{"fooCacheFrom", "barCacheFrom"}), "CacheFrom")
+				assert(reflect.DeepEqual(options.SecurityOpt, []string{"fooSecurityOpt", "barSecurityOpt"}), "SecurityOpt")
+				assert(reflect.DeepEqual(options.ExtraHosts, []string{"fooExtraHost", "barExtraHost"}), "ExtraHosts")
+				assert(options.Target == "fooTarget", "Target")
+				assert(options.SessionID == "fooSessionId", "SessionID")
+				assert(options.Platform == "fooPlatform", "Platform")
+				assert(options.Version == types.BuilderVersion("1"), "Version")
+				assert(options.BuildID == "fooBuildId", "BuildID")
+				// output
+				d.SetId("foo")
+			}
+		}
+		return nil
+	}
+	dummyResource.UpdateContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		return nil
+	}
+	dummyResource.DeleteContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		return nil
+	}
+	dummyResource.ReadContext = func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		d.Set("id", "foo")
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() { testAccPreCheck(t) },
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"docker": func() (*schema.Provider, error) {
+				return dummyProvider, nil
+			},
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageMappingConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.foo", "id"),
+				),
+			},
+		},
+	})
+}
 
 func TestAccDockerImage_basic(t *testing.T) {
 	// run a Docker container which refers the Docker image to test "force_remove" option
@@ -392,6 +495,113 @@ func TestAccDockerImage_buildOutsideContext(t *testing.T) {
 					resource.TestMatchResourceAttr("docker_image.outside_context", "name", regexp.MustCompile(`\Aoutside-context:latest\z`)),
 				),
 			},
+		},
+	})
+}
+
+func TestAccDockerImageResource_build(t *testing.T) {
+	name := "tftest-dockerregistryimage:1.0"
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepConfig"), name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.foo", "image_id"),
+				),
+			},
+		},
+	})
+}
+
+// Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
+func TestAccDockerImageResource_whitelistDockerignore(t *testing.T) {
+	name := "tftest-dockerregistryimage-whitelistdockerignore:1.0"
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_file_whitelist_dockerignore")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageFilePermissions"), name, context, "Dockerfile"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.file_permissions", "image_id"),
+				),
+			},
+		},
+	})
+}
+
+// Tests for issue https://github.com/kreuzwerker/terraform-provider-docker/issues/293
+// First we check if we can build the docker_registry_image resource at all
+// TODO in a second step we want to check whether the file has the correct permissions
+func TestAccDockerImageResource_correctFilePermissions(t *testing.T) {
+	name := "tftest-dockerregistryimage-filepermissions:1.0"
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_file_permissions")), "\\", "\\\\")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageFilePermissions"), name, context, "Dockerfile"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.file_permissions", "image_id"),
+				),
+				// TODO another check which starts the the newly built docker image and checks the file permissions to see if they are correct
+			},
+		},
+	})
+}
+
+func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
+	name := "tftest-dockerregistryimage-ignore:1.0"
+	wd, _ := os.Getwd()
+	ctx := context.Background()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
+	ignoredFile := context + "/to_be_ignored"
+	expectedSha := ""
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "one", name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.one", "image_id"),
+					resource.TestCheckResourceAttrWith("docker_image.one", "image_id", func(value string) error {
+						expectedSha = value
+						return nil
+					}),
+				),
+			},
+			{
+				PreConfig: func() {
+					// create a file that should be ignored
+					f, err := os.OpenFile(ignoredFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					if err != nil {
+						panic("failed to create test file")
+					}
+					f.Close()
+				},
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "two", name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("docker_image.two", "image_id", func(value string) error {
+						if value != expectedSha {
+							return fmt.Errorf("Image sha256_digest changed, expected %#v, got %#v", expectedSha, value)
+						}
+						return nil
+					}),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
 		},
 	})
 }
