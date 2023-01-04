@@ -104,10 +104,6 @@ resource "docker_image" "zoo" {
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`
 
-Required:
-
-- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
-
 Optional:
 
 - `auth_config` (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
@@ -116,6 +112,7 @@ Optional:
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `cache_from` (List of String) Images to consider as cache sources
 - `cgroup_parent` (String) Optional parent cgroup for the container
+- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
 - `cpu_period` (Number) The length of a CPU period in microseconds
 - `cpu_quota` (Number) Microseconds of CPU time that the container can get in a CPU period
 - `cpu_set_cpus` (String) CPUs in which to allow execution (e.g., `0-3`, `0`, `1`)
