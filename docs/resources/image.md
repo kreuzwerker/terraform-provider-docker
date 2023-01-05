@@ -104,17 +104,68 @@ resource "docker_image" "zoo" {
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`
 
+Optional:
+
+- `auth_config` (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
+- `build_arg` (Map of String) Set build-time variables
+- `build_args` (Map of String) Pairs for build-time variables in the form TODO
+- `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
+- `cache_from` (List of String) Images to consider as cache sources
+- `cgroup_parent` (String) Optional parent cgroup for the container
+- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
+- `cpu_period` (Number) The length of a CPU period in microseconds
+- `cpu_quota` (Number) Microseconds of CPU time that the container can get in a CPU period
+- `cpu_set_cpus` (String) CPUs in which to allow execution (e.g., `0-3`, `0`, `1`)
+- `cpu_set_mems` (String) MEMs in which to allow execution (`0-3`, `0`, `1`)
+- `cpu_shares` (Number) CPU shares (relative weight)
+- `dockerfile` (String) Name of the Dockerfile. Defaults to `Dockerfile`.
+- `extra_hosts` (List of String) A list of hostnames/IP mappings to add to the container’s /etc/hosts file. Specified in the form ["hostname:IP"]
+- `force_remove` (Boolean) Always remove intermediate containers
+- `isolation` (String) Isolation represents the isolation technology of a container. The supported values are
+- `label` (Map of String) Set metadata for an image
+- `labels` (Map of String) User-defined key/value metadata
+- `memory` (Number) Set memory limit for build
+- `memory_swap` (Number) Total memory (memory + swap), -1 to enable unlimited swap
+- `network_mode` (String) Set the networking mode for the RUN instructions during build
+- `no_cache` (Boolean) Do not use the cache when building the image
+- `path` (String, Deprecated) Context path
+- `platform` (String) Set platform if server is multi-platform capable
+- `pull_parent` (Boolean) Attempt to pull the image even if an older image exists locally
+- `remote_context` (String) A Git repository URI or HTTP/HTTPS context URI
+- `remove` (Boolean) Remove intermediate containers after a successful build. Defaults to `true`.
+- `security_opt` (List of String) The security options
+- `session_id` (String) Set an ID for the build session
+- `shm_size` (Number) Size of /dev/shm in bytes. The size must be greater than 0
+- `squash` (Boolean) If true the new layers are squashed into a new image with a single new layer
+- `suppress_output` (Boolean) Suppress the build output and print image ID on success
+- `tag` (List of String) Name and optionally a tag in the 'name:tag' format
+- `target` (String) Set the target build stage to build
+- `ulimit` (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
+- `version` (String) Version of the underlying builder to use
+
+<a id="nestedblock--build--auth_config"></a>
+### Nested Schema for `build.auth_config`
+
 Required:
 
-- `path` (String) Context path
+- `host_name` (String) hostname of the registry
 
 Optional:
 
-- `build_arg` (Map of String) Set build-time variables
-- `dockerfile` (String) Name of the Dockerfile. Defaults to `Dockerfile`.
-- `force_remove` (Boolean) Always remove intermediate containers
-- `label` (Map of String) Set metadata for an image
-- `no_cache` (Boolean) Do not use cache when building the image
-- `remove` (Boolean) Remove intermediate containers after a successful build. Defaults to  `true`.
-- `tag` (List of String) Name and optionally a tag in the 'name:tag' format
-- `target` (String) Set the target build stage to build
+- `auth` (String) the auth token
+- `email` (String) the user emal
+- `identity_token` (String) the identity token
+- `password` (String) the registry password
+- `registry_token` (String) the registry token
+- `server_address` (String) the server address
+- `user_name` (String) the registry user name
+
+
+<a id="nestedblock--build--ulimit"></a>
+### Nested Schema for `build.ulimit`
+
+Required:
+
+- `hard` (Number) soft limit
+- `name` (String) type of ulimit, e.g. `nofile`
+- `soft` (Number) hard limit

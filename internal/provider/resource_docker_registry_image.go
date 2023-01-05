@@ -42,6 +42,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 				Description: "Definition for building the image",
 				Optional:    true,
 				MaxItems:    1,
+				Deprecated:  "Use `docker_image` resource instead. This field will be removed in the next major release.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"suppress_output": {
@@ -333,7 +334,7 @@ func resourceDockerRegistryImage() *schema.Resource {
 			},
 
 			"triggers": {
-				Description: "A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to rebuild an image when contents of source code folders change or to repush a local image",
+				Description: "A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to repush a local image",
 				Type:        schema.TypeMap,
 				Optional:    true,
 				ForceNew:    true,

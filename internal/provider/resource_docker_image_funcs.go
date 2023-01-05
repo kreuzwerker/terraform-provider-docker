@@ -325,9 +325,8 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		err error
 	)
 
-	buildOptions := types.ImageBuildOptions{}
-
-	buildOptions.Dockerfile = rawBuild["dockerfile"].(string)
+	log.Printf("[DEBUG] Building docker image")
+	buildOptions := createImageBuildOptions(rawBuild)
 
 	tags := []string{imageName}
 	for _, t := range rawBuild["tag"].([]interface{}) {
@@ -335,29 +334,26 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	}
 	buildOptions.Tags = tags
 
-	buildOptions.ForceRemove = rawBuild["force_remove"].(bool)
-	buildOptions.Remove = rawBuild["remove"].(bool)
-	buildOptions.NoCache = rawBuild["no_cache"].(bool)
-	buildOptions.Target = rawBuild["target"].(string)
-
-	buildArgs := make(map[string]*string)
-	for k, v := range rawBuild["build_arg"].(map[string]interface{}) {
-		val := v.(string)
-		buildArgs[k] = &val
+	// Supporting both "path" and "context" for backwards compatibility
+	// TODO: remove "path" in the next major release
+	pathAttribute := rawBuild["path"].(string)
+	contextAttribute := rawBuild["context"].(string)
+	if len(pathAttribute) == 0 && len(contextAttribute) == 0 {
+		return errors.New("one of path or context must be configured")
 	}
-	buildOptions.BuildArgs = buildArgs
-	log.Printf("[DEBUG] Build Args: %v\n", buildArgs)
 
-	labels := make(map[string]string)
-	for k, v := range rawBuild["label"].(map[string]interface{}) {
-		labels[k] = v.(string)
+	buildContext := ""
+	if len(pathAttribute) > 0 {
+		// add existingAttribute to provider create API call
+		buildContext = pathAttribute
+	} else {
+		// add newAttribute to provider create API call
+		buildContext = contextAttribute
 	}
-	buildOptions.Labels = labels
-	log.Printf("[DEBUG] Labels: %v\n", labels)
-
+	// End backwards compatibility, remove until here
 	enableBuildKitIfSupported(ctx, client, &buildOptions)
 
-	buildCtx, relDockerfile, err := prepareBuildContext(rawBuild["path"].(string), buildOptions.Dockerfile)
+	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, buildOptions.Dockerfile)
 	if err != nil {
 		return err
 	}
