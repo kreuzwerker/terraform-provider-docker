@@ -15,6 +15,7 @@ func resourceDockerContainer() *schema.Resource {
 		ReadContext:   resourceDockerContainerRead,
 		UpdateContext: resourceDockerContainerUpdate,
 		DeleteContext: resourceDockerContainerDelete,
+		MigrateState:  resourceDockerContainerMigrateState,
 		SchemaVersion: 2,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
