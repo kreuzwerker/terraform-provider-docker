@@ -26,13 +26,6 @@ func resourceDockerImage() *schema.Resource {
 				ForceNew:    true,
 			},
 
-			"latest": {
-				Type:        schema.TypeString,
-				Description: "The ID of the image in the form of `sha256:<hash>` image digest. Do not confuse it with the default `latest` tag.",
-				Computed:    true,
-				Deprecated:  "Use repo_digest instead",
-			},
-
 			"image_id": {
 				Type:        schema.TypeString,
 				Description: "The ID of the image (as seen when executing `docker inspect` on the image). Can be used to reference the image via its ID in other resources.",
@@ -51,15 +44,6 @@ func resourceDockerImage() *schema.Resource {
 				Optional:    true,
 			},
 
-			"pull_trigger": {
-				Type:          schema.TypeString,
-				Description:   "A value which cause an image pull when changed",
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"pull_triggers"},
-				Deprecated:    "Use field pull_triggers instead",
-			},
-
 			"pull_triggers": {
 				Type:        schema.TypeSet,
 				Description: "List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the [docker_registry_image](../data-sources/registry_image.md).",
@@ -67,16 +51,6 @@ func resourceDockerImage() *schema.Resource {
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
-			},
-
-			"output": {
-				Type:       schema.TypeString,
-				Deprecated: "Is unused and will be removed.",
-				Computed:   true,
-				Elem: &schema.Schema{
-					Type:       schema.TypeString,
-					Deprecated: "Is unused and will be removed.",
-				},
 			},
 
 			"force_remove": {
@@ -90,16 +64,9 @@ func resourceDockerImage() *schema.Resource {
 				Description:   "Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.",
 				Optional:      true,
 				MaxItems:      1,
-				ConflictsWith: []string{"pull_triggers", "pull_trigger"},
+				ConflictsWith: []string{"pull_triggers"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"path": {
-							Type:        schema.TypeString,
-							Description: "Context path",
-							Optional:    true,
-							ForceNew:    true,
-							Deprecated:  "Use context instead. This attribute will be removed in the next major release.",
-						},
 						"dockerfile": {
 							Type:        schema.TypeString,
 							Description: "Name of the Dockerfile. Defaults to `Dockerfile`.",
@@ -323,7 +290,7 @@ func resourceDockerImage() *schema.Resource {
 						"context": {
 							Type:        schema.TypeString,
 							Description: "Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.",
-							Optional:    true,
+							Required:    true,
 							ForceNew:    true,
 						},
 						"labels": {

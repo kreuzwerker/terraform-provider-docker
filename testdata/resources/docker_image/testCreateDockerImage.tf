@@ -1,7 +1,7 @@
 resource "docker_image" "test" {
   name = "ubuntu:11"
   build {
-    path         = "."
+    context      = "."
     dockerfile   = "Dockerfile"
     force_remove = true
     build_arg = {

@@ -79,7 +79,6 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 	// TODO mavogel: remove the appended name from the ID
 	d.SetId(foundImage.ID + d.Get("name").(string))
 	d.Set("image_id", foundImage.ID)
-	d.Set("latest", foundImage.ID)
 	d.Set("repo_digest", repoDigest)
 	return nil
 }
@@ -89,12 +88,10 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 	// the value of "latest" or others
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
+	_, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
-
-	d.Set("latest", apiImage.ID)
 
 	return resourceDockerImageRead(ctx, d, meta)
 }
@@ -334,23 +331,8 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	}
 	buildOptions.Tags = tags
 
-	// Supporting both "path" and "context" for backwards compatibility
-	// TODO: remove "path" in the next major release
-	pathAttribute := rawBuild["path"].(string)
-	contextAttribute := rawBuild["context"].(string)
-	if len(pathAttribute) == 0 && len(contextAttribute) == 0 {
-		return errors.New("one of path or context must be configured")
-	}
+	buildContext := rawBuild["context"].(string)
 
-	buildContext := ""
-	if len(pathAttribute) > 0 {
-		// add existingAttribute to provider create API call
-		buildContext = pathAttribute
-	} else {
-		// add newAttribute to provider create API call
-		buildContext = contextAttribute
-	}
-	// End backwards compatibility, remove until here
 	enableBuildKitIfSupported(ctx, client, &buildOptions)
 
 	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, buildOptions.Dockerfile)
