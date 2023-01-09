@@ -1,6 +1,10 @@
 resource "docker_registry_image" "helloworld" {
-  name = "helloworld:1.0"
+  name          = docker_image.image.name
+  keep_remotely = true
+}
 
+resource "docker_image" "image" {
+  name = "registry.com/somename:1.0"
   build {
     context = "${path.cwd}/absolutePathToContextFolder"
   }

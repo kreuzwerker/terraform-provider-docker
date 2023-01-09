@@ -1,8 +1,8 @@
 resource "docker_image" "zoo" {
   name = "zoo"
   build {
-    path = "."
-    tag  = ["zoo:develop"]
+    context = "."
+    tag     = ["zoo:develop"]
     build_arg = {
       foo : "zoo"
     }

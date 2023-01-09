@@ -6,7 +6,7 @@ import (
 
 func resourceDockerRegistryImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manages the lifecycle of docker image/tag in a registry means it can store one or more version of specific docker images and identified by their tags.",
+		Description: "Manages the lifecycle of docker image in a registry. You can upload images to a registry (= `docker push`) and also delete them again",
 
 		CreateContext: resourceDockerRegistryImageCreate,
 		ReadContext:   resourceDockerRegistryImageRead,
