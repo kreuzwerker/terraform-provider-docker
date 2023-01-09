@@ -38,11 +38,11 @@ resource "docker_image" "foo_image" {
   provider = "docker.private"
   name     = "somename"
   build {
-   // your build params
+    // your build params
   }
 }
 
 resource "docker_registry_image" "foo" {
-  name                 = docker_image.foo_image.name
+  name = docker_image.foo_image.name
 }
 ```
