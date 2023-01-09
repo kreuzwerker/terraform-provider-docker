@@ -99,8 +99,6 @@ func TestAccDockerContainer_basic(t *testing.T) {
 
 					// TODO mavogel: Will be done in #74 (import resources)
 					"volumes",
-					"network_alias",
-					"networks",
 					"network_advanced",
 					"container_read_refresh_timeout_milliseconds",
 				},
@@ -143,8 +141,6 @@ func TestAccDockerContainer_init(t *testing.T) {
 
 					// TODO mavogel: Will be done in #74 (import resources)
 					"volumes",
-					"network_alias",
-					"networks",
 					"network_advanced",
 					"container_read_refresh_timeout_milliseconds",
 				},
@@ -164,9 +160,6 @@ func TestAccDockerContainer_basic_network(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "bridge", ""),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_address"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_prefix_length"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "gateway"),
 					resource.TestCheckResourceAttr("docker_container.foo", "network_data.#", "2"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.network_name"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.ip_address"),
@@ -193,9 +186,6 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "bridge", ""),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_address"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_prefix_length"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "gateway"),
 					resource.TestCheckResourceAttr("docker_container.foo", "network_data.#", "2"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.network_name"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.ip_address"),
@@ -205,11 +195,7 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.1.ip_address"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.1.ip_prefix_length"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.1.gateway"),
-					resource.TestCheckResourceAttr("docker_container.bar", "network_alias.#", "1"),
 					resource.TestCheckResourceAttr("docker_container.bar", "bridge", ""),
-					resource.TestCheckResourceAttrSet("docker_container.bar", "ip_address"),
-					resource.TestCheckResourceAttrSet("docker_container.bar", "ip_prefix_length"),
-					resource.TestCheckResourceAttrSet("docker_container.bar", "gateway"),
 					resource.TestCheckResourceAttr("docker_container.bar", "network_data.#", "1"),
 					resource.TestCheckResourceAttrSet("docker_container.bar", "network_data.0.network_name"),
 					resource.TestCheckResourceAttrSet("docker_container.bar", "network_data.0.ip_address"),

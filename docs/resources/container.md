@@ -58,7 +58,6 @@ resource "docker_image" "ubuntu" {
 - `init` (Boolean) Configured whether an init process should be injected for this container. If unset this will default to the `dockerd` defaults.
 - `ipc_mode` (String) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
 - `labels` (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
-- `links` (Set of String, Deprecated) Set of links for link based connectivity between containers that are running on the same host.
 - `log_driver` (String) The logging driver to use for the container.
 - `log_opts` (Map of String) Key/value pairs to use as options for the logging driver.
 - `logs` (Boolean) Save the container logs (`attach` must be enabled). Defaults to `false`.
@@ -67,9 +66,7 @@ resource "docker_image" "ubuntu" {
 - `memory_swap` (Number) The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.
-- `network_alias` (Set of String, Deprecated) Set an alias for the container in all specified networks
 - `network_mode` (String) Network mode of the container.
-- `networks` (Set of String, Deprecated) ID of the networks in which the container is.
 - `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
 - `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
@@ -104,10 +101,7 @@ resource "docker_image" "ubuntu" {
 - `bridge` (String) The network bridge of the container as read from its NetworkSettings.
 - `container_logs` (String) The logs of the container if its execution is done (`attach` must be disabled).
 - `exit_code` (Number) The exit code of the container if its execution is done (`must_run` must be disabled).
-- `gateway` (String, Deprecated) The network gateway of the container.
 - `id` (String) The ID of this resource.
-- `ip_address` (String, Deprecated) The IP address of the container.
-- `ip_prefix_length` (Number, Deprecated) The IP prefix length of the container.
 - `network_data` (List of Object) The data of the networks the container is connected to. (see [below for nested schema](#nestedatt--network_data))
 
 <a id="nestedblock--capabilities"></a>
