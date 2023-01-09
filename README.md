@@ -18,20 +18,11 @@
 [![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)  
 
-- Website: https://www.terraform.io
-- Provider: [kreuzwerker/docker](https://registry.terraform.io/providers/kreuzwerker/docker/latest)
-- Slack: [@gophers/terraform-provider-docker](https://gophers.slack.com/archives/C01G9TN5V36)
+## Documentation
 
-## Requirements
--	[Terraform](https://www.terraform.io/downloads.html) >=0.12.x
--	[Go](https://golang.org/doc/install) 1.18.x (to build the provider plugin)
+The documentation for the provider is available on the [Terraform Registry](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs).
 
-## Building The Provider
-
-```sh
-$ git clone git@github.com:kreuzwerker/terraform-provider-docker
-$ make build
-```
+Do you want to migrate from `v2.x` to `v3.x`? Please read the [migration guide](docs/v2_v3_migration.md)
 
 ## Example usage
 
@@ -98,6 +89,16 @@ resource "docker_service" "nginx_service" {
     }
   }
 }
+```
+
+## Building The Provider
+
+[Go](https://golang.org/doc/install) 1.18.x (to build the provider plugin)
+
+
+```sh
+$ git clone git@github.com:kreuzwerker/terraform-provider-docker
+$ make build
 ```
 
 ## Contributing

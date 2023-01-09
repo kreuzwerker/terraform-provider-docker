@@ -39,10 +39,10 @@ func resourceDockerRegistryImage() *schema.Resource {
 
 			"build": {
 				Type:        schema.TypeList,
-				Description: "Definition for building the image",
+				Description: "This field is deprecated. Use the `build` block of the `docker_image` resource instead. This field will be removed in the next major release.",
 				Optional:    true,
 				MaxItems:    1,
-				Deprecated:  "Use `docker_image` resource instead. This field will be removed in the next major release.",
+				Deprecated:  "Use the build block fo the `docker_image` resource instead. This field will be removed in the next major release.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"suppress_output": {
