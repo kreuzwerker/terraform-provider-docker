@@ -33,7 +33,7 @@ resource "docker_registry_image" "helloworld" {
 
 ### Optional
 
-- `build` (Block List, Max: 1, Deprecated) Definition for building the image (see [below for nested schema](#nestedblock--build))
+- `build` (Block List, Max: 1, Deprecated) This field is deprecated. Use the `build` block of the `docker_image` resource instead. This field will be removed in the next major release. (see [below for nested schema](#nestedblock--build))
 - `insecure_skip_verify` (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
 - `keep_remotely` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation. Defaults to `false`
 - `triggers` (Map of String) A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to repush a local image
