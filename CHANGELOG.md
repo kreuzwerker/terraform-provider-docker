@@ -1,6 +1,18 @@
 
+<a name="v3.0.1"></a>
+## [v3.0.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.0...v3.0.1) (2023-01-13)
+
+### Fix
+
+* Access health of container correctly. ([#506](https://github.com/kreuzwerker/terraform-provider-docker/issues/506))
+
+
 <a name="v3.0.0"></a>
 ## [v3.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.25.0...v3.0.0) (2023-01-13)
+
+### Chore
+
+* Prepare release v3.0.0
 
 ### Docs
 
