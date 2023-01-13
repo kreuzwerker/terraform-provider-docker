@@ -384,7 +384,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
 		return diag.Errorf("Unable to create container: %s", err)
 	}
-
+	log.Printf("[INFO] retContainer %#v", retContainer)
 	d.SetId(retContainer.ID)
 
 	// But overwrite them with the future ones, if set
@@ -504,7 +504,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					if err != nil {
 						result <- fmt.Errorf("error inspecting container state: %s", err)
 					}
-					if infos.State.Health.Status == types.Healthy {
+					//infos.ContainerJSONBase.State.Health is only set when there is a healthcheck defined on the container resource
+					if infos.ContainerJSONBase.State.Health.Status == types.Healthy {
 						log.Printf("[DEBUG] container state is healthy")
 						break
 					}
