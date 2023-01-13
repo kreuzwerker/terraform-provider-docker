@@ -1,6 +1,23 @@
 
+<a name="v3.0.0"></a>
+## [v3.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.25.0...v3.0.0) (2023-01-13)
+
+### Docs
+
+* Update documentation.
+* Add migration guide and update README ([#502](https://github.com/kreuzwerker/terraform-provider-docker/issues/502))
+
+### Feat
+
+* Prepare v3 release ([#503](https://github.com/kreuzwerker/terraform-provider-docker/issues/503))
+
+
 <a name="v2.25.0"></a>
 ## [v2.25.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.24.0...v2.25.0) (2023-01-05)
+
+### Chore
+
+* Prepare release v2.25.0
 
 ### Docs
 
