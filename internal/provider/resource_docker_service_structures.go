@@ -37,22 +37,7 @@ func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData) []interface{} {
 		m["runtime"] = in.Runtime
 	}
 	if len(in.Networks) > 0 {
-		// We check which networks are set and need to retrieve the resource data
-		// therefore. See in the method 'createServiceTaskSpec'
-		v := d.Get("task_spec").([]interface{})
-		// TODO mavogel: in the last cycle run v is empty
-		// so we check but then the import state fails
-		if len(v) > 0 {
-			rawTaskSpec := v[0].(map[string]interface{})
-			if v, ok := rawTaskSpec["networks"]; ok && len(v.(*schema.Set).List()) > 0 {
-				log.Printf("[DEBUG] flatten networks with length: %d", rawTaskSpec["networks"])
-				m["networks"] = flattenTaskNetworks(in.Networks)
-			}
-			if v, ok := rawTaskSpec["networks_advanced"]; ok && len(v.(*schema.Set).List()) > 0 {
-				log.Printf("[DEBUG] flatten networks_advanced with length: %d", rawTaskSpec["networks_advanced"])
-				m["networks_advanced"] = flattenTaskNetworksAdvanced(in.Networks)
-			}
-		}
+		m["networks_advanced"] = flattenTaskNetworksAdvanced(in.Networks)
 	}
 	if in.LogDriver != nil {
 		m["log_driver"] = flattenTaskLogDriver(in.LogDriver)
@@ -520,14 +505,6 @@ func flattenPlacementPlatforms(in []swarm.Platform) *schema.Set {
 	return schema.NewSet(f, out)
 }
 
-func flattenTaskNetworks(in []swarm.NetworkAttachmentConfig) *schema.Set {
-	out := make([]interface{}, len(in))
-	for i, v := range in {
-		out[i] = v.Target
-	}
-	return schema.NewSet(schema.HashString, out)
-}
-
 func flattenTaskNetworksAdvanced(in []swarm.NetworkAttachmentConfig) *schema.Set {
 	out := make([]interface{}, len(in))
 	for i, v := range in {
@@ -688,13 +665,6 @@ func createServiceTaskSpec(d *schema.ResourceData) (swarm.TaskSpec, error) {
 				}
 				if rawRuntimeSpec, ok := rawTaskSpec["runtime"]; ok {
 					taskSpec.Runtime = swarm.RuntimeType(rawRuntimeSpec.(string))
-				}
-				if rawNetworksSpec, ok := rawTaskSpec["networks"]; ok {
-					networks, err := createServiceNetworks(rawNetworksSpec)
-					if err != nil {
-						return taskSpec, err
-					}
-					taskSpec.Networks = networks
 				}
 				if rawNetworksSpec, ok := rawTaskSpec["networks_advanced"]; ok {
 					networks, err := createServiceAdvancedNetworks(rawNetworksSpec)
@@ -1116,20 +1086,6 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 	}
 
 	return &placement, nil
-}
-
-// createServiceNetworks creates the networks the service will be attachted to. Is deprecated
-func createServiceNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
-	networks := []swarm.NetworkAttachmentConfig{}
-	if len(v.(*schema.Set).List()) > 0 {
-		for _, rawNetwork := range v.(*schema.Set).List() {
-			network := swarm.NetworkAttachmentConfig{
-				Target: rawNetwork.(string),
-			}
-			networks = append(networks, network)
-		}
-	}
-	return networks, nil
 }
 
 // createServiceAdvancedNetworks creates the networks the service will be attachted to

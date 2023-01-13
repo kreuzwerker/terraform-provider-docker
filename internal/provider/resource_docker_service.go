@@ -680,20 +680,10 @@ func resourceDockerService() *schema.Resource {
 							Computed:         true,
 							ValidateDiagFunc: validateStringMatchesPattern("^(container|plugin)$"),
 						},
-						"networks": {
-							Type:          schema.TypeSet,
-							Description:   "Ids of the networks in which the  container will be put in",
-							Optional:      true,
-							Elem:          &schema.Schema{Type: schema.TypeString},
-							Set:           schema.HashString,
-							Deprecated:    "Use networks_advanced instead",
-							ConflictsWith: []string{"task_spec.0.networks_advanced"},
-						},
 						"networks_advanced": {
-							Type:          schema.TypeSet,
-							Description:   "The networks the container is attached to",
-							Optional:      true,
-							ConflictsWith: []string{"task_spec.0.networks"},
+							Type:        schema.TypeSet,
+							Description: "The networks the container is attached to",
+							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {

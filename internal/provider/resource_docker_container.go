@@ -568,37 +568,6 @@ func resourceDockerContainer() *schema.Resource {
 				Set:         schema.HashString,
 			},
 
-			"links": {
-				Type:        schema.TypeSet,
-				Description: "Set of links for link based connectivity between containers that are running on the same host.",
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-				Deprecated:  "The --link flag is a legacy feature of Docker. It may eventually be removed.",
-			},
-
-			"ip_address": {
-				Type:        schema.TypeString,
-				Description: "The IP address of the container.",
-				Computed:    true,
-				Deprecated:  "Use `network_data` instead. The IP address of the container's first network it.",
-			},
-
-			"ip_prefix_length": {
-				Type:        schema.TypeInt,
-				Description: "The IP prefix length of the container.",
-				Computed:    true,
-				Deprecated:  "Use `network_data` instead. The IP prefix length of the container as read from its NetworkSettings.",
-			},
-
-			"gateway": {
-				Type:        schema.TypeString,
-				Description: "The network gateway of the container.",
-				Computed:    true,
-				Deprecated:  "Use `network_data` instead. The network gateway of the container as read from its NetworkSettings.",
-			},
-
 			"bridge": {
 				Type:        schema.TypeString,
 				Description: "The network bridge of the container as read from its NetworkSettings.",
@@ -620,19 +589,16 @@ func resourceDockerContainer() *schema.Resource {
 							Type:        schema.TypeString,
 							Description: "The IP address of the container.",
 							Computed:    true,
-							Deprecated:  "Use `network_data` instead. The IP address of the container's first network it.",
 						},
 						"ip_prefix_length": {
 							Type:        schema.TypeInt,
 							Description: "The IP prefix length of the container.",
 							Computed:    true,
-							Deprecated:  "Use `network_data` instead. The IP prefix length of the container as read from its NetworkSettings.",
 						},
 						"gateway": {
 							Type:        schema.TypeString,
 							Description: "The network gateway of the container.",
 							Computed:    true,
-							Deprecated:  "Use `network_data` instead. The network gateway of the container as read from its NetworkSettings.",
 						},
 						"global_ipv6_address": {
 							Type:        schema.TypeString,
@@ -756,16 +722,6 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 			},
 
-			"network_alias": {
-				Type:        schema.TypeSet,
-				Description: "Set an alias for the container in all specified networks",
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-				Deprecated:  "Use networks_advanced instead. Will be removed in v3.0.0",
-			},
-
 			"network_mode": {
 				Type:        schema.TypeString,
 				Description: "Network mode of the container.",
@@ -781,16 +737,6 @@ func resourceDockerContainer() *schema.Resource {
 					}
 					return oldV == newV
 				},
-			},
-
-			"networks": {
-				Type:        schema.TypeSet,
-				Description: "ID of the networks in which the container is.",
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-				Deprecated:  "Use networks_advanced instead. Will be removed in v3.0.0",
 			},
 
 			"networks_advanced": {

@@ -144,13 +144,13 @@ func TestAccDockerImage_basic(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageConfig"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foo", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.foo", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccForceRemoveDockerImage"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.test", "latest", contentDigestRegexp),
+					resource.TestMatchResourceAttr("docker_image.test", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
 		},
@@ -185,7 +185,6 @@ func TestAccDockerImage_private(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAddDockerPrivateImageConfig"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foobar", "repo_digest", imageRepoDigestRegexp),
 					testAccImageCreated("docker_image.foobar", &i),
 					testCheckImageInspect,
@@ -218,7 +217,6 @@ func TestAccDockerImage_destroy(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageKeepLocallyConfig"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foobarzoo", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foobarzoo", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -235,7 +233,6 @@ func TestAccDockerImage_data(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataConfig"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foobarbaz", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foobarbaz", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -252,7 +249,6 @@ func TestAccDockerImage_data_pull_trigger(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataConfigWithPullTrigger"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foobarbazoo", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foobarbazoo", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -273,7 +269,6 @@ func TestAccDockerImage_data_private(t *testing.T) {
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataPrivateConfig"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foo_private", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -299,7 +294,6 @@ func TestAccDockerImage_data_private_config_file(t *testing.T) {
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataPrivateConfigFile"), registry, dockerConfig, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foo_private", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -325,7 +319,6 @@ func TestAccDockerImage_data_private_config_file_content(t *testing.T) {
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageFromDataPrivateConfigFileContent"), registry, dockerConfig, image),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foo_private", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foo_private", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -347,14 +340,12 @@ func TestAccDockerImage_name_attr_change(t *testing.T) {
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:precise@sha256:18305429afa14ea462f810146ba44d4363ae76e4c8dfc38288cf73aa07485005"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageName"), "ubuntu:jammy@sha256:b6b83d3c331794420340093eb706a6f152d9c1fa51b262d9bf34594887c2c7ac"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.ubuntu", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.ubuntu", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -374,7 +365,6 @@ func TestAccDockerImage_sha265(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAddDockerImageWithSHA256RepoDigest"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.foobar", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.foobar", "repo_digest", imageRepoDigestRegexp),
 				),
 			},
@@ -409,7 +399,6 @@ func TestAccDockerImage_tag_sha265(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageWithTagAndSHA256RepoDigest"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("docker_image.nginx", "latest", contentDigestRegexp),
 					resource.TestMatchResourceAttr("docker_image.nginx", "repo_digest", imageRepoDigestRegexp),
 				),
 			},

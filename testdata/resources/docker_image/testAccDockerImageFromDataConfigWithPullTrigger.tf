@@ -3,5 +3,5 @@ data "docker_registry_image" "foobarbazoo" {
 }
 resource "docker_image" "foobarbazoo" {
   name         = data.docker_registry_image.foobarbazoo.name
-  pull_trigger = data.docker_registry_image.foobarbazoo.sha256_digest
+  pull_triggers = [data.docker_registry_image.foobarbazoo.sha256_digest]
 }

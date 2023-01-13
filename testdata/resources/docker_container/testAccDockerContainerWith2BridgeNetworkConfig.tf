@@ -13,8 +13,14 @@ resource "docker_image" "foo" {
 resource "docker_container" "foo" {
   name  = "tf-test"
   image = docker_image.foo.image_id
-  networks = [
-    docker_network.tftest.name,
-    docker_network.tftest_2.name
-  ]
+  networks_advanced {
+    name = docker_network.tftest.name
+  }
+  networks_advanced {
+    name = docker_network.tftest_2.name
+  }
+  # networks = [
+  #   docker_network.tftest.name,
+  #   docker_network.tftest_2.name
+  # ]
 }

@@ -292,10 +292,6 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.DNSSearch = stringSetToStringSlice(v.(*schema.Set))
 	}
 
-	if v, ok := d.GetOk("links"); ok {
-		hostConfig.Links = stringSetToStringSlice(v.(*schema.Set))
-	}
-
 	if v, ok := d.GetOk("security_opts"); ok {
 		hostConfig.SecurityOpt = stringSetToStringSlice(v.(*schema.Set))
 	}
@@ -390,26 +386,6 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.SetId(retContainer.ID)
-
-	// Still support the deprecated properties
-	if v, ok := d.GetOk("networks"); ok {
-		if err := client.NetworkDisconnect(ctx, "bridge", retContainer.ID, false); err != nil {
-			if !containsIgnorableErrorMessage(err.Error(), "is not connected to the network bridge") {
-				return diag.Errorf("Unable to disconnect the default network: %s", err)
-			}
-		}
-		endpointConfig := &network.EndpointSettings{}
-		if v, ok := d.GetOk("network_alias"); ok {
-			endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
-		}
-
-		for _, rawNetwork := range v.(*schema.Set).List() {
-			networkID := rawNetwork.(string)
-			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
-				return diag.Errorf("Unable to connect to network '%s': %s", networkID, err)
-			}
-		}
-	}
 
 	// But overwrite them with the future ones, if set
 	if v, ok := d.GetOk("networks_advanced"); ok {
@@ -668,20 +644,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 
 	// Read Network Settings
 	if container.NetworkSettings != nil {
-		// TODO remove deprecated attributes in next major
-		d.Set("ip_address", container.NetworkSettings.IPAddress)
-		d.Set("ip_prefix_length", container.NetworkSettings.IPPrefixLen)
-		d.Set("gateway", container.NetworkSettings.Gateway)
-		if container.NetworkSettings != nil && len(container.NetworkSettings.Networks) > 0 {
-			// Still support deprecated outputs
-			for _, settings := range container.NetworkSettings.Networks {
-				d.Set("ip_address", settings.IPAddress)
-				d.Set("ip_prefix_length", settings.IPPrefixLen)
-				d.Set("gateway", settings.Gateway)
-				break
-			}
-		}
-
 		d.Set("bridge", container.NetworkSettings.Bridge)
 		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
 			log.Printf("[WARN] failed to set ports from API: %s", err)
@@ -752,7 +714,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/issues/242
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
-	d.Set("links", container.HostConfig.Links)
 	d.Set("privileged", container.HostConfig.Privileged)
 	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
@@ -770,10 +731,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
 	d.Set("log_opts", container.HostConfig.LogConfig.Config)
 	d.Set("storage_opts", container.HostConfig.StorageOpt)
-	// "network_alias" is deprecated
 	d.Set("network_mode", container.HostConfig.NetworkMode)
-	// networks
-	// networks_advanced
 	d.Set("pid_mode", container.HostConfig.PidMode)
 	d.Set("userns_mode", container.HostConfig.UsernsMode)
 	// "upload" can't be imported
@@ -848,7 +806,6 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 		// dns_search        = []
 		// group_add         = []
 		// id                = "9e6d9e987923e2c3a99f17e8781c7ce3515558df0e45f8ab06f6adb2dda0de50"
-		// links             = []
 		// log_opts          = {}
 		// name              = "nginx"
 		// sysctls           = {}

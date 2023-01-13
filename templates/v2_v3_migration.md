@@ -2,7 +2,7 @@
 
 This guide is intended to help you migrate from V2 to V3 of the `terraform-provider-docker`.
 
-The in the past minor versions there were many new attributes and older attributes are deprecated. 
+The in the past minor versions there were many new attributes and older attributes are deprecated.
 
 This will give you an overview over which attributes are deprecated and which attributes you should use instead.
 
@@ -10,6 +10,7 @@ This will give you an overview over which attributes are deprecated and which at
 
 
 Deprecated attributes:
+
 * `links`: The --link flag is a legacy feature of Docker and will be removed (https://docs.docker.com/network/links/)
 * `ip_address`, `ip_prefix_length`, `gateway`: Use the `network_data` block instead
 * `network_alias`, `networks`: Use the `networks_addvanced` block instead
@@ -37,11 +38,11 @@ resource "docker_image" "foo_image" {
   provider = "docker.private"
   name     = "somename"
   build {
-   // your build params
+    // your build params
   }
 }
 
 resource "docker_registry_image" "foo" {
-  name                 = docker_image.foo_image.name
+  name = docker_image.foo_image.name
 }
 ```
