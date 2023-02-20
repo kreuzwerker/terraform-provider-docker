@@ -13,7 +13,7 @@ Deprecated attributes:
 
 * `links`: The --link flag is a legacy feature of Docker and will be removed (https://docs.docker.com/network/links/)
 * `ip_address`, `ip_prefix_length`, `gateway`: Use the `network_data` block instead
-* `network_alias`, `networks`: Use the `networks_addvanced` block instead
+* `network_alias`, `networks`: Use the `networks_advanced` block instead
 
 
 ## `docker_image`
@@ -25,7 +25,7 @@ Deprecated attributes:
 
 ## `docker_service`
 
-* `networks`: Use the `networks_addvanced` block instead
+* `networks`: Use the `networks_advanced` block instead
 
 
 ## `docker_registry_image`
