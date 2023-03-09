@@ -615,6 +615,11 @@ func resourceDockerContainer() *schema.Resource {
 							Description: "The IPV6 gateway of the container.",
 							Computed:    true,
 						},
+						"mac_address": {
+							Type:        schema.TypeString,
+							Description: "The MAC address of the container.",
+							Computed:    true,
+						},
 					},
 				},
 			},
