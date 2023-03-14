@@ -64,10 +64,11 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	imageName := d.Get("name").(string)
 
-	foundImage, err := searchLocalImages(ctx, client, data, imageName)
-	if err != nil {
-		return diag.Errorf("resourceDockerImageRead: error looking up local image %q: %s", imageName, err)
+	foundImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
+	if err != nil && !errors.Is(err, errUnableToFindDockerImage) {
+		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
+
 	if foundImage == nil {
 		log.Printf("[DEBUG] did not find image with name: %v", imageName)
 		d.SetId("")
@@ -280,6 +281,8 @@ func parseImageOptions(image string) internalPullImageOptions {
 	return pullOpts
 }
 
+var errUnableToFindDockerImage = errors.New("unable to find docker image")
+
 func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs, platform string) (*types.ImageSummary, error) {
 	if imageName == "" {
 		return nil, fmt.Errorf("empty image name is not allowed")
@@ -314,13 +317,11 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 		return foundImage, nil
 	}
 
-	return nil, fmt.Errorf("unable to find or pull image %s", imageName)
+	return nil, errors.Wrap(errUnableToFindDockerImage, fmt.Sprintf("unable to find or pull image %s", imageName))
 }
 
 func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
-	var (
-		err error
-	)
+	var err error
 
 	log.Printf("[DEBUG] Building docker image")
 	buildOptions := createImageBuildOptions(rawBuild)
@@ -417,7 +418,7 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 
 func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	filePath, _ = homedir.Expand(filePath)
-	//TarWithOptions works only with absolute paths in Windows.
+	// TarWithOptions works only with absolute paths in Windows.
 	filePath, err := filepath.Abs(filePath)
 	if err != nil {
 		log.Fatalf("Invalid build directory: %s", filePath)
