@@ -1508,6 +1508,7 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.mac_address"),
 				),
 			},
 		},

@@ -74,6 +74,7 @@ func flattenContainerNetworks(in *types.NetworkSettings) []interface{} {
 		m["global_ipv6_address"] = networkData.GlobalIPv6Address
 		m["global_ipv6_prefix_length"] = networkData.GlobalIPv6PrefixLen
 		m["ipv6_gateway"] = networkData.IPv6Gateway
+		m["mac_address"] = networkData.MacAddress
 		out = append(out, m)
 	}
 	return out

@@ -290,6 +290,7 @@ Read-Only:
 - `ip_address` (String)
 - `ip_prefix_length` (Number)
 - `ipv6_gateway` (String)
+- `mac_address` (String)
 - `network_name` (String)
 
 ## Import
