@@ -250,8 +250,11 @@ func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkip
 	client := http.DefaultClient
 
 	if strings.HasPrefix(registryAddressWithProtocol, "https://") {
-		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}, Proxy: http.ProxyFromEnvironment}
+	} else {
+		client.Transport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 	}
+
 	return client
 }
 
