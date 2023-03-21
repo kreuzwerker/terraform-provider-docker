@@ -1,6 +1,22 @@
 
+<a name="v3.0.2"></a>
+## [v3.0.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.1...v3.0.2) (2023-03-17)
+
+### Docs
+
+* correct spelling of "networks_advanced" ([#517](https://github.com/kreuzwerker/terraform-provider-docker/issues/517))
+
+### Fix
+
+* Implement proxy support. ([#529](https://github.com/kreuzwerker/terraform-provider-docker/issues/529))
+
+
 <a name="v3.0.1"></a>
 ## [v3.0.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.0...v3.0.1) (2023-01-13)
+
+### Chore
+
+* Prepare release v3.0.1
 
 ### Fix
 
