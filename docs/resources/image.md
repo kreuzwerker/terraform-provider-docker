@@ -45,6 +45,8 @@ resource "docker_image" "ubuntu" {
 
 You can also use the resource to build an image.
 In this case the image "zoo" and "zoo:develop" are built.
+The `context` and `dockerfile` arguments are relative to the local Terraform process (`path.cwd`).
+There is no need to copy the files to remote hosts before creating the resource.
 
 ```terraform
 resource "docker_image" "zoo" {
@@ -103,7 +105,7 @@ resource "docker_image" "zoo" {
 
 Required:
 
-- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
+- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. This always refers to the local working directory, even when building images on remote hosts. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
 
 Optional:
 
