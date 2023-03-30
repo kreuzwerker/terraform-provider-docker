@@ -48,7 +48,7 @@ resource "docker_image" "ubuntu" {
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 - `dns_search` (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
 - `domainname` (String) Domain name of the container.
-- `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
+- `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogram"]`.
 - `env` (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
 - `gpus` (String) GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.
 - `group_add` (Set of String) Additional groups for the container user
