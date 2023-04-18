@@ -96,7 +96,7 @@ resource "docker_image" "zoo" {
 
 - `id` (String) Unique identifier for this resource. This is not the image ID, but the ID of the resource in the Terraform state. This is used to identify the resource in the Terraform state. To reference the correct image ID, use the `image_id` attribute.
 - `image_id` (String) The ID of the image (as seen when executing `docker inspect` on the image). Can be used to reference the image via its ID in other resources.
-- `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.
+- `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. This may not be populated when building an image, because it is read from the local Docker client and so may be available only when the image was either pulled from the repo or pushed to the repo (perhaps using `docker_registry_image`) in a previous run.
 
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`
