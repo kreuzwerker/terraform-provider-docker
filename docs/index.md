@@ -73,11 +73,12 @@ The configuration would look as follows:
 ```terraform
 provider "docker" {
   host     = "ssh://user@remote-host:22"
-  ssh_opts = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
+  ssh_opts = ["-i", "/path/to/private-key", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"]
 }
 ```
 
 When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
+When using the remote host, provide the ssh keys using the standard ssh command option `-i /path/to/private/key` under ssh_opts. The location of the ssh keys should be available to terraform
 
 ## Registry credentials
 
