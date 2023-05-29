@@ -10,7 +10,7 @@ description: |-
 # Resource (docker_image)
 
 Pulls a Docker image to a given Docker host from a Docker Registry.
- This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](registry_image.md) data source to update the `pull_triggers` field.
+ This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.
 
 ## Example Usage
 
