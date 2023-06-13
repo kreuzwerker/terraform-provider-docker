@@ -2,9 +2,13 @@ package provider
 
 import (
 	b64 "encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -92,4 +96,73 @@ func setupHTTPRequestForRegistry(method, registry, registryWithProtocol, image, 
 	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	return req, nil
+}
+
+// Checks for and parses key/value pairs from a WWW-Authenticate header
+func parseAuthHeader(header string) (map[string]string, error) {
+	if !strings.HasPrefix(header, "Bearer") {
+		return nil, errors.New("missing or invalid www-authenticate header")
+	}
+
+	parts := strings.SplitN(header, " ", 2)
+	parts = regexp.MustCompile(`\w+\=\".*?\"|\w+[^\s\"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
+	opts := make(map[string]string)
+
+	for _, part := range parts {
+		vals := strings.SplitN(part, "=", 2)
+		key := vals[0]
+		val := strings.Trim(vals[1], "\", ")
+		opts[key] = val
+	}
+
+	return opts, nil
+}
+
+func getAuthToken(auth map[string]string, username string, password string, client *http.Client) (string, error) {
+	params := url.Values{}
+	params.Set("service", auth["service"])
+	params.Set("scope", auth["scope"])
+	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
+	if err != nil {
+		return "", fmt.Errorf("Error creating registry request: %s", err)
+	}
+
+	if username != "" {
+		tokenRequest.SetBasicAuth(username, password)
+	}
+
+	tokenResponse, err := client.Do(tokenRequest)
+	if err != nil {
+		return "", fmt.Errorf("Error during registry request: %s", err)
+	}
+
+	if tokenResponse.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
+	}
+
+	body, err := ioutil.ReadAll(tokenResponse.Body)
+	if err != nil {
+		return "", fmt.Errorf("Error reading response body: %s", err)
+	}
+
+	token := &TokenResponse{}
+	err = json.Unmarshal(body, token)
+	if err != nil {
+		return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
+	}
+
+	if token.Token != "" {
+		return token.Token, nil
+	}
+
+	if token.AccessToken != "" {
+		return token.AccessToken, nil
+	}
+
+	return "", fmt.Errorf("Error unsupported OAuth response")
+}
+
+type TokenResponse struct {
+	Token       string
+	AccessToken string `json:"access_token"`
 }
