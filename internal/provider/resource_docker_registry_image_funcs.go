@@ -261,25 +261,10 @@ func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkip
 func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithProtocol string, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
 	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("DELETE", registryWithProtocol+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
+	req, err := setupHTTPRequestForRegistry("DELETE", pushOpts.Registry, registryWithProtocol, pushOpts.Repository, sha256Digest, username, password, fallback)
 	if err != nil {
-		return fmt.Errorf("Error deleting registry image: %s", err)
+		return err
 	}
-
-	if username != "" {
-		if pushOpts.Registry != "ghcr.io" && !isECRRepositoryURL(pushOpts.Registry) && !isAzureCRRepositoryURL(pushOpts.Registry) && pushOpts.Registry != "gcr.io" {
-			req.SetBasicAuth(username, password)
-		} else {
-			if isECRRepositoryURL(pushOpts.Registry) {
-				password = normalizeECRPasswordForHTTPUsage(password)
-				req.Header.Add("Authorization", "Basic "+password)
-			} else {
-				req.Header.Add("Authorization", "Bearer "+base64.StdEncoding.EncodeToString([]byte(password)))
-			}
-		}
-	}
-
-	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {

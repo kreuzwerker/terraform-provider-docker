@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"crypto/sha256"
-	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -76,25 +75,10 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 func getImageDigest(registry string, registryWithProtocol string, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
 	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("HEAD", registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
+	req, err := setupHTTPRequestForRegistry("HEAD", registry, registryWithProtocol, image, tag, username, password, fallback)
 	if err != nil {
-		return "", fmt.Errorf("Error creating registry request: %s", err)
+		return "", err
 	}
-
-	if username != "" {
-		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
-			req.SetBasicAuth(username, password)
-		} else {
-			if isECRRepositoryURL(registry) {
-				password = normalizeECRPasswordForHTTPUsage(password)
-				req.Header.Add("Authorization", "Basic "+password)
-			} else {
-				req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
-			}
-		}
-	}
-
-	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {

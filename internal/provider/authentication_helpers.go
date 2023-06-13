@@ -2,6 +2,7 @@ package provider
 
 import (
 	b64 "encoding/base64"
+	"fmt"
 	"log"
 	"net/http"
 	"regexp"
@@ -67,4 +68,28 @@ func setupHTTPHeadersForRegistryRequests(req *http.Request, fallback bool) {
 		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
 		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
 	}
+}
+
+func setupHTTPRequestForRegistry(method, registry, registryWithProtocol, image, tag, username, password string, fallback bool) (*http.Request, error) {
+	req, err := http.NewRequest(method, registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating registry request: %s", err)
+	}
+
+	if username != "" {
+		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
+			req.SetBasicAuth(username, password)
+		} else {
+			if isECRRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
+			}
+		}
+	}
+
+	setupHTTPHeadersForRegistryRequests(req, fallback)
+
+	return req, nil
 }
