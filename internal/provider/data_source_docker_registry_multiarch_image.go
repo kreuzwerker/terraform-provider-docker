@@ -121,7 +121,7 @@ func doManifestRequest(req *http.Request, client *http.Client, username string, 
 		if resp.StatusCode == http.StatusUnauthorized && retryUnauthorized {
 			auth, err := parseAuthHeader(resp.Header.Get("www-authenticate"))
 			if err != nil {
-				return nil, fmt.Errorf("Bad credentials: %s", resp.Status)
+				return nil, fmt.Errorf("bad credentials: %s", resp.Status)
 			}
 
 			token, err := getAuthToken(auth, username, password, client)
@@ -134,7 +134,7 @@ func doManifestRequest(req *http.Request, client *http.Client, username string, 
 			return doManifestRequest(req, client, username, password, false)
 		}
 
-		return nil, fmt.Errorf("Got bad response from registry: %s", resp.Status)
+		return nil, fmt.Errorf("got bad response from registry: %s", resp.Status)
 	}
 }
 
@@ -151,6 +151,7 @@ func getManifestsFromResponse(response *http.Response) (*ManifestResponse, error
 	}
 
 	if len(manifest.Manifests) == 0 {
+		log.Printf("[DEBUG] Manifest response was not for list: %s", string(body))
 		return nil, fmt.Errorf("Error unsupported manifest response")
 	}
 
