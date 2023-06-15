@@ -15,7 +15,7 @@ import (
 
 var registryDigestRegexp = regexp.MustCompile(`\A[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)
 
-func TestAccDockerRegistryImage_basic(t *testing.T) {
+func TestAccDockerRegistryImageDataSource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -30,7 +30,7 @@ func TestAccDockerRegistryImage_basic(t *testing.T) {
 	})
 }
 
-func TestAccDockerRegistryImage_private(t *testing.T) {
+func TestAccDockerRegistryImageDataSource_private(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -45,7 +45,7 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 	})
 }
 
-func TestAccDockerRegistryImage_auth(t *testing.T) {
+func TestAccDockerRegistryImageDataSource_auth(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
 	ctx := context.Background()
@@ -66,7 +66,7 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 	})
 }
 
-func TestAccDockerRegistryImage_httpAuth(t *testing.T) {
+func TestAccDockerRegistryImageDataSource_httpAuth(t *testing.T) {
 	registry := "http://127.0.0.1:15001"
 	image := "127.0.0.1:15001/tftest-service:v1"
 	ctx := context.Background()
