@@ -1,5 +1,5 @@
 provider "docker" {
-  version = "~> 2.16.0"
+  version = "~> 3.0.2"
   host    = "unix:///var/run/docker.sock"
 }
 
@@ -10,6 +10,6 @@ resource "docker_image" "ubuntu" {
 
 # Create a container
 resource "docker_container" "foo" {
-  image = docker_image.ubuntu.latest
+  image = docker_image.ubuntu.image_id
   name  = "foo"
 }

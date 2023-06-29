@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"testing"
@@ -51,7 +52,39 @@ func TestAccDockerProvider_WithIncompleteRegistryAuth(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccDockerProviderWithIncompleteAuthConfig,
-				ExpectError: regexp.MustCompile(`401 Unauthorized`),
+				ExpectError: regexp.MustCompile(`expected "registry_auth.0.address" to not be an empty string, got `),
+			},
+		},
+	})
+}
+
+func TestAccDockerProvider_WithMultipleRegistryAuth(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage-testtest:1.0")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "provider", "testAccDockerProviderMultipleRegistryAuth"), pushOptions.Registry),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.docker_registry_image.foobar", "sha256_digest"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerProvider_WithDisabledRegistryAuth(t *testing.T) {
+	pushOptions := createPushImageOptions("http://127.0.0.1:15002/tftest-dockerregistryimage-testtest:1.0")
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "provider", "testAccDockerProviderDisabledRegistryAuth"), pushOptions.NormalizedRegistry),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.docker_registry_image.foobar", "sha256_digest"),
+				),
 			},
 		},
 	})

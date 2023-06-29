@@ -18,24 +18,15 @@
 [![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)  
 
-- Website: https://www.terraform.io
-- Provider: [kreuzwerker/docker](https://registry.terraform.io/providers/kreuzwerker/docker/latest)
-- Slack: [@gophers/terraform-provider-docker](https://gophers.slack.com/archives/C01G9TN5V36)
+## Documentation
 
-## Requirements
--	[Terraform](https://www.terraform.io/downloads.html) >=0.12.x
--	[Go](https://golang.org/doc/install) 1.17.x (to build the provider plugin)
+The documentation for the provider is available on the [Terraform Registry](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs).
 
-## Building The Provider
-
-```sh
-$ git clone git@github.com:kreuzwerker/terraform-provider-docker
-$ make build
-```
+Do you want to migrate from `v2.x` to `v3.x`? Please read the [migration guide](docs/v2_v3_migration.md)
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/2.16.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/3.0.2/docs) of the registry
 or use the following example:
 
 
@@ -47,7 +38,7 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.16.0"
+      version = "3.0.2"
     }
   }
 }
@@ -67,7 +58,7 @@ resource "docker_image" "nginx" {
 # -> same as 'docker run --name nginx -p8080:80 -d nginx:latest'
 resource "docker_container" "nginx" {
   name    = "nginx"
-  image   = docker_image.nginx.latest
+  image   = docker_image.nginx.image_id
 
   ports {
     external = 8080
@@ -98,6 +89,16 @@ resource "docker_service" "nginx_service" {
     }
   }
 }
+```
+
+## Building The Provider
+
+[Go](https://golang.org/doc/install) 1.18.x (to build the provider plugin)
+
+
+```sh
+$ git clone git@github.com:kreuzwerker/terraform-provider-docker
+$ make build
 ```
 
 ## Contributing

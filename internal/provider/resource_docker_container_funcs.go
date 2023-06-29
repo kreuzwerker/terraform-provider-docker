@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -28,9 +29,9 @@ import (
 )
 
 const (
-	containerReadRefreshTimeout             = 15 * time.Second
-	containerReadRefreshWaitBeforeRefreshes = 100 * time.Millisecond
-	containerReadRefreshDelay               = 100 * time.Millisecond
+	containerReadRefreshTimeoutMillisecondsDefault = 15000
+	containerReadRefreshWaitBeforeRefreshes        = 100 * time.Millisecond
+	containerReadRefreshDelay                      = 100 * time.Millisecond
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 	errContainerFailedToBeDeleted        = errors.New("container failed to be deleted")
 	errContainerExitedImmediately        = errors.New("container exited immediately")
 	errContainerFailedToBeInRunningState = errors.New("container failed to be in running state")
+	errContainerFailedToBeInHealthyState = errors.New("container failed to be in healthy state")
 )
 
 // NOTE mavogel: we keep this global var for tracking
@@ -49,17 +51,24 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*ProviderConfig).DockerClient
 	authConfigs := meta.(*ProviderConfig).AuthConfigs
 	image := d.Get("image").(string)
-	_, err = findImage(ctx, image, client, authConfigs)
+	_, err = findImage(ctx, image, client, authConfigs, "")
 	if err != nil {
 		return diag.Errorf("Unable to create container with image %s: %s", image, err)
 	}
+	var stopTimeout *int
+	if v, ok := d.GetOk("stop_timeout"); ok {
+		tmp := v.(int)
+		stopTimeout = &tmp
+	}
 
 	config := &container.Config{
-		Image:      image,
-		Hostname:   d.Get("hostname").(string),
-		Domainname: d.Get("domainname").(string),
-		Tty:        d.Get("tty").(bool),
-		OpenStdin:  d.Get("stdin_open").(bool),
+		Image:       image,
+		Hostname:    d.Get("hostname").(string),
+		Domainname:  d.Get("domainname").(string),
+		Tty:         d.Get("tty").(bool),
+		OpenStdin:   d.Get("stdin_open").(bool),
+		StopSignal:  d.Get("stop_signal").(string),
+		StopTimeout: stopTimeout,
 	}
 
 	if v, ok := d.GetOk("env"); ok {
@@ -229,6 +238,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			Name:              d.Get("restart").(string),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
+		Runtime:        d.Get("runtime").(string),
 		Mounts:         mounts,
 		AutoRemove:     d.Get("rm").(bool),
 		ReadonlyRootfs: d.Get("read_only").(bool),
@@ -280,10 +290,6 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if v, ok := d.GetOk("dns_search"); ok {
 		hostConfig.DNSSearch = stringSetToStringSlice(v.(*schema.Set))
-	}
-
-	if v, ok := d.GetOk("links"); ok {
-		hostConfig.Links = stringSetToStringSlice(v.(*schema.Set))
 	}
 
 	if v, ok := d.GetOk("security_opts"); ok {
@@ -339,6 +345,31 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("group_add"); ok {
 		hostConfig.GroupAdd = stringSetToStringSlice(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("gpus"); ok {
+		if client.ClientVersion() >= "1.40" {
+			var gpu opts.GpuOpts
+			err := gpu.Set(v.(string))
+			if err != nil {
+				return diag.Errorf("Error setting gpus: %s", err)
+			}
+			hostConfig.DeviceRequests = gpu.Value()
+		} else {
+			log.Printf("[WARN] GPU support requires docker version 1.40 or higher")
+		}
+	}
+
+	if v, ok := d.GetOk("cgroupns_mode"); ok {
+		if client.ClientVersion() >= "1.41" {
+			cgroupnsMode := container.CgroupnsMode(v.(string))
+			if !cgroupnsMode.Valid() {
+				return diag.Errorf("cgroupns_mode: invalid CGROUP mode, must be either 'private', 'host' or empty")
+			} else {
+				hostConfig.CgroupnsMode = cgroupnsMode
+			}
+		} else {
+			log.Printf("[WARN] cgroupns_mode requires docker version 1.41 or higher")
+		}
+	}
 
 	init := d.Get("init").(bool)
 	hostConfig.Init = &init
@@ -353,28 +384,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
 		return diag.Errorf("Unable to create container: %s", err)
 	}
-
+	log.Printf("[INFO] retContainer %#v", retContainer)
 	d.SetId(retContainer.ID)
-
-	// Still support the deprecated properties
-	if v, ok := d.GetOk("networks"); ok {
-		if err := client.NetworkDisconnect(ctx, "bridge", retContainer.ID, false); err != nil {
-			if !containsIgnorableErrorMessage(err.Error(), "is not connected to the network bridge") {
-				return diag.Errorf("Unable to disconnect the default network: %s", err)
-			}
-		}
-		endpointConfig := &network.EndpointSettings{}
-		if v, ok := d.GetOk("network_alias"); ok {
-			endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
-		}
-
-		for _, rawNetwork := range v.(*schema.Set).List() {
-			networkID := rawNetwork.(string)
-			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
-				return diag.Errorf("Unable to connect to network '%s': %s", networkID, err)
-			}
-		}
-	}
 
 	// But overwrite them with the future ones, if set
 	if v, ok := d.GetOk("networks_advanced"); ok {
@@ -485,6 +496,40 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		if err := client.ContainerStart(ctx, retContainer.ID, options); err != nil {
 			return diag.Errorf("Unable to start container: %s", err)
 		}
+
+		if d.Get("wait").(bool) {
+			waitForHealthyState := func(result chan<- error) {
+				for {
+					infos, err := client.ContainerInspect(ctx, retContainer.ID)
+					if err != nil {
+						result <- fmt.Errorf("error inspecting container state: %s", err)
+					}
+					//infos.ContainerJSONBase.State.Health is only set when there is a healthcheck defined on the container resource
+					if infos.ContainerJSONBase.State.Health.Status == types.Healthy {
+						log.Printf("[DEBUG] container state is healthy")
+						break
+					}
+					log.Printf("[DEBUG] waiting for container healthy state")
+					time.Sleep(time.Second)
+				}
+				result <- nil
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(d.Get("wait_timeout").(int))*time.Second)
+			defer cancel()
+			result := make(chan error, 1)
+			go waitForHealthyState(result)
+			select {
+			case <-ctx.Done():
+				log.Printf("[ERROR] Container %s failed to be in healthy state in time", retContainer.ID)
+				return diag.FromErr(errContainerFailedToBeInHealthyState)
+
+			case err := <-result:
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
 	}
 
 	if d.Get("attach").(bool) {
@@ -539,7 +584,13 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeout)
+	containerReadRefreshTimeoutMilliseconds := d.Get("container_read_refresh_timeout_milliseconds").(int)
+	// Ensure the timeout can never be 0, the default integer value.
+	// This also ensures imported resources will get the default of 15 seconds
+	if containerReadRefreshTimeoutMilliseconds == 0 {
+		containerReadRefreshTimeoutMilliseconds = containerReadRefreshTimeoutMillisecondsDefault
+	}
+	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeoutMilliseconds/1000)
 	client := meta.(*ProviderConfig).DockerClient
 
 	apiContainer, err := fetchDockerContainer(ctx, d.Id(), client)
@@ -556,7 +607,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		Pending:    []string{"pending"},
 		Target:     []string{"running"},
 		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
-		Timeout:    containerReadRefreshTimeout,
+		Timeout:    time.Duration(containerReadRefreshTimeoutMilliseconds) * time.Millisecond,
 		MinTimeout: containerReadRefreshWaitBeforeRefreshes,
 		Delay:      containerReadRefreshDelay,
 	}
@@ -594,20 +645,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 
 	// Read Network Settings
 	if container.NetworkSettings != nil {
-		// TODO remove deprecated attributes in next major
-		d.Set("ip_address", container.NetworkSettings.IPAddress)
-		d.Set("ip_prefix_length", container.NetworkSettings.IPPrefixLen)
-		d.Set("gateway", container.NetworkSettings.Gateway)
-		if container.NetworkSettings != nil && len(container.NetworkSettings.Networks) > 0 {
-			// Still support deprecated outputs
-			for _, settings := range container.NetworkSettings.Networks {
-				d.Set("ip_address", settings.IPAddress)
-				d.Set("ip_prefix_length", settings.IPPrefixLen)
-				d.Set("gateway", settings.Gateway)
-				break
-			}
-		}
-
 		d.Set("bridge", container.NetworkSettings.Bridge)
 		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
 			log.Printf("[WARN] failed to set ports from API: %s", err)
@@ -660,6 +697,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
+	d.Set("runtime", container.HostConfig.Runtime)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
@@ -677,7 +715,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/issues/242
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
-	d.Set("links", container.HostConfig.Links)
 	d.Set("privileged", container.HostConfig.Privileged)
 	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
@@ -695,10 +732,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
 	d.Set("log_opts", container.HostConfig.LogConfig.Config)
 	d.Set("storage_opts", container.HostConfig.StorageOpt)
-	// "network_alias" is deprecated
 	d.Set("network_mode", container.HostConfig.NetworkMode)
-	// networks
-	// networks_advanced
 	d.Set("pid_mode", container.HostConfig.PidMode)
 	d.Set("userns_mode", container.HostConfig.UsernsMode)
 	// "upload" can't be imported
@@ -718,6 +752,15 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("group_add", container.HostConfig.GroupAdd)
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
+	d.Set("stop_signal", container.Config.StopSignal)
+	d.Set("stop_timeout", container.Config.StopTimeout)
+
+	if len(container.HostConfig.DeviceRequests) > 0 {
+		// TODO pass the original gpus property string back to the resource
+		// var gpuOpts opts.GpuOpts
+		// gpuOpts = opts.GpuOpts{container.HostConfig.DeviceRequests}
+		d.Set("gpus", "all")
+	}
 
 	return nil
 }
@@ -764,7 +807,6 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 		// dns_search        = []
 		// group_add         = []
 		// id                = "9e6d9e987923e2c3a99f17e8781c7ce3515558df0e45f8ab06f6adb2dda0de50"
-		// links             = []
 		// log_opts          = {}
 		// name              = "nginx"
 		// sysctls           = {}

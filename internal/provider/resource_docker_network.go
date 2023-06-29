@@ -12,7 +12,7 @@ import (
 
 func resourceDockerNetwork() *schema.Resource {
 	return &schema.Resource{
-		Description: "`docker_network` provides details about a specific Docker Network.",
+		Description: "`docker_network` provides a docker network resource.",
 
 		CreateContext: resourceDockerNetworkCreate,
 		ReadContext:   resourceDockerNetworkRead,
@@ -93,6 +93,12 @@ func resourceDockerNetwork() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "Driver used by the custom IP scheme of the network. Defaults to `default`",
 				Default:     "default",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"ipam_options": {
+				Type:        schema.TypeMap,
+				Description: "Provide explicit options to the IPAM driver. Valid options vary with `ipam_driver` and refer to that driver's documentation for more details.",
 				Optional:    true,
 				ForceNew:    true,
 			},

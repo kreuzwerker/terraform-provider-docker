@@ -1,6 +1,5 @@
-resource "docker_registry_image" "foo" {
+resource "docker_image" "foo" {
   name                 = "localhost:15000/foo:1.0"
-  insecure_skip_verify = true
   build {
     suppress_output = true
     remote_context  = "fooRemoteContext"

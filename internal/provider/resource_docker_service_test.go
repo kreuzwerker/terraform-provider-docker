@@ -228,40 +228,52 @@ func TestMigrateServiceLabelState_with_labels(t *testing.T) {
 
 func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
 	authConfigs := make(map[string]types.AuthConfig)
-	authConfigs["https://repo.my-company.com:8787"] = types.AuthConfig{
+	authConfigs["repo.my-company.com:8787"] = types.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
-		ServerAddress: "repo.my-company.com:8787",
+		ServerAddress: "https://repo.my-company.com:8787",
 	}
 
 	foundAuthConfig := fromRegistryAuth("repo.my-company.com:8787/my_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass")
 	checkAttribute(t, "Email", foundAuthConfig.Email, "")
-	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "repo.my-company.com:8787")
+	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "https://repo.my-company.com:8787")
 }
 
 func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
 	authConfigs := make(map[string]types.AuthConfig)
-	authConfigs["https://repo.my-company.com:8787"] = types.AuthConfig{
+	authConfigs["repo.my-company.com:8787"] = types.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
-		ServerAddress: "repo.my-company.com:8787",
+		ServerAddress: "https://repo.my-company.com:8787",
 	}
-	authConfigs["https://nexus.my-fancy-company.com"] = types.AuthConfig{
+	authConfigs["nexus.my-fancy-company.com"] = types.AuthConfig{
 		Username:      "myuser33",
 		Password:      "mypass123",
 		Email:         "test@example.com",
-		ServerAddress: "nexus.my-fancy-company.com",
+		ServerAddress: "https://nexus.my-fancy-company.com",
+	}
+	authConfigs["http-nexus.my-fancy-company.com"] = types.AuthConfig{
+		Username:      "myuser33",
+		Password:      "mypass123",
+		Email:         "test@example.com",
+		ServerAddress: "http://http-nexus.my-fancy-company.com",
 	}
 
 	foundAuthConfig := fromRegistryAuth("nexus.my-fancy-company.com/the_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser33")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass123")
 	checkAttribute(t, "Email", foundAuthConfig.Email, "test@example.com")
-	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "nexus.my-fancy-company.com")
+	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "https://nexus.my-fancy-company.com")
+
+	foundAuthConfig = fromRegistryAuth("http-nexus.my-fancy-company.com/the_image", authConfigs)
+	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser33")
+	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass123")
+	checkAttribute(t, "Email", foundAuthConfig.Email, "test@example.com")
+	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "http://http-nexus.my-fancy-company.com")
 
 	foundAuthConfig = fromRegistryAuth("alpine:3.1", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "")
@@ -489,7 +501,11 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 		}
 
 		if len(s.Spec.TaskTemplate.Networks) != 1 ||
-			s.Spec.TaskTemplate.Networks[0].Target == "" {
+			s.Spec.TaskTemplate.Networks[0].Target == "" ||
+			len(s.Spec.TaskTemplate.Networks[0].Aliases) == 0 ||
+			s.Spec.TaskTemplate.Networks[0].Aliases[0] != "tftest-foobar" ||
+			s.Spec.TaskTemplate.Networks[0].DriverOpts == nil ||
+			!mapEquals("foo", "bar", s.Spec.TaskTemplate.Networks[0].DriverOpts) {
 			return fmt.Errorf("Service Spec.TaskTemplate.Networks is wrong: %s", s.Spec.TaskTemplate.Networks)
 		}
 
@@ -627,7 +643,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.prefs.0", "spread=node.role.manager"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.placement.0.max_replicas", "2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.force_update", "0"),
-					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks.#", "1"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.networks_advanced.#", "1"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.name", "json-file"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-file", "3"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.log_driver.0.options.max-size", "10m"),
@@ -655,9 +671,10 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "docker_service.foo",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "docker_service.foo",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"task_spec.0.networks_advanced"},
 			},
 		},
 		CheckDestroy: func(state *terraform.State) error {

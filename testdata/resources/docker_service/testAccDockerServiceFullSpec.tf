@@ -175,7 +175,14 @@ resource "docker_service" "foo" {
 
     force_update = 0
     runtime      = "container"
-    networks     = [docker_network.test_network.id]
+    
+    networks_advanced {
+      name    = docker_network.test_network.id
+      aliases = ["tftest-foobar"]
+      driver_opts = [
+        "foo=bar"
+      ]
+    }
 
     log_driver {
       name = "json-file"

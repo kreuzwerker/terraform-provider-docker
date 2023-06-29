@@ -14,41 +14,63 @@ on:
 env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
-  DOCKER_CE_VERSION: "5:20.10.10~3-0~ubuntu-focal"
-  GO_VERSION: "1.17"
+  GO_VERSION: "1.18"
+  TESTSUITE_TIMEOUT: "720s"
 
 jobs:
   acc-test:
     runs-on: ubuntu-20.04
+    timeout-minutes: 15
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         terraform_version: 
-        - "0.12.31"
-        - "0.13.7"
-        - "0.14.11"
-        - "0.15.5"
-        - "1.0.1"
+        - "0.15.x"
+        - "1.1.x"
+        resource_type: 
+        - "TestAccDockerConfig"
+        - "TestAccDockerContainer"
+        - "TestAccDockerImage"
+        - "TestAccDockerNetwork"
+        - "TestAccDockerPlugin"
+        - "TestAccDockerRegistryImage"
+        - "TestAccDockerSecret"
+        - "TestAccDockerService"
+        - "TestAccDockerVolume"
+        - "TestAccDockerTag"
+        include:
+          - resource_type: TestAccDockerImage
+            registry: true
+          - resource_type: TestAccDockerContainer
+            registry: true
+          - resource_type: TestAccDockerRegistryImage
+            registry: true
+          - resource_type: TestAccDockerService
+            registry: true
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup cookies
         run: |
           cat /etc/issue
           bash scripts/gogetcookie.sh
-      - name: Setup docker version ${{ env.DOCKER_CE_VERSION }}
+      - name: Used docker version
         run: |
-          sudo apt-get update
-          sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-          sudo apt-get update
-          sudo apt-get -y install docker-ce=${DOCKER_CE_VERSION}
           docker version
-          sudo service docker restart
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ matrix.terraform_version }}
+          terraform_wrapper: false
+      - name: Setup acceptance tests
+        run: make testacc_setup
+        if: ${{ matrix.registry }}
       - name: Run acceptance tests
-        run: make testacc
         env: 
-          TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
+          TF_LOG: INFO 
+          TF_ACC: 1
+        run: go test -v ./internal/provider -timeout ${{ env.TESTSUITE_TIMEOUT }} -run ${{ matrix.resource_type }} 
+      - name: Cleanup acceptance tests
+        run: make testacc_cleanup
+        if: ${{ matrix.registry }}

@@ -74,6 +74,7 @@ func flattenContainerNetworks(in *types.NetworkSettings) []interface{} {
 		m["global_ipv6_address"] = networkData.GlobalIPv6Address
 		m["global_ipv6_prefix_length"] = networkData.GlobalIPv6PrefixLen
 		m["ipv6_gateway"] = networkData.IPv6Gateway
+		m["mac_address"] = networkData.MacAddress
 		out = append(out, m)
 	}
 	return out
@@ -98,6 +99,21 @@ func stringSetToStringSlice(stringSet *schema.Set) []string {
 	}
 	for _, envVal := range stringSet.List() {
 		ret = append(ret, envVal.(string))
+	}
+	return ret
+}
+
+func stringSetToMapStringString(stringSet *schema.Set) map[string]string {
+	ret := map[string]string{}
+	if stringSet == nil {
+		return ret
+	}
+	for _, envVal := range stringSet.List() {
+		envValSplit := strings.SplitN(envVal.(string), "=", 2)
+		if len(envValSplit) != 2 {
+			continue
+		}
+		ret[envValSplit[0]] = envValSplit[1]
 	}
 	return ret
 }

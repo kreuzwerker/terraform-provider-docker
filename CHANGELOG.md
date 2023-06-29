@@ -1,455 +1,655 @@
-## 2.16.0 (January 24, 2022)
 
-IMPROVEMENTS
-* add parameter for SSH options ([#335](https://github.com/kreuzwerker/terraform-provider-docker/issues/335))
+<a name="v3.0.2"></a>
+## [v3.0.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.1...v3.0.2) (2023-03-17)
 
-BUG FIXES
-* add nil check of DriverConfig ([#315](https://github.com/kreuzwerker/terraform-provider-docker/issues/315))
-* container: remove log_driver's default value and make log_driver `computed` ([#270](https://github.com/kreuzwerker/terraform-provider-docker/issues/270))
-* pass container rm flag ([#322](https://github.com/kreuzwerker/terraform-provider-docker/issues/322))
+### Docs
 
-DOCS
+* correct spelling of "networks_advanced" ([#517](https://github.com/kreuzwerker/terraform-provider-docker/issues/517))
+
+### Fix
+
+* Implement proxy support. ([#529](https://github.com/kreuzwerker/terraform-provider-docker/issues/529))
+
+
+<a name="v3.0.1"></a>
+## [v3.0.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.0...v3.0.1) (2023-01-13)
+
+### Chore
+
+* Prepare release v3.0.1
+
+### Fix
+
+* Access health of container correctly. ([#506](https://github.com/kreuzwerker/terraform-provider-docker/issues/506))
+
+
+<a name="v3.0.0"></a>
+## [v3.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.25.0...v3.0.0) (2023-01-13)
+
+### Chore
+
+* Prepare release v3.0.0
+
+### Docs
+
+* Update documentation.
+* Add migration guide and update README ([#502](https://github.com/kreuzwerker/terraform-provider-docker/issues/502))
+
+### Feat
+
+* Prepare v3 release ([#503](https://github.com/kreuzwerker/terraform-provider-docker/issues/503))
+
+
+<a name="v2.25.0"></a>
+## [v2.25.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.24.0...v2.25.0) (2023-01-05)
+
+### Chore
+
+* Prepare release v2.25.0
+
+### Docs
+
+* Add documentation of remote hosts. ([#498](https://github.com/kreuzwerker/terraform-provider-docker/issues/498))
+
+### Feat
+
+* Migrate build block to `docker_image` ([#501](https://github.com/kreuzwerker/terraform-provider-docker/issues/501))
+* Add platform attribute to docker_image resource ([#500](https://github.com/kreuzwerker/terraform-provider-docker/issues/500))
+* Add sysctl implementation to container of docker_service. ([#499](https://github.com/kreuzwerker/terraform-provider-docker/issues/499))
+
+
+<a name="v2.24.0"></a>
+## [v2.24.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.1...v2.24.0) (2022-12-23)
+
+### Chore
+
+* Prepare release v2.24.0
+
+### Docs
+
+* Fix generated website.
+* Update command typo ([#487](https://github.com/kreuzwerker/terraform-provider-docker/issues/487))
+
+### Feat
+
+* cgroupns support ([#497](https://github.com/kreuzwerker/terraform-provider-docker/issues/497))
+* Add triggers attribute to docker_registry_image ([#496](https://github.com/kreuzwerker/terraform-provider-docker/issues/496))
+* Support registries with disabled auth ([#494](https://github.com/kreuzwerker/terraform-provider-docker/issues/494))
+* add IPAM options block for docker networks ([#491](https://github.com/kreuzwerker/terraform-provider-docker/issues/491))
+
+### Fix
+
+* Pin data source specific tag test to older tag.
+
+### Tests
+
+* Add test for parsing auth headers.
+
+
+<a name="v2.23.1"></a>
+## [v2.23.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.0...v2.23.1) (2022-11-23)
+
+### Chore
+
+* Prepare release v2.23.1
+
+### Fix
+
+* Update shasum of busybox:1.35.0 tag in test.
+* Handle Auth Header Scopes ([#482](https://github.com/kreuzwerker/terraform-provider-docker/issues/482))
+* Set OS_ARCH from GOHOSTOS and GOHOSTARCH ([#477](https://github.com/kreuzwerker/terraform-provider-docker/issues/477))
+
+
+<a name="v2.23.0"></a>
+## [v2.23.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.22.0...v2.23.0) (2022-11-02)
+
+### Chore
+
+* Prepare release v2.23.0
+
+### Feat
+
+* wait container healthy state ([#467](https://github.com/kreuzwerker/terraform-provider-docker/issues/467))
+* add docker logs data source ([#471](https://github.com/kreuzwerker/terraform-provider-docker/issues/471))
+
+### Fix
+
+* Update shasum of busybox:1.35.0 tag in test.
+* Update shasum of busybox:1.35.0 tag
+* Correct provider name to match the public registry ([#462](https://github.com/kreuzwerker/terraform-provider-docker/issues/462))
+
+
+<a name="v2.22.0"></a>
+## [v2.22.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.21.0...v2.22.0) (2022-09-20)
+
+### Chore
+
+* Prepare release v2.22.0
+
+### Feat
+
+* Configurable timeout for docker_container resource stateChangeConf ([#454](https://github.com/kreuzwerker/terraform-provider-docker/issues/454))
+
+### Fix
+
+* oauth authorization support for azurecr ([#451](https://github.com/kreuzwerker/terraform-provider-docker/issues/451))
+
+
+<a name="v2.21.0"></a>
+## [v2.21.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.3...v2.21.0) (2022-09-05)
+
+### Chore
+
+* Prepare release v2.21.0
+
+### Docs
+
+* Fix docker config example.
+
+### Feat
+
+* Add image_id attribute to docker_image resource. ([#450](https://github.com/kreuzwerker/terraform-provider-docker/issues/450))
+* Update used goversion to 1.18. ([#449](https://github.com/kreuzwerker/terraform-provider-docker/issues/449))
+
+### Fix
+
+* Replace deprecated .latest attribute with new image_id. ([#453](https://github.com/kreuzwerker/terraform-provider-docker/issues/453))
+* Remove reading part of docker_tag resource. ([#448](https://github.com/kreuzwerker/terraform-provider-docker/issues/448))
+* Fix repo_digest value for DockerImageDatasource test.
+
+
+<a name="v2.20.3"></a>
+## [v2.20.3](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.2...v2.20.3) (2022-08-31)
+
+### Chore
+
+* Prepare release v2.20.3
+
+### Fix
+
+* Docker Registry Image data source use HEAD request to query image digest ([#433](https://github.com/kreuzwerker/terraform-provider-docker/issues/433))
+* Adding Support for Windows Paths in Bash ([#438](https://github.com/kreuzwerker/terraform-provider-docker/issues/438))
+
+
+<a name="v2.20.2"></a>
+## [v2.20.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.1...v2.20.2) (2022-08-10)
+
+### Chore
+
+* Prepare release v2.20.2
+
+### Fix
+
+* Check the operating system for determining the default Docker socket ([#427](https://github.com/kreuzwerker/terraform-provider-docker/issues/427))
+
+### Reverts
+
+* fix(deps): update module github.com/golangci/golangci-lint to v1.48.0 ([#423](https://github.com/kreuzwerker/terraform-provider-docker/issues/423))
+
+
+<a name="v2.20.1"></a>
+## [v2.20.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.20.0...v2.20.1) (2022-08-10)
+
+### Chore
+
+* Prepare release v2.20.1
+* Reduce time to setup AccTests ([#430](https://github.com/kreuzwerker/terraform-provider-docker/issues/430))
+
+### Docs
+
+* Improve docker network usage documentation [skip-ci]
+
+### Feat
+
+* Implement triggers attribute for docker_image. ([#425](https://github.com/kreuzwerker/terraform-provider-docker/issues/425))
+
+### Fix
+
+* Add ForceTrue to docker_image name attribute. ([#421](https://github.com/kreuzwerker/terraform-provider-docker/issues/421))
+
+
+<a name="v2.20.0"></a>
+## [v2.20.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.19.0...v2.20.0) (2022-07-28)
+
+### Chore
+
+* Prepare release v2.20.0
+* Fix release targets in Makefile.
+
+### Feat
+
+* Implementation of `docker_tag` resource. ([#418](https://github.com/kreuzwerker/terraform-provider-docker/issues/418))
+* Implement support for insecure registries ([#414](https://github.com/kreuzwerker/terraform-provider-docker/issues/414))
+
+
+<a name="v2.19.0"></a>
+## [v2.19.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.18.1...v2.19.0) (2022-07-15)
+
+### Chore
+
+* Prepare release v2.19.0
+
+### Feat
+
+* Add gpu flag to docker_container resource ([#405](https://github.com/kreuzwerker/terraform-provider-docker/issues/405))
+
+### Fix
+
+* Enable authentication to multiple registries again. ([#400](https://github.com/kreuzwerker/terraform-provider-docker/issues/400))
+* ECR authentication ([#409](https://github.com/kreuzwerker/terraform-provider-docker/issues/409))
+
+
+<a name="v2.18.1"></a>
+## [v2.18.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.18.0...v2.18.1) (2022-07-14)
+
+### Chore
+
+* Prepare release v2.18.1
+* Automate changelog generation [skip ci]
+
+### Fix
+
+* Improve searchLocalImages error handling. ([#407](https://github.com/kreuzwerker/terraform-provider-docker/issues/407))
+* Throw errors when any part of docker config file handling goes wrong. ([#406](https://github.com/kreuzwerker/terraform-provider-docker/issues/406))
+* Enables having a Dockerfile outside the context ([#402](https://github.com/kreuzwerker/terraform-provider-docker/issues/402))
+
+
+<a name="v2.18.0"></a>
+## [v2.18.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.17.0...v2.18.0) (2022-07-11)
+
+### Chore
+
+* prepare release v2.18.0
+
+### Feat
+
+* add runtime, stop_signal and stop_timeout properties to the docker_container resource ([#364](https://github.com/kreuzwerker/terraform-provider-docker/issues/364))
+
+### Fix
+
+* Correctly handle build files and context for docker_registry_image ([#398](https://github.com/kreuzwerker/terraform-provider-docker/issues/398))
+* Switch to proper go tools mechanism to fix website-* workflows. ([#399](https://github.com/kreuzwerker/terraform-provider-docker/issues/399))
+* compare relative paths when excluding, fixes kreuzwerker[#280](https://github.com/kreuzwerker/terraform-provider-docker/issues/280) ([#397](https://github.com/kreuzwerker/terraform-provider-docker/issues/397))
+
+
+<a name="v2.17.0"></a>
+## [v2.17.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.16.0...v2.17.0) (2022-06-23)
+
+### Chore
+
+* prepare release v2.17.0
+* Exclude examples directory from renovate.
+* remove the workflow to close stale issues and pull requests ([#371](https://github.com/kreuzwerker/terraform-provider-docker/issues/371))
+
+### Fix
+
+* update go package files directly on master to fix build.
+* correct authentication for ghcr.io registry([#349](https://github.com/kreuzwerker/terraform-provider-docker/issues/349))
+
+
+<a name="v2.16.0"></a>
+## [v2.16.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.15.0...v2.16.0) (2022-01-24)
+
+### Chore
+
+* prepare release v2.16.0
+
+### Docs
+
 * fix service options ([#337](https://github.com/kreuzwerker/terraform-provider-docker/issues/337))
 * update registry_image.md ([#321](https://github.com/kreuzwerker/terraform-provider-docker/issues/321))
 * fix r/registry_image truncated docs ([#304](https://github.com/kreuzwerker/terraform-provider-docker/issues/304))
 
-CHORE
-* fixed typo ([#310](https://github.com/kreuzwerker/terraform-provider-docker/issues/310))
+### Feat
+
+* add parameter for SSH options ([#335](https://github.com/kreuzwerker/terraform-provider-docker/issues/335))
+
+### Fix
+
+* pass container rm flag ([#322](https://github.com/kreuzwerker/terraform-provider-docker/issues/322))
+* add nil check of DriverConfig ([#315](https://github.com/kreuzwerker/terraform-provider-docker/issues/315))
 * fmt of go files for go 1.17
-* ci: update workflows and docs to go 1.17
-* deps: update nginx docker tag to v1.21.4 ([#309](https://github.com/kreuzwerker/terraform-provider-docker/issues/309))
-* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.10.1 ([#323](https://github.com/kreuzwerker/terraform-provider-docker/issues/323))
-* deps: update module github.com/golangci/golangci-lint to v1.43.0 ([#306](https://github.com/kreuzwerker/terraform-provider-docker/issues/306))
-* deps: update tj-actions/verify-changed-files action to v8.8 ([#308](https://github.com/kreuzwerker/terraform-provider-docker/issues/308))
-* deps: update tj-actions/verify-changed-files action to v8.3 ([#303](https://github.com/kreuzwerker/terraform-provider-docker/issues/303))
-* deps: update module github.com/hashicorp/terraform-plugin-docs to v0.5.1 ([#311](https://github.com/kreuzwerker/terraform-provider-docker/issues/311))
-* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.9.0 ([#317](https://github.com/kreuzwerker/terraform-provider-docker/issues/317))
-* deps: update module github.com/docker/cli to v20.10.11 ([#316](https://github.com/kreuzwerker/terraform-provider-docker/issues/316))
-* deps: update module github.com/docker/docker to v20.10.10 ([#297](https://github.com/kreuzwerker/terraform-provider-docker/issues/297))
-* deps: update module github.com/docker/cli to v20.10.10 ([#296](https://github.com/kreuzwerker/terraform-provider-docker/issues/296))
-* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.8.0 ([#298](https://github.com/kreuzwerker/terraform-provider-docker/issues/298))
-* deps: update tj-actions/verify-changed-files action to v8 ([#299](https://github.com/kreuzwerker/terraform-provider-docker/issues/299))
-* deps: update nginx:1.21.3 docker digest to 644a705 ([#295](https://github.com/kreuzwerker/terraform-provider-docker/issues/295))
-* deps: update nginx docker tag to v1.21.3 ([#287](https://github.com/kreuzwerker/terraform-provider-docker/issues/287))
-* deps: update module github.com/hashicorp/terraform-plugin-docs to v0.5.0 ([#286](https://github.com/kreuzwerker/terraform-provider-docker/issues/286))
-* deps: unify require sections in go.mod files
-* deps: update golang to v1.17 ([#272](https://github.com/kreuzwerker/terraform-provider-docker/issues/272))
-* deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.7.1 ([#279](https://github.com/kreuzwerker/terraform-provider-docker/issues/279))
-* deps: update nginx:1.21.1 docker digest to a05b0cd ([#273](https://github.com/kreuzwerker/terraform-provider-docker/issues/273))
-* deps: update module github.com/golangci/golangci-lint to v1.42.1 ([#284](https://github.com/kreuzwerker/terraform-provider-docker/issues/284))
-* deps: update tj-actions/verify-changed-files action to v7.2 ([#285](https://github.com/kreuzwerker/terraform-provider-docker/issues/285))
-* deps: update alpine docker tag to v3.14.2 ([#277](https://github.com/kreuzwerker/terraform-provider-docker/issues/277))
-* deps: update module github.com/golangci/golangci-lint to v1.42.0 ([#274](https://github.com/kreuzwerker/terraform-provider-docker/issues/274))
 
-## 2.15.0 (August 01, 2021)
 
-IMPROVEMENTS
+<a name="v2.15.0"></a>
+## [v2.15.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.14.0...v2.15.0) (2021-08-11)
+
+### Chore
+
+* prepare release v2.15.0
+* re go gets terraform-plugin-docs
+
+### Docs
+
+* corrects authentication misspell. Closes [#264](https://github.com/kreuzwerker/terraform-provider-docker/issues/264)
+
+### Feat
+
 * add container storage opts ([#258](https://github.com/kreuzwerker/terraform-provider-docker/issues/258))
-* add ssh_opts parameter to provider config. Allows passing additional ssh arguments when connecting via ssh. ([#29](https://github.com/kreuzwerker/terraform-provider-docker/issues/29))
 
-BUG FIXES
+### Fix
+
 * add current timestamp for file upload to container ([#259](https://github.com/kreuzwerker/terraform-provider-docker/issues/259))
 
-DOCS
-* docs: corrects authentication misspell ([#264](https://github.com/kreuzwerker/terraform-provider-docker/issues/264))
-* docs(readme): add badges
-
-CHORE
-* ci: adapt acc test docker version ([#266](https://github.com/kreuzwerker/terraform-provider-docker/issues/266))
-* deps: update alpine docker tag to v3.14.1 ([#263](https://github.com/kreuzwerker/terraform-provider-docker/issues/263))
-* re go gets terraform-plugin-docs
-* deps: update module github.com/docker/docker to v20.10.8 ([#256](https://github.com/kreuzwerker/terraform-provider-docker/issues/256))
-* deps: update module github.com/docker/cli to v20.10.8 ([#255](https://github.com/kreuzwerker/terraform-provider-docker/issues/255))
-* deps: update nginx:1.21.1 docker digest to 8f33576 ([#252](https://github.com/kreuzwerker/terraform-provider-docker/issues/252))
-* deps: update nginx:1.21.1 docker digest to 11d4e59 ([#251](https://github.com/kreuzwerker/terraform-provider-docker/issues/251))
-* deps: update actions/stale action to v4 ([#250](https://github.com/kreuzwerker/terraform-provider-docker/issues/250))
-* deps: update nginx:1.21.1 docker digest to 353c20f ([#248](https://github.com/kreuzwerker/terraform-provider-docker/issues/248))
-
-## 2.14.0 (July 09, 2021)
-
-IMPROVEMENTS
-- support terraform v1 ([#242](https://github.com/kreuzwerker/terraform-provider-docker/issues/242))
-
-BUG FIXES
-- registry_image): consider .dockerignore in image build ([#240](https://github.com/kreuzwerker/terraform-provider-docker/issues/240))
-- Update the URL of the docker hub registry ([#230](https://github.com/kreuzwerker/terraform-provider-docker/issues/230))
-- service bind options ([#234](https://github.com/kreuzwerker/terraform-provider-docker/issues/234))
-- deps: update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.7.0 ([#236](https://github.com/kreuzwerker/terraform-provider-docker/issues/236))
-
-DOCS
-- update to absolute path for registry image context ([#246](https://github.com/kreuzwerker/terraform-provider-docker/issues/246))
-- service entrypoint ([#244](https://github.com/kreuzwerker/terraform-provider-docker/issues/244))
-- update readme with logos and subsections ([#235](https://github.com/kreuzwerker/terraform-provider-docker/issues/235))
-
-CHORE
-- deps: update nginx docker tag to v1.21.1 ([#243](https://github.com/kreuzwerker/terraform-provider-docker/issues/243))
-- deps: update tj-actions/verify-changed-files action to v7 ([#237](https://github.com/kreuzwerker/terraform-provider-docker/issues/237))
-- deps: update nginx:1.21.0 docker digest to d1b8ff2 ([#232](https://github.com/kreuzwerker/terraform-provider-docker/issues/232))
-
-## 2.13.0 (June 22, 2021)
-
-IMPROVEMENTS
-- service image name fix and new data-source `docker_image` ([#212](https://github.com/kreuzwerker/terraform-provider-docker/issues/212))
-
-BUG FIXES
-- internal/provider include image name in error message ([#223](https://github.com/kreuzwerker/terraform-provider-docker/issues/223))
-- service delete deadline ([#227](https://github.com/kreuzwerker/terraform-provider-docker/issues/227))
-
-DOCS
-- contributing: add oneline cli git cmd to get the changes since the last tag
-- fix a few typos ([#216](https://github.com/kreuzwerker/terraform-provider-docker/issues/216))
-- fix typos in docker_image example usage ([#213](https://github.com/kreuzwerker/terraform-provider-docker/issues/213))
-
-CHORE
-- refactor tests ([#201](https://github.com/kreuzwerker/terraform-provider-docker/issues/201))
-- update module github.com/docker/docker to v20.10.7 ([#218](https://github.com/kreuzwerker/terraform-provider-docker/issues/218))
-- update module github.com/docker/cli to v20.10.7 ([#217](https://github.com/kreuzwerker/terraform-provider-docker/issues/217))
-- update module github.com/golangci/golangci-lint to v1.41.1 ([#226](https://github.com/kreuzwerker/terraform-provider-docker/issues/226))
-- update module github.com/golangci/golangci-lint to v1.40.1 ([#194](https://github.com/kreuzwerker/terraform-provider-docker/issues/194))
-- update alpine docker tag to v3.14.0 ([#225](https://github.com/kreuzwerker/terraform-provider-docker/issues/225))
-- update stocard/gotthard docker digest to 38c2216
-- update nginx docker tag to v1.21.0
-- update nginx:1.18.0-alpine docker digest to 93baf2e
-- update nginx docker tag to v1.21.0
-- update alpine docker tag to v3.13.5
-- update stocard/gotthard docker digest to 38c2216
-- update nginx:1.18.0-alpine docker digest to 93baf2e
-
-## 2.12.2 (May 26, 2021)
-
-DOCS
-- update documentation and website for the release which was forgotten in `v2.12.1`
-## 2.12.1 (May 26, 2021)
-
-BUG FIXES
-- `resource.docker_service.task_spec.container_spec.hosts` is ignored (#202)
-- service state upgradeV2 crashes for empty `auth` block (#203)
-
-## 2.12.0 (May 23, 2021)
-
-IMPROVEMENTS
-- migrate to terraform-sdk-v2 ([#102](https://github.com/kreuzwerker/terraform-provider-docker/issues/102))
-- support darwin arm builds and golang 1.16 ([#140](https://github.com/kreuzwerker/terraform-provider-docker/issues/140))  
-- add documentation generation ([#193](https://github.com/kreuzwerker/terraform-provider-docker/issues/193))
-
-BUG FIXES
-- set `ForceNew`: `true` to labelSchema ([#152](https://github.com/kreuzwerker/terraform-provider-docker/issues/152))
-- search local images with Docker image ID ([#151](https://github.com/kreuzwerker/terraform-provider-docker/issues/151))
-- update module github.com/golangci/golangci-lint to v1.39.0 ([#166](https://github.com/kreuzwerker/terraform-provider-docker/issues/166))
-- update module github.com/katbyte/terrafmt to v0.3.0 ([#168](https://github.com/kreuzwerker/terraform-provider-docker/issues/168))
-- update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.5.0 ([#167](https://github.com/kreuzwerker/terraform-provider-docker/issues/167))
-- update module github.com/docker/docker to v20.10.5 ([#165](https://github.com/kreuzwerker/terraform-provider-docker/issues/165))
-- update module github.com/docker/cli to v20.10.5 ([#164](https://github.com/kreuzwerker/terraform-provider-docker/issues/164))
-- update module github.com/docker/docker to v20.10.6 ([#174](https://github.com/kreuzwerker/terraform-provider-docker/issues/174))
-- update module github.com/docker/cli to v20.10.6 ([#175](https://github.com/kreuzwerker/terraform-provider-docker/issues/175))
-- move helpers ([#170](https://github.com/kreuzwerker/terraform-provider-docker/issues/170))
-- assign map to `rawState` when it is nil to prevent `panic` ([#180](https://github.com/kreuzwerker/terraform-provider-docker/issues/180))
-- remove gpg key from action to make it work in forks
-- skip sign on `compile` action
-- update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.6.1 ([#181](https://github.com/kreuzwerker/terraform-provider-docker/issues/181))
-- replace for loops with StateChangeConf ([#182](https://github.com/kreuzwerker/terraform-provider-docker/issues/182))
-- update module github.com/golangci/golangci-lint to v1.40.0 ([#191](https://github.com/kreuzwerker/terraform-provider-docker/issues/191))
-- test spaces for windows ([#190](https://github.com/kreuzwerker/terraform-provider-docker/issues/190))
-- rewriting tar header fields ([#198](https://github.com/kreuzwerker/terraform-provider-docker/issues/198))
 
-DOCS
-- fix Github repository URL in README ([#136](https://github.com/kreuzwerker/terraform-provider-docker/issues/136))
-- chore: add the guide about Terraform Configuration in Bug Report ([#139](https://github.com/kreuzwerker/terraform-provider-docker/issues/139))
-- add a guide about writing issues to CONTRIBUTING.md ([#149](https://github.com/kreuzwerker/terraform-provider-docker/issues/149))
-- add an example to build an image with docker_image ([#158](https://github.com/kreuzwerker/terraform-provider-docker/issues/158))
-- format Guide of Bug report ([#159](https://github.com/kreuzwerker/terraform-provider-docker/issues/159))
-- add releasing steps
-
-CI 
-- bump docker dependency to v20.10.5 ([#119](https://github.com/kreuzwerker/terraform-provider-docker/issues/119)). Note: Removes `generic_resources` for `docker_service`. 
-- run acceptance tests with multiple Terraform versions ([#129](https://github.com/kreuzwerker/terraform-provider-docker/issues/129))
-- fix/workflows ([#169](https://github.com/kreuzwerker/terraform-provider-docker/issues/169))
-
-CHORE 
-- configure actions/stale ([#157](https://github.com/kreuzwerker/terraform-provider-docker/issues/157))
-- configure Renovate ([#162](https://github.com/kreuzwerker/terraform-provider-docker/issues/162))
-- ignore `dist` folder
+<a name="v2.14.0"></a>
+## [v2.14.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.13.0...v2.14.0) (2021-07-09)
 
-## 2.11.0 (January 22, 2021)
+### Chore
 
-IMPROVEMENTS:
-- add properties -it (tty and stdin_opn) to docker container ([#120](https://github.com/kreuzwerker/terraform-provider-docker/issues/120))
+* prepare release v2.14.0
 
-DOCS
--  fix legacy configuration style ([#126](https://github.com/kreuzwerker/terraform-provider-docker/pull/126))
+### Docs
 
-## 2.10.0 (January 08, 2021)
+* update to absolute path for registry image context ([#246](https://github.com/kreuzwerker/terraform-provider-docker/issues/246))
+* update readme with logos and subsections ([#235](https://github.com/kreuzwerker/terraform-provider-docker/issues/235))
 
-IMPROVEMENTS:
-- add ability to lint/check of links in documentation locally ([#98](https://github.com/kreuzwerker/terraform-provider-docker/pull/98))
-- add local semantic commit validation ([#99](https://github.com/kreuzwerker/terraform-provider-docker/pull/99))
-- add force_remove option to `r/image` ([#104](https://github.com/kreuzwerker/terraform-provider-docker/pull/104))
-- support max replicas of Docker Service Task Spec ([#112](https://github.com/kreuzwerker/terraform-provider-docker/pull/112))
-- supports Docker plugin ([#35](https://github.com/kreuzwerker/terraform-provider-docker/pull/35))
+### Feat
 
-DOCS:
-- updates docs like gh templates, contribution guideline and readme ([#36](https://github.com/kreuzwerker/terraform-provider-docker/pull/36))
-- updates links to provider and slack
-- docs(changelog): fixes broken links
-- style(changelog): aligns braces
-- add labels to arguments of docker_service ([#105](https://github.com/kreuzwerker/terraform-provider-docker/pull/105))
+* support terraform v1 ([#242](https://github.com/kreuzwerker/terraform-provider-docker/issues/242))
 
-BUG FIXES
-- image label for workflows
-- set "latest" to tag when tag isn't specified ([#117](https://github.com/kreuzwerker/terraform-provider-docker/pull/117))
+### Fix
 
-CI 
-- ci: update ubuntu images and docker version ([#38](https://github.com/kreuzwerker/terraform-provider-docker/pull/38))
+* Update the URL of the docker hub registry ([#230](https://github.com/kreuzwerker/terraform-provider-docker/issues/230))
 
-## 2.9.0 (December 25, 2020)
 
-IMPROVEMENTS
-* Introduces golangci-lint ([#13](https://github.com/kreuzwerker/terraform-provider-docker/issues/13))
+<a name="v2.13.0"></a>
+## [v2.13.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.12.2...v2.13.0) (2021-06-22)
 
-BUG FIXES
-* docs: devices is a block, not a boolean ([#33](https://github.com/kreuzwerker/terraform-provider-docker/issues/33))
-* style: format with gofumpt ([#11](https://github.com/kreuzwerker/terraform-provider-docker/issues/11))
-* ci: fix website ci ([#26](https://github.com/kreuzwerker/terraform-provider-docker/issues/26))
-* fix: AuxAddress is not read from network and trigger a re-apply every time ([#10](https://github.com/kreuzwerker/terraform-provider-docker/issues/10))
+### Chore
 
-## 2.8.0 (November 11, 2020)
+* prepare release v2.13.0
 
-IMPROVEMENTS
-* Add new resource docker_registry_image ([#249](https://github.com/terraform-providers/terraform-provider-docker/pull/249))
-* Added complete support for Docker credential helpers ([#253](https://github.com/terraform-providers/terraform-provider-docker/pull/253))
+### Docs
 
-BUG FIXES
-* Prevent provider error if auth config is incomplete ([#251](https://github.com/terraform-providers/terraform-provider-docker/pull/251))
-* Resolve ([#255](https://github.com/terraform-providers/terraform-provider-docker/pull/255) by conditionally adding port binding ([#293](https://github.com/terraform-providers/terraform-provider-docker/pull/293))
+* fix a few typos ([#216](https://github.com/kreuzwerker/terraform-provider-docker/issues/216))
+* fix typos in docker_image example usage ([#213](https://github.com/kreuzwerker/terraform-provider-docker/issues/213))
 
-DOCS
-* Update service.html.markdown ([#245](https://github.com/terraform-providers/terraform-provider-docker/pull/245))
-* Documentation updates ([#286](https://github.com/terraform-providers/terraform-provider-docker/pull/286))
-* Update link syntax ([#287](https://github.com/terraform-providers/terraform-provider-docker/pull/287))
-* Fix typo ([#292](https://github.com/terraform-providers/terraform-provider-docker/pull/292))
 
-CI
-* Update to go 1.15 ([#284](https://github.com/terraform-providers/terraform-provider-docker/pull/284))
+<a name="v2.12.2"></a>
+## [v2.12.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.12.1...v2.12.2) (2021-05-26)
 
-## 2.7.2 (August 03, 2020)
+### Chore
 
-BUG FIXES
-* Fix port objects with the same internal port but different protocol trigger recreation of container ([#274](https://github.com/terraform-providers/terraform-provider-docker/pull/274))
-* Fix panic to migrate schema of docker_container from v1 to v2 ([#271](https://github.com/terraform-providers/terraform-provider-docker/pull/271))
-* Set `Computed: true` and separate files of resourceDockerContainerV1 ([#272](https://github.com/terraform-providers/terraform-provider-docker/pull/272))
-* Prevent force recreate of container about some attributes ([#269](https://github.com/terraform-providers/terraform-provider-docker/pull/269))
+* prepare release v2.12.2
 
-DOCS:
-* Typo in container.html.markdown ([#278](https://github.com/terraform-providers/terraform-provider-docker/pull/278))
-* Update service.html.markdown ([#281](https://github.com/terraform-providers/terraform-provider-docker/pull/281))
 
-## 2.7.1 (June 05, 2020)
+<a name="v2.12.1"></a>
+## [v2.12.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.12.0...v2.12.1) (2021-05-26)
 
-BUG FIXES
-* prevent force recreate of container about some attributes ([#269](https://github.com/terraform-providers/terraform-provider-docker/issues/269))
+### Chore
 
-## 2.7.0 (February 10, 2020)
+* update changelog for v2.12.1
 
-IMPROVEMENTS:
-* support to import some docker_container's attributes ([#234](https://github.com/terraform-providers/terraform-provider-docker/issues/234))
-* make UID, GID, & mode for Docker secrets and configs configurable ([#231](https://github.com/terraform-providers/terraform-provider-docker/pull/231))
+### Fix
 
-BUG FIXES:
-* Allow use of `source` file instead of content / content_base64 ([#240](https://github.com/terraform-providers/terraform-provider-docker/pull/240))
-* Correct IPAM config read on the data provider ([#229](https://github.com/terraform-providers/terraform-provider-docker/pull/229))
-* `published_port` is not correctly populated on docker_service resource ([#222](https://github.com/terraform-providers/terraform-provider-docker/issues/222))
-* Registry Config File MUST be a file reference ([#224](https://github.com/terraform-providers/terraform-provider-docker/issues/224))
-* Allow zero replicas ([#220](https://github.com/terraform-providers/terraform-provider-docker/pull/220))
-* fixing the label schema for HCL2 ([#217](https://github.com/terraform-providers/terraform-provider-docker/pull/217))
+* add service host flattener with space split ([#205](https://github.com/kreuzwerker/terraform-provider-docker/issues/205))
+* service state upgradeV2 for empty auth
 
-DOCS:
-* Update documentation to reflect changes in TF v12 ([#228](https://github.com/terraform-providers/terraform-provider-docker/pull/228))
 
-CI:
-* bumps docker `19.03` and ubuntu `bionic` ([#241](https://github.com/terraform-providers/terraform-provider-docker/pull/241))
+<a name="v2.12.0"></a>
+## [v2.12.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.11.0...v2.12.0) (2021-05-23)
 
-## 2.6.0 (November 25, 2019)
+### Chore
 
-IMPROVEMENTS:
-* adds import for resources ([#99](https://github.com/terraform-providers/terraform-provider-docker/issues/99))
-* supports --read-only root fs ([#203](https://github.com/terraform-providers/terraform-provider-docker/issues/203))
-  
-DOCS
-* corrects mounts block name in docs ([#218](https://github.com/terraform-providers/terraform-provider-docker/pull/218))
+* update changelog for v2.12.0
+* ignore dist folder
+* configure actions/stale ([#157](https://github.com/kreuzwerker/terraform-provider-docker/issues/157))
+* add the guide about Terraform Configuration in Bug Report ([#139](https://github.com/kreuzwerker/terraform-provider-docker/issues/139))
+* bump docker dependency to v20.10.5 ([#119](https://github.com/kreuzwerker/terraform-provider-docker/issues/119))
 
+### Ci
 
-## 2.5.0 (October 15, 2019)
+* run acceptance tests with multiple Terraform versions ([#129](https://github.com/kreuzwerker/terraform-provider-docker/issues/129))
 
-IMPROVEMENTS:
-* ci: update to go 1.13 ([#198](https://github.com/terraform-providers/terraform-provider-docker/issues/198))
-* feat: migrate to standalone plugin sdk ([#197](https://github.com/terraform-providers/terraform-provider-docker/issues/197))
+### Docs
 
-BUG FIXES:
-* fix: removes whitelists of attributes ([#208](https://github.com/terraform-providers/terraform-provider-docker/issues/208))
-* fix: splunk Log Driver missing from container `log_driver` ([#204](https://github.com/terraform-providers/terraform-provider-docker/issues/204))
+* update for v2.12.0
+* add releasing steps
+* format `Guide of Bug report` ([#159](https://github.com/kreuzwerker/terraform-provider-docker/issues/159))
+* add an example to build an image with docker_image ([#158](https://github.com/kreuzwerker/terraform-provider-docker/issues/158))
+* add a guide about writing issues to CONTRIBUTING.md ([#149](https://github.com/kreuzwerker/terraform-provider-docker/issues/149))
+* fix Github repository URL in README ([#136](https://github.com/kreuzwerker/terraform-provider-docker/issues/136))
 
+### Feat
 
-## 2.4.0 (October 07, 2019)
+* support darwin arm builds and golang 1.16 ([#140](https://github.com/kreuzwerker/terraform-provider-docker/issues/140))
+* migrate to terraform-sdk v2 ([#102](https://github.com/kreuzwerker/terraform-provider-docker/issues/102))
 
-IMPROVEMENTS:
-* feat: adds `shm_size attribute` for `docker_container` resource ([#164](https://github.com/terraform-providers/terraform-provider-docker/issues/164))
-* feat: supports for group-add ([#191](https://github.com/terraform-providers/terraform-provider-docker/issues/191))
+### Fix
 
-BUG FIXES:
-* fix: binary upload as base 64 content ([#48](https://github.com/terraform-providers/terraform-provider-docker/issues/48))
-* fix: service env truncation for multiple delimiters ([#121](https://github.com/terraform-providers/terraform-provider-docker/issues/121))
-* fix: allows docker_registry_image to read from AWS ECR registry ([#186](https://github.com/terraform-providers/terraform-provider-docker/issues/186))
+* rewriting tar header fields ([#198](https://github.com/kreuzwerker/terraform-provider-docker/issues/198))
+* test spaces for windows ([#190](https://github.com/kreuzwerker/terraform-provider-docker/issues/190))
+* replace for loops with StateChangeConf ([#182](https://github.com/kreuzwerker/terraform-provider-docker/issues/182))
+* skip sign on compile action
+* assign map to rawState when it is nil to prevent panic ([#180](https://github.com/kreuzwerker/terraform-provider-docker/issues/180))
+* search local images with Docker image ID ([#151](https://github.com/kreuzwerker/terraform-provider-docker/issues/151))
+* set "ForceNew: true" to labelSchema ([#152](https://github.com/kreuzwerker/terraform-provider-docker/issues/152))
 
-DOCS
-* Removes duplicate `start_period` entry in `healthcheck` section of the documentation for `docker_service` ([#189](https://github.com/terraform-providers/terraform-provider-docker/pull/189))
 
-## 2.3.0 (September 23, 2019)
+<a name="v2.11.0"></a>
+## [v2.11.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.10.0...v2.11.0) (2021-01-22)
 
-IMPROVEMENTS:
-* feat: adds container ipc mode ([#12](https://github.com/terraform-providers/terraform-provider-docker/issues/12))
-* feat: adds container working dir ([#146](https://github.com/terraform-providers/terraform-provider-docker/issues/146))
-* remove usage of config pkg ([#183](https://github.com/terraform-providers/terraform-provider-docker/pull/183))
+### Chore
 
-BUG FIXES:
-* fix for destroy_grace_seconds is not adhered ([#174](https://github.com/terraform-providers/terraform-provider-docker/issues/174))
+* update changelog for v2.11.0
+* updates changelog for v2.10.0
 
-## 2.2.0 (August 22, 2019)
+### Docs
 
-IMPROVEMENTS
-* Docker client negotiates the version with the server instead of using a fixed version ([#173](https://github.com/terraform-providers/terraform-provider-docker/issues/173))
+* fix legacy configuration style ([#126](https://github.com/kreuzwerker/terraform-provider-docker/issues/126))
 
-DOCS
-* Fixes section links so they point to the right id ([#176](https://github.com/terraform-providers/terraform-provider-docker/issues/176))
+### Feat
 
-## 2.1.1 (August 08, 2019)
+* add properties -it (tty and stdin_opn) to docker container
 
-BUG FIXES
-* Fixes 'No changes' for containers when all port blocks have been removed ([#167](https://github.com/terraform-providers/terraform-provider-docker/issues/167))
 
-## 2.1.0 (July 19, 2019)
+<a name="v2.10.0"></a>
+## [v2.10.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.9.0...v2.10.0) (2021-01-08)
 
-IMPROVEMENTS
-* Adds cross-platform support for generic Docker credential helper ([#159](https://github.com/terraform-providers/terraform-provider-docker/pull/159))
+### Chore
 
-DOC
-* Updates the docs for ssh protocol and mounts ([#158](https://github.com/terraform-providers/terraform-provider-docker/issues/158))
-* Fixes website typo / containers / mount vs mounts ([#162](https://github.com/terraform-providers/terraform-provider-docker/pull/162))
+* updates changelog for 2.10.0
+* ignores testing folders
+* adds separate bug and ft req templates
 
-## 2.0.0 (June 25, 2019)
+### Ci
 
-BREAKING CHANGES
-* Updates to Terraform `v0.12` [[#144](https://github.com/terraform-providers/terraform-provider-docker/issues/144)] and ([#150](https://github.com/terraform-providers/terraform-provider-docker/pull/150))
+* bumps to docker version 20.10.1
+* pins workflows to ubuntu:20.04 image
 
-IMPROVEMENTS
-* Refactors test setup ([#156](https://github.com/terraform-providers/terraform-provider-docker/pull/156))
-* Fixes flaky acceptance tests ([#154](https://github.com/terraform-providers/terraform-provider-docker/pull/154))
+### Docs
 
-## 1.2.0 (May 29, 2019)
+* add labels to arguments of docker_service ([#105](https://github.com/kreuzwerker/terraform-provider-docker/issues/105))
+* cleans readme
+* adds coc and contributing
 
-IMPROVEMENTS
-* Updates to docker `18.09` and API Version `1.39` ([#114](https://github.com/terraform-providers/terraform-provider-docker/issues/114))
-* Upgrades to go `1.11` ([#116](https://github.com/terraform-providers/terraform-provider-docker/pull/116))
-* Switches to `go modules` ([#124](https://github.com/terraform-providers/terraform-provider-docker/issues/124))
-* Adds data source for networks ([#84](https://github.com/terraform-providers/terraform-provider-docker/issues/84))
-* Adds `ssh` protocol support ([#153](https://github.com/terraform-providers/terraform-provider-docker/issues/153))
-* Adds docker container mounts support ([#147](https://github.com/terraform-providers/terraform-provider-docker/pull/147))
+### Feat
 
-BUG FIXES
-* Fixes image pulling and local registry connections ([#143](https://github.com/terraform-providers/terraform-provider-docker/pull/143))
+* supports Docker plugin ([#35](https://github.com/kreuzwerker/terraform-provider-docker/issues/35))
+* support max replicas of Docker Service Task Spec ([#112](https://github.com/kreuzwerker/terraform-provider-docker/issues/112))
+* add force_remove option to r/image ([#104](https://github.com/kreuzwerker/terraform-provider-docker/issues/104))
+* add local semantic commit validation ([#99](https://github.com/kreuzwerker/terraform-provider-docker/issues/99))
+* add ability to lint/check of links in documentation locally ([#98](https://github.com/kreuzwerker/terraform-provider-docker/issues/98))
 
-## 1.1.1 (March 08, 2019)
+### Fix
 
-BUG FIXES
-* Fixes no more 'force new resource' for container ports when
-there are no changes. This was caused to the ascending order. See ([#110](https://github.com/terraform-providers/terraform-provider-docker/issues/110))
-for details and ([#115](https://github.com/terraform-providers/terraform-provider-docker/pull/115))
-* Normalize blank port IP's to 0.0.0.0 ([#128](https://github.com/terraform-providers/terraform-provider-docker/pull/128))
+* set "latest" to tag when tag isn't specified ([#117](https://github.com/kreuzwerker/terraform-provider-docker/issues/117))
+* image label for workflows
+* remove all azure cps
 
-BUILD
-* Simplify Dockerfile(s) for tests ([#135](https://github.com/terraform-providers/terraform-provider-docker/pull/135))
-* Skip test if swap limit isn't available ([#136](https://github.com/terraform-providers/terraform-provider-docker/pull/136))
+### Pull Requests
 
-DOCS
-* Corrects `networks_advanced` section ([#109](https://github.com/terraform-providers/terraform-provider-docker/issues/109))
-* Corrects `tmpfs_options` section ([#122](https://github.com/terraform-providers/terraform-provider-docker/issues/122))
-* Corrects indentation for container in docs ([#126](https://github.com/terraform-providers/terraform-provider-docker/issues/126))
-* Fix syntax error in docker_service example and make all examples adhere to terraform fmt ([#137](https://github.com/terraform-providers/terraform-provider-docker/pull/137))
+* Merge pull request [#38](https://github.com/kreuzwerker/terraform-provider-docker/issues/38) from kreuzwerker/ci-ubuntu2004-workflow
+* Merge pull request [#36](https://github.com/kreuzwerker/terraform-provider-docker/issues/36) from kreuzwerker/chore-gh-issue-tpl
 
-## 1.1.0 (October 30, 2018)
 
-IMPROVEMENTS
-* Adds labels for `network`, `volume` and `secret` to support docker stacks. ([#92](https://github.com/terraform-providers/terraform-provider-docker/pull/92))
-* Adds `rm` and `attach` options to execute short-lived containers ([#43](https://github.com/terraform-providers/terraform-provider-docker/issues/43)] and [[#106](https://github.com/terraform-providers/terraform-provider-docker/pull/106))
-* Adds container healthcheck([#93](https://github.com/terraform-providers/terraform-provider-docker/pull/93))
-* Adds the docker container start flag ([#62](https://github.com/terraform-providers/terraform-provider-docker/issues/62)] and [[#94](https://github.com/terraform-providers/terraform-provider-docker/pull/94))
-* Adds `cpu_set` to docker container ([#41](https://github.com/terraform-providers/terraform-provider-docker/pull/41))
-* Simplifies the image options parser and adds missing registry combinations ([#49](https://github.com/terraform-providers/terraform-provider-docker/pull/49))
-* Adds container static IPv4/IPv6 address. Marks network and network_alias as deprecated. ([#105](https://github.com/terraform-providers/terraform-provider-docker/pull/105))
-* Adds container logs option ([#108](https://github.com/terraform-providers/terraform-provider-docker/pull/108))
+<a name="v2.9.0"></a>
+## [v2.9.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.8.0...v2.9.0) (2020-12-25)
 
-BUG FIXES
-* Fixes that new network were appended to the default bridge ([#10](https://github.com/terraform-providers/terraform-provider-docker/issues/10))
-* Fixes that container resource returns a non-existent IP address ([#36](https://github.com/terraform-providers/terraform-provider-docker/issues/36))
-* Fixes container's ip_address is empty when using custom network ([#9](https://github.com/terraform-providers/terraform-provider-docker/issues/9)] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50))
-* Fixes terraform destroy failing to remove a bridge network ([#98](https://github.com/terraform-providers/terraform-provider-docker/issues/98)] and [[#50](https://github.com/terraform-providers/terraform-provider-docker/pull/50))
+### Chore
 
+* updates changelog for 2.9.0
+* update changelog 2.8.0 release date
+* introduces golangci-lint ([#32](https://github.com/kreuzwerker/terraform-provider-docker/issues/32))
+* fix changelog links
 
-## 1.0.4 (October 17, 2018)
+### Ci
 
-BUG FIXES
-* Support and fix for random external ports for containers [[#102](https://github.com/terraform-providers/terraform-provider-docker/issues/102)] and ([#103](https://github.com/terraform-providers/terraform-provider-docker/pull/103))
+* add gofmt's '-s' option
+* remove unneeded make tasks
+* fix test of website
 
-## 1.0.3 (October 12, 2018)
+### Doc
 
-IMPROVEMENTS
-* Add support for running tests on Windows [[#54](https://github.com/terraform-providers/terraform-provider-docker/issues/54)] and ([#90](https://github.com/terraform-providers/terraform-provider-docker/pull/90))
-* Add options for PID and user namespace mode [[#88](https://github.com/terraform-providers/terraform-provider-docker/issues/88)] and ([#96](https://github.com/terraform-providers/terraform-provider-docker/pull/96))
+* devices is a block, not a boolean
 
-BUG FIXES
-* Fixes issue with internal and external ports on containers [[#8](https://github.com/terraform-providers/terraform-provider-docker/issues/8)] and ([#89](https://github.com/terraform-providers/terraform-provider-docker/pull/89))
-* Fixes `tfstate` having correct external port for containers [[#73](https://github.com/terraform-providers/terraform-provider-docker/issues/73)] and ([#95](https://github.com/terraform-providers/terraform-provider-docker/pull/95))
-* Fixes that a `docker_image` can be pulled with its SHA256 tag/repo digest [[#79](https://github.com/terraform-providers/terraform-provider-docker/issues/79)] and ([#97](https://github.com/terraform-providers/terraform-provider-docker/pull/97))
+### Feat
 
-## 1.0.2 (September 27, 2018)
+* adds support for OCI manifests ([#316](https://github.com/kreuzwerker/terraform-provider-docker/issues/316))
+* adds security_opts to container config. ([#308](https://github.com/kreuzwerker/terraform-provider-docker/issues/308))
+* adds support for init process injection for containers. ([#300](https://github.com/kreuzwerker/terraform-provider-docker/issues/300))
 
-BUG FIXES
-* Fixes connection via TLS to docker host with file contents ([#86](https://github.com/terraform-providers/terraform-provider-docker/issues/86))
-* Skips TLS verification if `ca_material` is not set ([#14](https://github.com/terraform-providers/terraform-provider-docker/issues/14))
+### Fix
 
-## 1.0.1 (August 06, 2018)
+* changing mounts requires ForceNew ([#314](https://github.com/kreuzwerker/terraform-provider-docker/issues/314))
+* allow healthcheck to be computed as container can specify ([#312](https://github.com/kreuzwerker/terraform-provider-docker/issues/312))
+* treat null user as a no-op ([#318](https://github.com/kreuzwerker/terraform-provider-docker/issues/318))
+* workdir null behavior ([#320](https://github.com/kreuzwerker/terraform-provider-docker/issues/320))
 
-BUG FIXES
-* Fixes empty strings on mapping from map to slice causes ([#81](https://github.com/terraform-providers/terraform-provider-docker/issues/81))
+### Style
 
-## 1.0.0 (July 03, 2018)
+* format with gofumpt
 
-NOTES:
-* Update `go-dockerclient` to `bf3bc17bb` ([#46](https://github.com/terraform-providers/terraform-provider-docker/pull/46))
-* The `links` property on `resource_docker_container` is now marked as deprecated ([#47](https://github.com/terraform-providers/terraform-provider-docker/pull/47))
+### Pull Requests
 
-FEATURES:
-* Add `swarm` capabilities ([#29](https://github.com/terraform-providers/terraform-provider-docker/issues/29), [#40](https://github.com/terraform-providers/terraform-provider-docker/pull/40) which fixes [#66](https://github.com/terraform-providers/terraform-provider-docker/pull/66) up to Docker `18.03.1` and API Version `1.37` ([#64](https://github.com/terraform-providers/terraform-provider-docker/issues/64))
-* Add ability to upload executable files [#55](https://github.com/terraform-providers/terraform-provider-docker/pull/55)
-* Add support to attach devices to containers [#30](https://github.com/terraform-providers/terraform-provider-docker/issues/30), [#54](https://github.com/terraform-providers/terraform-provider-docker/pull/54)
-* Add Ulimits to containers [#35](https://github.com/terraform-providers/terraform-provider-docker/pull/35)
+* Merge pull request [#33](https://github.com/kreuzwerker/terraform-provider-docker/issues/33) from brandonros/patch-1
+* Merge pull request [#11](https://github.com/kreuzwerker/terraform-provider-docker/issues/11) from suzuki-shunsuke/format-with-gofumpt
+* Merge pull request [#26](https://github.com/kreuzwerker/terraform-provider-docker/issues/26) from kreuzwerker/ci/fix-website-ci
+* Merge pull request [#8](https://github.com/kreuzwerker/terraform-provider-docker/issues/8) from dubo-dubon-duponey/patch1
 
-IMPROVEMENTS:
-* Fix `travis` build with a fixed docker version [#57](https://github.com/terraform-providers/terraform-provider-docker/pull/57)
-* Infrastructure for Acceptance tests [#39](https://github.com/terraform-providers/terraform-provider-docker/pull/39)
-* Internal refactorings [#38](https://github.com/terraform-providers/terraform-provider-docker/pull/38)
-* Allow the awslogs log driver [#28](https://github.com/terraform-providers/terraform-provider-docker/pull/28)
-* Add prefix `library` only to official images in the path [#27](https://github.com/terraform-providers/terraform-provider-docker/pull/27)
 
-BUG FIXES
-* Update documentation for private registries ([#45](https://github.com/terraform-providers/terraform-provider-docker/issues/45))
+<a name="v2.8.0"></a>
+## v2.8.0 (2020-11-11)
 
-## 0.1.1 (November 21, 2017)
+### Chore
 
-FEATURES:
-* Support for pulling images from private registries [#21](https://github.com/terraform-providers/terraform-provider-docker/issues/21)
+* updates changelog for 2.8.0
+* removes travis.yml
+* deactivates travis
+* removes vendor dir ([#298](https://github.com/kreuzwerker/terraform-provider-docker/issues/298))
+* bump go 115 ([#297](https://github.com/kreuzwerker/terraform-provider-docker/issues/297))
+* documentation updates ([#286](https://github.com/kreuzwerker/terraform-provider-docker/issues/286))
+* updates link syntax ([#287](https://github.com/kreuzwerker/terraform-provider-docker/issues/287))
+* fix typo ([#292](https://github.com/kreuzwerker/terraform-provider-docker/issues/292))
 
-## 0.1.0 (June 20, 2017)
+### Ci
 
-NOTES:
+* reactivats all workflows
+* fix website
+* only run website workflow
+* exports gopath manually
+* fix absolute gopath for website
+* make website check separate workflow
+* fix workflow names
+* adds website test to unit test
+* adds acc test
+* adds compile
+* adds go version and goproxy env
+* enables unit tests for master branch
+* adds unit test workflow
+* adds goreleaser and gh action
+* bumps docker and ubuntu versions ([#241](https://github.com/kreuzwerker/terraform-provider-docker/issues/241))
+* removes debug option from acc tests
+* skips test which is flaky only on travis
 
-* Same functionality as that of Terraform 0.9.8. Repacked as part of [Provider Splitout](https://www.hashicorp.com/blog/upcoming-provider-changes-in-terraform-0-10/)
+### Deps
+
+* github.com/hashicorp/terraform[@sdk](https://github.com/sdk)-v0.11-with-go-modules Updated via: go get github.com/hashicorp/terraform[@sdk](https://github.com/sdk)-v0.11-with-go-modules and go mod tidy
+* use go modules for dep mgmt run go mod tidy remove govendor from makefile and travis config set appropriate env vars for go modules
+
+### Docker
+
+* improve validation of runtime constraints
+
+### Docs
+
+* update container.html.markdown ([#278](https://github.com/kreuzwerker/terraform-provider-docker/issues/278))
+* update service.html.markdown ([#281](https://github.com/kreuzwerker/terraform-provider-docker/issues/281))
+* update restart_policy for service. Closes [#228](https://github.com/kreuzwerker/terraform-provider-docker/issues/228)
+* adds new label structure. Closes [#214](https://github.com/kreuzwerker/terraform-provider-docker/issues/214)
+* update anchors with -1 suffix ([#178](https://github.com/kreuzwerker/terraform-provider-docker/issues/178))
+* Fix misspelled words
+* Fix exported attribute name in docker_registry_image
+* Fix example for docker_registry_image ([#8308](https://github.com/kreuzwerker/terraform-provider-docker/issues/8308))
+* provider/docker - network settings attrs
+
+### Feat
+
+* conditionally adding port binding ([#293](https://github.com/kreuzwerker/terraform-provider-docker/issues/293)).
+* adds docker Image build feature ([#283](https://github.com/kreuzwerker/terraform-provider-docker/issues/283))
+* adds complete support for Docker credential helpers ([#253](https://github.com/kreuzwerker/terraform-provider-docker/issues/253))
+* Expose IPv6 properties as attributes
+* allow use of source file instead of content / content_base64 ([#240](https://github.com/kreuzwerker/terraform-provider-docker/issues/240))
+* supports to update docker_container ([#236](https://github.com/kreuzwerker/terraform-provider-docker/issues/236))
+* support to import some docker_container's attributes ([#234](https://github.com/kreuzwerker/terraform-provider-docker/issues/234))
+* adds config file content as plain string ([#232](https://github.com/kreuzwerker/terraform-provider-docker/issues/232))
+* make UID, GID, & mode for secrets and configs configurable ([#231](https://github.com/kreuzwerker/terraform-provider-docker/issues/231))
+* adds import for resources ([#196](https://github.com/kreuzwerker/terraform-provider-docker/issues/196))
+* add container ipc mode. ([#182](https://github.com/kreuzwerker/terraform-provider-docker/issues/182))
+* adds container working dir ([#181](https://github.com/kreuzwerker/terraform-provider-docker/issues/181))
+
+### Fix
+
+* ignores 'remove_volumes' on container import
+* duplicated buildImage function
+* port objects with the same internal port but different protocol trigger recreation of container ([#274](https://github.com/kreuzwerker/terraform-provider-docker/issues/274))
+* panic to migrate schema of docker_container from v1 to v2 ([#271](https://github.com/kreuzwerker/terraform-provider-docker/issues/271)). Closes [#264](https://github.com/kreuzwerker/terraform-provider-docker/issues/264)
+* pins docker registry for tests to v2.7.0
+* prevent force recreate of container about some attributes ([#269](https://github.com/kreuzwerker/terraform-provider-docker/issues/269))
+* service endpoint spec flattening
+* corrects IPAM config read on the data provider ([#229](https://github.com/kreuzwerker/terraform-provider-docker/issues/229))
+* replica to 0 in current schema. Closes [#221](https://github.com/kreuzwerker/terraform-provider-docker/issues/221)
+* label for network and volume after improt
+* binary upload as base 64 content ([#194](https://github.com/kreuzwerker/terraform-provider-docker/issues/194))
+* service env truncation for multiple delimiters ([#193](https://github.com/kreuzwerker/terraform-provider-docker/issues/193))
+* destroy_grace_seconds are considered ([#179](https://github.com/kreuzwerker/terraform-provider-docker/issues/179))
+
+### Make
+
+* Add website + website-test targets
+
+### Provider
+
+* Ensured Go 1.11 in TravisCI and README provider: Run go fix provider: Run go fmt provider: Encode go version 1.11.5 to .go-version file
+* Require Go 1.11 in TravisCI and README provider: Run go fix provider: Run go fmt
+
+### Tests
+
+* Skip test if swap limit isn't available ([#136](https://github.com/kreuzwerker/terraform-provider-docker/issues/136))
+* Simplify Dockerfile(s)
+
+### Vendor
+
+* github.com/hashicorp/terraform/...[@v0](https://github.com/v0).10.0
+* Ignore github.com/hashicorp/terraform/backend
+
+### Website
+
+* Docs sweep for lists & maps
+* note on docker
+* docker docs
+
+### Pull Requests
+
+* Merge pull request [#134](https://github.com/kreuzwerker/terraform-provider-docker/issues/134) from terraform-providers/go-modules-2019-03-01
+* Merge pull request [#135](https://github.com/kreuzwerker/terraform-provider-docker/issues/135) from terraform-providers/t-simplify-dockerfile
+* Merge pull request [#47](https://github.com/kreuzwerker/terraform-provider-docker/issues/47) from captn3m0/docker-link-warning
+* Merge pull request [#60](https://github.com/kreuzwerker/terraform-provider-docker/issues/60) from terraform-providers/f-make-website
+* Merge pull request [#23](https://github.com/kreuzwerker/terraform-provider-docker/issues/23) from JamesLaverack/patch-1
+* Merge pull request [#18](https://github.com/kreuzwerker/terraform-provider-docker/issues/18) from terraform-providers/vendor-tf-0.10
+* Merge pull request [#5046](https://github.com/kreuzwerker/terraform-provider-docker/issues/5046) from tpounds/use-built-in-schema-string-hash
+* Merge pull request [#3761](https://github.com/kreuzwerker/terraform-provider-docker/issues/3761) from ryane/f-provider-docker-improvements
+* Merge pull request [#3383](https://github.com/kreuzwerker/terraform-provider-docker/issues/3383) from apparentlymart/docker-container-command-docs
+* Merge pull request [#1564](https://github.com/kreuzwerker/terraform-provider-docker/issues/1564) from nickryand/docker_links
+

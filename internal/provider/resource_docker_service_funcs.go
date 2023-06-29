@@ -25,9 +25,9 @@ type convergeConfig struct {
 	delay      time.Duration
 }
 
-/////////////////
+// ///////////////
 // TF CRUD funcs
-/////////////////
+// ///////////////
 func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var err error
 	client := meta.(*ProviderConfig).DockerClient
@@ -131,7 +131,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 		d.Set("name", service.Spec.Name)
 		d.Set("labels", mapToLabelSet(service.Spec.Labels))
 
-		if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate)); err != nil {
+		if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate, d)); err != nil {
 			log.Printf("[WARN] failed to set task spec from API: %s", err)
 		}
 		if err = d.Set("mode", flattenServiceMode(service.Spec.Mode)); err != nil {
@@ -226,9 +226,9 @@ func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-/////////////////
+// ///////////////
 // Helpers
-/////////////////
+// ///////////////
 // fetchDockerService fetches a service by its name or id
 func fetchDockerService(ctx context.Context, ID string, name string, client *client.Client) (*swarm.Service, error) {
 	apiServices, err := client.ServiceList(ctx, types.ServiceListOptions{})
@@ -620,7 +620,7 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 	// No auth given and image name has no slash like 'alpine:3.1'
 	if lastBin != -1 {
 		serverAddress := image[0:lastBin]
-		if fromRegistryAuth, ok := authConfigs[normalizeRegistryAddress(serverAddress)]; ok {
+		if fromRegistryAuth, ok := authConfigs[serverAddress]; ok {
 			return fromRegistryAuth
 		}
 	}

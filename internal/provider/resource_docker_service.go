@@ -499,6 +499,12 @@ func resourceDockerService() *schema.Resource {
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(default|process|hyperv)$`),
 									},
+									"sysctl": {
+										Type:        schema.TypeMap,
+										Description: "Sysctls config (Linux only)",
+										Optional:    true,
+										ForceNew:    true,
+									},
 								},
 							},
 						},
@@ -674,12 +680,35 @@ func resourceDockerService() *schema.Resource {
 							Computed:         true,
 							ValidateDiagFunc: validateStringMatchesPattern("^(container|plugin)$"),
 						},
-						"networks": {
+						"networks_advanced": {
 							Type:        schema.TypeSet,
-							Description: "Ids of the networks in which the  container will be put in",
+							Description: "The networks the container is attached to",
 							Optional:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Set:         schema.HashString,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:        schema.TypeString,
+										Description: "The name/id of the network.",
+										Required:    true,
+										ForceNew:    true,
+									},
+									"aliases": {
+										Type:        schema.TypeSet,
+										Description: "The network aliases of the container in the specific network.",
+										Optional:    true,
+										ForceNew:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Set:         schema.HashString,
+									},
+									"driver_opts": {
+										Type:        schema.TypeSet,
+										Description: "An array of driver options for the network, e.g. `opts1=value`",
+										Optional:    true,
+										ForceNew:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
 						},
 						"log_driver": {
 							Type:        schema.TypeList,

@@ -25,7 +25,7 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "2.16.0"
+      version = "3.0.2"
     }
   }
 }
@@ -41,7 +41,7 @@ resource "docker_image" "ubuntu" {
 
 # Create a container
 resource "docker_container" "foo" {
-  image = docker_image.ubuntu.latest
+  image = docker_image.ubuntu.image_id
   name  = "foo"
 }
 ```
@@ -50,7 +50,7 @@ Terraform 0.12 and earlier:
 
 ```terraform
 provider "docker" {
-  version = "~> 2.16.0"
+  version = "~> 3.0.2"
   host    = "unix:///var/run/docker.sock"
 }
 
@@ -61,12 +61,12 @@ resource "docker_image" "ubuntu" {
 
 # Create a container
 resource "docker_container" "foo" {
-  image = docker_image.ubuntu.latest
+  image = docker_image.ubuntu.image_id
   name  = "foo"
 }
 ```
 
--> **Note**
+## Remote Hosts
 You can also use the `ssh` protocol to connect to the docker host on a remote machine.
 The configuration would look as follows:
 
@@ -77,13 +77,16 @@ provider "docker" {
 }
 ```
 
+When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
+
 ## Registry credentials
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
+If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**
-The location of the config file is on the machine terraform runs on, nevertheless if the specified docker host is on another machine.
+The config file is loaded from the machine `terraform` runs on. This also applies when the specified docker host is on another machine.
 
 ```terraform
 provider "docker" {
@@ -119,6 +122,9 @@ data "docker_registry_image" "quay" {
 When passing in a config file either the corresponding `auth` string of the repository is read or the os specific
 [credential helpers](https://github.com/docker/docker-credential-helpers#available-programs) are
 used to retrieve the authentication credentials.
+
+-> **Note**
+`config_file` has predence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
 
 You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
@@ -160,24 +166,25 @@ provider "docker" {
 
 ### Optional
 
-- **ca_material** (String) PEM-encoded content of Docker host CA certificate
-- **cert_material** (String) PEM-encoded content of Docker client certificate
-- **cert_path** (String) Path to directory with Docker TLS config
-- **host** (String) The Docker daemon address
-- **key_material** (String) PEM-encoded content of Docker client private key
-- **registry_auth** (Block List, Max: 1) (see [below for nested schema](#nestedblock--registry_auth))
-- **ssh_opts** (List of String) Additional SSH option flags to be appended when using `ssh://` protocol
+- `ca_material` (String) PEM-encoded content of Docker host CA certificate
+- `cert_material` (String) PEM-encoded content of Docker client certificate
+- `cert_path` (String) Path to directory with Docker TLS config
+- `host` (String) The Docker daemon address
+- `key_material` (String) PEM-encoded content of Docker client private key
+- `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--registry_auth))
+- `ssh_opts` (List of String) Additional SSH option flags to be appended when using `ssh://` protocol
 
 <a id="nestedblock--registry_auth"></a>
 ### Nested Schema for `registry_auth`
 
 Required:
 
-- **address** (String) Address of the registry
+- `address` (String) Address of the registry
 
 Optional:
 
-- **config_file** (String) Path to docker json file for registry auth
-- **config_file_content** (String) Plain content of the docker json file for registry auth
-- **password** (String, Sensitive) Password for the registry
-- **username** (String) Username for the registry
+- `auth_disabled` (Boolean) Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.
+- `config_file` (String) Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.
+- `config_file_content` (String) Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.
+- `password` (String, Sensitive) Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.
+- `username` (String) Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.

@@ -3,12 +3,13 @@ package provider
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,39 +47,21 @@ func dataSourceDockerRegistryImage() *schema.Resource {
 
 func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	pullOpts := parseImageOptions(d.Get("name").(string))
-	authConfig := meta.(*ProviderConfig).AuthConfigs
 
-	// Use the official Docker Hub if a registry isn't specified
-	if pullOpts.Registry == "" {
-		pullOpts.Registry = "registry-1.docker.io"
-	} else {
-		// Otherwise, filter the registry name out of the repo name
-		pullOpts.Repository = strings.Replace(pullOpts.Repository, pullOpts.Registry+"/", "", 1)
-	}
-
-	if pullOpts.Registry == "registry-1.docker.io" {
-		// Docker prefixes 'library' to official images in the path; 'consul' becomes 'library/consul'
-		if !strings.Contains(pullOpts.Repository, "/") {
-			pullOpts.Repository = "library/" + pullOpts.Repository
-		}
-	}
-
-	if pullOpts.Tag == "" {
-		pullOpts.Tag = "latest"
-	}
-
-	username := ""
-	password := ""
-
-	if auth, ok := authConfig.Configs[normalizeRegistryAddress(pullOpts.Registry)]; ok {
-		username = auth.Username
-		password = auth.Password
+	authConfig, err := getAuthConfigForRegistry(pullOpts.Registry, meta.(*ProviderConfig))
+	if err != nil {
+		// The user did not provide a credential for this registry.
+		// But there are many registries where you can pull without a credential.
+		// We are setting default values for the authConfig here.
+		authConfig.Username = ""
+		authConfig.Password = ""
+		authConfig.ServerAddress = "https://" + pullOpts.Registry
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
-	digest, err := getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, false)
+	digest, err := getImageDigest(pullOpts.Registry, authConfig.ServerAddress, pullOpts.Repository, pullOpts.Tag, authConfig.Username, authConfig.Password, insecureSkipVerify, false)
 	if err != nil {
-		digest, err = getImageDigest(pullOpts.Registry, pullOpts.Repository, pullOpts.Tag, username, password, insecureSkipVerify, true)
+		digest, err = getImageDigest(pullOpts.Registry, authConfig.ServerAddress, pullOpts.Repository, pullOpts.Tag, authConfig.Username, authConfig.Password, insecureSkipVerify, true)
 		if err != nil {
 			return diag.Errorf("Got error when attempting to fetch image version %s:%s from registry: %s", pullOpts.Repository, pullOpts.Tag, err)
 		}
@@ -90,30 +73,28 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func getImageDigest(registry, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
-	client := http.DefaultClient
-	// DevSkim: ignore DS440000
-	client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+func getImageDigest(registry string, registryWithProtocol string, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
+	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("GET", "https://"+registry+"/v2/"+image+"/manifests/"+tag, nil)
+	req, err := http.NewRequest("HEAD", registryWithProtocol+"/v2/"+image+"/manifests/"+tag, nil)
 	if err != nil {
 		return "", fmt.Errorf("Error creating registry request: %s", err)
 	}
 
 	if username != "" {
-		req.SetBasicAuth(username, password)
+		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
+			req.SetBasicAuth(username, password)
+		} else {
+			if isECRRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
+			}
+		}
 	}
 
-	// We accept schema v2 manifests and manifest lists, and also OCI types
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-
-	if fallback {
-		// Fallback to this header if the registry does not support the v2 manifest like gcr.io
-		req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v1+prettyjws")
-	}
+	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -127,69 +108,53 @@ func getImageDigest(registry, image, tag, username, password string, insecureSki
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
-		if strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
-			auth := parseAuthHeader(resp.Header.Get("www-authenticate"))
-			params := url.Values{}
-			params.Set("service", auth["service"])
-			params.Set("scope", auth["scope"])
-			tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-			if err != nil {
-				return "", fmt.Errorf("Error creating registry request: %s", err)
-			}
-
-			if username != "" {
-				tokenRequest.SetBasicAuth(username, password)
-			}
-
-			tokenResponse, err := client.Do(tokenRequest)
-			if err != nil {
-				return "", fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if tokenResponse.StatusCode != http.StatusOK {
-				return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
-			}
-
-			body, err := ioutil.ReadAll(tokenResponse.Body)
-			if err != nil {
-				return "", fmt.Errorf("Error reading response body: %s", err)
-			}
-
-			token := &TokenResponse{}
-			err = json.Unmarshal(body, token)
-			if err != nil {
-				return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
-			}
-
-			req.Header.Set("Authorization", "Bearer "+token.Token)
-			digestResponse, err := client.Do(req)
-			if err != nil {
-				return "", fmt.Errorf("Error during registry request: %s", err)
-			}
-
-			if digestResponse.StatusCode != http.StatusOK {
-				return "", fmt.Errorf("Got bad response from registry: " + digestResponse.Status)
-			}
-
-			return getDigestFromResponse(digestResponse)
+		if !strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
+			return "", fmt.Errorf("Bad credentials: " + resp.Status)
 		}
 
-		return "", fmt.Errorf("Bad credentials: " + resp.Status)
+		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		if err != nil {
+			return "", err
+		}
 
-		// Some unexpected status was given, return an error
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		// Do a HEAD request to docker registry first (avoiding Docker Hub rate limiting)
+		digestResponse, err := doDigestRequest(req, client)
+		if err != nil {
+			return "", err
+		}
+
+		digest, err := getDigestFromResponse(digestResponse)
+		if err == nil {
+			return digest, nil
+		}
+
+		// If previous HEAD request does not contain required info, do a GET request
+		req.Method = "GET"
+		digestResponse, err = doDigestRequest(req, client)
+
+		if err != nil {
+			return "", err
+		}
+
+		return getDigestFromResponse(digestResponse)
+
+	// Some unexpected status was given, return an error
 	default:
 		return "", fmt.Errorf("Got bad response from registry: " + resp.Status)
 	}
 }
 
 type TokenResponse struct {
-	Token string
+	Token       string
+	AccessToken string `json:"access_token"`
 }
 
 // Parses key/value pairs from a WWW-Authenticate header
 func parseAuthHeader(header string) map[string]string {
 	parts := strings.SplitN(header, " ", 2)
-	parts = strings.Split(parts[1], ",")
+	parts = regexp.MustCompile(`\w+\=\".*?\"|\w+[^\s\"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
 	opts := make(map[string]string)
 
 	for _, part := range parts {
@@ -207,7 +172,7 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 
 	if header == "" {
 		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
+		if err != nil || len(body) == 0 {
 			return "", fmt.Errorf("Error reading registry response body: %s", err)
 		}
 
@@ -215,4 +180,62 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 	}
 
 	return header, nil
+}
+
+func getAuthToken(authHeader string, username string, password string, client *http.Client) (string, error) {
+	auth := parseAuthHeader(authHeader)
+	params := url.Values{}
+	params.Set("service", auth["service"])
+	params.Set("scope", auth["scope"])
+	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
+	if err != nil {
+		return "", fmt.Errorf("Error creating registry request: %s", err)
+	}
+
+	if username != "" {
+		tokenRequest.SetBasicAuth(username, password)
+	}
+
+	tokenResponse, err := client.Do(tokenRequest)
+	if err != nil {
+		return "", fmt.Errorf("Error during registry request: %s", err)
+	}
+
+	if tokenResponse.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
+	}
+
+	body, err := ioutil.ReadAll(tokenResponse.Body)
+	if err != nil {
+		return "", fmt.Errorf("Error reading response body: %s", err)
+	}
+
+	token := &TokenResponse{}
+	err = json.Unmarshal(body, token)
+	if err != nil {
+		return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
+	}
+
+	if token.Token != "" {
+		return token.Token, nil
+	}
+
+	if token.AccessToken != "" {
+		return token.AccessToken, nil
+	}
+
+	return "", fmt.Errorf("Error unsupported OAuth response")
+}
+
+func doDigestRequest(req *http.Request, client *http.Client) (*http.Response, error) {
+	digestResponse, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error during registry request: %s", err)
+	}
+
+	if digestResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Got bad response from registry: " + digestResponse.Status)
+	}
+
+	return digestResponse, nil
 }

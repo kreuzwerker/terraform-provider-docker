@@ -12,42 +12,29 @@ on:
 
 env:
   GOPROXY: https://proxy.golang.org,direct
-  GO_VERSION: "1.17"
+  GO_VERSION: "1.18"
 
 jobs:
   website-generation:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Setup tools
-        run: make setup
-      - name: Explicitly get tfplugindocs
-        run: go get github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+      - name: Get dependencies
+        run: go mod download
       - name: Generate the website
         run: make website-generation
-      - name: Verify Changed files
-        uses: tj-actions/verify-changed-files@v8.8
-        id: verify-changed-files
-        with:
-          files: |
-             docs/**/*.md
-      - name: Display changed files
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
+      - name: git diff
         run: |
-          echo "Changed files: ${{ steps.verify_changed_files.outputs.changed_files }}"
-      - name: Fail if files have changed
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
-        run: |
-          echo "Generated website was not up-to-date. Please run 'make website-generation' locally, commit, and push again";
-          exit 1;
+          git diff --compact-summary --exit-code || \
+            (echo; echo "Unexpected difference in directories after code generation. Run 'make website-generation' command and commit."; exit 1)
   website-lint-spellcheck-tffmt:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - run: docker version
@@ -58,7 +45,7 @@ jobs:
   markdown-lint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: avto-dev/markdown-lint@v1
         with:
           args: 'docs'

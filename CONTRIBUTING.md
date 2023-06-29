@@ -25,9 +25,11 @@ Please use issue templates as much as possible.
 Prerequisites:
 
 - `make`, `git`, `bash`
-- [Go 1.16+](https://golang.org/doc/install)
+- [Go 1.18+](https://golang.org/doc/install)
 - [Docker](https://www.docker.com/)
 - [Terraform 0.12+](https://terraform.io/)
+- [git-chglog](https://github.com/git-chglog/git-chglog)
+- [svu](https://github.com/caarlos0/svu)
 
 Clone `terraform-provider-docker` anywhere:
 
@@ -144,7 +146,7 @@ resource "docker_image" "foo" {
 
 resource "docker_container" "foo" {
   name    = "foo"
-  image   = docker_image.foo.latest
+  image   = docker_image.foo.image_id
 }
 ```
 
@@ -183,8 +185,16 @@ Push your branch to your `terraform-provider-docker` fork and open a
 pull request against the master branch.
 
 ## Releasing
-- Update the `CHANGELOG.md` by hand by [comparing](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.11.0...master) with the latest release, e.g. `v2.11.0` or via the `cli` with the command `git log v2.11.0..HEAD --oneline`
-- Replace all occurrences of the latest release, e.g. `2.11.0` with the new one, e.g. `2.12.2`, except in the files `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/**/*`
-- regenerate the website: `make website-generation`
-- commit the changes: `chore: prepare release v2.12.0`
-- run `git tag v2.12.2 && git push origin master v2.12.2`
+
+Run one of the following commands (depending on the semver version you want to release): 
+
+```sh
+make patch
+make minor
+make major
+```
+
+Those commands will automatically:
+- Replace all occurrences of the latest release, e.g. `2.11.0` with the new one, e.g. `2.12.0`: ``
+- Generate the `CHANGELOG.md` 
+- Regenerate the website (`make website-generation`)

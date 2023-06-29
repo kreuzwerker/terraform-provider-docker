@@ -64,6 +64,20 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 			},
 
+			"wait": {
+				Type:        schema.TypeBool,
+				Description: "If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.",
+				Default:     false,
+				Optional:    true,
+			},
+
+			"wait_timeout": {
+				Type:        schema.TypeInt,
+				Description: "The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.",
+				Default:     60,
+				Optional:    true,
+			},
+
 			"attach": {
 				Type:        schema.TypeBool,
 				Description: "If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.",
@@ -139,7 +153,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"command": {
 				Type:        schema.TypeList,
-				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-\",\"baz.con\"]`.",
+				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.con\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -273,6 +287,27 @@ func resourceDockerContainer() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
+			},
+			"runtime": {
+				Type:        schema.TypeString,
+				Description: "Runtime to use for the container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"stop_signal": {
+				Type:        schema.TypeString,
+				Description: "Signal to stop a container (default `SIGTERM`).",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"stop_timeout": {
+				Type:        schema.TypeInt,
+				Description: "Timeout (in seconds) to stop a container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
 			},
 			"mounts": {
 				Type:        schema.TypeSet,
@@ -533,37 +568,6 @@ func resourceDockerContainer() *schema.Resource {
 				Set:         schema.HashString,
 			},
 
-			"links": {
-				Type:        schema.TypeSet,
-				Description: "Set of links for link based connectivity between containers that are running on the same host.",
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-				Deprecated:  "The --link flag is a legacy feature of Docker. It may eventually be removed.",
-			},
-
-			"ip_address": {
-				Type:        schema.TypeString,
-				Description: "The IP address of the container.",
-				Computed:    true,
-				Deprecated:  "Use `network_data` instead. The IP address of the container's first network it.",
-			},
-
-			"ip_prefix_length": {
-				Type:        schema.TypeInt,
-				Description: "The IP prefix length of the container.",
-				Computed:    true,
-				Deprecated:  "Use `network_data` instead. The IP prefix length of the container as read from its NetworkSettings.",
-			},
-
-			"gateway": {
-				Type:        schema.TypeString,
-				Description: "The network gateway of the container.",
-				Computed:    true,
-				Deprecated:  "Use `network_data` instead. The network gateway of the container as read from its NetworkSettings.",
-			},
-
 			"bridge": {
 				Type:        schema.TypeString,
 				Description: "The network bridge of the container as read from its NetworkSettings.",
@@ -585,19 +589,16 @@ func resourceDockerContainer() *schema.Resource {
 							Type:        schema.TypeString,
 							Description: "The IP address of the container.",
 							Computed:    true,
-							Deprecated:  "Use `network_data` instead. The IP address of the container's first network it.",
 						},
 						"ip_prefix_length": {
 							Type:        schema.TypeInt,
 							Description: "The IP prefix length of the container.",
 							Computed:    true,
-							Deprecated:  "Use `network_data` instead. The IP prefix length of the container as read from its NetworkSettings.",
 						},
 						"gateway": {
 							Type:        schema.TypeString,
 							Description: "The network gateway of the container.",
 							Computed:    true,
-							Deprecated:  "Use `network_data` instead. The network gateway of the container as read from its NetworkSettings.",
 						},
 						"global_ipv6_address": {
 							Type:        schema.TypeString,
@@ -612,6 +613,11 @@ func resourceDockerContainer() *schema.Resource {
 						"ipv6_gateway": {
 							Type:        schema.TypeString,
 							Description: "The IPV6 gateway of the container.",
+							Computed:    true,
+						},
+						"mac_address": {
+							Type:        schema.TypeString,
+							Description: "The MAC address of the container.",
 							Computed:    true,
 						},
 					},
@@ -721,16 +727,6 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 			},
 
-			"network_alias": {
-				Type:        schema.TypeSet,
-				Description: "Set an alias for the container in all specified networks",
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-				Deprecated:  "Use networks_advanced instead. Will be removed in v3.0.0",
-			},
-
 			"network_mode": {
 				Type:        schema.TypeString,
 				Description: "Network mode of the container.",
@@ -748,16 +744,6 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
-			"networks": {
-				Type:        schema.TypeSet,
-				Description: "ID of the networks in which the container is.",
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-				Deprecated:  "Use networks_advanced instead. Will be removed in v3.0.0",
-			},
-
 			"networks_advanced": {
 				Type:        schema.TypeSet,
 				Description: "The networks the container is attached to",
@@ -767,7 +753,7 @@ func resourceDockerContainer() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:        schema.TypeString,
-							Description: "The name of the network.",
+							Description: "The name or id of the network to use. You can use `name` or `id` attribute from a `docker_network` resource.",
 							Required:    true,
 							ForceNew:    true,
 						},
@@ -905,6 +891,13 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
+			"container_read_refresh_timeout_milliseconds": {
+				Type:        schema.TypeInt,
+				Description: "The total number of milliseconds to wait for the container to reach status 'running'",
+				Optional:    true,
+				Default:     containerReadRefreshTimeoutMillisecondsDefault,
+			},
+
 			"sysctls": {
 				Type:        schema.TypeMap,
 				Description: "A map of kernel parameters (sysctls) to set in the container.",
@@ -949,6 +942,18 @@ func resourceDockerContainer() *schema.Resource {
 			"storage_opts": {
 				Type:        schema.TypeMap,
 				Description: "Key/value pairs for the storage driver options, e.g. `size`: `120G`",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"gpus": {
+				Type:        schema.TypeString,
+				Description: "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"cgroupns_mode": {
+				Type:        schema.TypeString,
+				Description: "Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.",
 				Optional:    true,
 				ForceNew:    true,
 			},

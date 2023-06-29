@@ -219,6 +219,27 @@ func resourceDockerContainerV1() *schema.Resource {
 					},
 				},
 			},
+			"runtime": {
+				Type:        schema.TypeString,
+				Description: "Runtime to use for the container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"stop_signal": {
+				Type:        schema.TypeString,
+				Description: "Signal to stop a container (default `SIGTERM`).",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"stop_timeout": {
+				Type:        schema.TypeInt,
+				Description: "Timeout (in seconds) to stop a container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
 			"mounts": {
 				Type:        schema.TypeSet,
 				Description: "Specification for mounts to be added to containers created as part of the service",
@@ -522,6 +543,10 @@ func resourceDockerContainerV1() *schema.Resource {
 							Computed: true,
 						},
 						"ipv6_gateway": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"mac_address": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},

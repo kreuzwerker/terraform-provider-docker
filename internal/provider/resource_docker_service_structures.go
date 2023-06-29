@@ -13,12 +13,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//////////////
+// ////////////
 // flatteners
 // flatten API objects to the terraform schema
-//////////////
+// ////////////
 // see https://learn.hashicorp.com/tutorials/terraform/provider-create?in=terraform/providers#add-flattening-functions
-func flattenTaskSpec(in swarm.TaskSpec) []interface{} {
+func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData) []interface{} {
 	m := make(map[string]interface{})
 	if in.ContainerSpec != nil {
 		m["container_spec"] = flattenContainerSpec(in.ContainerSpec)
@@ -37,7 +37,7 @@ func flattenTaskSpec(in swarm.TaskSpec) []interface{} {
 		m["runtime"] = in.Runtime
 	}
 	if len(in.Networks) > 0 {
-		m["networks"] = flattenTaskNetworks(in.Networks)
+		m["networks_advanced"] = flattenTaskNetworksAdvanced(in.Networks)
 	}
 	if in.LogDriver != nil {
 		m["log_driver"] = flattenTaskLogDriver(in.LogDriver)
@@ -110,7 +110,7 @@ func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
 	return out
 }
 
-///// start TaskSpec
+// /// start TaskSpec
 func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
@@ -173,6 +173,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	}
 	if len(in.Isolation) > 0 {
 		m["isolation"] = string(in.Isolation)
+	}
+	if len(in.Sysctls) > 0 {
+		m["sysctl"] = in.Sysctls
 	}
 	out = append(out, m)
 	return out
@@ -502,10 +505,27 @@ func flattenPlacementPlatforms(in []swarm.Platform) *schema.Set {
 	return schema.NewSet(f, out)
 }
 
-func flattenTaskNetworks(in []swarm.NetworkAttachmentConfig) *schema.Set {
+func flattenTaskNetworksAdvanced(in []swarm.NetworkAttachmentConfig) *schema.Set {
 	out := make([]interface{}, len(in))
 	for i, v := range in {
-		out[i] = v.Target
+		m := make(map[string]interface{})
+		m["name"] = v.Target
+		m["driver_opts"] = stringSliceToSchemaSet(mapTypeMapValsToStringSlice(mapStringStringToMapStringInterface(v.DriverOpts)))
+		if len(v.Aliases) > 0 {
+			m["aliases"] = stringSliceToSchemaSet(v.Aliases)
+		}
+		out[i] = m
+	}
+	taskSpecResource := resourceDockerService().Schema["task_spec"].Elem.(*schema.Resource)
+	networksAdvancedResource := taskSpecResource.Schema["networks_advanced"].Elem.(*schema.Resource)
+	f := schema.HashResource(networksAdvancedResource)
+	return schema.NewSet(f, out)
+}
+
+func stringSliceToSchemaSet(in []string) *schema.Set {
+	out := make([]interface{}, len(in))
+	for i, v := range in {
+		out[i] = v
 	}
 	return schema.NewSet(schema.HashString, out)
 }
@@ -525,8 +545,8 @@ func flattenTaskLogDriver(in *swarm.Driver) []interface{} {
 	return out
 }
 
-///// end TaskSpec
-///// start EndpointSpec
+// /// end TaskSpec
+// /// start EndpointSpec
 func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 	out := make([]interface{}, len(in))
 	for i, v := range in {
@@ -543,10 +563,10 @@ func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 
 ///// end EndpointSpec
 
-//////////////
+// ////////////
 // Mappers
 // create API object from the terraform resource schema
-//////////////
+// ////////////
 // createServiceSpec creates the service spec: https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
 	serviceSpec := swarm.ServiceSpec{
@@ -646,8 +666,8 @@ func createServiceTaskSpec(d *schema.ResourceData) (swarm.TaskSpec, error) {
 				if rawRuntimeSpec, ok := rawTaskSpec["runtime"]; ok {
 					taskSpec.Runtime = swarm.RuntimeType(rawRuntimeSpec.(string))
 				}
-				if rawNetworksSpec, ok := rawTaskSpec["networks"]; ok {
-					networks, err := createServiceNetworks(rawNetworksSpec)
+				if rawNetworksSpec, ok := rawTaskSpec["networks_advanced"]; ok {
+					networks, err := createServiceAdvancedNetworks(rawNetworksSpec)
 					if err != nil {
 						return taskSpec, err
 					}
@@ -925,6 +945,9 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 			if value, ok := rawContainerSpec["isolation"]; ok {
 				containerSpec.Isolation = container.Isolation(value.(string))
 			}
+			if value, ok := rawContainerSpec["sysctl"]; ok {
+				containerSpec.Sysctls = mapTypeMapValsToString(value.(map[string]interface{}))
+			}
 		}
 	}
 
@@ -1065,13 +1088,20 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 	return &placement, nil
 }
 
-// createServiceNetworks creates the networks the service will be attachted to
-func createServiceNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
+// createServiceAdvancedNetworks creates the networks the service will be attachted to
+func createServiceAdvancedNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
 	networks := []swarm.NetworkAttachmentConfig{}
 	if len(v.(*schema.Set).List()) > 0 {
 		for _, rawNetwork := range v.(*schema.Set).List() {
+			rawNetwork := rawNetwork.(map[string]interface{})
+			networkID := rawNetwork["name"].(string)
+			networkAliases := stringSetToStringSlice(rawNetwork["aliases"].(*schema.Set))
 			network := swarm.NetworkAttachmentConfig{
-				Target: rawNetwork.(string),
+				Target:  networkID,
+				Aliases: networkAliases,
+			}
+			if driverOpts, ok := rawNetwork["driver_opts"]; ok {
+				network.DriverOpts = stringSetToMapStringString(driverOpts.(*schema.Set))
 			}
 			networks = append(networks, network)
 		}

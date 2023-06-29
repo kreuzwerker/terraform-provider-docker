@@ -1,2 +1,2 @@
 FROM scratch
-COPY empty /empty
+COPY * /
