@@ -261,25 +261,10 @@ func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkip
 func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithProtocol string, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
 	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("DELETE", registryWithProtocol+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
+	req, err := setupHTTPRequestForRegistry("DELETE", pushOpts.Registry, registryWithProtocol, pushOpts.Repository, sha256Digest, username, password, fallback)
 	if err != nil {
-		return fmt.Errorf("Error deleting registry image: %s", err)
+		return err
 	}
-
-	if username != "" {
-		if pushOpts.Registry != "ghcr.io" && !isECRRepositoryURL(pushOpts.Registry) && !isAzureCRRepositoryURL(pushOpts.Registry) && pushOpts.Registry != "gcr.io" {
-			req.SetBasicAuth(username, password)
-		} else {
-			if isECRRepositoryURL(pushOpts.Registry) {
-				password = normalizeECRPasswordForHTTPUsage(password)
-				req.Header.Add("Authorization", "Basic "+password)
-			} else {
-				req.Header.Add("Authorization", "Bearer "+base64.StdEncoding.EncodeToString([]byte(password)))
-			}
-		}
-	}
-
-	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -293,11 +278,12 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
-		if !strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
-			return fmt.Errorf("Bad credentials: " + resp.Status)
+		auth, err := parseAuthHeader(resp.Header.Get("www-authenticate"))
+		if err != nil {
+			return fmt.Errorf("Bad credentials: %s", resp.Status)
 		}
 
-		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		token, err := getAuthToken(auth, username, password, client)
 		if err != nil {
 			return err
 		}
