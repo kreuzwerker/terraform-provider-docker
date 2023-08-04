@@ -8,7 +8,7 @@ description: |-
 
 # docker_registry_multiarch_image (Data Source)
 
-Reads the image metadata for each manifest in a [Docker multi-arch image](https://docs.docker.com/build/building/multi-platform/) from a Docker Registry.
+Reads the image metadata for each manifest in a Docker multi-arch image from a Docker Registry.
 
 ## Example Usage
 
@@ -44,3 +44,5 @@ Read-Only:
 - `media_type` (String)
 - `os` (String)
 - `sha256_digest` (String)
+
+
