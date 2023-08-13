@@ -153,7 +153,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"command": {
 				Type:        schema.TypeList,
-				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.con\"]`.",
+				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.conf\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
