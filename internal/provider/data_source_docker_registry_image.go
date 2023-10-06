@@ -112,7 +112,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 			return "", fmt.Errorf("Bad credentials: " + resp.Status)
 		}
 
-		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, "repository:"+image+":push,pull", client)
 		if err != nil {
 			return "", err
 		}
@@ -182,11 +182,14 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 	return header, nil
 }
 
-func getAuthToken(authHeader string, username string, password string, client *http.Client) (string, error) {
+func getAuthToken(authHeader string, username string, password string, fallbackScope string, client *http.Client) (string, error) {
 	auth := parseAuthHeader(authHeader)
 	params := url.Values{}
 	params.Set("service", auth["service"])
-	params.Set("scope", auth["scope"])
+    params.Set("scope", auth["scope"])
+	if (auth["scope"] == "") {
+    	params.Set("scope", fallbackScope)
+	}
 	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
 	if err != nil {
 		return "", fmt.Errorf("Error creating registry request: %s", err)
