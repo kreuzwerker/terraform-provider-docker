@@ -25,7 +25,7 @@ func resourceDockerContainer() *schema.Resource {
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
 				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					// TODO do the ohter V0-to-V1 migration, unless we're okay
+					// TODO do the other V0-to-V1 migration, unless we're okay
 					// with breaking for users who straggled on their docker
 					// provider version
 
@@ -162,7 +162,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"entrypoint": {
 				Type:        schema.TypeList,
-				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogra\"]`.",
+				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogram\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -171,7 +171,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"user": {
 				Type:        schema.TypeString,
-				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.",
+				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -252,7 +252,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"capabilities": {
 				Type:        schema.TypeSet,
-				Description: "Add or drop certrain linux capabilities.",
+				Description: "Add or drop certain linux capabilities.",
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,

@@ -86,7 +86,7 @@ website-link-check:
 website-lint:
 	@echo "==> Checking website against linters..."
 	@misspell -error -source=text docs/ || (echo; \
-		echo "Unexpected mispelling found in website files."; \
+		echo "Unexpected misspelling found in website files."; \
 		echo "To automatically fix the misspelling, run 'make website-lint-fix' and commit the changes."; \
 		exit 1)
 	@docker run --rm -v $(PWD):/markdown 06kellyjac/markdownlint-cli docs/ || (echo; \
@@ -113,8 +113,8 @@ chlog-%:
 	@echo "Review the changes made by this script then execute the following:"
 
 
-replace-occurences-%:
-	@echo "Replace occurences of old version strings..."
+replace-occurrences-%:
+	@echo "Replace occurrences of old version strings..."
 	sed -i '' "s/$(shell (svu --strip-prefix current))/$*/g" README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf
 
 release-%:
@@ -130,15 +130,15 @@ release-%:
 
 patch:
 	@${MAKE} chlog-$(shell (svu patch))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix patch))
+	@${MAKE} replace-occurrences-$(shell (svu --strip-prefix patch))
 	@${MAKE} release-$(shell (svu patch))
 
 minor:
 	@${MAKE} chlog-$(shell (svu minor))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix minor))
+	@${MAKE} replace-occurrences-$(shell (svu --strip-prefix minor))
 	@${MAKE} release-$(shell (svu minor))
 
 major:
 	@${MAKE} chlog-$(shell (svu major))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix major))
+	@${MAKE} replace-occurrences-$(shell (svu --strip-prefix major))
 	@${MAKE} release-$(shell (svu major))

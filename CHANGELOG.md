@@ -545,7 +545,7 @@
 
 ### Ci
 
-* reactivats all workflows
+* reactivates all workflows
 * fix website
 * only run website workflow
 * exports gopath manually
