@@ -123,7 +123,7 @@ func New(version string) func() *schema.Provider {
 								Type:        schema.TypeString,
 								Optional:    true,
 								DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
-								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
+								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has precedence over all other options.",
 							},
 
 							"config_file_content": {
@@ -278,7 +278,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			log.Println("[DEBUG] Parsing file for registry auths:", filePath)
 
 			// We manually expand the path and do not use the 'pathexpand' interpolation function
-			// because in the default of this varable we refer to '~/.docker/config.json'
+			// because in the default of this variable we refer to '~/.docker/config.json'
 			if strings.HasPrefix(filePath, "~/") {
 				usr, err := user.Current()
 				if err != nil {

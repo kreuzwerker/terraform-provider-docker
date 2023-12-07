@@ -36,7 +36,7 @@ resource "docker_image" "ubuntu" {
 ### Optional
 
 - `attach` (Boolean) If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.
-- `capabilities` (Block Set, Max: 1) Add or drop certrain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
+- `capabilities` (Block Set, Max: 1) Add or drop certain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
 - `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
 - `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.con"]`.
 - `container_read_refresh_timeout_milliseconds` (Number) The total number of milliseconds to wait for the container to reach status 'running'
@@ -48,7 +48,7 @@ resource "docker_image" "ubuntu" {
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 - `dns_search` (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
 - `domainname` (String) Domain name of the container.
-- `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
+- `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogram"]`.
 - `env` (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
 - `gpus` (String) GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.
 - `group_add` (Set of String) Additional groups for the container user
@@ -89,7 +89,7 @@ resource "docker_image" "ubuntu" {
 - `tty` (Boolean) If `true`, allocate a pseudo-tty (`docker run -t`). Defaults to `false`.
 - `ulimit` (Block Set) Ulimit options to add. (see [below for nested schema](#nestedblock--ulimit))
 - `upload` (Block Set) Specifies files to upload to the container before starting it. Only one of `content` or `content_base64` can be set and at least one of them has to be set. (see [below for nested schema](#nestedblock--upload))
-- `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
+- `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
 - `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.

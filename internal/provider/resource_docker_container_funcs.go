@@ -906,7 +906,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
-		log.Printf("[INFO] Waiting for Container '%s' errord: '%s'", d.Id(), err.Error())
+		log.Printf("[INFO] Waiting for Container '%s' error: '%s'", d.Id(), err.Error())
 	}
 
 	d.SetId("")
