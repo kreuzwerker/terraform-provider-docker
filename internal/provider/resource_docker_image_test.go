@@ -449,6 +449,53 @@ func TestAccDockerImage_build(t *testing.T) {
 	})
 }
 
+func TestAccDockerImageSecrets_build(t *testing.T) {
+	const testDockerFileWithSecret = `
+	FROM python:3-bookworm
+
+	WORKDIR /app
+
+	ARG test_arg
+
+	RUN echo ${test_arg} > test_arg.txt
+
+	RUN --mount=type=secret,id=TEST_SECRET_SRC \
+        --mount=type=secret,id=TEST_SECRET_ENV \
+		apt-get update -qq`
+
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "Dockerfile")
+	if err := os.WriteFile(dfPath, []byte(testDockerFileWithSecret), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath)
+
+	const secretContent = "THIS IS A SECRET"
+	sPath := filepath.Join(wd, "secret")
+	if err := os.WriteFile(sPath, []byte(secretContent), 0o644); err != nil {
+		t.Fatalf("failed to create a secret file %s for test: %+v", sPath, err)
+	}
+
+	defer os.Remove(sPath)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageBuildSecrets"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.test", "name", contentDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 const testDockerFileExample = `
 FROM python:3-bookworm
 
