@@ -12,7 +12,7 @@ import (
 
 func dataSourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "`docker_image` provides details about a specific Docker Image which need to be presend on the Docker Host",
+		Description: "`docker_image` provides details about a specific Docker Image which need to be present on the Docker Host",
 
 		ReadContext: dataSourceDockerImageRead,
 
