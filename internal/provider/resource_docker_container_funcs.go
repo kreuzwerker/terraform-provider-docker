@@ -320,6 +320,27 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.CpusetCpus = v.(string)
 	}
 
+	if v, ok := d.GetOk("cpus"); ok {
+		hostConfig.CPUPeriod = 100000
+		hostConfig.CPUQuota = int64(v.(float32) * 100000)
+
+		if _, ook := d.GetOk("cpu_period"); ook {
+			log.Printf("[WARN] Value for cpus is set, ignore cpu_period setting")
+		}
+
+		if _, ook := d.GetOk("cpu_quota"); ook {
+			log.Printf("[WARN] Value for cpus is set, ignore cpu_quota setting")
+		}
+	} else {
+		if vv, ook := d.GetOk("cpu_period"); ook {
+			hostConfig.CPUPeriod = int64(vv.(int))
+		}
+
+		if vv, ook := d.GetOk("cpu_quota"); ook {
+			hostConfig.CPUQuota = int64(vv.(int))
+		}
+	}
+
 	if v, ok := d.GetOk("log_opts"); ok {
 		hostConfig.LogConfig.Config = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
