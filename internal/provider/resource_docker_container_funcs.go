@@ -371,6 +371,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
+	if v, ok := d.GetOk("cgroupns_mode"); ok {
+		hostConfig.CgroupParent = v.(string)
+	}
+
 	init := d.Get("init").(bool)
 	hostConfig.Init = &init
 
