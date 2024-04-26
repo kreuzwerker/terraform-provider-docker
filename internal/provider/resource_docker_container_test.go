@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -739,7 +738,7 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 
 	wd, _ := os.Getwd()
 	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
-	testFileContent, _ := ioutil.ReadFile(testFile)
+	testFileContent, _ := os.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
@@ -816,7 +815,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 
 	wd, _ := os.Getwd()
 	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
-	hash, _ := ioutil.ReadFile(testFile + ".base64")
+	hash, _ := os.ReadFile(testFile + ".base64")
 	grabFirstCheck := func(*terraform.State) error {
 		firstRunId = c.ID
 		return nil

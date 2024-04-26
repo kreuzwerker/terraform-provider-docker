@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+    "io"
 	"strings"
 
 	"github.com/docker/distribution/reference"
@@ -34,7 +34,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return fmt.Errorf("install a Docker plugin "+pluginName+": %w", err)
 	}
-	_, _ = ioutil.ReadAll(body)
+	_, _ = io.ReadAll(body)
 	key := pluginName
 	if alias != "" {
 		key = alias
