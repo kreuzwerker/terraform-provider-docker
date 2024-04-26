@@ -12,7 +12,7 @@ on:
 
 env:
   GOPROXY: https://proxy.golang.org,direct
-  GO_VERSION: "1.18"
+  GO_VERSION: "1.22"
 
 jobs:
   website-generation:
