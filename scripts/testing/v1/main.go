@@ -15,7 +15,7 @@ type config struct {
 }
 
 func main() {
-    configsContent, err := os.ReadFile("configs.json")
+	configsContent, err := os.ReadFile("configs.json")
 	if err != nil {
 		log.Fatalf("cannot open 'configs.json': %s", err)
 	}

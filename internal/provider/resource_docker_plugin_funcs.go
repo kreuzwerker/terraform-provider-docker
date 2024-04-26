@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
-    "io"
 	"strings"
 
 	"github.com/docker/distribution/reference"
