@@ -6,7 +6,7 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -154,7 +154,7 @@ type TokenResponse struct {
 // Parses key/value pairs from a WWW-Authenticate header
 func parseAuthHeader(header string) map[string]string {
 	parts := strings.SplitN(header, " ", 2)
-	parts = regexp.MustCompile(`\w+\=\".*?\"|\w+[^\s\"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
+	parts = regexp.MustCompile(`\w+=".*?"|\w+[^\s"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
 	opts := make(map[string]string)
 
 	for _, part := range parts {
@@ -171,7 +171,7 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 	header := response.Header.Get("Docker-Content-Digest")
 
 	if header == "" {
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil || len(body) == 0 {
 			return "", fmt.Errorf("Error reading registry response body: %s", err)
 		}
@@ -205,7 +205,7 @@ func getAuthToken(authHeader string, username string, password string, client *h
 		return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
 	}
 
-	body, err := ioutil.ReadAll(tokenResponse.Body)
+	body, err := io.ReadAll(tokenResponse.Body)
 	if err != nil {
 		return "", fmt.Errorf("Error reading response body: %s", err)
 	}
@@ -230,7 +230,7 @@ func getAuthToken(authHeader string, username string, password string, client *h
 func doDigestRequest(req *http.Request, client *http.Client) (*http.Response, error) {
 	digestResponse, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error during registry request: %s", err)
+		return nil, fmt.Errorf("error during registry request: %s", err)
 	}
 
 	if digestResponse.StatusCode != http.StatusOK {

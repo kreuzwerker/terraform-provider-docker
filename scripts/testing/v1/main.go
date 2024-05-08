@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 const listenAddr = ":8080"
@@ -15,7 +15,7 @@ type config struct {
 }
 
 func main() {
-	configsContent, err := ioutil.ReadFile("configs.json")
+	configsContent, err := os.ReadFile("configs.json")
 	if err != nil {
 		log.Fatalf("cannot open 'configs.json': %s", err)
 	}
