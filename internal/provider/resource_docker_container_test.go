@@ -872,7 +872,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 			} else {
 				mode := strconv.FormatInt(header.Mode, 8)
 				if !strings.HasSuffix(mode, filePerm) {
-					return fmt.Errorf("File permissions are incorrect: %s", mode)
+					return fmt.Errorf("File permissions are incorrect: %s; wanted: %s", mode, filePerm)
 				}
 			}
 
