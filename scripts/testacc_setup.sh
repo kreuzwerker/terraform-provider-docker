@@ -1,8 +1,16 @@
 #!/bin/bash
 set -e
 
+function b64() {
+  case "$(uname -o)" in
+    GNU/Linux*) base64 -w 0 "$1";;
+    Linux*)     base64 -w 0 "$1";;
+    Darwin*)    base64 -i "$1";;
+    *)          exit 1;; #bail out, complaining loudly
+  esac
+}
 echo -n "foo" > "$(pwd)/scripts/testing/testingFile"
-echo -n `base64 $(pwd)/scripts/testing/testingFile` > "$(pwd)/scripts/testing/testingFile.base64"
+b64 $(pwd)/scripts/testing/testingFile > "$(pwd)/scripts/testing/testingFile.base64"
 
 # Create self signed certs
 mkdir -p "$(pwd)"/scripts/testing/certs
