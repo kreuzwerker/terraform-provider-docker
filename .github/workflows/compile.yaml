@@ -12,8 +12,7 @@ on:
       - '**.go'
       - go.mod
       - '.github/workflows/**'
-    paths-ignore:
-      - '**_test.go'
+      - '!**_test.go'
 
 env:
   GOPROXY: https://proxy.golang.org,direct
