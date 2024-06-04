@@ -11,7 +11,7 @@ require (
 	github.com/docker/go-units v0.5.0
 	github.com/golangci/golangci-lint v1.59.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
-	github.com/hashicorp/terraform-plugin-docs v0.14.1
+	github.com/hashicorp/terraform-plugin-docs v0.19.4
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.25.0
 	github.com/katbyte/terrafmt v0.5.3
 	github.com/mitchellh/go-homedir v1.1.0
@@ -32,12 +32,14 @@ require (
 	github.com/Crocmagnon/fatcontext v0.2.2 // indirect
 	github.com/Djarvur/go-err113 v0.1.0 // indirect
 	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.2.0 // indirect
+	github.com/Kunde21/markdownfmt/v3 v3.1.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
-	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
+	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.9.2 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.2.0 // indirect
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.2 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/alecthomas/go-check-sumtype v0.1.4 // indirect
 	github.com/alexkohler/nakedret/v2 v2.0.4 // indirect
@@ -51,6 +53,7 @@ require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/bkielbasa/cyclop v1.2.1 // indirect
 	github.com/blizzy78/varnamelen v0.8.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/bombsimon/wsl/v4 v4.2.1 // indirect
 	github.com/breml/bidichk v0.2.7 // indirect
 	github.com/breml/errchkjson v0.3.6 // indirect
@@ -62,6 +65,7 @@ require (
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/chavacava/garif v0.1.0 // indirect
 	github.com/ckaznocha/intrange v0.1.2 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/containerd v1.6.3-0.20220401172941-5ff8fce1fcc6 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
@@ -110,6 +114,7 @@ require (
 	github.com/gostaticanalysis/forcetypeassert v0.1.0 // indirect
 	github.com/gostaticanalysis/nilerr v0.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
+	github.com/hashicorp/cli v1.1.6 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -118,20 +123,20 @@ require (
 	github.com/hashicorp/go-plugin v1.4.8 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
-	github.com/hashicorp/hc-install v0.5.0 // indirect
+	github.com/hashicorp/hc-install v0.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.20.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
-	github.com/hashicorp/terraform-exec v0.18.1 // indirect
-	github.com/hashicorp/terraform-json v0.15.0 // indirect
+	github.com/hashicorp/terraform-exec v0.21.0 // indirect
+	github.com/hashicorp/terraform-json v0.22.1 // indirect
 	github.com/hashicorp/terraform-plugin-go v0.14.3 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.8.0 // indirect
 	github.com/hashicorp/terraform-registry-address v0.1.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
-	github.com/huandu/xstrings v1.3.2 // indirect
-	github.com/imdario/mergo v0.3.13 // indirect
+	github.com/huandu/xstrings v1.3.3 // indirect
+	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jgautheron/goconst v1.7.1 // indirect
 	github.com/jingyugao/rowserrcheck v1.1.1 // indirect
@@ -161,7 +166,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mgechev/revive v1.3.7 // indirect
-	github.com/mitchellh/cli v1.1.5 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
@@ -196,7 +200,6 @@ require (
 	github.com/quasilyte/gogrep v0.5.0 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
-	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/ryancurrah/gomodguard v1.3.2 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.5.1 // indirect
 	github.com/sanposhiho/wastedassign/v2 v2.0.7 // indirect
@@ -240,10 +243,13 @@ require (
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.3.0 // indirect
 	github.com/ykadowak/zerologlint v0.1.5 // indirect
-	github.com/zclconf/go-cty v1.14.3 // indirect
+	github.com/yuin/goldmark v1.7.1 // indirect
+	github.com/yuin/goldmark-meta v1.1.0 // indirect
+	github.com/zclconf/go-cty v1.14.4 // indirect
 	gitlab.com/bosi/decorder v0.4.2 // indirect
 	go-simpler.org/musttag v0.12.2 // indirect
 	go-simpler.org/sloglint v0.7.0 // indirect
+	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.29.0 // indirect
 	go.opentelemetry.io/otel v1.4.1 // indirect
