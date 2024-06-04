@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/client9/misspell v0.3.4
-	github.com/docker/cli v20.10.22+incompatible
+	github.com/docker/cli v20.10.27+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/docker/go-connections v0.4.0
