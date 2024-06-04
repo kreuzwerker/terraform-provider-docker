@@ -59,7 +59,7 @@ jobs:
       - name: Used docker version
         run: |
           docker version
-      - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ matrix.terraform_version }}
           terraform_wrapper: false
