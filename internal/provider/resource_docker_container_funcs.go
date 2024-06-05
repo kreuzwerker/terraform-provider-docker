@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"strings"
 	"time"
@@ -309,6 +310,23 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if v, ok := d.GetOk("shm_size"); ok {
 		hostConfig.ShmSize = int64(v.(int)) * 1024 * 1024
+	}
+
+	if v, ok := d.GetOk("cpus"); ok {
+		if client.ClientVersion() >= "1.28" {
+			cpu, ok := new(big.Rat).SetString(v.(string))
+			if !ok {
+				return diag.Errorf("Error setting cpus: Failed to parse %v as a rational number", v.(string))
+			}
+			nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
+			if !nano.IsInt() {
+				return diag.Errorf("Error setting cpus: value is too precise")
+			}
+
+			hostConfig.NanoCPUs = nano.Num().Int64()
+		} else {
+			log.Printf("[WARN] Setting CPUs count/quota requires docker version 1.28 or higher")
+		}
 	}
 
 	if v, ok := d.GetOk("cpu_shares"); ok {
@@ -726,6 +744,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		d.Set("memory_swap", container.HostConfig.MemorySwap)
 	}
 	d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
+	if container.HostConfig.NanoCPUs > 0 {
+		d.Set("cpus", container.HostConfig.NanoCPUs)
+	}
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)

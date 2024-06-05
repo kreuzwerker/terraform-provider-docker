@@ -50,6 +50,7 @@ resource "docker_image" "ubuntu" {
 - `domainname` (String) Domain name of the container.
 - `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
 - `env` (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
+- `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs
 - `gpus` (String) GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.
 - `group_add` (Set of String) Additional groups for the container user
 - `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--healthcheck))
