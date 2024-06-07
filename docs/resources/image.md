@@ -50,12 +50,12 @@ In this case the image "zoo" and "zoo:develop" are built.
 resource "docker_image" "zoo" {
   name = "zoo"
   build {
-    context = "."
-    tag     = ["zoo:develop"]
-    build_arg = {
+    context    = "."
+    tag        = ["zoo:develop"]
+    build_args = {
       foo : "zoo"
     }
-    label = {
+    label      = {
       author : "zoo"
     }
   }
@@ -108,8 +108,7 @@ Required:
 Optional:
 
 - `auth_config` (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
-- `build_arg` (Map of String) Set build-time variables
-- `build_args` (Map of String) Pairs for build-time variables in the form TODO
+- `build_args` (Map of String) Pairs for build-time variables in the form `ENDPOINT : "https://example.com"`
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `cache_from` (List of String) Images to consider as cache sources
 - `cgroup_parent` (String) Optional parent cgroup for the container
