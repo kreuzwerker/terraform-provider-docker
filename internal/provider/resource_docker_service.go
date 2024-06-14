@@ -530,7 +530,7 @@ func resourceDockerService() *schema.Resource {
 												},
 												"memory_bytes": {
 													Type:        schema.TypeInt,
-													Description: "The amounf of memory in bytes the container allocates",
+													Description: "The amount of memory in bytes the container allocates",
 													Optional:    true,
 												},
 											},
@@ -550,7 +550,7 @@ func resourceDockerService() *schema.Resource {
 												},
 												"memory_bytes": {
 													Type:        schema.TypeInt,
-													Description: "The amounf of memory in bytes the container allocates",
+													Description: "The amount of memory in bytes the container allocates",
 													Optional:    true,
 												},
 												"generic_resources": {
@@ -904,7 +904,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"protocol": {
 										Type:             schema.TypeString,
-										Description:      "Rrepresents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.",
+										Description:      "Represents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.",
 										Default:          "tcp",
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(tcp|udp|sctp)$`),

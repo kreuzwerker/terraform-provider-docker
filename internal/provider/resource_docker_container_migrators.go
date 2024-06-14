@@ -493,19 +493,19 @@ func resourceDockerContainerV1() *schema.Resource {
 			"ip_address": {
 				Type:       schema.TypeString,
 				Computed:   true,
-				Deprecated: "Use ip_adresses_data instead. This field exposes the data of the container's first network.",
+				Deprecated: "Use network_data instead. This field exposes the data of the container's first network.",
 			},
 
 			"ip_prefix_length": {
 				Type:       schema.TypeInt,
 				Computed:   true,
-				Deprecated: "Use ip_prefix_length from ip_adresses_data instead. This field exposes the data of the container's first network.",
+				Deprecated: "Use ip_prefix_length from network_data instead. This field exposes the data of the container's first network.",
 			},
 
 			"gateway": {
 				Type:       schema.TypeString,
 				Computed:   true,
-				Deprecated: "Use gateway from ip_adresses_data instead. This field exposes the data of the container's first network.",
+				Deprecated: "Use gateway from network_data instead. This field exposes the data of the container's first network.",
 			},
 
 			"bridge": {
