@@ -37,6 +37,14 @@ func resourceDockerConfig() *schema.Resource {
 				ForceNew:         true,
 				ValidateDiagFunc: validateStringIsBase64Encoded(),
 			},
+
+			"labels": {
+				Type:        schema.TypeSet,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        labelSchema,
+			},
 		},
 	}
 }
@@ -50,6 +58,10 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 			Name: d.Get("name").(string),
 		},
 		Data: data,
+	}
+
+	if v, ok := d.GetOk("labels"); ok {
+		configSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
 	}
 
 	config, err := client.ConfigCreate(ctx, configSpec)
@@ -76,6 +88,7 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.SetId(config.ID)
 	d.Set("name", config.Spec.Name)
 	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
+	d.Set("labels", mapToLabelSet(config.Spec.Labels))
 	return nil
 }
 

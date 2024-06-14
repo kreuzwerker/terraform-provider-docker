@@ -157,3 +157,38 @@ func testAccServiceConfigCreated(resourceName string, config *swarm.Config) reso
 
 	}
 }
+
+func TestAccDockerConfig_labels(t *testing.T) {
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testCheckDockerSecretDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				resource "docker_config" "foo" {
+					name = "foo-config"
+					data = "Ymxhc2RzYmxhYmxhMTI0ZHNkd2VzZA=="
+					labels {
+						label = "test1"
+						value = "foo"
+					}
+					labels {
+						label = "test2"
+						value = "bar"
+					}
+				}
+				`,
+				Check: testCheckLabelMap("docker_config.foo", "labels",
+					map[string]string{
+						"test1": "foo",
+						"test2": "bar",
+					},
+				),
+			},
+		},
+	})
+}
