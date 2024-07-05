@@ -1,5 +1,5 @@
 
-<a name="v3.0.3"></a>
+<a name="v3.0.2"></a>
 ## [v3.0.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.1...v3.0.2) (2023-03-17)
 
 ### Docs
