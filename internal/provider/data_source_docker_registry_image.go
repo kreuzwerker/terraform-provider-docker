@@ -187,7 +187,7 @@ func getAuthToken(authHeader string, username string, password string, fallbackS
 	params := url.Values{}
 	params.Set("service", auth["service"])
 	params.Set("scope", auth["scope"])
-	if (auth["scope"] == "") {
+	if auth["scope"] == "" {
 		params.Set("scope", fallbackScope)
 	}
 	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
