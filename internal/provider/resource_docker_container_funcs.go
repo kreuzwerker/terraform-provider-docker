@@ -496,28 +496,40 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			return diag.Errorf("Unable to start container: %s", err)
 		}
 
-		if d.Get("wait").(bool) {
+
+		_ , hasHealthCheck := d.GetOk("healthcheck")
+
+		if d.Get("wait").(bool) && hasHealthCheck {
 			waitForHealthyState := func(result chan<- error) {
 				for {
 					infos, err := client.ContainerInspect(ctx, retContainer.ID)
 					if err != nil {
 						result <- fmt.Errorf("error inspecting container state: %s", err)
-					}
-					//infos.ContainerJSONBase.State.Health is only set when there is a healthcheck defined on the container resource
-					if infos.ContainerJSONBase.State.Health.Status == types.Healthy {
-						log.Printf("[DEBUG] container state is healthy")
 						break
 					}
+
+					if infos.ContainerJSONBase == nil || infos.ContainerJSONBase.State == nil || infos.ContainerJSONBase.State.Health == nil {
+						result <- fmt.Errorf("invalid container state: missing required fields")
+						break 
+					}
+
+					if infos.ContainerJSONBase.State.Health.Status == types.Healthy {
+						log.Printf("[DEBUG] container state is healthy")
+						result <- nil
+						return
+					}
+
 					log.Printf("[DEBUG] waiting for container healthy state")
 					time.Sleep(time.Second)
 				}
-				result <- nil
 			}
 
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(d.Get("wait_timeout").(int))*time.Second)
 			defer cancel()
+
 			result := make(chan error, 1)
 			go waitForHealthyState(result)
+			
 			select {
 			case <-ctx.Done():
 				log.Printf("[ERROR] Container %s failed to be in healthy state in time", retContainer.ID)
