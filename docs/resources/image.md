@@ -85,7 +85,7 @@ resource "docker_image" "zoo" {
 
 ### Optional
 
-- `build` (Block Set, Max: 1) Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. (see [below for nested schema](#nestedblock--build))
+- `build` (Block Set, Max: 1) Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. Requires the `Use containerd for pulling and storing images` option to be disabled in the Docker Host. (see [below for nested schema](#nestedblock--build))
 - `force_remove` (Boolean) If true, then the image is removed forcibly when the resource is destroyed.
 - `keep_locally` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
 - `platform` (String) The platform to use when pulling the image. Defaults to the platform of the current machine.
