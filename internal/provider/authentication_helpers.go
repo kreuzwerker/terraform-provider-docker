@@ -41,8 +41,12 @@ func normalizeECRPasswordForDockerCLIUsage(password string) string {
 	return password[4:]
 }
 
+func isECRPublicRepositoryURL(url string) bool {
+	return url == "public.ecr.aws"
+}
+
 func isECRRepositoryURL(url string) bool {
-	if url == "public.ecr.aws" {
+	if isECRPublicRepositoryURL(url) {
 		return true
 	}
 	// Regexp is based on the ecr urls shown in https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html

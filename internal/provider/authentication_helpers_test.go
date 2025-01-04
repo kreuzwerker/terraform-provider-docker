@@ -4,8 +4,16 @@ import (
 	"testing"
 )
 
-func TestIsECRRepositoryURL(t *testing.T) {
+func TestIsECRPublicRepositoryURL(t *testing.T) {
+	if !isECRPublicRepositoryURL("public.ecr.aws") {
+		t.Fatalf("Expected true")
+	}
+	if isECRPublicRepositoryURL("public.ecr.aws.com") {
+		t.Fatalf("Expected false")
+	}
+}
 
+func TestIsECRRepositoryURL(t *testing.T) {
 	if !isECRRepositoryURL("2385929435838.dkr.ecr.eu-central-1.amazonaws.com") {
 		t.Fatalf("Expected true")
 	}
