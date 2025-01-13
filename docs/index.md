@@ -171,6 +171,7 @@ provider "docker" {
 - `cert_path` (String) Path to directory with Docker TLS config
 - `host` (String) The Docker daemon address
 - `key_material` (String) PEM-encoded content of Docker client private key
+- `ping` (Boolean) Should provider ping docker host on initialization
 - `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--registry_auth))
 - `ssh_opts` (List of String) Additional SSH option flags to be appended when using `ssh://` protocol
 

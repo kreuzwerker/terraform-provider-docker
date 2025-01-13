@@ -66,6 +66,12 @@ func New(version string) func() *schema.Provider {
 					},
 					Description: "Additional SSH option flags to be appended when using `ssh://` protocol",
 				},
+				"ping": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     true,
+					Description: "Should provider ping docker host on initialization",
+				},
 				"ca_material": {
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -191,9 +197,11 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diag.Errorf("Error initializing Docker client: %s", err)
 		}
 
-		_, err = client.Ping(ctx)
-		if err != nil {
-			return nil, diag.Errorf("Error pinging Docker server: %s", err)
+		if d.Get("ping").(bool) {
+			_, err = client.Ping(ctx)
+			if err != nil {
+				return nil, diag.Errorf("Error pinging Docker server: %s", err)
+			}
 		}
 
 		authConfigs := &AuthConfigs{}
