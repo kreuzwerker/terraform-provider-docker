@@ -682,6 +682,13 @@ func resourceDockerContainer() *schema.Resource {
 				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 
+			"memory_reservation": {
+				Type:             schema.TypeInt,
+				Description:      "The memory soft limit for the container in MBs.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+			},
+
 			"memory_swap": {
 				Type:             schema.TypeInt,
 				Description:      "The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.",

@@ -11,5 +11,6 @@ resource "docker_container" "foo" {
   cpu_shares      = 32
   cpu_set         = "0-1"
   memory          = 512
+  memory_reservation    = 256
   memory_swap     = 2048
 }

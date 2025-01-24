@@ -63,6 +63,7 @@ resource "docker_image" "ubuntu" {
 - `logs` (Boolean) Save the container logs (`attach` must be enabled). Defaults to `false`.
 - `max_retry_count` (Number) The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'.
 - `memory` (Number) The memory limit for the container in MBs.
+- `memory_reservation` (Number) The memory soft limit for the container in MBs.
 - `memory_swap` (Number) The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.

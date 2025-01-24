@@ -299,6 +299,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.Memory = int64(v.(int)) * 1024 * 1024
 	}
 
+	if v, ok := d.GetOk("memory_reservation"); ok {
+		hostConfig.MemoryReservation = int64(v.(int)) * 1024 * 1024
+	}
+
 	if v, ok := d.GetOk("memory_swap"); ok {
 		swap := int64(v.(int))
 		if swap > 0 {
