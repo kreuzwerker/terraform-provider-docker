@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -133,4 +134,12 @@ func containsIgnorableErrorMessage(errorMsg string, ignorableErrorMessages ...st
 	}
 
 	return false
+}
+
+func alreadyDeleted(err error) bool {
+	if strings.Contains(err.Error(), "is already in progress") {
+		return true
+	}
+
+	return client.IsErrNotFound(err)
 }
