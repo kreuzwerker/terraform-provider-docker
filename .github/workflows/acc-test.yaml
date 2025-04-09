@@ -26,7 +26,7 @@ jobs:
       matrix:
         terraform_version:
         - "0.15.x"
-        - "1.1.x"
+        - "1.8.x"
         resource_type:
         - "TestAccDockerConfig"
         - "TestAccDockerContainer"
