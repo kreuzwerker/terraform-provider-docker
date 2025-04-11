@@ -77,7 +77,7 @@ provider "docker" {
 }
 ```
 
-When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
+When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by applying log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
 
 ## Registry credentials
 
@@ -124,7 +124,7 @@ When passing in a config file either the corresponding `auth` string of the repo
 used to retrieve the authentication credentials.
 
 -> **Note**
-`config_file` has predence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
+`config_file` has precedence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
 
 You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
@@ -184,7 +184,7 @@ Required:
 Optional:
 
 - `auth_disabled` (Boolean) Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.
-- `config_file` (String) Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.
+- `config_file` (String) Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has precedence over all other options.
 - `config_file_content` (String) Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.
 - `password` (String, Sensitive) Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.
 - `username` (String) Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.
