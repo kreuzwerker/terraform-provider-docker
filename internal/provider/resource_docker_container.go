@@ -729,19 +729,10 @@ func resourceDockerContainer() *schema.Resource {
 
 			"network_mode": {
 				Type:        schema.TypeString,
-				Description: "Network mode of the container.",
+				Description: "Network mode of the container. See https://docs.docker.com/engine/network/ for more information.",
 				Optional:    true,
 				ForceNew:    true,
-				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
-					// treat "" as "default", which is Docker's default value
-					if oldV == "" {
-						oldV = "default"
-					}
-					if newV == "" {
-						newV = "default"
-					}
-					return oldV == newV
-				},
+				Default:     "bridge",
 			},
 
 			"networks_advanced": {
