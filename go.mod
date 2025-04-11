@@ -7,7 +7,7 @@ require (
 	github.com/docker/cli v20.10.27+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.22+incompatible
-	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-units v0.5.0
 	github.com/golangci/golangci-lint v1.59.0
 	github.com/hashicorp/go-cty v1.5.0
