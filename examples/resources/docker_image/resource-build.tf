@@ -3,7 +3,7 @@ resource "docker_image" "zoo" {
   build {
     context = "."
     tag     = ["zoo:develop"]
-    build_arg = {
+    build_args = {
       foo : "zoo"
     }
     label = {
