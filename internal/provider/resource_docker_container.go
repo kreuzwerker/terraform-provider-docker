@@ -729,19 +729,10 @@ func resourceDockerContainer() *schema.Resource {
 
 			"network_mode": {
 				Type:        schema.TypeString,
-				Description: "Network mode of the container.",
+				Description: "Network mode of the container. See https://docs.docker.com/engine/network/ for more information.",
 				Optional:    true,
 				ForceNew:    true,
-				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
-					// treat "" as "default", which is Docker's default value
-					if oldV == "" {
-						oldV = "default"
-					}
-					if newV == "" {
-						newV = "default"
-					}
-					return oldV == newV
-				},
+				Default:     "bridge",
 			},
 
 			"networks_advanced": {
@@ -948,6 +939,12 @@ func resourceDockerContainer() *schema.Resource {
 			"gpus": {
 				Type:        schema.TypeString,
 				Description: "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"cpus": {
+				Type:        schema.TypeString,
+				Description: "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs",
 				Optional:    true,
 				ForceNew:    true,
 			},

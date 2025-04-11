@@ -127,7 +127,7 @@ func testCheckLabelMap(name string, partialKey string, expectedLabels map[string
 // message to ignore. Returns true if so, false otherwise (also if no ignorable message is given)
 func containsIgnorableErrorMessage(errorMsg string, ignorableErrorMessages ...string) bool {
 	for _, ignorableErrorMessage := range ignorableErrorMessages {
-		if strings.Contains(errorMsg, ignorableErrorMessage) {
+		if strings.Contains(strings.ToLower(errorMsg), strings.ToLower(ignorableErrorMessage)) {
 			return true
 		}
 	}
