@@ -942,6 +942,12 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"cpus": {
+				Type:        schema.TypeString,
+				Description: "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs",
+				Optional:    true,
+				ForceNew:    true,
+			},
 			"cgroupns_mode": {
 				Type:        schema.TypeString,
 				Description: "Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.",
