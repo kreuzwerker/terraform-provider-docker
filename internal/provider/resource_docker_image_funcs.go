@@ -410,6 +410,15 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		if err != nil {
 			return nil, "", err
 		}
+	}
+	// Compress build context to avoid Docker misinterpreting it as plain text
+	if buildCtx != nil {
+		buildCtx, err = build.Compress(buildCtx)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+	if relDockerfile != "" {
 		return buildCtx, relDockerfile, nil
 	}
 	return buildCtx, specifiedDockerfile, nil
