@@ -61,6 +61,10 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 		ipamOpts.Config = ipamConfigSetToIpamConfigs(v.(*schema.Set))
 		ipamOptsSet = true
 	}
+	if v, ok := d.GetOk("ipam_options"); ok {
+		ipamOpts.Options = mapTypeMapValsToString(v.(map[string]interface{}))
+		ipamOptsSet = true
+	}
 
 	if ipamOptsSet {
 		createOpts.IPAM = ipamOpts
@@ -166,6 +170,7 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 		d.Set("ingress", retNetwork.Ingress)
 		d.Set("ipv6", retNetwork.EnableIPv6)
 		d.Set("ipam_driver", retNetwork.IPAM.Driver)
+		d.Set("ipam_options", retNetwork.IPAM.Options)
 		d.Set("scope", retNetwork.Scope)
 		if retNetwork.Scope == "overlay" {
 			if retNetwork.Options != nil && len(retNetwork.Options) != 0 {

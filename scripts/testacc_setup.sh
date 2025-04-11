@@ -1,8 +1,16 @@
 #!/bin/bash
 set -e
 
+function b64() {
+  case "$(uname -o)" in
+    GNU/Linux*) base64 -w 0 "$1";;
+    Linux*)     base64 -w 0 "$1";;
+    Darwin*)    base64 -i "$1";;
+    *)          exit 1;; #bail out, complaining loudly
+  esac
+}
 echo -n "foo" > "$(pwd)/scripts/testing/testingFile"
-echo -n `base64 $(pwd)/scripts/testing/testingFile` > "$(pwd)/scripts/testing/testingFile.base64"
+b64 $(pwd)/scripts/testing/testingFile > "$(pwd)/scripts/testing/testingFile.base64"
 
 # Create self signed certs
 mkdir -p "$(pwd)"/scripts/testing/certs
@@ -37,6 +45,13 @@ docker run -d -p 15001:5000 --rm --name http_private_registry \
   -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" \
   -e "REGISTRY_STORAGE_DELETE_ENABLED=true" \
   registry:2.7.0
+
+docker run -d -p 15002:5000 --rm --name no_auth_registry \
+   -v "$(pwd)"/scripts/testing/certs:/certs \
+  -e "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry_auth.crt" \
+  -e "REGISTRY_HTTP_TLS_KEY=/certs/registry_auth.key" \
+  registry:2.7.0
+
 # wait a bit for travis...
 sleep 5
 # Login to private registry
@@ -49,10 +64,16 @@ for i in $(seq 1 3); do
   docker push 127.0.0.1:15000/tftest-service:v${i}
   docker tag tftest-service 127.0.0.1:15000/tftest-service
   docker push 127.0.0.1:15000/tftest-service
+
   docker tag tftest-service 127.0.0.1:15001/tftest-service:v${i}
   docker push 127.0.0.1:15001/tftest-service:v${i}
   docker tag tftest-service 127.0.0.1:15001/tftest-service
   docker push 127.0.0.1:15001/tftest-service
+
+  docker tag tftest-service 127.0.0.1:15002/tftest-service:v${i}
+  docker push 127.0.0.1:15002/tftest-service:v${i}
+  docker tag tftest-service 127.0.0.1:15002/tftest-service
+  docker push 127.0.0.1:15002/tftest-service
 done
 # Remove images from host machine before starting the tests
 for i in $(docker images -aq 127.0.0.1:15000/tftest-service); do docker rmi -f "$i"; done

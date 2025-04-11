@@ -1,29 +1,20 @@
 package provider
 
 import (
-	"archive/tar"
 	"bufio"
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -36,14 +27,6 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 	log.Printf("[DEBUG] Creating docker image %s", name)
 
 	pushOpts := createPushImageOptions(name)
-
-	if buildOptions, ok := d.GetOk("build"); ok {
-		buildOptionsMap := buildOptions.([]interface{})[0].(map[string]interface{})
-		err := buildDockerRegistryImage(ctx, client, buildOptionsMap, pushOpts.FqName)
-		if err != nil {
-			return diag.Errorf("Error building docker image: %s", err)
-		}
-	}
 
 	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
 	if err != nil {
@@ -215,207 +198,6 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 	return buildImageOptions
 }
 
-func buildDockerRegistryImage(ctx context.Context, client *client.Client, buildOptions map[string]interface{}, fqName string) error {
-	type ErrorDetailMessage struct {
-		Code    int    `json:"code,omitempty"`
-		Message string `json:"message,omitempty"`
-	}
-
-	type BuildImageResponseMessage struct {
-		Error       string              `json:"error,omitempty"`
-		ErrorDetail *ErrorDetailMessage `json:"errorDetail,omitempty"`
-	}
-
-	getError := func(body io.ReadCloser) error {
-		dec := json.NewDecoder(body)
-		for {
-			message := BuildImageResponseMessage{}
-			if err := dec.Decode(&message); err != nil {
-				if err == io.EOF {
-					break
-				}
-				return err
-			}
-			if message.ErrorDetail != nil {
-				detail := message.ErrorDetail
-				return fmt.Errorf("%v: %s", detail.Code, detail.Message)
-			}
-			if len(message.Error) > 0 {
-				return fmt.Errorf("%s", message.Error)
-			}
-		}
-		return nil
-	}
-
-	log.Printf("[DEBUG] Building docker image")
-	imageBuildOptions := createImageBuildOptions(buildOptions)
-	imageBuildOptions.Tags = []string{fqName}
-
-	// the tar hash is passed only after the initial creation
-	buildContext := buildOptions["context"].(string)
-	if lastIndex := strings.LastIndexByte(buildContext, ':'); (lastIndex > -1) && (buildContext[lastIndex+1] != filepath.Separator) {
-		buildContext = buildContext[:lastIndex]
-	}
-
-	enableBuildKitIfSupported(ctx, client, &imageBuildOptions)
-
-	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, imageBuildOptions.Dockerfile)
-	if err != nil {
-		return err
-	}
-	imageBuildOptions.Dockerfile = relDockerfile
-
-	buildResponse, err := client.ImageBuild(ctx, buildCtx, imageBuildOptions)
-	if err != nil {
-		return fmt.Errorf("unable to build image for docker_registry_image: %v", err)
-	}
-	defer buildResponse.Body.Close()
-
-	err = getError(buildResponse.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func buildDockerImageContextTar(buildContext string) (string, error) {
-	// Create our Temp File:  This will create a filename like /tmp/terraform-provider-docker-123456.tar
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "terraform-provider-docker-*.tar")
-	if err != nil {
-		return "", fmt.Errorf("cannot create temporary file - %v", err.Error())
-	}
-
-	defer tmpFile.Close()
-	if _, err = os.Stat(buildContext); err != nil {
-		return "", fmt.Errorf("unable to read build context - %v", err.Error())
-	}
-
-	excludes, err := build.ReadDockerignore(buildContext)
-	if err != nil {
-		return "", fmt.Errorf("unable to read .dockerignore file - %v", err.Error())
-	}
-
-	pm, err := fileutils.NewPatternMatcher(excludes)
-	if err != nil {
-		return "", fmt.Errorf("unable to create pattern matcher from .dockerignore excludes - %v", err.Error())
-	}
-
-	tw := tar.NewWriter(tmpFile)
-	defer tw.Close()
-
-	if err := filepath.Walk(buildContext, func(file string, info os.FileInfo, err error) error {
-		// return on any error
-		if err != nil {
-			return err
-		}
-
-		// if .dockerignore is present, ignore files from there
-		rel, _ := filepath.Rel(buildContext, file)
-		skip, err := pm.Matches(rel)
-		if err != nil {
-			return err
-		}
-
-		// adapted from https://github.com/moby/moby/blob/v20.10.7/pkg/archive/archive.go#L851
-		if skip {
-			log.Printf("[DEBUG] Skipping file/dir from image build '%v'", file)
-			// If we want to skip this file and its a directory
-			// then we should first check to see if there's an
-			// excludes pattern (e.g. !dir/file) that starts with this
-			// dir. If so then we can't skip this dir.
-
-			// Its not a dir then so we can just return/skip.
-			if !info.IsDir() {
-				return nil
-			}
-
-			// No exceptions (!...) in patterns so just skip dir
-			if !pm.Exclusions() {
-				return filepath.SkipDir
-			}
-
-			dirSlash := file + string(filepath.Separator)
-
-			for _, pat := range pm.Patterns() {
-				if !pat.Exclusion() {
-					continue
-				}
-				if strings.HasPrefix(pat.String()+string(filepath.Separator), dirSlash) {
-					// found a match - so can't skip this dir
-					return nil
-				}
-			}
-
-			// No matching exclusion dir so just skip dir
-			return filepath.SkipDir
-		}
-
-		// create a new dir/file header
-		header, err := tar.FileInfoHeader(info, info.Name())
-		if err != nil {
-			return err
-		}
-
-		// update the name to correctly reflect the desired destination when untaring
-		header.Name = strings.TrimPrefix(strings.Replace(file, buildContext, "", -1), string(filepath.Separator))
-
-		// set archive metadata non deterministic
-		header.Mode = 0
-		header.Uid = 0
-		header.Gid = 0
-		header.Uname = ""
-		header.Gname = ""
-		header.ModTime = time.Time{}
-		header.AccessTime = time.Time{}
-		header.ChangeTime = time.Time{}
-
-		// write the header
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
-
-		// return on non-regular files (thanks to [kumo](https://medium.com/@komuw/just-like-you-did-fbdd7df829d3) for this suggested update)
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		// open files for taring
-		f, err := os.Open(file)
-		if err != nil {
-			return err
-		}
-
-		// copy file data into tar writer
-		if _, err := io.Copy(tw, f); err != nil {
-			return err
-		}
-
-		// manually close here after each file operation; defering would cause each file close
-		// to wait until all operations have completed.
-		f.Close()
-
-		return nil
-	}); err != nil {
-		return "", err
-	}
-
-	return tmpFile.Name(), nil
-}
-
-func getDockerImageContextTarHash(dockerContextTarPath string) (string, error) {
-	hasher := sha256.New()
-	s, err := ioutil.ReadFile(dockerContextTarPath)
-	if err != nil {
-		return "", err
-	}
-	if _, err := hasher.Write(s); err != nil {
-		return "", err
-	}
-	contextHash := hex.EncodeToString(hasher.Sum(nil))
-	return contextHash, nil
-}
-
 func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpts internalPushImageOptions, username string, password string) error {
 	pushOptions := types.ImagePushOptions{}
 	if username != "" {
@@ -468,8 +250,11 @@ func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkip
 	client := http.DefaultClient
 
 	if strings.HasPrefix(registryAddressWithProtocol, "https://") {
-		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}}
+		client.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify}, Proxy: http.ProxyFromEnvironment}
+	} else {
+		client.Transport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 	}
+
 	return client
 }
 

@@ -546,6 +546,10 @@ func resourceDockerContainerV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"mac_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},

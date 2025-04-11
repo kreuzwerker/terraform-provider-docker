@@ -3,12 +3,12 @@
 page_title: "docker_image Data Source - terraform-provider-docker"
 subcategory: ""
 description: |-
-  docker_image provides details about a specific Docker Image which need to be presend on the Docker Host
+  docker_image provides details about a specific Docker Image which need to be present on the Docker Host
 ---
 
 # docker_image (Data Source)
 
-`docker_image` provides details about a specific Docker Image which need to be presend on the Docker Host
+`docker_image` provides details about a specific Docker Image which need to be present on the Docker Host
 
 ## Example Usage
 

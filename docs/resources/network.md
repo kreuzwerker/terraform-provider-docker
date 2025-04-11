@@ -34,6 +34,7 @@ resource "docker_network" "private_network" {
 - `internal` (Boolean) Whether the network is internal.
 - `ipam_config` (Block Set) The IPAM configuration options (see [below for nested schema](#nestedblock--ipam_config))
 - `ipam_driver` (String) Driver used by the custom IP scheme of the network. Defaults to `default`
+- `ipam_options` (Map of String) Provide explicit options to the IPAM driver. Valid options vary with `ipam_driver` and refer to that driver's documentation for more details.
 - `ipv6` (Boolean) Enable IPv6 networking. Defaults to `false`.
 - `labels` (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 - `options` (Map of String) Only available with bridge networks. See [bridge options docs](https://docs.docker.com/engine/reference/commandline/network_create/#bridge-driver-options) for more details.

@@ -37,7 +37,8 @@ resource "docker_image" "ubuntu" {
 
 - `attach` (Boolean) If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.
 - `capabilities` (Block Set, Max: 1) Add or drop certrain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
-- `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-","baz.con"]`.
+- `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
+- `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.con"]`.
 - `container_read_refresh_timeout_milliseconds` (Number) The total number of milliseconds to wait for the container to reach status 'running'
 - `cpu_set` (String) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
@@ -49,6 +50,7 @@ resource "docker_image" "ubuntu" {
 - `domainname` (String) Domain name of the container.
 - `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
 - `env` (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
+- `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs
 - `gpus` (String) GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.
 - `group_add` (Set of String) Additional groups for the container user
 - `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--healthcheck))
@@ -57,7 +59,6 @@ resource "docker_image" "ubuntu" {
 - `init` (Boolean) Configured whether an init process should be injected for this container. If unset this will default to the `dockerd` defaults.
 - `ipc_mode` (String) IPC sharing mode for the container. Possible values are: `none`, `private`, `shareable`, `container:<name|id>` or `host`.
 - `labels` (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
-- `links` (Set of String, Deprecated) Set of links for link based connectivity between containers that are running on the same host.
 - `log_driver` (String) The logging driver to use for the container.
 - `log_opts` (Map of String) Key/value pairs to use as options for the logging driver.
 - `logs` (Boolean) Save the container logs (`attach` must be enabled). Defaults to `false`.
@@ -66,9 +67,7 @@ resource "docker_image" "ubuntu" {
 - `memory_swap` (Number) The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.
-- `network_alias` (Set of String, Deprecated) Set an alias for the container in all specified networks
 - `network_mode` (String) Network mode of the container.
-- `networks` (Set of String, Deprecated) ID of the networks in which the container is.
 - `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
 - `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
@@ -94,6 +93,8 @@ resource "docker_image" "ubuntu" {
 - `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
+- `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.
+- `wait_timeout` (Number) The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.
 - `working_dir` (String) The working directory for commands to run in.
 
 ### Read-Only
@@ -101,10 +102,7 @@ resource "docker_image" "ubuntu" {
 - `bridge` (String) The network bridge of the container as read from its NetworkSettings.
 - `container_logs` (String) The logs of the container if its execution is done (`attach` must be disabled).
 - `exit_code` (Number) The exit code of the container if its execution is done (`must_run` must be disabled).
-- `gateway` (String, Deprecated) The network gateway of the container.
 - `id` (String) The ID of this resource.
-- `ip_address` (String, Deprecated) The IP address of the container.
-- `ip_prefix_length` (Number, Deprecated) The IP prefix length of the container.
 - `network_data` (List of Object) The data of the networks the container is connected to. (see [below for nested schema](#nestedatt--network_data))
 
 <a id="nestedblock--capabilities"></a>
@@ -293,6 +291,7 @@ Read-Only:
 - `ip_address` (String)
 - `ip_prefix_length` (Number)
 - `ipv6_gateway` (String)
+- `mac_address` (String)
 - `network_name` (String)
 
 ## Import

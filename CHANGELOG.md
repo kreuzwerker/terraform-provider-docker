@@ -1,6 +1,130 @@
 
+<a name="v3.0.2"></a>
+## [v3.0.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.1...v3.0.2) (2023-03-17)
+
+### Docs
+
+* correct spelling of "networks_advanced" ([#517](https://github.com/kreuzwerker/terraform-provider-docker/issues/517))
+
+### Fix
+
+* Implement proxy support. ([#529](https://github.com/kreuzwerker/terraform-provider-docker/issues/529))
+
+
+<a name="v3.0.1"></a>
+## [v3.0.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.0...v3.0.1) (2023-01-13)
+
+### Chore
+
+* Prepare release v3.0.1
+
+### Fix
+
+* Access health of container correctly. ([#506](https://github.com/kreuzwerker/terraform-provider-docker/issues/506))
+
+
+<a name="v3.0.0"></a>
+## [v3.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.25.0...v3.0.0) (2023-01-13)
+
+### Chore
+
+* Prepare release v3.0.0
+
+### Docs
+
+* Update documentation.
+* Add migration guide and update README ([#502](https://github.com/kreuzwerker/terraform-provider-docker/issues/502))
+
+### Feat
+
+* Prepare v3 release ([#503](https://github.com/kreuzwerker/terraform-provider-docker/issues/503))
+
+
+<a name="v2.25.0"></a>
+## [v2.25.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.24.0...v2.25.0) (2023-01-05)
+
+### Chore
+
+* Prepare release v2.25.0
+
+### Docs
+
+* Add documentation of remote hosts. ([#498](https://github.com/kreuzwerker/terraform-provider-docker/issues/498))
+
+### Feat
+
+* Migrate build block to `docker_image` ([#501](https://github.com/kreuzwerker/terraform-provider-docker/issues/501))
+* Add platform attribute to docker_image resource ([#500](https://github.com/kreuzwerker/terraform-provider-docker/issues/500))
+* Add sysctl implementation to container of docker_service. ([#499](https://github.com/kreuzwerker/terraform-provider-docker/issues/499))
+
+
+<a name="v2.24.0"></a>
+## [v2.24.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.1...v2.24.0) (2022-12-23)
+
+### Chore
+
+* Prepare release v2.24.0
+
+### Docs
+
+* Fix generated website.
+* Update command typo ([#487](https://github.com/kreuzwerker/terraform-provider-docker/issues/487))
+
+### Feat
+
+* cgroupns support ([#497](https://github.com/kreuzwerker/terraform-provider-docker/issues/497))
+* Add triggers attribute to docker_registry_image ([#496](https://github.com/kreuzwerker/terraform-provider-docker/issues/496))
+* Support registries with disabled auth ([#494](https://github.com/kreuzwerker/terraform-provider-docker/issues/494))
+* add IPAM options block for docker networks ([#491](https://github.com/kreuzwerker/terraform-provider-docker/issues/491))
+
+### Fix
+
+* Pin data source specific tag test to older tag.
+
+### Tests
+
+* Add test for parsing auth headers.
+
+
+<a name="v2.23.1"></a>
+## [v2.23.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.23.0...v2.23.1) (2022-11-23)
+
+### Chore
+
+* Prepare release v2.23.1
+
+### Fix
+
+* Update shasum of busybox:1.35.0 tag in test.
+* Handle Auth Header Scopes ([#482](https://github.com/kreuzwerker/terraform-provider-docker/issues/482))
+* Set OS_ARCH from GOHOSTOS and GOHOSTARCH ([#477](https://github.com/kreuzwerker/terraform-provider-docker/issues/477))
+
+
+<a name="v2.23.0"></a>
+## [v2.23.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.22.0...v2.23.0) (2022-11-02)
+
+### Chore
+
+* Prepare release v2.23.0
+
+### Feat
+
+* wait container healthy state ([#467](https://github.com/kreuzwerker/terraform-provider-docker/issues/467))
+* add docker logs data source ([#471](https://github.com/kreuzwerker/terraform-provider-docker/issues/471))
+
+### Fix
+
+* Update shasum of busybox:1.35.0 tag in test.
+* Update shasum of busybox:1.35.0 tag
+* Correct provider name to match the public registry ([#462](https://github.com/kreuzwerker/terraform-provider-docker/issues/462))
+
+
 <a name="v2.22.0"></a>
-## [v2.22.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.21.0...v2.22.0) (2022-09-13)
+## [v2.22.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v2.21.0...v2.22.0) (2022-09-20)
+
+### Chore
+
+* Prepare release v2.22.0
 
 ### Feat
 

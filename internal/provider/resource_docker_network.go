@@ -96,6 +96,12 @@ func resourceDockerNetwork() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"ipam_options": {
+				Type:        schema.TypeMap,
+				Description: "Provide explicit options to the IPAM driver. Valid options vary with `ipam_driver` and refer to that driver's documentation for more details.",
+				Optional:    true,
+				ForceNew:    true,
+			},
 
 			"ipam_config": {
 				Type:        schema.TypeSet,

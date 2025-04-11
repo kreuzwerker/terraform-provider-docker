@@ -19,7 +19,7 @@ var imageNameWithTagAndDigestRegexp = regexp.MustCompile(`^.*:.*@sha256:[A-Fa-f0
 
 func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 	ctx := context.Background()
-	imageName := "busybox:1.35.0"
+	imageName := "busybox:1.34.0"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -32,7 +32,7 @@ func TestAccDockerImageDataSource_withSpecificTag(t *testing.T) {
 				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_image", "testAccDockerImageDataSourceWithSpecificTag"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_image.foo", "name", imageName),
-					resource.TestCheckResourceAttr("data.docker_image.foo", "repo_digest", "busybox@sha256:d7f4aada301c0f13d93ceed62fef318c195c38bf430fc8bfbdf1d850514422ff"),
+					resource.TestCheckResourceAttr("data.docker_image.foo", "repo_digest", "busybox@sha256:e8e5cca392e3cf056fcdb3093e7ac2bf83fcf28b3bcf5818fe8ae71cf360c231"),
 				),
 			},
 		},

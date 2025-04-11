@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -89,6 +88,8 @@ func TestAccDockerContainer_basic(t *testing.T) {
 					"restart",
 					"rm",
 					"start",
+					"wait",
+					"wait_timeout",
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
@@ -97,8 +98,6 @@ func TestAccDockerContainer_basic(t *testing.T) {
 
 					// TODO mavogel: Will be done in #74 (import resources)
 					"volumes",
-					"network_alias",
-					"networks",
 					"network_advanced",
 					"container_read_refresh_timeout_milliseconds",
 				},
@@ -132,6 +131,8 @@ func TestAccDockerContainer_init(t *testing.T) {
 					"restart",
 					"rm",
 					"start",
+					"wait",
+					"wait_timeout",
 					"container_logs",
 					"destroy_grace_seconds",
 					"upload",
@@ -139,8 +140,6 @@ func TestAccDockerContainer_init(t *testing.T) {
 
 					// TODO mavogel: Will be done in #74 (import resources)
 					"volumes",
-					"network_alias",
-					"networks",
 					"network_advanced",
 					"container_read_refresh_timeout_milliseconds",
 				},
@@ -160,9 +159,6 @@ func TestAccDockerContainer_basic_network(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "bridge", ""),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_address"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_prefix_length"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "gateway"),
 					resource.TestCheckResourceAttr("docker_container.foo", "network_data.#", "2"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.network_name"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.ip_address"),
@@ -189,9 +185,6 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "bridge", ""),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_address"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "ip_prefix_length"),
-					resource.TestCheckResourceAttrSet("docker_container.foo", "gateway"),
 					resource.TestCheckResourceAttr("docker_container.foo", "network_data.#", "2"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.network_name"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.ip_address"),
@@ -201,11 +194,7 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.1.ip_address"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.1.ip_prefix_length"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.1.gateway"),
-					resource.TestCheckResourceAttr("docker_container.bar", "network_alias.#", "1"),
 					resource.TestCheckResourceAttr("docker_container.bar", "bridge", ""),
-					resource.TestCheckResourceAttrSet("docker_container.bar", "ip_address"),
-					resource.TestCheckResourceAttrSet("docker_container.bar", "ip_prefix_length"),
-					resource.TestCheckResourceAttrSet("docker_container.bar", "gateway"),
 					resource.TestCheckResourceAttr("docker_container.bar", "network_data.#", "1"),
 					resource.TestCheckResourceAttrSet("docker_container.bar", "network_data.0.network_name"),
 					resource.TestCheckResourceAttrSet("docker_container.bar", "network_data.0.ip_address"),
@@ -749,7 +738,7 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 
 	wd, _ := os.Getwd()
 	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
-	testFileContent, _ := ioutil.ReadFile(testFile)
+	testFileContent, _ := os.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
@@ -826,7 +815,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 
 	wd, _ := os.Getwd()
 	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
-	hash, _ := ioutil.ReadFile(testFile + ".base64")
+	hash, _ := os.ReadFile(testFile + ".base64")
 	grabFirstCheck := func(*terraform.State) error {
 		firstRunId = c.ID
 		return nil
@@ -883,7 +872,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 			} else {
 				mode := strconv.FormatInt(header.Mode, 8)
 				if !strings.HasSuffix(mode, filePerm) {
-					return fmt.Errorf("File permissions are incorrect: %s", mode)
+					return fmt.Errorf("File permissions are incorrect: %s; wanted: %s", mode, filePerm)
 				}
 			}
 
@@ -911,7 +900,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
-					testCheck("/terraform/test2.txt", "foobar", "100644"),
+					testCheck("/terraform/test2.txt", "foobar", "644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "2"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
@@ -933,7 +922,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
-					testCheck("/terraform/test2.txt", "foobar", "100644"),
+					testCheck("/terraform/test2.txt", "foobar", "644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "2"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
@@ -962,12 +951,12 @@ func TestAccDockerContainer_multipleUploadContentsConfig(t *testing.T) {
 					name         = "nginx:latest"
 					keep_locally = true
 				}
-				
+
 				resource "docker_container" "foo" {
 					name     = "tf-test"
 					image    = docker_image.foo.image_id
 					must_run = "false"
-				
+
 					upload {
 						content        = "foobar"
 						content_base64 = base64encode("barbaz")
@@ -993,12 +982,12 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 					name         = "nginx:latest"
 					keep_locally = true
 				}
-				
+
 				resource "docker_container" "foo" {
 					name     = "tf-test"
 					image    = docker_image.foo.image_id
 					must_run = "false"
-				
+
 					upload {
 						file           = "/terraform/test1.txt"
 						executable     = true
@@ -1518,6 +1507,7 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					testCheck,
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.mac_address"),
 				),
 			},
 		},

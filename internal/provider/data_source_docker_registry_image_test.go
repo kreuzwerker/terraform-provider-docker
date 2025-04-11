@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"testing"
@@ -93,7 +93,7 @@ func TestGetDigestFromResponse(t *testing.T) {
 		Header: http.Header{
 			"Docker-Content-Digest": []string{headerContent},
 		},
-		Body: ioutil.NopCloser(bytes.NewReader([]byte("foo"))),
+		Body: io.NopCloser(bytes.NewReader([]byte("foo"))),
 	}
 
 	if digest, _ := getDigestFromResponse(respWithHeaders); digest != headerContent {
@@ -103,7 +103,7 @@ func TestGetDigestFromResponse(t *testing.T) {
 	bodyDigest := "sha256:fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
 	respWithoutHeaders := &http.Response{
 		Header: make(http.Header),
-		Body:   ioutil.NopCloser(bytes.NewReader([]byte("bar"))),
+		Body:   io.NopCloser(bytes.NewReader([]byte("bar"))),
 	}
 
 	if digest, _ := getDigestFromResponse(respWithoutHeaders); digest != bodyDigest {

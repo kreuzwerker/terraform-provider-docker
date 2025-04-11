@@ -4,15 +4,17 @@ provider "docker" {
     address = "%s"
   }
 }
+
+resource "docker_image" "foo_image" {
+  provider = "docker.private"
+  name     = "%s"
+  build {
+    context = "%s"
+  }
+}
+
 resource "docker_registry_image" "foo" {
   provider             = "docker.private"
-  name                 = "%s"
+  name                 = docker_image.foo_image.name
   insecure_skip_verify = true
-
-  build {
-    context      = "%s"
-    remove       = true
-    force_remove = true
-    no_cache     = true
-  }
 }
