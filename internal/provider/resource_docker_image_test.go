@@ -431,7 +431,7 @@ func TestAccDockerImage_build(t *testing.T) {
 	if err := os.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
 		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
 	}
-	defer os.Remove(dfPath)
+	defer os.Remove(dfPath) //nolint:errcheck
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -469,7 +469,7 @@ func TestAccDockerImage_buildOutsideContext(t *testing.T) {
 	if err := os.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
 		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
 	}
-	defer os.Remove(dfPath)
+	defer os.Remove(dfPath) //nolint:errcheck
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -575,7 +575,7 @@ func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
 					if err != nil {
 						panic("failed to create test file")
 					}
-					f.Close()
+					f.Close() //nolint:errcheck
 				},
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "two", name, context),
 				Check: resource.ComposeTestCheckFunc(
@@ -610,7 +610,7 @@ func testAccImageCreated(resourceName string, image *types.ImageInspect) resourc
 		// TODO mavogel: it's because we set the ID in the format:
 		// d.SetId(foundImage.ID + d.Get("name").(string))
 		// so we need to strip away the name
-		strippedID := strings.Replace(rs.Primary.ID, name, "", -1)
+		strippedID := strings.ReplaceAll(rs.Primary.ID, name, "")
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		inspectedImage, _, err := client.ImageInspectWithRaw(ctx, strippedID)

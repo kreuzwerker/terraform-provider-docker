@@ -101,7 +101,7 @@ func dataSourceDockerLogsRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("dataSourceDockerLogsRead: error while asking for logs %s", err)
 	}
-	defer readCloser.Close()
+	defer readCloser.Close() //nolint:errcheck
 
 	// see https://github.com/moby/moby/issues/7375#issuecomment-51462963
 	discard := d.Get("discard_headers").(bool)

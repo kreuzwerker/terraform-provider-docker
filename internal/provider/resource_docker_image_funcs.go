@@ -212,7 +212,7 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 	if err != nil {
 		return fmt.Errorf("error pulling image %s: %w", image, err)
 	}
-	defer out.Close()
+	defer out.Close() //nolint:errcheck
 
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(out); err != nil {
@@ -346,7 +346,7 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer response.Body.Close() //nolint:errcheck
 
 	buildResult, err := decodeBuildMessages(response)
 	if err != nil {
@@ -366,7 +366,7 @@ func enableBuildKitIfSupported(ctx context.Context, client *client.Client, build
 		}
 		//nolint
 		go s.Run(ctx, dialSession)
-		defer s.Close()
+		defer s.Close() //nolint:errcheck
 		buildOptions.SessionID = s.ID()
 		buildOptions.Version = types.BuilderBuildKit
 	} else {
@@ -391,7 +391,7 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		if err != nil {
 			return nil, "", errors.Errorf("unable to open Dockerfile: %v", err)
 		}
-		defer dockerfileCtx.Close()
+		defer dockerfileCtx.Close() //nolint:errcheck
 	}
 	excludes, err := build.ReadDockerignore(contextDir)
 	if err != nil {

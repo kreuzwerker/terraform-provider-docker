@@ -1069,7 +1069,8 @@ func TestAccDockerContainer_port_internal(t *testing.T) {
 	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1116,7 +1117,8 @@ func TestAccDockerContainer_port_multiple_internal(t *testing.T) {
 	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1185,7 +1187,8 @@ func TestAccDockerContainer_port(t *testing.T) {
 	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1240,7 +1243,8 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 	var c types.ContainerJSON
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
