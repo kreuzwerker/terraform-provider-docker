@@ -102,15 +102,6 @@ func resourceDockerImage() *schema.Resource {
 							Default:     true,
 							Optional:    true,
 						},
-						"build_arg": {
-							Type:        schema.TypeMap,
-							Description: "Set build-time variables",
-							Optional:    true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-							ForceNew: true,
-						},
 						"label": {
 							Type:        schema.TypeMap,
 							Description: "Set metadata for an image",
@@ -244,7 +235,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"build_args": {
 							Type:        schema.TypeMap,
-							Description: "Pairs for build-time variables in the form TODO",
+							Description: "Pairs for build-time variables in the form of `ENDPOINT : \"https://example.com\"`",
 							Optional:    true,
 							ForceNew:    true,
 							Elem: &schema.Schema{
