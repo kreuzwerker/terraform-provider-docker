@@ -1,9 +1,19 @@
 
-<a name="v3.1.0"></a>
-## [v3.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.2...v3.1.0) (2025-04-13)
+<a name="v3.1.1"></a>
+## [v3.1.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.0...v3.1.1) (2025-04-14)
 
 ### Chore
 
+* Update makefile commands to match new svi version
+* Update gorelease publish github token
+
+
+<a name="v3.1.0"></a>
+## [v3.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.2...v3.1.0) (2025-04-14)
+
+### Chore
+
+* Prepare release 3.1.0 ([#685](https://github.com/kreuzwerker/terraform-provider-docker/issues/685))
 * update Go version to 1.22 for consistency across workflows, jo… ([#613](https://github.com/kreuzwerker/terraform-provider-docker/issues/613))
 
 ### Feat

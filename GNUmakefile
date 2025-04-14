@@ -115,7 +115,7 @@ chlog-%:
 
 replace-occurences-%:
 	@echo "Replace occurences of old version strings..."
-	sed -i '' "s/$(shell (svu --strip-prefix current))/$*/g" README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf
+	sed -i "s/$(shell (svu --tag.prefix='' current))/$*/g" README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf
 
 release-%:
 	@echo "Review the changes made by this script then execute the following:"
@@ -130,15 +130,15 @@ release-%:
 
 patch:
 	@${MAKE} chlog-$(shell (svu patch))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix patch))
+	@${MAKE} replace-occurences-$(shell (svu --tag.prefix='' patch))
 	@${MAKE} release-$(shell (svu patch))
 
 minor:
 	@${MAKE} chlog-$(shell (svu minor))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix minor))
+	@${MAKE} replace-occurences-$(shell (svu --tag.prefix='' minor))
 	@${MAKE} release-$(shell (svu minor))
 
 major:
 	@${MAKE} chlog-$(shell (svu major))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix major))
+	@${MAKE} replace-occurences-$(shell (svu --tag.prefix='' major))
 	@${MAKE} release-$(shell (svu major))
