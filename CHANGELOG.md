@@ -1,6 +1,32 @@
 
+<a name="v3.1.0"></a>
+## [v3.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.2...v3.1.0) (2025-04-13)
+
+### Chore
+
+* update Go version to 1.22 for consistency across workflows, jo… ([#613](https://github.com/kreuzwerker/terraform-provider-docker/issues/613))
+
+### Feat
+
+* support setting cpu shares ([#575](https://github.com/kreuzwerker/terraform-provider-docker/issues/575))
+
+### Fix
+
+* Use build_args everywhere and update documentation ([#681](https://github.com/kreuzwerker/terraform-provider-docker/issues/681))
+* Compress build context before sending it to Docker ([#461](https://github.com/kreuzwerker/terraform-provider-docker/issues/461))
+* Set correct default network driver and fix a test ([#677](https://github.com/kreuzwerker/terraform-provider-docker/issues/677))
+
+### Typo
+
+* s/presend/present/ ([#606](https://github.com/kreuzwerker/terraform-provider-docker/issues/606))
+
+
 <a name="v3.0.2"></a>
 ## [v3.0.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.1...v3.0.2) (2023-03-17)
+
+### Chore
+
+* Prepare release v3.0.2
 
 ### Docs
 
