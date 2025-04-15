@@ -270,7 +270,10 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 		if pushOpts.Registry != "ghcr.io" && !isECRRepositoryURL(pushOpts.Registry) && !isAzureCRRepositoryURL(pushOpts.Registry) && pushOpts.Registry != "gcr.io" {
 			req.SetBasicAuth(username, password)
 		} else {
-			if isECRRepositoryURL(pushOpts.Registry) {
+			if isECRPublicRepositoryURL(pushOpts.Registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Bearer "+password)
+			} else if isECRRepositoryURL(pushOpts.Registry) {
 				password = normalizeECRPasswordForHTTPUsage(password)
 				req.Header.Add("Authorization", "Basic "+password)
 			} else {

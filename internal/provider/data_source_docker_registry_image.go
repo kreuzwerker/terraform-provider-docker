@@ -85,7 +85,10 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
 			req.SetBasicAuth(username, password)
 		} else {
-			if isECRRepositoryURL(registry) {
+			if isECRPublicRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Bearer "+password)
+			} else if isECRRepositoryURL(registry) {
 				password = normalizeECRPasswordForHTTPUsage(password)
 				req.Header.Add("Authorization", "Basic "+password)
 			} else {
