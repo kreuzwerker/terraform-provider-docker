@@ -173,7 +173,7 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 		d.Set("ipam_options", retNetwork.IPAM.Options)
 		d.Set("scope", retNetwork.Scope)
 		if retNetwork.Scope == "overlay" {
-			if retNetwork.Options != nil && len(retNetwork.Options) != 0 {
+			if len(retNetwork.Options) != 0 {
 				d.Set("options", retNetwork.Options)
 			} else {
 				log.Printf("[DEBUG] options: %v not exposed", retNetwork.Options)

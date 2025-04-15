@@ -36,7 +36,7 @@ func init() {
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = New("dev")()
+	var _ = New("dev")()
 }
 
 func TestProvider(t *testing.T) {
