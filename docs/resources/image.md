@@ -4,13 +4,13 @@ page_title: "Resource docker_image - terraform-provider-docker"
 subcategory: ""
 description: |-
   Pulls a Docker image to a given Docker host from a Docker Registry.
-   This resource will not pull new layers of the image automatically unless used in conjunction with dockerregistryimage registry_image.md data source to update the pull_triggers field.
+   This resource will not pull new layers of the image automatically unless used in conjunction with dockerregistryimage ../data-sources/registry_image.md data source to update the pull_triggers field.
 ---
 <!-- Bug: Type and Name are switched -->
 # Resource (docker_image)
 
 Pulls a Docker image to a given Docker host from a Docker Registry.
- This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](registry_image.md) data source to update the `pull_triggers` field.
+ This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.
 
 ## Example Usage
 
@@ -45,6 +45,8 @@ resource "docker_image" "ubuntu" {
 
 You can also use the resource to build an image.
 In this case the image "zoo" and "zoo:develop" are built.
+The `context` and `dockerfile` arguments are relative to the local Terraform process (`path.cwd`).
+There is no need to copy the files to remote hosts before creating the resource.
 
 ```terraform
 resource "docker_image" "zoo" {
@@ -71,7 +73,7 @@ resource "docker_image" "zoo" {
     context = "."
   }
   triggers = {
-    dir_sha1 = sha1(join("", [for f in fileset(path.module, "src/*") : filesha1(f)]))
+    dir_sha1 = sha1(join("", [for f in fileset(path.module, "src/**") : filesha1(f)]))
   }
 }
 ```
@@ -85,7 +87,7 @@ resource "docker_image" "zoo" {
 
 ### Optional
 
-- `build` (Block Set, Max: 1) Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. (see [below for nested schema](#nestedblock--build))
+- `build` (Block Set, Max: 1) Configuration to build an image. Requires the `Use containerd for pulling and storing images` option to be disabled in the Docker Host(https://github.com/kreuzwerker/terraform-provider-docker/issues/534). Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. (see [below for nested schema](#nestedblock--build))
 - `force_remove` (Boolean) If true, then the image is removed forcibly when the resource is destroyed.
 - `keep_locally` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
 - `platform` (String) The platform to use when pulling the image. Defaults to the platform of the current machine.
@@ -96,14 +98,14 @@ resource "docker_image" "zoo" {
 
 - `id` (String) Unique identifier for this resource. This is not the image ID, but the ID of the resource in the Terraform state. This is used to identify the resource in the Terraform state. To reference the correct image ID, use the `image_id` attribute.
 - `image_id` (String) The ID of the image (as seen when executing `docker inspect` on the image). Can be used to reference the image via its ID in other resources.
-- `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.
+- `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. This may not be populated when building an image, because it is read from the local Docker client and so may be available only when the image was either pulled from the repo or pushed to the repo (perhaps using `docker_registry_image`) in a previous run.
 
 <a id="nestedblock--build"></a>
 ### Nested Schema for `build`
 
 Required:
 
-- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
+- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. This always refers to the local working directory, even when building images on remote hosts. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
 
 Optional:
 

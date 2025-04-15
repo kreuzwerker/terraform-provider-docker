@@ -153,7 +153,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"command": {
 				Type:        schema.TypeList,
-				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.con\"]`.",
+				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.conf\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -162,7 +162,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"entrypoint": {
 				Type:        schema.TypeList,
-				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogra\"]`.",
+				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogram\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
