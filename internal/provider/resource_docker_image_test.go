@@ -469,7 +469,7 @@ func TestAccDockerImageSecrets_build(t *testing.T) {
 	if err := os.WriteFile(dfPath, []byte(testDockerFileWithSecret), 0o644); err != nil {
 		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
 	}
-	defer os.Remove(dfPath)
+	defer os.Remove(dfPath) //nolint:errcheck
 
 	const secretContent = "THIS IS A SECRET"
 	sPath := filepath.Join(wd, "secret")
@@ -477,7 +477,7 @@ func TestAccDockerImageSecrets_build(t *testing.T) {
 		t.Fatalf("failed to create a secret file %s for test: %+v", sPath, err)
 	}
 
-	defer os.Remove(sPath)
+	defer os.Remove(sPath) //nolint:errcheck
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
