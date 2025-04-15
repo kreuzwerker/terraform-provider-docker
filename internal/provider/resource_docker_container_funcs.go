@@ -170,7 +170,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				mountInstance.ReadOnly = value.(bool)
 			}
 
-			if mountType == mount.TypeBind {
+			// QF1003: could use tagged switch on mountType
+			if mountType == mount.TypeBind { //nolint:staticcheck
 				if value, ok := rawMount["bind_options"]; ok {
 					if len(value.([]interface{})) > 0 {
 						mountInstance.BindOptions = &mount.BindOptions{}
@@ -521,8 +522,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					if err != nil {
 						result <- fmt.Errorf("error inspecting container state: %s", err)
 					}
-					//infos.ContainerJSONBase.State.Health is only set when there is a healthcheck defined on the container resource
-					if infos.ContainerJSONBase.State.Health.Status == types.Healthy {
+					// QF1008: could remove embedded field "ContainerJSONBase" from selector
+					if infos.ContainerJSONBase.State.Health.Status == types.Healthy { //nolint:staticcheck
 						log.Printf("[DEBUG] container state is healthy")
 						break
 					}
@@ -564,7 +565,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				if err != nil {
 					log.Panic(err)
 				}
-				defer reader.Close()
+				defer reader.Close() //nolint:errcheck
 
 				scanner := bufio.NewScanner(reader)
 				for scanner.Scan() {
@@ -870,7 +871,8 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 				if a > 0 {
 					a = a * 1024 * 1024
 				}
-				updateConfig.Resources.MemorySwap = a
+				// QF1008: could remove embedded field "Resources" from selector
+				updateConfig.Resources.MemorySwap = a //nolint:staticcheck
 			}
 			client := meta.(*ProviderConfig).DockerClient
 			_, err := client.ContainerUpdate(ctx, d.Id(), updateConfig)
@@ -936,7 +938,8 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 func fetchDockerContainer(ctx context.Context, ID string, client *client.Client) (*types.Container, error) {
 	apiContainers, err := client.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching container information from Docker: %s\n", err)
+		// ST1005: error strings should not end with punctuation or newlines
+		return nil, fmt.Errorf("error fetching container information from Docker: %s\n", err) //nolint:staticcheck
 	}
 
 	for _, apiContainer := range apiContainers {

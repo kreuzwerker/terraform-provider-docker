@@ -214,7 +214,7 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer out.Close() //nolint:errcheck
 
 	type ErrorMessage struct {
 		Error string

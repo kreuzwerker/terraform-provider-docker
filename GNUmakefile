@@ -2,7 +2,7 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 PKG_NAME=internal/provider
 
-GOLANGCI_VERSION = 1.49.0
+GOLANGCI_VERSION = 2.1.1
 
 # Values to install the provider locally for testing purposes
 HOSTNAME=registry.terraform.io

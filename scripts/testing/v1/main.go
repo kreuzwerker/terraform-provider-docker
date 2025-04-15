@@ -32,7 +32,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, err = w.Write([]byte(fmt.Sprintf("%s - Hello World!", configs.Prefix)))
+		_, err = w.Write([]byte(fmt.Sprintf("%s - Hello World!", configs.Prefix))) //nolint:staticcheck
 		if err != nil {
 			log.Fatalln("failed to write for path '/'")
 		}

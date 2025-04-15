@@ -100,7 +100,8 @@ func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	if v, ok := d.GetOk("labels"); ok {
-		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
+		//  QF1008: could remove embedded field "Annotations" from selector
+		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set)) //nolint:staticcheck
 	}
 
 	secret, err := client.SecretCreate(ctx, secretSpec)
