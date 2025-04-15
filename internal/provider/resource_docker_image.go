@@ -88,6 +88,36 @@ func resourceDockerImage() *schema.Resource {
 							Default:     true,
 							Optional:    true,
 						},
+						"secrets": {
+							Type:        schema.TypeList,
+							Description: "Set build-time secrets",
+							Optional:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Description: "ID of the secret. By default, secrets are mounted to /run/secrets/<id>",
+										Optional:    false,
+										Required:    true,
+										ForceNew:    true,
+									},
+									"src": {
+										Type:        schema.TypeString,
+										Description: "File source of the secret",
+										Optional:    true,
+										Required:    false,
+										ForceNew:    true,
+									},
+									"env": {
+										Type:        schema.TypeString,
+										Description: "Environment variable source of the secret",
+										Optional:    true,
+										Required:    false,
+										ForceNew:    true,
+									},
+								},
+							},
+						},
 						"label": {
 							Type:        schema.TypeMap,
 							Description: "Set metadata for an image",

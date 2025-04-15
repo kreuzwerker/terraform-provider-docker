@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 	"github.com/moby/buildkit/session"
+	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/pkg/errors"
 )
 
@@ -333,7 +334,22 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 
 	buildContext := rawBuild["context"].(string)
 
-	enableBuildKitIfSupported(ctx, client, &buildOptions)
+	buildKitSession := enableBuildKitIfSupported(ctx, client, &buildOptions)
+
+	// If Buildkit is enabled, try to parse and use secrets if present.
+	if buildKitSession != nil {
+		if secretsRaw, secretsDefined := rawBuild["secrets"]; secretsDefined {
+			parsedSecrets := parseBuildSecrets(secretsRaw)
+
+			store, err := secretsprovider.NewStore(parsedSecrets)
+			if err != nil {
+				return err
+			}
+
+			provider := secretsprovider.NewSecretProvider(store)
+			buildKitSession.Allow(provider)
+		}
+	}
 
 	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, buildOptions.Dockerfile)
 	if err != nil {
@@ -355,7 +371,11 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	return nil
 }
 
-func enableBuildKitIfSupported(ctx context.Context, client *client.Client, buildOptions *types.ImageBuildOptions) {
+func enableBuildKitIfSupported(
+	ctx context.Context,
+	client *client.Client,
+	buildOptions *types.ImageBuildOptions,
+) *session.Session {
 	dockerClientVersion := client.ClientVersion()
 	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
 	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
@@ -369,8 +389,10 @@ func enableBuildKitIfSupported(ctx context.Context, client *client.Client, build
 		defer s.Close() //nolint:errcheck
 		buildOptions.SessionID = s.ID()
 		buildOptions.Version = types.BuilderBuildKit
+		return s
 	} else {
 		buildOptions.Version = types.BuilderV1
+		return nil
 	}
 }
 
@@ -460,4 +482,21 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 	log.Printf("[DEBUG] %s", buf.String())
 
 	return buf.String(), buildErr
+}
+
+func parseBuildSecrets(secretsRaw interface{}) []secretsprovider.Source {
+	options := secretsRaw.([]interface{})
+
+	secrets := make([]secretsprovider.Source, len(options))
+	for i, option := range options {
+		secretRaw := option.(map[string]interface{})
+		source := secretsprovider.Source{
+			ID:       secretRaw["id"].(string),
+			FilePath: secretRaw["src"].(string),
+			Env:      secretRaw["env"].(string),
+		}
+		secrets[i] = source
+	}
+
+	return secrets
 }

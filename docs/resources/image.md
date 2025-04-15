@@ -131,6 +131,7 @@ Optional:
 - `pull_parent` (Boolean) Attempt to pull the image even if an older image exists locally
 - `remote_context` (String) A Git repository URI or HTTP/HTTPS context URI
 - `remove` (Boolean) Remove intermediate containers after a successful build. Defaults to `true`.
+- `secrets` (Block List) Set build-time secrets (see [below for nested schema](#nestedblock--build--secrets))
 - `security_opt` (List of String) The security options
 - `session_id` (String) Set an ID for the build session
 - `shm_size` (Number) Size of /dev/shm in bytes. The size must be greater than 0
@@ -157,6 +158,19 @@ Optional:
 - `registry_token` (String) the registry token
 - `server_address` (String) the server address
 - `user_name` (String) the registry user name
+
+
+<a id="nestedblock--build--secrets"></a>
+### Nested Schema for `build.secrets`
+
+Required:
+
+- `id` (String) ID of the secret. By default, secrets are mounted to /run/secrets/<id>
+
+Optional:
+
+- `env` (String) Environment variable source of the secret
+- `src` (String) File source of the secret
 
 
 <a id="nestedblock--build--ulimit"></a>
