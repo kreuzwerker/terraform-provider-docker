@@ -1,17 +1,31 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerImageCreateDefaultTimeout = 20 * time.Minute
+	dockerImageUpdateDefaultTimeout = 20 * time.Minute
+	dockerImageDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.",
+		Description: "Manages the lifecycle of a docker image in your docker host. It can be used to build a new docker image or to pull an existing one from a registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.",
 
 		CreateContext: resourceDockerImageCreate,
 		ReadContext:   resourceDockerImageRead,
 		UpdateContext: resourceDockerImageUpdate,
 		DeleteContext: resourceDockerImageDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerImageCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerImageUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerImageDeleteDefaultTimeout),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"id": {
