@@ -3,13 +3,13 @@
 page_title: "Resource docker_image - terraform-provider-docker"
 subcategory: ""
 description: |-
-  Pulls a Docker image to a given Docker host from a Docker Registry.
+  Manages the lifecycle of a docker image in your docker host. It can be used to build a new docker image or to pull an existing one from a registry.
    This resource will not pull new layers of the image automatically unless used in conjunction with dockerregistryimage ../data-sources/registry_image.md data source to update the pull_triggers field.
 ---
 <!-- Bug: Type and Name are switched -->
 # Resource (docker_image)
 
-Pulls a Docker image to a given Docker host from a Docker Registry.
+Manages the lifecycle of a docker image in your docker host. It can be used to build a new docker image or to pull an existing one from a registry.
  This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.
 
 ## Example Usage
@@ -44,6 +44,9 @@ resource "docker_image" "ubuntu" {
 ### Build
 
 You can also use the resource to build an image.
+
+-> **Note**: The default timeout for the building is 20 minutes. If you need to increase this, you can use [operation timeouts](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts).
+
 In this case the image "zoo" and "zoo:develop" are built.
 The `context` and `dockerfile` arguments are relative to the local Terraform process (`path.cwd`).
 There is no need to copy the files to remote hosts before creating the resource.
@@ -92,6 +95,7 @@ resource "docker_image" "zoo" {
 - `keep_locally` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker local storage on destroy operation.
 - `platform` (String) The platform to use when pulling the image. Defaults to the platform of the current machine.
 - `pull_triggers` (Set of String) List of values which cause an image pull when changed. This is used to store the image digest from the registry when using the [docker_registry_image](../data-sources/registry_image.md).
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `triggers` (Map of String) A map of arbitrary strings that, when changed, will force the `docker_image` resource to be replaced. This can be used to rebuild an image when contents of source code folders change
 
 ### Read-Only
@@ -183,3 +187,14 @@ Required:
 - `hard` (Number) soft limit
 - `name` (String) type of ulimit, e.g. `nofile`
 - `soft` (Number) hard limit
+
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
