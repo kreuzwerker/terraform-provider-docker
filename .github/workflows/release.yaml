@@ -21,6 +21,8 @@ env:
 jobs:
   goreleaser:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,8 +40,6 @@ jobs:
           PASSPHRASE: ${{ secrets.PASSPHRASE }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
-        permissions:
-          contents: write
         with:
           version: latest
           args: release --rm-dist

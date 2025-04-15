@@ -1,11 +1,18 @@
 
+<a name="v3.1.2"></a>
+## [v3.1.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.1...v3.1.2) (2025-04-14)
+
+### Chore
+
+* Use correct permissions statement in release workflow
+
+
 <a name="v3.1.1"></a>
 ## [v3.1.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.0...v3.1.1) (2025-04-14)
 
 ### Chore
 
-* Update makefile commands to match new svi version
-* Update gorelease publish github token
+* Prepare release 3.1.1 ([#687](https://github.com/kreuzwerker/terraform-provider-docker/issues/687))
 
 
 <a name="v3.1.0"></a>
