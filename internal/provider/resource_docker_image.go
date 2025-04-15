@@ -6,7 +6,7 @@ import (
 
 func resourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](registry_image.md) data source to update the `pull_triggers` field.",
+		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.",
 
 		CreateContext: resourceDockerImageCreate,
 		ReadContext:   resourceDockerImageRead,
@@ -34,7 +34,7 @@ func resourceDockerImage() *schema.Resource {
 
 			"repo_digest": {
 				Type:        schema.TypeString,
-				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.",
+				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. This may not be populated when building an image, because it is read from the local Docker client and so may be available only when the image was either pulled from the repo or pushed to the repo (perhaps using `docker_registry_image`) in a previous run.",
 				Computed:    true,
 			},
 
@@ -61,7 +61,7 @@ func resourceDockerImage() *schema.Resource {
 
 			"build": {
 				Type:          schema.TypeSet,
-				Description:   "Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.",
+				Description:   "Configuration to build an image. Requires the `Use containerd for pulling and storing images` option to be disabled in the Docker Host(https://github.com/kreuzwerker/terraform-provider-docker/issues/534). Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.",
 				Optional:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"pull_triggers"},
@@ -310,7 +310,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"context": {
 							Type:        schema.TypeString,
-							Description: "Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.",
+							Description: "Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. This always refers to the local working directory, even when building images on remote hosts. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.",
 							Required:    true,
 							ForceNew:    true,
 						},

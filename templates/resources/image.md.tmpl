@@ -30,6 +30,8 @@ you need to use it in combination with `docker_registry_image` as follows:
 
 You can also use the resource to build an image.
 In this case the image "zoo" and "zoo:develop" are built.
+The `context` and `dockerfile` arguments are relative to the local Terraform process (`path.cwd`).
+There is no need to copy the files to remote hosts before creating the resource.
 
 {{tffile "examples/resources/docker_image/resource-build.tf"}}
 
