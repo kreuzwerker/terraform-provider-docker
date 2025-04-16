@@ -264,6 +264,7 @@ Optional:
 - `content` (String) Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text. Conflicts with `content_base64` & `source`
 - `content_base64` (String) Base64-encoded data that will be decoded and uploaded as raw bytes for the object content. This allows safely uploading non-UTF8 binary data, but is recommended only for larger binary content such as the result of the `base64encode` interpolation function. See [here](https://github.com/terraform-providers/terraform-provider-docker/issues/48#issuecomment-374174588) for the reason. Conflicts with `content` & `source`
 - `executable` (Boolean) If `true`, the file will be uploaded with user executable permission. Defaults to `false`.
+- `permissions` (String) The permission mode for the file in the container. Has precedence over `executable`.
 - `source` (String) A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state. Conflicts with `content` & `content_base64`
 - `source_hash` (String) If using `source`, this will force an update if the file content has updated but the filename has not.
 
