@@ -14,6 +14,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -143,11 +145,11 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 		return ulimits
 	}
 
-	readAuthConfigs := func(options []interface{}) map[string]types.AuthConfig {
-		authConfigs := make(map[string]types.AuthConfig, len(options))
+	readAuthConfigs := func(options []interface{}) map[string]registry.AuthConfig {
+		authConfigs := make(map[string]registry.AuthConfig, len(options))
 		for _, v := range options {
 			authOptions := v.(map[string]interface{})
-			auth := types.AuthConfig{
+			auth := registry.AuthConfig{
 				Username:      authOptions["user_name"].(string),
 				Password:      authOptions["password"].(string),
 				Auth:          authOptions["auth"].(string),
@@ -199,9 +201,9 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 }
 
 func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpts internalPushImageOptions, username string, password string) error {
-	pushOptions := types.ImagePushOptions{}
+	pushOptions := image.PushOptions{}
 	if username != "" {
-		auth := types.AuthConfig{Username: username, Password: password}
+		auth := registry.AuthConfig{Username: username, Password: password}
 		authBytes, err := json.Marshal(auth)
 		if err != nil {
 			return fmt.Errorf("Error creating push options: %s", err)
@@ -239,11 +241,11 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 
 func getAuthConfigForRegistry(
 	registryWithoutProtocol string,
-	providerConfig *ProviderConfig) (types.AuthConfig, error) {
+	providerConfig *ProviderConfig) (registry.AuthConfig, error) {
 	if authConfig, ok := providerConfig.AuthConfigs.Configs[registryWithoutProtocol]; ok {
 		return authConfig, nil
 	}
-	return types.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
+	return registry.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
 }
 
 func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkipVerify bool) *http.Client {

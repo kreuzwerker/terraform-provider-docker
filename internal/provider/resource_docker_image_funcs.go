@@ -15,6 +15,8 @@ import (
 
 	"github.com/docker/cli/cli/command/image/build"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
@@ -109,8 +111,8 @@ func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta
 }
 
 // Helpers
-func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) (*types.ImageSummary, error) {
-	imageInspect, _, err := client.ImageInspectWithRaw(ctx, imageName)
+func searchLocalImages(ctx context.Context, client *client.Client, data Data, imageName string) (*image.Summary, error) {
+	imageInspect, err := client.ImageInspect(ctx, imageName)
 	if err != nil {
 		if errdefs.IsNotFound(err) {
 			return nil, nil
@@ -153,7 +155,7 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 	}
 
 	if foundImage != nil {
-		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, types.ImageRemoveOptions{
+		imageDeleteResponseItems, err := client.ImageRemove(ctx, imageName, image.RemoveOptions{
 			Force: d.Get("force_remove").(bool),
 		})
 		if err != nil {
@@ -167,13 +169,13 @@ func removeImage(ctx context.Context, d *schema.ResourceData, client *client.Cli
 }
 
 func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) error {
-	images, err := client.ImageList(ctx, types.ImageListOptions{All: false})
+	images, err := client.ImageList(ctx, image.ListOptions{All: false})
 	if err != nil {
 		return fmt.Errorf("unable to list Docker images: %w", err)
 	}
 
 	if data.DockerImages == nil {
-		data.DockerImages = make(map[string]*types.ImageSummary)
+		data.DockerImages = make(map[string]*image.Summary)
 	}
 
 	// Docker uses different nomenclatures in different places...sometimes a short
@@ -193,10 +195,10 @@ func fetchLocalImages(ctx context.Context, data *Data, client *client.Client) er
 	return nil
 }
 
-func pullImage(ctx context.Context, data *Data, client *client.Client, authConfig *AuthConfigs, image string, platform string) error {
-	pullOpts := parseImageOptions(image)
+func pullImage(ctx context.Context, data *Data, client *client.Client, authConfig *AuthConfigs, imageName string, platform string) error {
+	pullOpts := parseImageOptions(imageName)
 
-	auth := types.AuthConfig{}
+	auth := registry.AuthConfig{}
 	if authConfig, ok := authConfig.Configs[pullOpts.Registry]; ok {
 		auth = authConfig
 	}
@@ -206,12 +208,12 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 		return fmt.Errorf("error creating auth config: %w", err)
 	}
 
-	out, err := client.ImagePull(ctx, image, types.ImagePullOptions{
+	out, err := client.ImagePull(ctx, imageName, image.PullOptions{
 		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
 		Platform:     platform,
 	})
 	if err != nil {
-		return fmt.Errorf("error pulling image %s: %w", image, err)
+		return fmt.Errorf("error pulling image %s: %w", imageName, err)
 	}
 	defer out.Close() //nolint:errcheck
 
@@ -220,7 +222,7 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 		return err
 	}
 	s := buf.String()
-	log.Printf("[DEBUG] pulled image %v: %v", image, s)
+	log.Printf("[DEBUG] pulled image %v: %v", imageName, s)
 
 	return nil
 }
@@ -281,7 +283,7 @@ func parseImageOptions(image string) internalPullImageOptions {
 	return pullOpts
 }
 
-func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs, platform string) (*types.ImageSummary, error) {
+func findImage(ctx context.Context, imageName string, client *client.Client, authConfig *AuthConfigs, platform string) (*image.Summary, error) {
 	if imageName == "" {
 		return nil, fmt.Errorf("empty image name is not allowed")
 	}
@@ -420,7 +422,7 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		return nil, "", err
 	}
 
-	specifiedDockerfile = archive.CanonicalTarNameForPath(specifiedDockerfile)
+	// specifiedDockerfile = archive.CanonicalTarNameForPath(specifiedDockerfile)
 	excludes = build.TrimBuildFilesFromExcludes(excludes, specifiedDockerfile, false)
 	log.Printf("[DEBUG] Excludes: %v", excludes)
 	buildCtx := getBuildContext(contextDir, excludes)

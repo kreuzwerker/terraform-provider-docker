@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -305,7 +306,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 				}
 			}
 
-			removeOpts := types.ContainerRemoveOptions{
+			removeOpts := container.RemoveOptions{
 				RemoveVolumes: true,
 				Force:         true,
 			}
@@ -593,25 +594,25 @@ func terminalState(state swarm.TaskState) bool {
 }
 
 // authToServiceAuth maps the auth to AuthConfiguration
-func authToServiceAuth(auths []interface{}) types.AuthConfig {
+func authToServiceAuth(auths []interface{}) registry.AuthConfig {
 	if len(auths) == 0 {
-		return types.AuthConfig{}
+		return registry.AuthConfig{}
 	}
 	// it's maxItems = 1
 	auth := auths[0].(map[string]interface{})
 	if auth["username"] != nil && len(auth["username"].(string)) > 0 && auth["password"] != nil && len(auth["password"].(string)) > 0 {
-		return types.AuthConfig{
+		return registry.AuthConfig{
 			Username:      auth["username"].(string),
 			Password:      auth["password"].(string),
 			ServerAddress: auth["server_address"].(string),
 		}
 	}
 
-	return types.AuthConfig{}
+	return registry.AuthConfig{}
 }
 
 // fromRegistryAuth extract the desired AuthConfiguration for the given image
-func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) types.AuthConfig {
+func fromRegistryAuth(image string, authConfigs map[string]registry.AuthConfig) registry.AuthConfig {
 	// Remove normalized prefixes to simplify substring
 	// DevSkim: ignore DS137138
 	image = strings.Replace(strings.Replace(image, "http://", "", 1), "https://", "", 1)
@@ -625,12 +626,12 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 		}
 	}
 
-	return types.AuthConfig{}
+	return registry.AuthConfig{}
 }
 
 // retrieveAndMarshalAuth retrieves and marshals the service registry auth
 func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType string) []byte {
-	var auth types.AuthConfig
+	var auth registry.AuthConfig
 	// when a service is updated/set for the first time the auth is set but empty
 	// this is why we need this additional check
 	if rawAuth, ok := d.GetOk("auth"); ok && len(rawAuth.([]interface{})) != 0 {

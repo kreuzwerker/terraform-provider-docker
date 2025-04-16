@@ -14,6 +14,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -68,7 +70,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 				// DevSkim: ignore DS137138
 				assert(*options.BuildArgs["HTTP_PROXY"] == "http://10.20.30.2:1234", "BuildArgs")
 				assert(len(options.AuthConfigs) == 1, "AuthConfigs")
-				assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], types.AuthConfig{
+				assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], registry.AuthConfig{
 					Username:      "fooUserName",
 					Password:      "fooPassword",
 					Auth:          "fooAuth",
@@ -159,7 +161,7 @@ func TestAccDockerImage_basic(t *testing.T) {
 
 func TestAccDockerImage_private(t *testing.T) {
 	ctx := context.Background()
-	var i types.ImageInspect
+	var i image.InspectResponse
 
 	testCheckImageInspect := func(*terraform.State) error {
 		if len(i.RepoTags) != 1 ||
@@ -206,7 +208,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 				}
 
 				client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-				_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["name"])
+				_, err := client.ImageInspect(ctx, rs.Primary.Attributes["name"])
 				if err != nil {
 					return err
 				}
@@ -379,7 +381,7 @@ func testAccDockerImageDestroy(ctx context.Context, s *terraform.State) error {
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["name"])
+		_, err := client.ImageInspect(ctx, rs.Primary.Attributes["name"])
 		if err == nil {
 			return fmt.Errorf("Image still exists")
 		}
@@ -642,7 +644,7 @@ func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
 	})
 }
 
-func testAccImageCreated(resourceName string, image *types.ImageInspect) resource.TestCheckFunc {
+func testAccImageCreated(resourceName string, image *image.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -661,7 +663,7 @@ func testAccImageCreated(resourceName string, image *types.ImageInspect) resourc
 		strippedID := strings.ReplaceAll(rs.Primary.ID, name, "")
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		inspectedImage, _, err := client.ImageInspectWithRaw(ctx, strippedID)
+		inspectedImage, err := client.ImageInspect(ctx, strippedID)
 		if err != nil {
 			return fmt.Errorf("Image with ID '%s': %w", strippedID, err)
 		}

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerVolume_basic(t *testing.T) {
-	var v types.Volume
+	var v volume.Volume
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -39,7 +39,7 @@ func TestAccDockerVolume_basic(t *testing.T) {
 }
 
 func TestAccDockerVolume_full(t *testing.T) {
-	var v types.Volume
+	var v volume.Volume
 
 	testCheckVolumeInspect := func(*terraform.State) error {
 		if v.Driver != "local" {
@@ -88,7 +88,7 @@ func TestAccDockerVolume_full(t *testing.T) {
 }
 
 func TestAccDockerVolume_labels(t *testing.T) {
-	var v types.Volume
+	var v volume.Volume
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -127,7 +127,7 @@ func TestAccDockerVolume_labels(t *testing.T) {
 	})
 }
 
-func checkDockerVolumeCreated(n string, volume *types.Volume) resource.TestCheckFunc {
+func checkDockerVolumeCreated(n string, volumeToCheck *volume.Volume) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -145,7 +145,7 @@ func checkDockerVolumeCreated(n string, volume *types.Volume) resource.TestCheck
 			return err
 		}
 
-		*volume = v
+		*volumeToCheck = v
 
 		return nil
 	}
