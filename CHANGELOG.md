@@ -1,10 +1,32 @@
 
-<a name="v3.1.2"></a>
-## [v3.1.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.1...v3.1.2) (2025-04-14)
+<a name="v3.2.0"></a>
+## [v3.2.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.2...v3.2.0) (2025-04-16)
 
 ### Chore
 
-* Use correct permissions statement in release workflow
+* Upgrade golangci-lint to next major version ([#686](https://github.com/kreuzwerker/terraform-provider-docker/issues/686))
+
+### Docs
+
+* Consolidated update of docs from several PRs ([#691](https://github.com/kreuzwerker/terraform-provider-docker/issues/691))
+
+### Feat
+
+* Implement upload permissions in docker_container resource ([#693](https://github.com/kreuzwerker/terraform-provider-docker/issues/693))
+* Implement docker_image timeouts ([#692](https://github.com/kreuzwerker/terraform-provider-docker/issues/692))
+* Add support for build-secrets ([#604](https://github.com/kreuzwerker/terraform-provider-docker/issues/604))
+
+### Fix
+
+* Authentication to ECR public ([#690](https://github.com/kreuzwerker/terraform-provider-docker/issues/690))
+
+
+<a name="v3.1.2"></a>
+## [v3.1.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.1...v3.1.2) (2025-04-15)
+
+### Chore
+
+* prepare release 3.1.2 ([#688](https://github.com/kreuzwerker/terraform-provider-docker/issues/688))
 
 
 <a name="v3.1.1"></a>
