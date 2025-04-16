@@ -549,7 +549,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container does not have the correct number of Capabilities in Drop: %d", len(c.HostConfig.CapDrop))
 		}
 
-		if c.HostConfig.CapDrop[0] != "SYS_ADMIN" {
+		if c.HostConfig.CapDrop[0] != "CAP_SYS_ADMIN" {
 			return fmt.Errorf("Container has wrong CapDrop setting: %v", c.HostConfig.CapDrop[0])
 		}
 
