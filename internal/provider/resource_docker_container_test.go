@@ -675,40 +675,42 @@ func testAccCheckSwapLimit(t *testing.T) {
 	}
 }
 
-func TestAccDockerContainer_upload(t *testing.T) {
+func TestAccDockerContainer_uploadPermission(t *testing.T) {
 	var c types.ContainerJSON
 	ctx := context.Background()
 
-	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	testCheck := func(expected_mode string) func(*terraform.State) error {
+		return func(*terraform.State) error {
+			client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
-		srcPath := "/terraform/test.txt"
-		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
-		if err != nil {
-			return fmt.Errorf("Unable to download a file from container: %s", err)
-		}
-
-		tr := tar.NewReader(r)
-		if header, err := tr.Next(); err != nil {
-			return fmt.Errorf("Unable to read content of tar archive: %s", err)
-		} else {
-			mode := strconv.FormatInt(header.Mode, 8)
-			if !strings.HasSuffix(mode, "744") {
-				return fmt.Errorf("File permissions are incorrect: %s", mode)
+			srcPath := "/terraform/test.txt"
+			r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
+			if err != nil {
+				return fmt.Errorf("Unable to download a file from container: %s", err)
 			}
-		}
 
-		fbuf := new(bytes.Buffer)
-		if _, err := fbuf.ReadFrom(tr); err != nil {
-			return err
-		}
-		content := fbuf.String()
+			tr := tar.NewReader(r)
+			if header, err := tr.Next(); err != nil {
+				return fmt.Errorf("Unable to read content of tar archive: %s", err)
+			} else {
+				mode := strconv.FormatInt(header.Mode, 8)
+				if !strings.HasSuffix(mode, expected_mode) {
+					return fmt.Errorf("File permissions are incorrect: %s", mode)
+				}
+			}
 
-		if content != "foo" {
-			return fmt.Errorf("file content is invalid")
-		}
+			fbuf := new(bytes.Buffer)
+			if _, err := fbuf.ReadFrom(tr); err != nil {
+				return err
+			}
+			content := fbuf.String()
 
-		return nil
+			if content != "foo" {
+				return fmt.Errorf("file content is invalid")
+			}
+
+			return nil
+		}
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -719,12 +721,25 @@ func TestAccDockerContainer_upload(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
-					testCheck,
+					testCheck("744"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.executable", "true"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
+				),
+			},
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfigPermissions"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck("600"),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.permissions", "0600"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
 				),
 			},

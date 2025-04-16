@@ -820,6 +820,13 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 						},
+						"permissions": {
+							Type:             schema.TypeString,
+							Description:      "The permission mode for the file in the container. Has precedence over `executable`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateStringMatchesPattern(`^0[0-7]{3}$`),
+						},
 						"source": {
 							Type:        schema.TypeString,
 							Description: "A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state. Conflicts with `content` & `content_base64`",

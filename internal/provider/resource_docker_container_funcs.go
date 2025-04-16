@@ -12,6 +12,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -475,10 +476,16 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 			file := upload.(map[string]interface{})["file"].(string)
 			executable := upload.(map[string]interface{})["executable"].(bool)
+			permission := upload.(map[string]interface{})["permissions"].(string)
 
 			buf := new(bytes.Buffer)
 			tw := tar.NewWriter(buf)
-			if executable {
+			if permission != "" {
+				mode, err = strconv.ParseInt(permission, 8, 32)
+				if err != nil {
+					return diag.Errorf("Error parsing permission: %s", err)
+				}
+			} else if executable {
 				mode = 0o744
 			} else {
 				mode = 0o644
