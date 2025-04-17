@@ -44,7 +44,8 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 		createOpts.Ingress = v.(bool)
 	}
 	if v, ok := d.GetOk("ipv6"); ok {
-		createOpts.EnableIPv6 = v.(*bool)
+		enableIPv6 := v.(bool)
+		createOpts.EnableIPv6 = &enableIPv6
 	}
 
 	ipamOpts := &network.IPAM{}
