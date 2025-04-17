@@ -161,6 +161,7 @@ func New(version string) func() *schema.Provider {
 				"docker_plugin":         dataSourceDockerPlugin(),
 				"docker_image":          dataSourceDockerImage(),
 				"docker_logs":           dataSourceDockerLogs(),
+				"docker_containers":     dataSourceDockerContainers(),
 			},
 		}
 
