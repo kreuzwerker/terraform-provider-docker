@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -80,7 +79,7 @@ func resourceDockerVolume() *schema.Resource {
 func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	createOpts := volume.VolumeCreateBody{}
+	createOpts := volume.CreateOptions{}
 
 	if v, ok := d.GetOk("name"); ok {
 		createOpts.Name = v.(string)
@@ -96,7 +95,7 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	var err error
-	var retVolume types.Volume
+	var retVolume volume.Volume
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
 	if err != nil {

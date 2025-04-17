@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -64,7 +64,7 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 // determineRepoDigest determines the repo digest for a local image name.
 // It will always return a digest and if none was found it returns an empty string.
 // See https://github.com/kreuzwerker/terraform-provider-docker/pull/212#discussion_r646025706 for details
-func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) string {
+func determineRepoDigest(imageName string, imageToQuery *image.Summary) string {
 	// the edge case where the local image was pulled from a repo, tagged locally,
 	// and then referred to in the data source by that local name/tag...
 	if len(imageToQuery.RepoDigests) == 0 {

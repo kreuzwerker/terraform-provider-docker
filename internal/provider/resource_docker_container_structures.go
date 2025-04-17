@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
@@ -58,7 +57,7 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	return out
 }
 
-func flattenContainerNetworks(in *types.NetworkSettings) []interface{} {
+func flattenContainerNetworks(in *container.NetworkSettings) []interface{} {
 	out := make([]interface{}, 0)
 	if in == nil || in.Networks == nil || len(in.Networks) == 0 {
 		return out
@@ -261,7 +260,7 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 	return retDevices
 }
 
-func getDockerContainerMounts(container types.ContainerJSON) []map[string]interface{} {
+func getDockerContainerMounts(container container.InspectResponse) []map[string]interface{} {
 	mounts := []map[string]interface{}{}
 	for _, mount := range container.HostConfig.Mounts {
 		m := map[string]interface{}{

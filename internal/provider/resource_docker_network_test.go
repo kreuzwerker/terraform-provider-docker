@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerNetwork_basic(t *testing.T) {
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
@@ -34,7 +34,7 @@ func TestAccDockerNetwork_basic(t *testing.T) {
 }
 
 func TestAccDockerNetwork_full(t *testing.T) {
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	testCheckNetworkInspect := func(*terraform.State) error {
@@ -121,7 +121,7 @@ func TestAccDockerNetwork_full(t *testing.T) {
 
 // TODO mavogel: add full network config test in #74 (import resources)
 
-func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheckFunc {
+func testAccNetwork(n string, networkToCheck *network.Inspect) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
@@ -134,18 +134,18 @@ func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheck
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		networks, err := client.NetworkList(ctx, types.NetworkListOptions{})
+		networks, err := client.NetworkList(ctx, network.ListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, n := range networks {
 			if n.ID == rs.Primary.ID {
-				inspected, err := client.NetworkInspect(ctx, n.ID, types.NetworkInspectOptions{})
+				inspected, err := client.NetworkInspect(ctx, n.ID, network.InspectOptions{})
 				if err != nil {
 					return fmt.Errorf("Network could not be obtained: %s", err)
 				}
-				*network = inspected
+				*networkToCheck = inspected
 				return nil
 			}
 		}
@@ -155,7 +155,7 @@ func testAccNetwork(n string, network *types.NetworkResource) resource.TestCheck
 }
 
 func TestAccDockerNetwork_internal(t *testing.T) {
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
@@ -178,7 +178,7 @@ func TestAccDockerNetwork_internal(t *testing.T) {
 	})
 }
 
-func testAccNetworkInternal(network *types.NetworkResource, internal bool) resource.TestCheckFunc {
+func testAccNetworkInternal(network *network.Inspect, internal bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if network.Internal != internal {
 			return fmt.Errorf("Bad value for attribute 'internal': %t", network.Internal)
@@ -188,7 +188,7 @@ func testAccNetworkInternal(network *types.NetworkResource, internal bool) resou
 }
 
 func TestAccDockerNetwork_attachable(t *testing.T) {
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
@@ -211,7 +211,7 @@ func TestAccDockerNetwork_attachable(t *testing.T) {
 	})
 }
 
-func testAccNetworkAttachable(network *types.NetworkResource, attachable bool) resource.TestCheckFunc {
+func testAccNetworkAttachable(network *network.Inspect, attachable bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if network.Attachable != attachable {
 			return fmt.Errorf("Bad value for attribute 'attachable': %t", network.Attachable)
@@ -222,7 +222,7 @@ func testAccNetworkAttachable(network *types.NetworkResource, attachable bool) r
 
 func TestAccDockerNetwork_ingress(t *testing.T) {
 	ctx := context.Background()
-	var n types.NetworkResource
+	var n network.Inspect
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -252,7 +252,7 @@ func TestAccDockerNetwork_ingress(t *testing.T) {
 
 func removeSwarmIngressNetwork(ctx context.Context, t *testing.T) {
 	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-	networks, err := client.NetworkList(ctx, types.NetworkListOptions{})
+	networks, err := client.NetworkList(ctx, network.ListOptions{})
 	if err != nil {
 		t.Errorf("failed to list swarm networks: %v", err)
 	}
@@ -280,7 +280,7 @@ func nodeLeaveSwarm(ctx context.Context, t *testing.T) error {
 	return nil
 }
 
-func testAccNetworkIngress(network *types.NetworkResource, ingress bool) resource.TestCheckFunc {
+func testAccNetworkIngress(network *network.Inspect, ingress bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if network.Ingress != ingress {
 			return fmt.Errorf("Bad value for attribute 'ingress': %t", network.Ingress)
@@ -290,7 +290,7 @@ func testAccNetworkIngress(network *types.NetworkResource, ingress bool) resourc
 }
 
 func TestAccDockerNetwork_ipv4(t *testing.T) {
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
@@ -313,7 +313,7 @@ func TestAccDockerNetwork_ipv4(t *testing.T) {
 	})
 }
 
-func testAccNetworkIPv4(network *types.NetworkResource, internal bool) resource.TestCheckFunc {
+func testAccNetworkIPv4(network *network.Inspect, internal bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if len(network.IPAM.Config) != 1 {
 			return fmt.Errorf("Bad value for IPAM configuration count: %d", len(network.IPAM.Config))
@@ -327,7 +327,7 @@ func testAccNetworkIPv4(network *types.NetworkResource, internal bool) resource.
 
 func TestAccDockerNetwork_ipv6(t *testing.T) {
 	t.Skip("TODO mavogel: need to fix ipv6 network state")
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{
@@ -352,7 +352,7 @@ func TestAccDockerNetwork_ipv6(t *testing.T) {
 	})
 }
 
-func testAccNetworkIPv6(network *types.NetworkResource, internal bool) resource.TestCheckFunc { //nolint:unused
+func testAccNetworkIPv6(network *network.Inspect, internal bool) resource.TestCheckFunc { //nolint:unused
 	return func(s *terraform.State) error {
 		if !network.EnableIPv6 {
 			return fmt.Errorf("Bad value for attribute 'ipv6': %t", network.EnableIPv6)
@@ -368,7 +368,7 @@ func testAccNetworkIPv6(network *types.NetworkResource, internal bool) resource.
 }
 
 func TestAccDockerNetwork_labels(t *testing.T) {
-	var n types.NetworkResource
+	var n network.Inspect
 	resourceName := "docker_network.foo"
 
 	resource.Test(t, resource.TestCase{

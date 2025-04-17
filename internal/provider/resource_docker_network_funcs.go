@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -25,12 +24,9 @@ const (
 func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	createOpts := types.NetworkCreate{}
+	createOpts := network.CreateOptions{}
 	if v, ok := d.GetOk("labels"); ok {
 		createOpts.Labels = labelSetToMap(v.(*schema.Set))
-	}
-	if v, ok := d.GetOk("check_duplicate"); ok {
-		createOpts.CheckDuplicate = v.(bool)
 	}
 	if v, ok := d.GetOk("driver"); ok {
 		createOpts.Driver = v.(string)
@@ -48,7 +44,8 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 		createOpts.Ingress = v.(bool)
 	}
 	if v, ok := d.GetOk("ipv6"); ok {
-		createOpts.EnableIPv6 = v.(bool)
+		enableIPv6 := v.(bool)
+		createOpts.EnableIPv6 = &enableIPv6
 	}
 
 	ipamOpts := &network.IPAM{}
@@ -152,7 +149,7 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
-		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
+		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
 		if err != nil {
 			log.Printf("[WARN] Network (%s) not found, removing from state", networkID)
 			d.SetId("")
@@ -198,7 +195,7 @@ func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context,
 		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
-		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
+		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
 		if err != nil {
 			log.Printf("[INFO] Network (%s) not found. Already removed", networkID)
 			return networkID, "removed", nil

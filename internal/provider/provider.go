@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -217,17 +217,17 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 // AuthConfigs represents authentication options to use for the
 // PushImage method accommodating the new X-Registry-Config header
 type AuthConfigs struct {
-	Configs map[string]types.AuthConfig `json:"configs"`
+	Configs map[string]registry.AuthConfig `json:"configs"`
 }
 
 // Take the given registry_auth schemas and return a map of registry auth configurations
 func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 	authConfigs := AuthConfigs{
-		Configs: make(map[string]types.AuthConfig),
+		Configs: make(map[string]registry.AuthConfig),
 	}
 
 	for _, auth := range authList.List() {
-		authConfig := types.AuthConfig{}
+		authConfig := registry.AuthConfig{}
 		address := auth.(map[string]interface{})["address"].(string)
 		authConfig.ServerAddress = normalizeRegistryAddress(address)
 		registryHostname := convertToHostname(authConfig.ServerAddress)
@@ -311,11 +311,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 func loadConfigFile(configData io.Reader) (*configfile.ConfigFile, error) {
 	configFile := configfile.New("")
 	if err := configFile.LoadFromReader(configData); err != nil {
-		log.Println("[DEBUG] Error parsing registry config: ", err)
-		log.Println("[DEBUG] Will try parsing from legacy format")
-		if err := configFile.LegacyLoadFromReader(configData); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	return configFile, nil
 }

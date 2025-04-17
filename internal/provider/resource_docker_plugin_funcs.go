@@ -129,7 +129,7 @@ func validateFuncPluginName(val interface{}, key string) (warns []string, errs [
 	return
 }
 
-func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivileges) (bool, error) {
+func getDockerPluginGrantPermissions(src interface{}) func(context.Context, types.PluginPrivileges) (bool, error) {
 	grantPermissionsSet := src.(*schema.Set)
 	grantPermissions := make(map[string]map[string]struct{}, grantPermissionsSet.Len())
 	for _, b := range grantPermissionsSet.List() {
@@ -142,7 +142,7 @@ func getDockerPluginGrantPermissions(src interface{}) func(types.PluginPrivilege
 		}
 		grantPermissions[name] = grantPermission
 	}
-	return func(privileges types.PluginPrivileges) (bool, error) {
+	return func(context context.Context, privileges types.PluginPrivileges) (bool, error) {
 		for _, privilege := range privileges {
 			grantPermission, nameOK := grantPermissions[privilege.Name]
 			if !nameOK {
