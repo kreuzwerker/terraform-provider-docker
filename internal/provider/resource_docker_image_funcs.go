@@ -61,9 +61,6 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return diag.Errorf("Error reading docker image list: %s", err)
 	}
-	for id := range data.DockerImages {
-		log.Printf("[DEBUG] local images data: %v", id)
-	}
 
 	imageName := d.Get("name").(string)
 
