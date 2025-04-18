@@ -22,6 +22,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
+	auth := v.([]interface{})[0].(map[string]interface{})
+		return registry.AuthConfig{
+			ServerAddress: normalizeRegistryAddress(auth["address"].(string)),
+			Username:      auth["username"].(string),
+			Password:      auth["password"].(string),
+		}
+
+}
+
 func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	providerConfig := meta.(*ProviderConfig)
@@ -30,10 +40,19 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 
 	pushOpts := createPushImageOptions(name)
 
-	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
-	if err != nil {
-		return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
+	var authConfig registry.AuthConfig
+	if v, ok := d.GetOk("auth_config"); ok {
+		log.Printf("[INFO] Using auth config from resource: %s", v)
+		authConfig = buildAuthConfigFromResource(v)
+	} else {
+		log.Printf("[INFO] Using auth config from provider: %s", v)
+		var err error
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		if err != nil {
+			return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
+		}
 	}
+
 	if err := pushDockerRegistryImage(ctx, client, pushOpts, authConfig.Username, authConfig.Password); err != nil {
 		return diag.Errorf("Error pushing docker image: %s", err)
 	}
@@ -41,7 +60,7 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
 	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
-		return diag.Errorf("Unable to create image, image not found: %s", err)
+		return diag.Errorf("Got error getting registry image digest inside resourceDockerRegistryImageCreate: %s", err)
 	}
 	d.SetId(digest)
 	d.Set("sha256_digest", digest)
@@ -52,9 +71,16 @@ func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
-	if err != nil {
-		return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+
+	var authConfig registry.AuthConfig
+	if v, ok := d.GetOk("auth_config"); ok {
+		authConfig = buildAuthConfigFromResource(v)
+	} else {
+		var err error
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		if err != nil {
+			return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+		}
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
