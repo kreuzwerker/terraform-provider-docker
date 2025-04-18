@@ -46,26 +46,6 @@ resource "docker_container" "foo" {
 }
 ```
 
-Terraform 0.12 and earlier:
-
-```terraform
-provider "docker" {
-  version = "~> 3.2.0"
-  host    = "unix:///var/run/docker.sock"
-}
-
-# Pulls the image
-resource "docker_image" "ubuntu" {
-  name = "ubuntu:latest"
-}
-
-# Create a container
-resource "docker_container" "foo" {
-  image = docker_image.ubuntu.image_id
-  name  = "foo"
-}
-```
-
 ## Remote Hosts
 You can also use the `ssh` protocol to connect to the docker host on a remote machine.
 The configuration would look as follows:
@@ -78,6 +58,11 @@ provider "docker" {
 ```
 
 When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
+
+## Disabling Docker Daemon Checking
+
+The `docker_registry_image` `data_source` and `resource` do not require a connection to the Docker daemon. If you want to use those in an environment without a Docker daemon, you can disable the
+connection check by setting the `disable_docker_daemon_check` argument to `true`. Be careful, this will break the provider for any resources that require a connection to the Docker daemon.
 
 ## Registry credentials
 
@@ -169,6 +154,7 @@ provider "docker" {
 - `ca_material` (String) PEM-encoded content of Docker host CA certificate
 - `cert_material` (String) PEM-encoded content of Docker client certificate
 - `cert_path` (String) Path to directory with Docker TLS config
+- `disable_docker_daemon_check` (Boolean) If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.
 - `host` (String) The Docker daemon address
 - `key_material` (String) PEM-encoded content of Docker client private key
 - `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--registry_auth))
