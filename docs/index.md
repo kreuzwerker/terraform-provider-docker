@@ -154,6 +154,7 @@ provider "docker" {
 - `ca_material` (String) PEM-encoded content of Docker host CA certificate
 - `cert_material` (String) PEM-encoded content of Docker client certificate
 - `cert_path` (String) Path to directory with Docker TLS config
+- `context` (String) The name of the Docker context to use. Can also be set via `DOCKER_CONTEXT` environment variable. Overrides the `host` if set.
 - `disable_docker_daemon_check` (Boolean) If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.
 - `host` (String) The Docker daemon address
 - `key_material` (String) PEM-encoded content of Docker client private key
