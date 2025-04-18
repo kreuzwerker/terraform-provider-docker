@@ -27,6 +27,14 @@ func resourceDockerTag() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 			},
+			"tag_triggers": {
+				Type:        schema.TypeSet,
+				Description: "List of values which cause the tag to be (re)created. This is useful for triggering a new tag when the source image changes.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+			},
 		},
 	}
 }
