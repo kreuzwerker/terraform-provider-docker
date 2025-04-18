@@ -45,6 +45,26 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 	})
 }
 
+func TestAccDockerRegistryImage_WithoutDaemon(t *testing.T) {
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSource_WithoutDaemon"), registry, image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
 func TestAccDockerRegistryImage_auth(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"

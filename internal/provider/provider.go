@@ -140,6 +140,12 @@ func New(version string) func() *schema.Provider {
 						},
 					},
 				},
+				"disable_docker_daemon_check": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.",
+				},
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
@@ -191,9 +197,18 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diag.Errorf("Error initializing Docker client: %s", err)
 		}
 
-		_, err = client.Ping(ctx)
-		if err != nil {
-			return nil, diag.Errorf("Error pinging Docker server: %s", err)
+		// Check if the Docker daemon is running
+		if !d.Get("disable_docker_daemon_check").(bool) {
+			_, err = client.ServerVersion(ctx)
+			if err != nil {
+				return nil, diag.Errorf("Error connecting to Docker daemon: %s", err)
+			}
+			_, err = client.Ping(ctx)
+			if err != nil {
+				return nil, diag.Errorf("Error pinging Docker server: %s", err)
+			}
+		} else {
+			log.Printf("[DEBUG] Skipping Docker daemon check")
 		}
 
 		authConfigs := &AuthConfigs{}
