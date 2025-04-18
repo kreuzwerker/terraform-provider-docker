@@ -47,6 +47,33 @@ func resourceDockerRegistryImage() *schema.Resource {
 				Description: "The sha256 digest of the image.",
 				Computed:    true,
 			},
+
+			"auth_config": {
+				Type:        schema.TypeList,
+				Description: "Authentication configuration for the Docker registry. It is only used for this resource.",
+				Optional:    true,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"address": {
+							Type:        schema.TypeString,
+							Description: "The address of the Docker registry.",
+							Required:    true,
+						},
+						"username": {
+							Type:        schema.TypeString,
+							Description: "The username for the Docker registry.",
+							Required:    true,
+						},
+						"password": {
+							Type:        schema.TypeString,
+							Description: "The password for the Docker registry.",
+							Required:    true,
+							Sensitive:   true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
