@@ -115,14 +115,14 @@ chlog-%:
 
 replace-occurences-%:
 	@echo "Replace occurences of old version strings..."
-	sed -i "s/$(shell (svu --tag.prefix='' current))/$*/g" README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf
+	sed -i "s/$(shell (svu --tag.prefix='' current))/$*/g" README.md docs/index.md examples/provider/provider-tf13.tf
 
 release-%:
 	@echo "Review the changes made by this script then execute the following:"
 	@${MAKE} website-generation
 	@echo "Review the changes made by this script then execute the following:"
 	@echo
-	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf && git commit -m 'chore: Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
+	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf13.tf && git commit -m 'chore: Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
 	@echo
 	@echo "Finally, push the changes:"
 	@echo
