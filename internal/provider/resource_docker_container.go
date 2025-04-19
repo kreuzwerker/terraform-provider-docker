@@ -712,6 +712,27 @@ func resourceDockerContainer() *schema.Resource {
 				ValidateDiagFunc: validateStringMatchesPattern(`^\d+([,-]\d+)*$`),
 			},
 
+			"cpus": {
+				Type:             schema.TypeFloat,
+				Description:      "Specify how much of the available CPU resources a container can use.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+			},
+
+			"cpu_period": {
+				Type:             schema.TypeInt,
+				Description:      "Specify the CPU CFS scheduler period, which is used alongside `cpu-quota`.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+			},
+
+			"cpu_quota": {
+				Type:             schema.TypeInt,
+				Description:      "Impose a CPU CFS quota on the container. The number of microseconds per `cpu-period` that the container is limited to before throttled.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+			},
+
 			"log_driver": {
 				Type:        schema.TypeString,
 				Description: "The logging driver to use for the container.",
