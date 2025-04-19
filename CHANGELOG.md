@@ -1,9 +1,30 @@
 
+<a name="v3.3.0"></a>
+## [v3.3.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.2.0...v3.3.0) (2025-04-18)
+
+### Chore
+
+* Update terraform-plugin-sdk/v2 dependency ([#699](https://github.com/kreuzwerker/terraform-provider-docker/issues/699))
+* Update docker/docker and docker/cli to newest stable ([#695](https://github.com/kreuzwerker/terraform-provider-docker/issues/695))
+
+### Feat
+
+* Implement support for docker context ([#704](https://github.com/kreuzwerker/terraform-provider-docker/issues/704))
+* disable_docker_daemon_check for provider ([#703](https://github.com/kreuzwerker/terraform-provider-docker/issues/703))
+* Implement tag triggers for docker_tag resource ([#702](https://github.com/kreuzwerker/terraform-provider-docker/issues/702))
+* Implement auth_config for docker_registry_image ([#701](https://github.com/kreuzwerker/terraform-provider-docker/issues/701))
+
+### Fix
+
+* Store correctly ports from server ([#698](https://github.com/kreuzwerker/terraform-provider-docker/issues/698))
+
+
 <a name="v3.2.0"></a>
 ## [v3.2.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.2...v3.2.0) (2025-04-16)
 
 ### Chore
 
+* Prepare release v3.2.0 ([#694](https://github.com/kreuzwerker/terraform-provider-docker/issues/694))
 * Upgrade golangci-lint to next major version ([#686](https://github.com/kreuzwerker/terraform-provider-docker/issues/686))
 
 ### Docs
