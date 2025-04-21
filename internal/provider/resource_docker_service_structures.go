@@ -177,6 +177,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Sysctls) > 0 {
 		m["sysctl"] = in.Sysctls
 	}
+	if len(in.CapAdd) > 0 || len(in.CapDrop) > 0 {
+		m["capabilities"] = flattenServiceCapabilities(in.CapAdd, in.CapDrop)
+	}
 	out = append(out, m)
 	return out
 }
@@ -376,6 +379,26 @@ func flattenServiceConfigs(in []*swarm.ConfigReference) *schema.Set {
 	configsResource := containerSpecResource.Schema["configs"].Elem.(*schema.Resource)
 	f := schema.HashResource(configsResource)
 	return schema.NewSet(f, out)
+}
+
+func flattenServiceCapabilities(add []string, drop []string) []interface{} {
+	if len(add) == 0 && len(drop) == 0 {
+		return nil
+	}
+
+	out := make([]interface{}, 1)
+	m := make(map[string]interface{})
+
+	if len(add) > 0 {
+		m["add"] = add
+	}
+
+	if len(drop) > 0 {
+		m["drop"] = drop
+	}
+
+	out[0] = m
+	return out
 }
 
 func flattenTaskResources(in *swarm.ResourceRequirements) []interface{} {
@@ -948,6 +971,18 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 			if value, ok := rawContainerSpec["sysctl"]; ok {
 				containerSpec.Sysctls = mapTypeMapValsToString(value.(map[string]interface{}))
 			}
+            if value, ok := rawContainerSpec["cap_add"]; ok {
+				for _, cap := range value.([]interface{}) {
+					containerSpec.CapAdd = append(containerSpec.CapAdd, cap.(string))
+				}
+			}
+			
+			if value, ok := rawContainerSpec["cap_drop"]; ok {
+				for _, cap := range value.([]interface{}) {
+					containerSpec.CapDrop = append(containerSpec.CapDrop, cap.(string))
+				}
+			}
+			
 		}
 	}
 
