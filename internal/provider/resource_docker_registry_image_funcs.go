@@ -101,13 +101,20 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
-	if err != nil {
-		return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
+
+	var authConfig registry.AuthConfig
+	if v, ok := d.GetOk("auth_config"); ok {
+		authConfig = buildAuthConfigFromResource(v)
+	} else {
+		var err error
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		if err != nil {
+			return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
+		}
 	}
 
 	digest := d.Get("sha256_digest").(string)
-	err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
+	err := deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
 	if err != nil {
 		err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, pushOpts.Tag, authConfig.Username, authConfig.Password, true, true)
 		if err != nil {
