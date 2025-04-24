@@ -529,9 +529,16 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					if err != nil {
 						result <- fmt.Errorf("error inspecting container state: %s", err)
 					}
+
+					if infos.ContainerJSONBase == nil || infos.ContainerJSONBase.State == nil || infos.ContainerJSONBase.State.Health == nil { //nolint:staticcheck
+						result <- fmt.Errorf("you have supplied a 'wait' argument, but the container does not have a healthcheck defined. Please remove the 'wait' argument or add a 'healthcheck' attribute")
+						break
+					}
+
 					// QF1008: could remove embedded field "ContainerJSONBase" from selector
 					if infos.ContainerJSONBase.State.Health.Status == types.Healthy { //nolint:staticcheck
 						log.Printf("[DEBUG] container state is healthy")
+						result <- nil
 						break
 					}
 					log.Printf("[DEBUG] waiting for container healthy state")

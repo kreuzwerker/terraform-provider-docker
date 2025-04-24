@@ -1416,6 +1416,25 @@ func TestAccDockerContainer_healthcheck(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_wait(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerWait"),
+				ExpectError: regexp.MustCompile(
+					`You have supplied a 'wait' argument.*`,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_nostart(t *testing.T) {
 	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{

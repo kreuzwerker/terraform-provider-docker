@@ -66,7 +66,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"wait": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.",
+				Description: "If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
