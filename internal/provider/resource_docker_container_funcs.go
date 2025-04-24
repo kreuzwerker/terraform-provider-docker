@@ -535,7 +535,6 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 						break
 					}
 
-					// QF1008: could remove embedded field "ContainerJSONBase" from selector
 					if infos.ContainerJSONBase.State.Health.Status == types.Healthy { //nolint:staticcheck
 						log.Printf("[DEBUG] container state is healthy")
 						result <- nil
