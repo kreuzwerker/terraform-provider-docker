@@ -1425,7 +1425,7 @@ func TestAccDockerContainer_wait(t *testing.T) {
 			{
 				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerWait"),
 				ExpectError: regexp.MustCompile(
-					`You have supplied a 'wait' argument.*`,
+					`you have supplied a 'wait' argument.*`,
 				),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerNotRunning("docker_container.foo", &c),
