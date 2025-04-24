@@ -202,6 +202,7 @@ Optional:
 - `driver_options` (Map of String) key/value map of driver specific options.
 - `labels` (Block Set) User-defined key/value metadata. (see [below for nested schema](#nestedblock--mounts--volume_options--labels))
 - `no_copy` (Boolean) Populate volume with data from the target.
+- `subpath` (String) Path within the volume to mount. Requires docker server version 1.45 or higher.
 
 <a id="nestedblock--mounts--volume_options--labels"></a>
 ### Nested Schema for `mounts.volume_options.labels`
