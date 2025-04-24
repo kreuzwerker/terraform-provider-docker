@@ -209,6 +209,13 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 								}
 								mountInstance.VolumeOptions.DriverConfig.Options = mapTypeMapValsToString(value.(map[string]interface{}))
 							}
+							if client.ClientVersion() >= "1.45" {
+								if value, ok := rawVolumeOptions["subpath"]; ok {
+									mountInstance.VolumeOptions.Subpath = value.(string)
+								}
+							} else {
+								return diag.Errorf("Setting VolumeOptions.Subpath requires docker version 1.45 or higher")
+							}
 						}
 					}
 				}

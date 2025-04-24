@@ -382,6 +382,12 @@ func resourceDockerContainer() *schema.Resource {
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 									},
+									"subpath": {
+										Type:        schema.TypeString,
+										Description: "Path within the volume to mount. Requires docker server version 1.45 or higher.",
+										Optional:    true,
+										ForceNew:    true,
+									},
 								},
 							},
 						},
