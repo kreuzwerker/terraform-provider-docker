@@ -26,7 +26,7 @@ Do you want to migrate from `v2.x` to `v3.x`? Please read the [migration guide](
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/3.3.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/3.4.0/docs) of the registry
 or use the following example:
 
 
@@ -38,7 +38,7 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "3.3.0"
+      version = "3.4.0"
     }
   }
 }
