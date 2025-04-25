@@ -713,7 +713,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		d.Set("image", container.Config.Image)
 	}
 
-
 	d.Set("hostname", container.Config.Hostname)
 	d.Set("domainname", container.Config.Domainname)
 	d.Set("command", container.Config.Cmd)

@@ -227,7 +227,6 @@ func resourceDockerContainer() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'.",
 				Optional:    true,
-				
 			},
 			"working_dir": {
 				Type:        schema.TypeString,
