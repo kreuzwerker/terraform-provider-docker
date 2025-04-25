@@ -126,12 +126,9 @@ func resourceDockerContainer() *schema.Resource {
 				Computed:    true,
 			},
 
-			// ForceNew is not true for image because we need to
-			// sane this against Docker image IDs, as each image
-			// can have multiple names/tags attached do it.
 			"image": {
 				Type:        schema.TypeString,
-				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.",
+				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `image_id` attribute of the `docker_image` resource as is shown in the example.",
 				Required:    true,
 				ForceNew:    true,
 			},
@@ -230,6 +227,7 @@ func resourceDockerContainer() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'.",
 				Optional:    true,
+				
 			},
 			"working_dir": {
 				Type:        schema.TypeString,
