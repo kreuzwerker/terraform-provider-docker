@@ -702,7 +702,17 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// logs
 	// "must_run" can't be imported
 	// container_logs
-	d.Set("image", container.Image)
+
+	// get image value from plan. If it begins with sha256: then we need to use {{ .Image }} value
+	//  If not, we can use Config.Image
+	// See https://github.com/kreuzwerker/terraform-provider-docker/issues/426#issuecomment-2828954974 for more details
+	imageValue := d.Get("image").(string)
+	if strings.HasPrefix(imageValue, "sha256:") {
+		d.Set("image", container.Image)
+	} else {
+		d.Set("image", container.Config.Image)
+	}
+
 	d.Set("hostname", container.Config.Hostname)
 	d.Set("domainname", container.Config.Domainname)
 	d.Set("command", container.Config.Cmd)

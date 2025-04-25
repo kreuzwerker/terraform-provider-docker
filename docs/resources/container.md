@@ -30,7 +30,7 @@ resource "docker_image" "ubuntu" {
 
 ### Required
 
-- `image` (String) The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.
+- `image` (String) The ID of the image to back this container. The easiest way to get this value is to use the `image_id` attribute of the `docker_image` resource as is shown in the example.
 - `name` (String) The name of the container.
 
 ### Optional

@@ -1435,6 +1435,21 @@ func TestAccDockerContainer_wait(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_nameattrnochange(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerimageId"), "busybox:1.35.0"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
 func TestAccDockerContainer_nostart(t *testing.T) {
 	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
