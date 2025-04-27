@@ -138,6 +138,7 @@ Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`.
+- `start_interval` (String) Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
