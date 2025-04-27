@@ -881,6 +881,13 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
 						},
+						"start_interval": {
+							Type:             schema.TypeString,
+							Description:      "Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.",
+							Default:          "0s",
+							Optional:         true,
+							ValidateDiagFunc: validateDurationGeq0(),
+						},
 						"retries": {
 							Type:             schema.TypeInt,
 							Description:      "Consecutive failures needed to report unhealthy. Defaults to `0`.",

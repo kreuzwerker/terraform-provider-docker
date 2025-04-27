@@ -149,6 +149,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				if rawStartPeriod, ok := rawHealthCheck["start_period"]; ok {
 					config.Healthcheck.StartPeriod, _ = time.ParseDuration(rawStartPeriod.(string))
 				}
+				if rawStartInterval, ok := rawHealthCheck["start_interval"]; ok {
+					config.Healthcheck.StartInterval, _ = time.ParseDuration(rawStartInterval.(string))
+				}
 				if rawRetries, ok := rawHealthCheck["retries"]; ok {
 					config.Healthcheck.Retries, _ = rawRetries.(int)
 				}
@@ -790,11 +793,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if container.Config.Healthcheck != nil {
 		d.Set("healthcheck", []interface{}{
 			map[string]interface{}{
-				"test":         container.Config.Healthcheck.Test,
-				"interval":     container.Config.Healthcheck.Interval.String(),
-				"timeout":      container.Config.Healthcheck.Timeout.String(),
-				"start_period": container.Config.Healthcheck.StartPeriod.String(),
-				"retries":      container.Config.Healthcheck.Retries,
+				"test":           container.Config.Healthcheck.Test,
+				"interval":       container.Config.Healthcheck.Interval.String(),
+				"timeout":        container.Config.Healthcheck.Timeout.String(),
+				"start_period":   container.Config.Healthcheck.StartPeriod.String(),
+				"start_interval": container.Config.Healthcheck.StartInterval.String(),
+				"retries":        container.Config.Healthcheck.Retries,
 			},
 		})
 	}
