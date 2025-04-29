@@ -127,10 +127,13 @@ func parseAuthHeader(header string) (map[string]string, error) {
 	return opts, nil
 }
 
-func getAuthToken(auth map[string]string, username string, password string, client *http.Client) (string, error) {
+func getAuthToken(auth map[string]string, username string, password string, fallbackScope string, client *http.Client) (string, error) {
 	params := url.Values{}
 	params.Set("service", auth["service"])
 	params.Set("scope", auth["scope"])
+	if auth["scope"] == "" {
+		params.Set("scope", fallbackScope)
+	}
 	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
 	if err != nil {
 		return "", fmt.Errorf("Error creating registry request: %s", err)

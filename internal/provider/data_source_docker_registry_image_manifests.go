@@ -114,10 +114,10 @@ func getImageManifest(registry, registryWithProtocol, image, tag, username, pass
 		return nil, err
 	}
 
-	return doManifestRequest(req, client, username, password, true)
+	return doManifestRequest(req, client, username, password, "repository:"+image+":push,pull", true)
 }
 
-func doManifestRequest(req *http.Request, client *http.Client, username string, password string, retryUnauthorized bool) (*ManifestResponse, error) {
+func doManifestRequest(req *http.Request, client *http.Client, username string, password string, fallbackScope string, retryUnauthorized bool) (*ManifestResponse, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Error during registry request: %s", err)
@@ -135,14 +135,14 @@ func doManifestRequest(req *http.Request, client *http.Client, username string, 
 				return nil, fmt.Errorf("bad credentials: %s", resp.Status)
 			}
 
-			token, err := getAuthToken(auth, username, password, client)
+			token, err := getAuthToken(auth, username, password, fallbackScope, client)
 			if err != nil {
 				return nil, err
 			}
 
 			req.Header.Set("Authorization", "Bearer "+token)
 
-			return doManifestRequest(req, client, username, password, false)
+			return doManifestRequest(req, client, username, password, fallbackScope, false)
 		}
 
 		return nil, fmt.Errorf("got bad response from registry: %s", resp.Status)

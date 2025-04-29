@@ -318,7 +318,7 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 			return fmt.Errorf("bad credentials: %s", resp.Status)
 		}
 
-		token, err := getAuthToken(auth, username, password, client)
+		token, err := getAuthToken(auth, username, password, "repository:"+pushOpts.Repository+":*", client)
 		if err != nil {
 			return err
 		}
