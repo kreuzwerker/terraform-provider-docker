@@ -177,8 +177,11 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Sysctls) > 0 {
 		m["sysctl"] = in.Sysctls
 	}
-	if len(in.CapabilityAdd) > 0 || len(in.CapabilityDrop) > 0 {
-		m["capabilities"] = flattenServiceCapabilities(in.CapabilityAdd, in.CapabilityDrop)
+	if len(in.CapabilityAdd) > 0 {
+		m["cap_add"] = in.CapabilityAdd
+	}
+	if len(in.CapabilityDrop) > 0 {
+		m["cap_drop"] = in.CapabilityDrop
 	}
 	out = append(out, m)
 	return out
@@ -379,26 +382,6 @@ func flattenServiceConfigs(in []*swarm.ConfigReference) *schema.Set {
 	configsResource := containerSpecResource.Schema["configs"].Elem.(*schema.Resource)
 	f := schema.HashResource(configsResource)
 	return schema.NewSet(f, out)
-}
-
-func flattenServiceCapabilities(add []string, drop []string) []interface{} {
-	if len(add) == 0 && len(drop) == 0 {
-		return nil
-	}
-
-	out := make([]interface{}, 1)
-	m := make(map[string]interface{})
-
-	if len(add) > 0 {
-		m["cap_add"] = add
-	}
-
-	if len(drop) > 0 {
-		m["cap_drop"] = drop
-	}
-
-	out[0] = m
-	return out
 }
 
 func flattenTaskResources(in *swarm.ResourceRequirements) []interface{} {
