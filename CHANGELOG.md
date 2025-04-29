@@ -1,9 +1,24 @@
 
+<a name="v3.4.0"></a>
+## [v3.4.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.3.0...v3.4.0) (2025-04-25)
+
+### Feat
+
+* Implement volume_options subpath ([#710](https://github.com/kreuzwerker/terraform-provider-docker/issues/710))
+
+### Fix
+
+* Prevent recreation of image name is intentionally set to a fixed value ([#711](https://github.com/kreuzwerker/terraform-provider-docker/issues/711))
+* Improve container wait handling ([#709](https://github.com/kreuzwerker/terraform-provider-docker/issues/709))
+* Use auth_config block also for registry_image delete functionality ([#708](https://github.com/kreuzwerker/terraform-provider-docker/issues/708))
+
+
 <a name="v3.3.0"></a>
-## [v3.3.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.2.0...v3.3.0) (2025-04-18)
+## [v3.3.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.2.0...v3.3.0) (2025-04-19)
 
 ### Chore
 
+* Prepare release v3.3.0 ([#705](https://github.com/kreuzwerker/terraform-provider-docker/issues/705))
 * Update terraform-plugin-sdk/v2 dependency ([#699](https://github.com/kreuzwerker/terraform-provider-docker/issues/699))
 * Update docker/docker and docker/cli to newest stable ([#695](https://github.com/kreuzwerker/terraform-provider-docker/issues/695))
 

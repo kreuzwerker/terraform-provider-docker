@@ -30,7 +30,7 @@ resource "docker_image" "ubuntu" {
 
 ### Required
 
-- `image` (String) The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.
+- `image` (String) The ID of the image to back this container. The easiest way to get this value is to use the `image_id` attribute of the `docker_image` resource as is shown in the example.
 - `name` (String) The name of the container.
 
 ### Optional
@@ -93,7 +93,7 @@ resource "docker_image" "ubuntu" {
 - `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
-- `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.
+- `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.
 - `wait_timeout` (Number) The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.
 - `working_dir` (String) The working directory for commands to run in.
 
@@ -138,6 +138,7 @@ Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`.
+- `start_interval` (String) Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
@@ -202,6 +203,7 @@ Optional:
 - `driver_options` (Map of String) key/value map of driver specific options.
 - `labels` (Block Set) User-defined key/value metadata. (see [below for nested schema](#nestedblock--mounts--volume_options--labels))
 - `no_copy` (Boolean) Populate volume with data from the target.
+- `subpath` (String) Path within the volume to mount. Requires docker server version 1.45 or higher.
 
 <a id="nestedblock--mounts--volume_options--labels"></a>
 ### Nested Schema for `mounts.volume_options.labels`
