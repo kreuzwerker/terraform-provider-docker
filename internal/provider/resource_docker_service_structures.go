@@ -177,10 +177,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Sysctls) > 0 {
 		m["sysctl"] = in.Sysctls
 	}
-	if len(in.Capabilities) > 0 {
-		if len(in.CapabilityAdd) > 0 || len(in.CapabilityDrop) > 0 {
-			m["capabilities"] = flattenServiceCapabilities(in.CapabilityAdd, in.CapabilityDrop)
-		}
+	if len(in.CapabilityAdd) > 0 || len(in.CapabilityDrop) > 0 {
+		m["capabilities"] = flattenServiceCapabilities(in.CapabilityAdd, in.CapabilityDrop)
+	}
 	out = append(out, m)
 	return out
 }
