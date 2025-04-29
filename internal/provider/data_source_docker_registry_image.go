@@ -93,7 +93,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 			return "", fmt.Errorf("bad credentials: %s", resp.Status)
 		}
 
-		token, err := getAuthToken(auth, username, password, client)
+		token, err := getAuthToken(auth, username, password, "repository:"+image+":push,pull", client)
 		if err != nil {
 			return "", err
 		}
