@@ -90,7 +90,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 	case http.StatusUnauthorized:
 		auth, err := parseAuthHeader(resp.Header.Get("www-authenticate"))
 		if err != nil {
-			return "", fmt.Errorf("Bad credentials: %s", resp.Status)
+			return "", fmt.Errorf("bad credentials: %s", resp.Status)
 		}
 
 		token, err := getAuthToken(auth, username, password, client)

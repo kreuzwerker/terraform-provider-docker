@@ -315,10 +315,13 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 	case http.StatusUnauthorized:
 		auth, err := parseAuthHeader(resp.Header.Get("www-authenticate"))
 		if err != nil {
-			return fmt.Errorf("Bad credentials: %s", resp.Status)
+			return fmt.Errorf("bad credentials: %s", resp.Status)
 		}
 
 		token, err := getAuthToken(auth, username, password, client)
+		if err != nil {
+			return err
+		}
 
 		req.Header.Set("Authorization", "Bearer "+token)
 		oauthResp, err := client.Do(req)
