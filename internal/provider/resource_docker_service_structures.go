@@ -177,9 +177,10 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.Sysctls) > 0 {
 		m["sysctl"] = in.Sysctls
 	}
-	if len(in.CapAdd) > 0 || len(in.CapDrop) > 0 {
-		m["capabilities"] = flattenServiceCapabilities(in.CapAdd, in.CapDrop)
-	}
+	if len(in.Capabilities) > 0 {
+		if len(in.CapabilityAdd) > 0 || len(in.CapabilityDrop) > 0 {
+			m["capabilities"] = flattenServiceCapabilities(in.CapabilityAdd, in.CapabilityDrop)
+		}
 	out = append(out, m)
 	return out
 }
@@ -390,11 +391,11 @@ func flattenServiceCapabilities(add []string, drop []string) []interface{} {
 	m := make(map[string]interface{})
 
 	if len(add) > 0 {
-		m["add"] = add
+		m["cap_add"] = add
 	}
 
 	if len(drop) > 0 {
-		m["drop"] = drop
+		m["cap_drop"] = drop
 	}
 
 	out[0] = m
@@ -973,13 +974,13 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 			}
             if value, ok := rawContainerSpec["cap_add"]; ok {
 				for _, cap := range value.([]interface{}) {
-					containerSpec.CapAdd = append(containerSpec.CapAdd, cap.(string))
+					containerSpec.CapabilityAdd = append(containerSpec.CapabilityAdd, cap.(string))
 				}
 			}
 			
 			if value, ok := rawContainerSpec["cap_drop"]; ok {
 				for _, cap := range value.([]interface{}) {
-					containerSpec.CapDrop = append(containerSpec.CapDrop, cap.(string))
+					containerSpec.CapabilityDrop = append(containerSpec.CapabilityDrop, cap.(string))
 				}
 			}
 			
