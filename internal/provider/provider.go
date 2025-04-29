@@ -169,11 +169,12 @@ func New(version string) func() *schema.Provider {
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"docker_registry_image": dataSourceDockerRegistryImage(),
-				"docker_network":        dataSourceDockerNetwork(),
-				"docker_plugin":         dataSourceDockerPlugin(),
-				"docker_image":          dataSourceDockerImage(),
-				"docker_logs":           dataSourceDockerLogs(),
+				"docker_registry_image":           dataSourceDockerRegistryImage(),
+				"docker_network":                  dataSourceDockerNetwork(),
+				"docker_plugin":                   dataSourceDockerPlugin(),
+				"docker_image":                    dataSourceDockerImage(),
+				"docker_logs":                     dataSourceDockerLogs(),
+				"docker_registry_image_manifests": dataSourceDockerRegistryImageManifests(),
 			},
 		}
 
