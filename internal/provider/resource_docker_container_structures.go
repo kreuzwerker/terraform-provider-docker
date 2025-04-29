@@ -291,6 +291,9 @@ func getDockerContainerMounts(container container.InspectResponse) []map[string]
 				opt["driver_name"] = mount.VolumeOptions.DriverConfig.Name
 				opt["driver_options"] = mount.VolumeOptions.DriverConfig.Options
 			}
+			if mount.VolumeOptions.Subpath != "" {
+				opt["subpath"] = mount.VolumeOptions.Subpath
+			}
 			m["volume_options"] = []map[string]interface{}{
 				opt,
 			}

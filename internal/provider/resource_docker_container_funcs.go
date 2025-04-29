@@ -149,6 +149,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				if rawStartPeriod, ok := rawHealthCheck["start_period"]; ok {
 					config.Healthcheck.StartPeriod, _ = time.ParseDuration(rawStartPeriod.(string))
 				}
+				if rawStartInterval, ok := rawHealthCheck["start_interval"]; ok {
+					config.Healthcheck.StartInterval, _ = time.ParseDuration(rawStartInterval.(string))
+				}
 				if rawRetries, ok := rawHealthCheck["retries"]; ok {
 					config.Healthcheck.Retries, _ = rawRetries.(int)
 				}
@@ -208,6 +211,13 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 									mountInstance.VolumeOptions.DriverConfig = &mount.Driver{}
 								}
 								mountInstance.VolumeOptions.DriverConfig.Options = mapTypeMapValsToString(value.(map[string]interface{}))
+							}
+							if client.ClientVersion() >= "1.45" {
+								if value, ok := rawVolumeOptions["subpath"]; ok {
+									mountInstance.VolumeOptions.Subpath = value.(string)
+								}
+							} else {
+								return diag.Errorf("Setting VolumeOptions.Subpath requires docker version 1.45 or higher")
 							}
 						}
 					}
@@ -529,9 +539,15 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					if err != nil {
 						result <- fmt.Errorf("error inspecting container state: %s", err)
 					}
-					// QF1008: could remove embedded field "ContainerJSONBase" from selector
+
+					if infos.ContainerJSONBase == nil || infos.ContainerJSONBase.State == nil || infos.ContainerJSONBase.State.Health == nil { //nolint:staticcheck
+						result <- fmt.Errorf("you have supplied a 'wait' argument, but the container does not have a healthcheck defined. Please remove the 'wait' argument or add a 'healthcheck' attribute")
+						break
+					}
+
 					if infos.ContainerJSONBase.State.Health.Status == types.Healthy { //nolint:staticcheck
 						log.Printf("[DEBUG] container state is healthy")
+						result <- nil
 						break
 					}
 					log.Printf("[DEBUG] waiting for container healthy state")
@@ -689,7 +705,17 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// logs
 	// "must_run" can't be imported
 	// container_logs
-	d.Set("image", container.Image)
+
+	// get image value from plan. If it begins with sha256: then we need to use {{ .Image }} value
+	//  If not, we can use Config.Image
+	// See https://github.com/kreuzwerker/terraform-provider-docker/issues/426#issuecomment-2828954974 for more details
+	imageValue := d.Get("image").(string)
+	if strings.HasPrefix(imageValue, "sha256:") {
+		d.Set("image", container.Image)
+	} else {
+		d.Set("image", container.Config.Image)
+	}
+
 	d.Set("hostname", container.Config.Hostname)
 	d.Set("domainname", container.Config.Domainname)
 	d.Set("command", container.Config.Cmd)
@@ -767,11 +793,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if container.Config.Healthcheck != nil {
 		d.Set("healthcheck", []interface{}{
 			map[string]interface{}{
-				"test":         container.Config.Healthcheck.Test,
-				"interval":     container.Config.Healthcheck.Interval.String(),
-				"timeout":      container.Config.Healthcheck.Timeout.String(),
-				"start_period": container.Config.Healthcheck.StartPeriod.String(),
-				"retries":      container.Config.Healthcheck.Retries,
+				"test":           container.Config.Healthcheck.Test,
+				"interval":       container.Config.Healthcheck.Interval.String(),
+				"timeout":        container.Config.Healthcheck.Timeout.String(),
+				"start_period":   container.Config.Healthcheck.StartPeriod.String(),
+				"start_interval": container.Config.Healthcheck.StartInterval.String(),
+				"retries":        container.Config.Healthcheck.Retries,
 			},
 		})
 	}

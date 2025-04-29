@@ -66,7 +66,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"wait": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.",
+				Description: "If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
@@ -126,12 +126,9 @@ func resourceDockerContainer() *schema.Resource {
 				Computed:    true,
 			},
 
-			// ForceNew is not true for image because we need to
-			// sane this against Docker image IDs, as each image
-			// can have multiple names/tags attached do it.
 			"image": {
 				Type:        schema.TypeString,
-				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.",
+				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `image_id` attribute of the `docker_image` resource as is shown in the example.",
 				Required:    true,
 				ForceNew:    true,
 			},
@@ -381,6 +378,12 @@ func resourceDockerContainer() *schema.Resource {
 										Description: "key/value map of driver specific options.",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+									"subpath": {
+										Type:        schema.TypeString,
+										Description: "Path within the volume to mount. Requires docker server version 1.45 or higher.",
+										Optional:    true,
+										ForceNew:    true,
 									},
 								},
 							},
@@ -874,6 +877,13 @@ func resourceDockerContainer() *schema.Resource {
 						"start_period": {
 							Type:             schema.TypeString,
 							Description:      "Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.",
+							Default:          "0s",
+							Optional:         true,
+							ValidateDiagFunc: validateDurationGeq0(),
+						},
+						"start_interval": {
+							Type:             schema.TypeString,
+							Description:      "Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.",
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
