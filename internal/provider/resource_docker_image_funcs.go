@@ -379,7 +379,7 @@ func enableBuildKitIfSupported(
 	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
 	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
 		log.Printf("[DEBUG] Enabling BuildKit")
-		s, _ := session.NewSession(ctx, "docker-provider", "")
+		s, _ := session.NewSession(ctx, "docker-provider")
 		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
 			return client.DialHijack(ctx, "/session", proto, meta)
 		}
