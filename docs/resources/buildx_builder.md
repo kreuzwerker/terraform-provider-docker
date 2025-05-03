@@ -46,7 +46,7 @@ Optional:
 - `cpu_shares` (String) Configures CPU shares (relative weight) of the container.
 - `cpuset_cpus` (String) Limits the set of CPU cores the container can use.
 - `cpuset_mems` (String) Limits the set of CPU memory nodes the container can use.
-- `default_load` (Boolean) Automatically load images to the Docker Engine image store.
+- `default_load` (Boolean) Automatically load images to the Docker Engine image store. Defaults to `false`
 - `env` (Map of String) Sets environment variables in the container.
 - `image` (String) Sets the BuildKit image to use for the container.
 - `memory` (String) Sets the amount of memory the container can use.
@@ -61,7 +61,7 @@ Optional:
 Optional:
 
 - `annotations` (String) Sets additional annotations on the deployments and pods.
-- `default_load` (Boolean) Automatically load images to the Docker Engine image store.
+- `default_load` (Boolean) Automatically load images to the Docker Engine image store. Defaults to `false`
 - `image` (String) Sets the image to use for running BuildKit.
 - `labels` (String) Sets additional labels on the deployments and pods.
 - `limits` (Block List, Max: 1) Resource limits for CPU, memory, and ephemeral storage. (see [below for nested schema](#nestedblock--kubernetes--limits))
@@ -114,7 +114,7 @@ Optional:
 
 - `cacert` (String) Absolute path to the TLS certificate authority used for validation.
 - `cert` (String) Absolute path to the TLS client certificate to present to buildkitd.
-- `default_load` (Boolean) Automatically load images to the Docker Engine image store.
+- `default_load` (Boolean) Automatically load images to the Docker Engine image store. Defaults to `false`
 - `key` (String) Sets the TLS client key.
 - `servername` (String) TLS server name used in requests.
 
