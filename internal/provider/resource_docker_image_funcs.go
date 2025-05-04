@@ -41,7 +41,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			
+
 			builder := rawBuild["builder"].(string)
 			tflog.Info(ctx, fmt.Sprintf("canUseBuildx: %v, builder %s", canUseBuildx, builder))
 			// buildx is enabled
@@ -57,10 +57,8 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 					return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
 				}
 
-				
-
 				options, err := mapBuildAttributesToBuildOptions(rawBuild)
-				options.tags = append(options.tags,imageName)
+				options.tags = append(options.tags, imageName)
 				for _, t := range rawBuild["tag"].([]interface{}) {
 					options.tags = append(options.tags, t.(string))
 				}
