@@ -42,4 +42,10 @@ You can use the `triggers` argument to specify when the image should be rebuild.
 
 {{tffile "examples/resources/docker_image/resource-build-triggers.tf"}}
 
+### Buildx
+
+-> **Note**: The buildx feature is currently in preview and may have some quirks. Known issues: Setting `ulimits` will not work.
+
+The `build` argument uses the legacy docker builder. If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
+
 {{ .SchemaMarkdown | trimspace }}

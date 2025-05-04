@@ -8,41 +8,75 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/image/build"
+	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
-	"github.com/moby/buildkit/session"
-	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/pkg/errors"
 )
-
-const minBuildkitDockerVersion = "1.39"
 
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 	imageName := d.Get("name").(string)
 
 	if value, ok := d.GetOk("build"); ok {
-		for _, rawBuild := range value.(*schema.Set).List() {
-			rawBuild := rawBuild.(map[string]interface{})
+		// now we need to determine whether we can use buildx or need to use the legacy builder
+		canUseBuildx, err := canUseBuildx(ctx, client)
+		tflog.Info(ctx, fmt.Sprintf("canUseBuildx: %v", canUseBuildx))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-			err := buildDockerImage(ctx, rawBuild, imageName, client)
+		// buildx is enabled
+		_, ok := d.GetOk("builder")
+		if canUseBuildx && ok {
+			dockerCli, error := command.NewDockerCli()
+			if error != nil {
+				return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", error))
+			}
+
+			log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
+			err := dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
 			if err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
+			}
+
+			for _, rawBuild := range value.(*schema.Set).List() {
+				rawBuild := rawBuild.(map[string]interface{})
+
+				options, err := mapBuildAttributesToBuildOptions(rawBuild)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
+				}
+				buildLogFile := rawBuild["build_log_file"].(string)
+				err = runBuild(ctx, dockerCli, options, buildLogFile)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+
+		} else {
+			for _, rawBuild := range value.(*schema.Set).List() {
+				rawBuild := rawBuild.(map[string]interface{})
+
+				err := buildDockerImage(ctx, rawBuild, imageName, client)
+				if err != nil {
+					return diag.FromErr(err)
+				}
 			}
 		}
 	}
@@ -333,23 +367,6 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 
 	buildContext := rawBuild["context"].(string)
 
-	buildKitSession := enableBuildKitIfSupported(ctx, client, &buildOptions)
-
-	// If Buildkit is enabled, try to parse and use secrets if present.
-	if buildKitSession != nil {
-		if secretsRaw, secretsDefined := rawBuild["secrets"]; secretsDefined {
-			parsedSecrets := parseBuildSecrets(secretsRaw)
-
-			store, err := secretsprovider.NewStore(parsedSecrets)
-			if err != nil {
-				return err
-			}
-
-			provider := secretsprovider.NewSecretProvider(store)
-			buildKitSession.Allow(provider)
-		}
-	}
-
 	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, buildOptions.Dockerfile)
 	if err != nil {
 		return err
@@ -368,31 +385,6 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		return fmt.Errorf("%s\n\n%s", err, buildResult)
 	}
 	return nil
-}
-
-func enableBuildKitIfSupported(
-	ctx context.Context,
-	client *client.Client,
-	buildOptions *types.ImageBuildOptions,
-) *session.Session {
-	dockerClientVersion := client.ClientVersion()
-	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
-	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
-		log.Printf("[DEBUG] Enabling BuildKit")
-		s, _ := session.NewSession(ctx, "docker-provider", "")
-		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
-			return client.DialHijack(ctx, "/session", proto, meta)
-		}
-		//nolint
-		go s.Run(ctx, dialSession)
-		defer s.Close() //nolint:errcheck
-		buildOptions.SessionID = s.ID()
-		buildOptions.Version = types.BuilderBuildKit
-		return s
-	} else {
-		buildOptions.Version = types.BuilderV1
-		return nil
-	}
 }
 
 func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (io.ReadCloser, string, error) {
@@ -481,21 +473,4 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 	log.Printf("[DEBUG] %s", buf.String())
 
 	return buf.String(), buildErr
-}
-
-func parseBuildSecrets(secretsRaw interface{}) []secretsprovider.Source {
-	options := secretsRaw.([]interface{})
-
-	secrets := make([]secretsprovider.Source, len(options))
-	for i, option := range options {
-		secretRaw := option.(map[string]interface{})
-		source := secretsprovider.Source{
-			ID:       secretRaw["id"].(string),
-			FilePath: secretRaw["src"].(string),
-			Env:      secretRaw["env"].(string),
-		}
-		secrets[i] = source
-	}
-
-	return secrets
 }
