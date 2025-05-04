@@ -51,6 +51,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
+
+	// import drivers otherwise factories are empty
+	// for --driver output flag usage
+	_ "github.com/docker/buildx/driver/docker"
+	_ "github.com/docker/buildx/driver/docker-container"
+	_ "github.com/docker/buildx/driver/kubernetes"
+	_ "github.com/docker/buildx/driver/remote"
 )
 
 type buildOptions struct {
@@ -212,16 +219,12 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}) (b
 		options.dockerfileName = dockerfile
 	}
 
+	options.contextPath = buildAttributes["context"].(string)
+	options.exportLoad = true
+	// options.outputs = []string{"type=docker"}
+
 	if builder, ok := buildAttributes["builder"].(string); ok {
 		options.builder = builder
-	}
-
-	if tags, ok := buildAttributes["tag"].([]interface{}); ok {
-		for _, tag := range tags {
-			if tagStr, ok := tag.(string); ok {
-				options.tags = append(options.tags, tagStr)
-			}
-		}
 	}
 
 	if remove, ok := buildAttributes["remove"].(bool); ok {
@@ -234,16 +237,13 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}) (b
 				// Construct the secret string in the format [type=env,]id=<ID>[,env=<VARIABLE>]
 				secretStr := ""
 
-				if id, ok := secretMap["id"].(string); ok {
-					secretStr += fmt.Sprintf("id=%s", id)
+				id, _ := secretMap["id"].(string)
+				if env, ok := secretMap["env"].(string); ok && env != "" {
+					secretStr += fmt.Sprintf("type=env,id=%s,env=%s", id, env)
 				}
 
-				if src, ok := secretMap["src"].(string); ok {
-					secretStr += fmt.Sprintf("type=file,src=%s", src)
-				}
-
-				if env, ok := secretMap["env"].(string); ok {
-					secretStr += fmt.Sprintf("type=env,env=%s", env)
+				if src, ok := secretMap["src"].(string); ok && src != "" {
+					secretStr += fmt.Sprintf("type=file,id=%s,src=%s", id, src)
 				}
 
 				options.secrets = append(options.secrets, secretStr)
@@ -263,17 +263,19 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}) (b
 		options.quiet = suppressOutput
 	}
 
-	if remoteContext, ok := buildAttributes["remote_context"].(string); ok {
-		options.contextPath = remoteContext
-	}
+	// TODO: what to do with "remote_context"?
+	// if remoteContext, ok := buildAttributes["remote_context"].(string); ok {
+	// 	options.contextPath = remoteContext
+	// }
 
 	if noCache, ok := buildAttributes["no_cache"].(bool); ok {
 		options.noCache = noCache
 	}
 
-	if forceRemove, ok := buildAttributes["force_remove"].(bool); ok {
-		options.exportPush = forceRemove
-	}
+	// TODO: what to do with "force_remove?"
+	// if forceRemove, ok := buildAttributes["force_remove"].(bool); ok {
+	// 	options.exportPush = forceRemove
+	// }
 
 	if pullParent, ok := buildAttributes["pull_parent"].(bool); ok {
 		options.pull = pullParent
@@ -408,6 +410,11 @@ func canUseBuildx(ctx context.Context, client *dockerclient.Client) (bool, error
 }
 
 func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, buildLogFile string) (err error) {
+
+	if buildLogFile == "" {
+		buildLogFile = os.DevNull
+	}
+
 	logFile, err := os.OpenFile(buildLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open build log file: %w", err)

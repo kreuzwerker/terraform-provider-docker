@@ -48,4 +48,6 @@ You can use the `triggers` argument to specify when the image should be rebuild.
 
 The `build` argument uses the legacy docker builder. If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
 
+The single platform build result is automatically loaded to `docker images`.
+
 {{ .SchemaMarkdown | trimspace }}

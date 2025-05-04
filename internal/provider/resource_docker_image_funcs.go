@@ -34,31 +34,36 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 	imageName := d.Get("name").(string)
 
 	if value, ok := d.GetOk("build"); ok {
-		// now we need to determine whether we can use buildx or need to use the legacy builder
-		canUseBuildx, err := canUseBuildx(ctx, client)
-		tflog.Info(ctx, fmt.Sprintf("canUseBuildx: %v", canUseBuildx))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		// buildx is enabled
-		_, ok := d.GetOk("builder")
-		if canUseBuildx && ok {
-			dockerCli, error := command.NewDockerCli()
-			if error != nil {
-				return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", error))
-			}
-
-			log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
-			err := dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
+		for _, rawBuild := range value.(*schema.Set).List() {
+			rawBuild := rawBuild.(map[string]interface{})
+			// now we need to determine whether we can use buildx or need to use the legacy builder
+			canUseBuildx, err := canUseBuildx(ctx, client)
 			if err != nil {
-				return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
+				return diag.FromErr(err)
 			}
+			
+			builder := rawBuild["builder"].(string)
+			tflog.Info(ctx, fmt.Sprintf("canUseBuildx: %v, builder %s", canUseBuildx, builder))
+			// buildx is enabled
+			if canUseBuildx && builder != "" {
+				dockerCli, error := command.NewDockerCli()
+				if error != nil {
+					return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", error))
+				}
 
-			for _, rawBuild := range value.(*schema.Set).List() {
-				rawBuild := rawBuild.(map[string]interface{})
+				log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
+				err := dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
+				}
+
+				
 
 				options, err := mapBuildAttributesToBuildOptions(rawBuild)
+				options.tags = append(options.tags,imageName)
+				for _, t := range rawBuild["tag"].([]interface{}) {
+					options.tags = append(options.tags, t.(string))
+				}
 				if err != nil {
 					return diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
 				}
@@ -67,11 +72,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 				if err != nil {
 					return diag.FromErr(err)
 				}
-			}
-
-		} else {
-			for _, rawBuild := range value.(*schema.Set).List() {
-				rawBuild := rawBuild.(map[string]interface{})
+			} else {
 
 				err := buildDockerImage(ctx, rawBuild, imageName, client)
 				if err != nil {
@@ -372,6 +373,7 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		return err
 	}
 	buildOptions.Dockerfile = relDockerfile
+	buildOptions.Version = types.BuilderV1
 
 	var response types.ImageBuildResponse
 	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
