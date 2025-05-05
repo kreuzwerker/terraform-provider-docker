@@ -124,8 +124,8 @@ Optional:
 - `auth_config` (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
 - `build_args` (Map of String) Pairs for build-time variables in the form of `ENDPOINT : "https://example.com"`
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
-- `build_log_file` (String) Path to the build log file. Only available when `builder` is set.
-- `builder` (String) Set the name of the buildx builder to use. If not set, the default builder will be used.
+- `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
+- `builder` (String) Set the name of the buildx builder to use. If not set, the legacy builder will be used.
 - `cache_from` (List of String) Images to consider as cache sources
 - `cgroup_parent` (String) Optional parent cgroup for the container
 - `cpu_period` (Number) The length of a CPU period in microseconds

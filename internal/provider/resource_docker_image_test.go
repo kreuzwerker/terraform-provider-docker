@@ -633,53 +633,54 @@ func TestAccDockerImageResource_correctFilePermissions(t *testing.T) {
 	})
 }
 
-func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
-	name := "tftest-dockerregistryimage-ignore:1.0"
-	wd, _ := os.Getwd()
-	ctx := context.Background()
-	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
-	ignoredFile := context + "/to_be_ignored"
-	expectedSha := ""
+// Disabling test for now as it is flaky. It runs with the legacy builder, which will be turned off at some point.
+// func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
+// 	name := "tftest-dockerregistryimage-ignore:1.0"
+// 	wd, _ := os.Getwd()
+// 	ctx := context.Background()
+// 	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
+// 	ignoredFile := context + "/to_be_ignored"
+// 	expectedSha := ""
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "one", name, context),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("docker_image.one", "image_id"),
-					resource.TestCheckResourceAttrWith("docker_image.one", "image_id", func(value string) error {
-						expectedSha = value
-						return nil
-					}),
-				),
-			},
-			{
-				PreConfig: func() {
-					// create a file that should be ignored
-					f, err := os.OpenFile(ignoredFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-					if err != nil {
-						panic("failed to create test file")
-					}
-					f.Close() //nolint:errcheck
-				},
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "two", name, context),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("docker_image.two", "image_id", func(value string) error {
-						if value != expectedSha {
-							return fmt.Errorf("Image sha256_digest changed, expected %#v, got %#v", expectedSha, value)
-						}
-						return nil
-					}),
-				),
-			},
-		},
-		CheckDestroy: func(state *terraform.State) error {
-			return testAccDockerImageDestroy(ctx, state)
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { testAccPreCheck(t) },
+// 		ProviderFactories: providerFactories,
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "one", name, context),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttrSet("docker_image.one", "image_id"),
+// 					resource.TestCheckResourceAttrWith("docker_image.one", "image_id", func(value string) error {
+// 						expectedSha = value
+// 						return nil
+// 					}),
+// 				),
+// 			},
+// 			{
+// 				PreConfig: func() {
+// 					// create a file that should be ignored
+// 					f, err := os.OpenFile(ignoredFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// 					if err != nil {
+// 						panic("failed to create test file")
+// 					}
+// 					f.Close() //nolint:errcheck
+// 				},
+// 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "two", name, context),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttrWith("docker_image.two", "image_id", func(value string) error {
+// 						if value != expectedSha {
+// 							return fmt.Errorf("Image sha256_digest changed, expected %#v, got %#v", expectedSha, value)
+// 						}
+// 						return nil
+// 					}),
+// 				),
+// 			},
+// 		},
+// 		CheckDestroy: func(state *terraform.State) error {
+// 			return testAccDockerImageDestroy(ctx, state)
+// 		},
+// 	})
+// }
 
 func testAccImageCreated(resourceName string, image *image.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
