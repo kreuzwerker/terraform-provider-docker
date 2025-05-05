@@ -452,6 +452,43 @@ func TestAccDockerImage_build(t *testing.T) {
 	})
 }
 
+func TestAccDockerImage_buildx_buildlog(t *testing.T) {
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "Dockerfile")
+	buildLogPath := filepath.Join(wd, "build.log")
+	if err := os.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath) //nolint:errcheck
+
+	testCheckBuildLog := func(*terraform.State) error {
+		// list all contents of the wd variable
+		_, err := os.Stat(buildLogPath)
+		if err != nil {
+			return fmt.Errorf("Expected file does not exist at path %s, %w", buildLogPath, err)
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageBuildxBuildLog"), buildLogPath),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.test", "name", contentDigestRegexp),
+					testCheckBuildLog,
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerImageSecrets_build(t *testing.T) {
 	const testDockerFileWithSecret = `
 	FROM python:3-bookworm

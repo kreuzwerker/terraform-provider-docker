@@ -406,13 +406,13 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"builder": {
 							Type:        schema.TypeString,
-							Description: "Set the name of the buildx builder to use. If not set, the default builder will be used.",
+							Description: "Set the name of the buildx builder to use. If not set, the legacy builder will be used.",
 							Optional:    true,
 							ForceNew:    true,
 						},
 						"build_log_file": {
 							Type:        schema.TypeString,
-							Description: "Path to the build log file. Only available when `builder` is set.",
+							Description: "Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.",
 							Optional:    true,
 							ForceNew:    true,
 						},

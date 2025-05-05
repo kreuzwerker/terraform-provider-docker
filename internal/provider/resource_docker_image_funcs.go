@@ -21,6 +21,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -150,11 +151,11 @@ func searchLocalImages(ctx context.Context, client *client.Client, data Data, im
 		return nil, fmt.Errorf("unable to inspect image %s: %w", imageName, err)
 	}
 
-	jsonObj, err := json.MarshalIndent(imageInspect, "", "\t")
+	_, err = json.MarshalIndent(imageInspect, "", "\t")
 	if err != nil {
 		return nil, fmt.Errorf("error parsing inspect response: %w", err)
 	}
-	log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
+	// log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
 
 	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
 		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
@@ -446,6 +447,7 @@ func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	}
 	ctx, _ := archive.TarWithOptions(filePath, &archive.TarOptions{
 		ExcludePatterns: excludes,
+		ChownOpts:       &idtools.Identity{UID: 0, GID: 0},
 	})
 	return ctx
 }
