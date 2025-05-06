@@ -148,7 +148,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"remote_context": {
 							Type:        schema.TypeString,
-							Description: "A Git repository URI or HTTP/HTTPS context URI",
+							Description: "A Git repository URI or HTTP/HTTPS context URI. Will be ignored if `builder` is set.",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -406,7 +406,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"builder": {
 							Type:        schema.TypeString,
-							Description: "Set the name of the buildx builder to use. If not set, the legacy builder will be used.",
+							Description: "Set the name of the buildx builder to use. If not set or empty, the legacy builder will be used.",
 							Optional:    true,
 							ForceNew:    true,
 						},

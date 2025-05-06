@@ -12,9 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/image/build"
-	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -23,7 +21,6 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
@@ -44,29 +41,22 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 			}
 
 			builder := rawBuild["builder"].(string)
-			tflog.Info(ctx, fmt.Sprintf("canUseBuildx: %v, builder %s", canUseBuildx, builder))
+			log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
 			// buildx is enabled
 			if canUseBuildx && builder != "" {
-				dockerCli, error := command.NewDockerCli()
-				if error != nil {
-					return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", error))
-				}
-
-				log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
-				err := dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
+				log.Printf("[DEBUG] Using buildx")
+				dockerCli, err := createAndInitDockerCli(client)
 				if err != nil {
-					return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
+					return diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
 				}
 
-				options, err := mapBuildAttributesToBuildOptions(rawBuild)
-				options.tags = append(options.tags, imageName)
-				for _, t := range rawBuild["tag"].([]interface{}) {
-					options.tags = append(options.tags, t.(string))
-				}
+				options, err := mapBuildAttributesToBuildOptions(rawBuild, imageName)
+
 				if err != nil {
 					return diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
 				}
 				buildLogFile := rawBuild["build_log_file"].(string)
+
 				err = runBuild(ctx, dockerCli, options, buildLogFile)
 				if err != nil {
 					return diag.FromErr(err)

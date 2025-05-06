@@ -213,7 +213,7 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 	return &opts, nil
 }
 
-func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}) (buildOptions, error) {
+func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, imageName string) (buildOptions, error) {
 	options := buildOptions{}
 	if dockerfile, ok := buildAttributes["dockerfile"].(string); ok {
 		options.dockerfileName = dockerfile
@@ -221,7 +221,11 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}) (b
 
 	options.contextPath = buildAttributes["context"].(string)
 	options.exportLoad = true
-	// options.outputs = []string{"type=docker"}
+
+	options.tags = append(options.tags, imageName)
+	for _, t := range buildAttributes["tag"].([]interface{}) {
+		options.tags = append(options.tags, t.(string))
+	}
 
 	if builder, ok := buildAttributes["builder"].(string); ok {
 		options.builder = builder
@@ -263,19 +267,9 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}) (b
 		options.quiet = suppressOutput
 	}
 
-	// TODO: what to do with "remote_context"?
-	// if remoteContext, ok := buildAttributes["remote_context"].(string); ok {
-	// 	options.contextPath = remoteContext
-	// }
-
 	if noCache, ok := buildAttributes["no_cache"].(bool); ok {
 		options.noCache = noCache
 	}
-
-	// TODO: what to do with "force_remove?"
-	// if forceRemove, ok := buildAttributes["force_remove"].(bool); ok {
-	// 	options.exportPush = forceRemove
-	// }
 
 	if pullParent, ok := buildAttributes["pull_parent"].(bool); ok {
 		options.pull = pullParent
