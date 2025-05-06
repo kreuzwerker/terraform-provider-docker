@@ -1,6 +1,21 @@
 
+<a name="v3.5.0"></a>
+## [v3.5.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.4.0...v3.5.0) (2025-05-06)
+
+### Feat
+
+* Implement using of buildx for docker_image ([#717](https://github.com/kreuzwerker/terraform-provider-docker/issues/717))
+* Support registries that return empty auth scope [#646](https://github.com/kreuzwerker/terraform-provider-docker/issues/646)
+* Implement registry_image_manifests data source ([#714](https://github.com/kreuzwerker/terraform-provider-docker/issues/714))
+* Implement healthcheck start interval ([#713](https://github.com/kreuzwerker/terraform-provider-docker/issues/713))
+
+
 <a name="v3.4.0"></a>
 ## [v3.4.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.3.0...v3.4.0) (2025-04-25)
+
+### Chore
+
+* Prepare release v3.4.0 ([#712](https://github.com/kreuzwerker/terraform-provider-docker/issues/712))
 
 ### Feat
 
