@@ -505,6 +505,18 @@ func resourceDockerService() *schema.Resource {
 										Optional:    true,
 										ForceNew:    true,
 									},
+									"cap_add": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "List of Linux capabilities to add to the container",
+									},
+									"cap_drop": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "List of Linux capabilities to drop from the container",
+									},
 								},
 							},
 						},
