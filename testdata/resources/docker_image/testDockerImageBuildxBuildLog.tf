@@ -7,14 +7,6 @@ resource "docker_image" "test" {
     builder = "default"
     platform = "linux/amd64"
 
-    secrets {
-      id  = "TEST_SECRET_SRC"
-      src = "./secret"
-    }
-
-    secrets {
-      id  = "TEST_SECRET_ENV"
-      env = "PATH"
-    }
+    build_log_file = "%s"
   }
 }

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,20 +16,16 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
-	"github.com/moby/buildkit/session"
-	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/pkg/errors"
 )
-
-const minBuildkitDockerVersion = "1.39"
 
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
@@ -39,10 +34,39 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 	if value, ok := d.GetOk("build"); ok {
 		for _, rawBuild := range value.(*schema.Set).List() {
 			rawBuild := rawBuild.(map[string]interface{})
-
-			err := buildDockerImage(ctx, rawBuild, imageName, client)
+			// now we need to determine whether we can use buildx or need to use the legacy builder
+			canUseBuildx, err := canUseBuildx(ctx, client)
 			if err != nil {
 				return diag.FromErr(err)
+			}
+
+			builder := rawBuild["builder"].(string)
+			log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
+			// buildx is enabled
+			if canUseBuildx && builder != "" {
+				log.Printf("[DEBUG] Using buildx")
+				dockerCli, err := createAndInitDockerCli(client)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
+				}
+
+				options, err := mapBuildAttributesToBuildOptions(rawBuild, imageName)
+
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
+				}
+				buildLogFile := rawBuild["build_log_file"].(string)
+
+				err = runBuild(ctx, dockerCli, options, buildLogFile)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			} else {
+
+				err := buildDockerImage(ctx, rawBuild, imageName, client)
+				if err != nil {
+					return diag.FromErr(err)
+				}
 			}
 		}
 	}
@@ -117,11 +141,11 @@ func searchLocalImages(ctx context.Context, client *client.Client, data Data, im
 		return nil, fmt.Errorf("unable to inspect image %s: %w", imageName, err)
 	}
 
-	jsonObj, err := json.MarshalIndent(imageInspect, "", "\t")
+	_, err = json.MarshalIndent(imageInspect, "", "\t")
 	if err != nil {
 		return nil, fmt.Errorf("error parsing inspect response: %w", err)
 	}
-	log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
+	// log.Printf("[DEBUG] Docker image inspect from readFunc: %s", jsonObj)
 
 	if apiImage, ok := data.DockerImages[imageInspect.ID]; ok {
 		log.Printf("[DEBUG] found local image via imageName: %v", imageName)
@@ -333,28 +357,12 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 
 	buildContext := rawBuild["context"].(string)
 
-	buildKitSession := enableBuildKitIfSupported(ctx, client, &buildOptions)
-
-	// If Buildkit is enabled, try to parse and use secrets if present.
-	if buildKitSession != nil {
-		if secretsRaw, secretsDefined := rawBuild["secrets"]; secretsDefined {
-			parsedSecrets := parseBuildSecrets(secretsRaw)
-
-			store, err := secretsprovider.NewStore(parsedSecrets)
-			if err != nil {
-				return err
-			}
-
-			provider := secretsprovider.NewSecretProvider(store)
-			buildKitSession.Allow(provider)
-		}
-	}
-
 	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, buildOptions.Dockerfile)
 	if err != nil {
 		return err
 	}
 	buildOptions.Dockerfile = relDockerfile
+	buildOptions.Version = types.BuilderV1
 
 	var response types.ImageBuildResponse
 	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
@@ -368,31 +376,6 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		return fmt.Errorf("%s\n\n%s", err, buildResult)
 	}
 	return nil
-}
-
-func enableBuildKitIfSupported(
-	ctx context.Context,
-	client *client.Client,
-	buildOptions *types.ImageBuildOptions,
-) *session.Session {
-	dockerClientVersion := client.ClientVersion()
-	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
-	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
-		log.Printf("[DEBUG] Enabling BuildKit")
-		s, _ := session.NewSession(ctx, "docker-provider", "")
-		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
-			return client.DialHijack(ctx, "/session", proto, meta)
-		}
-		//nolint
-		go s.Run(ctx, dialSession)
-		defer s.Close() //nolint:errcheck
-		buildOptions.SessionID = s.ID()
-		buildOptions.Version = types.BuilderBuildKit
-		return s
-	} else {
-		buildOptions.Version = types.BuilderV1
-		return nil
-	}
 }
 
 func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (io.ReadCloser, string, error) {
@@ -454,6 +437,7 @@ func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	}
 	ctx, _ := archive.TarWithOptions(filePath, &archive.TarOptions{
 		ExcludePatterns: excludes,
+		ChownOpts:       &idtools.Identity{UID: 0, GID: 0},
 	})
 	return ctx
 }
@@ -481,21 +465,4 @@ func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
 	log.Printf("[DEBUG] %s", buf.String())
 
 	return buf.String(), buildErr
-}
-
-func parseBuildSecrets(secretsRaw interface{}) []secretsprovider.Source {
-	options := secretsRaw.([]interface{})
-
-	secrets := make([]secretsprovider.Source, len(options))
-	for i, option := range options {
-		secretRaw := option.(map[string]interface{})
-		source := secretsprovider.Source{
-			ID:       secretRaw["id"].(string),
-			FilePath: secretRaw["src"].(string),
-			Env:      secretRaw["env"].(string),
-		}
-		secrets[i] = source
-	}
-
-	return secrets
 }

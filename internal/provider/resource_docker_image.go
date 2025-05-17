@@ -104,7 +104,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"secrets": {
 							Type:        schema.TypeList,
-							Description: "Set build-time secrets",
+							Description: "Set build-time secrets. Only available when you use a buildx builder.",
 							Optional:    true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -117,7 +117,7 @@ func resourceDockerImage() *schema.Resource {
 									},
 									"src": {
 										Type:        schema.TypeString,
-										Description: "File source of the secret",
+										Description: "File source of the secret. Takes precedence over `env`",
 										Optional:    true,
 										Required:    false,
 										ForceNew:    true,
@@ -148,7 +148,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"remote_context": {
 							Type:        schema.TypeString,
-							Description: "A Git repository URI or HTTP/HTTPS context URI",
+							Description: "A Git repository URI or HTTP/HTTPS context URI. Will be ignored if `builder` is set.",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -401,6 +401,18 @@ func resourceDockerImage() *schema.Resource {
 						"build_id": {
 							Type:        schema.TypeString,
 							Description: "BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.",
+							Optional:    true,
+							ForceNew:    true,
+						},
+						"builder": {
+							Type:        schema.TypeString,
+							Description: "Set the name of the buildx builder to use. If not set or empty, the legacy builder will be used.",
+							Optional:    true,
+							ForceNew:    true,
+						},
+						"build_log_file": {
+							Type:        schema.TypeString,
+							Description: "Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.",
 							Optional:    true,
 							ForceNew:    true,
 						},
