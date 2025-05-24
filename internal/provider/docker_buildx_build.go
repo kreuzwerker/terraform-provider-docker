@@ -353,7 +353,7 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, im
 		options.target = target
 	}
 
-	if platform, ok := buildAttributes["platform"].(string); ok {
+	if platform, ok := buildAttributes["platform"].(string); ok && len(platform) > 0 {
 		options.platforms = append(options.platforms, platform)
 	}
 

@@ -388,7 +388,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"platform": {
 							Type:        schema.TypeString,
-							Description: "Set platform if server is multi-platform capable",
+							Description: "Set the target platform for the build. Defaults to `GOOS/GOARCH`. For more information see the [docker documentation](https://github.com/docker/buildx/blob/master/docs/reference/buildx.md#-set-the-target-platforms-for-the-build---platform)",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -406,7 +406,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"builder": {
 							Type:        schema.TypeString,
-							Description: "Set the name of the buildx builder to use. If not set or empty, the legacy builder will be used.",
+							Description: "Set the name of the buildx builder to use. If not set, the legacy builder is used.",
 							Optional:    true,
 							ForceNew:    true,
 						},
