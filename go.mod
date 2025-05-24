@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/client9/misspell v0.3.4
-	github.com/containerd/console v1.0.4
+	github.com/containerd/console v1.0.5
 	github.com/distribution/reference v0.6.0
 	github.com/docker/buildx v0.23.0
 	github.com/docker/cli v28.0.4+incompatible
