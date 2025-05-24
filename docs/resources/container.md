@@ -40,9 +40,11 @@ resource "docker_image" "ubuntu" {
 - `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
 - `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.conf"]`.
 - `container_read_refresh_timeout_milliseconds` (Number) The total number of milliseconds to wait for the container to reach status 'running'
+- `cpu_period` (Number) Specify the CPU CFS scheduler period (in microseconds), which is used alongside `cpu-quota`. Is ignored if `cpus` is set.
+- `cpu_quota` (Number) Impose a CPU CFS quota on the container (in microseconds). The number of microseconds per `cpu-period` that the container is limited to before throttled. Is ignored if `cpus` is set.
 - `cpu_set` (String) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
-- `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs
+- `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 - `devices` (Block Set) Bind devices to the container. (see [below for nested schema](#nestedblock--devices))
 - `dns` (Set of String) DNS servers to use.

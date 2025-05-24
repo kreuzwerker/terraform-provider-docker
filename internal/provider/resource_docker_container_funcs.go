@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/big"
 	"os"
 	"strconv"
 	"strings"
@@ -325,19 +324,23 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if v, ok := d.GetOk("cpus"); ok {
-		if client.ClientVersion() >= "1.28" {
-			cpu, ok := new(big.Rat).SetString(v.(string))
-			if !ok {
-				return diag.Errorf("Error setting cpus: Failed to parse %v as a rational number", v.(string))
-			}
-			nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
-			if !nano.IsInt() {
-				return diag.Errorf("Error setting cpus: value is too precise")
-			}
+		hostConfig.CPUPeriod = 100000
+		hostConfig.CPUQuota = int64(v.(float32) * 100000)
 
-			hostConfig.NanoCPUs = nano.Num().Int64()
-		} else {
-			log.Printf("[WARN] Setting CPUs count/quota requires docker version 1.28 or higher")
+		if _, ook := d.GetOk("cpu_period"); ook {
+			log.Printf("[WARN] Value for cpus is set, ignore cpu_period setting")
+		}
+
+		if _, ook := d.GetOk("cpu_quota"); ook {
+			log.Printf("[WARN] Value for cpus is set, ignore cpu_quota setting")
+		}
+	} else {
+		if vv, ook := d.GetOk("cpu_period"); ook {
+			hostConfig.CPUPeriod = int64(vv.(int))
+		}
+
+		if vv, ook := d.GetOk("cpu_quota"); ook {
+			hostConfig.CPUQuota = int64(vv.(int))
 		}
 	}
 
