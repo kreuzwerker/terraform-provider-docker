@@ -1,6 +1,25 @@
 
+<a name="v3.6.0"></a>
+## [v3.6.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.5.0...v3.6.0) (2025-05-24)
+
+### Feat
+
+* Implement correct cpu scheduler settings ([#732](https://github.com/kreuzwerker/terraform-provider-docker/issues/732))
+* Add implementaion of capabilities in docker servic ([#727](https://github.com/kreuzwerker/terraform-provider-docker/issues/727))
+* implement Buildx builder resource ([#724](https://github.com/kreuzwerker/terraform-provider-docker/issues/724))
+
+### Fix
+
+* Implement buildx fixes for general buildkit support and platform handling ([#734](https://github.com/kreuzwerker/terraform-provider-docker/issues/734))
+* Make endpoint validation less strict ([#733](https://github.com/kreuzwerker/terraform-provider-docker/issues/733))
+
+
 <a name="v3.5.0"></a>
 ## [v3.5.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.4.0...v3.5.0) (2025-05-06)
+
+### Chore
+
+* Prepare release v3.5.0 ([#721](https://github.com/kreuzwerker/terraform-provider-docker/issues/721))
 
 ### Feat
 
