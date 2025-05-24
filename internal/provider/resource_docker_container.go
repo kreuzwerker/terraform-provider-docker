@@ -961,9 +961,21 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"cpus": {
 				Type:        schema.TypeString,
-				Description: "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs",
+				Description: "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.",
 				Optional:    true,
 				ForceNew:    true,
+			},
+			"cpu_period": {
+				Type:             schema.TypeInt,
+				Description:      "Specify the CPU CFS scheduler period (in microseconds), which is used alongside `cpu-quota`. Is ignored if `cpus` is set.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+			},
+			"cpu_quota": {
+				Type:             schema.TypeInt,
+				Description:      "Impose a CPU CFS quota on the container (in microseconds). The number of microseconds per `cpu-period` that the container is limited to before throttled. Is ignored if `cpus` is set.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 			"cgroupns_mode": {
 				Type:        schema.TypeString,
