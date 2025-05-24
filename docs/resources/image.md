@@ -125,7 +125,7 @@ Optional:
 - `build_args` (Map of String) Pairs for build-time variables in the form of `ENDPOINT : "https://example.com"`
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
-- `builder` (String) Set the name of the buildx builder to use. If not set or empty, the legacy builder will be used.
+- `builder` (String) Set the name of the buildx builder to use. Defaults to the `default` builder.
 - `cache_from` (List of String) Images to consider as cache sources
 - `cgroup_parent` (String) Optional parent cgroup for the container
 - `cpu_period` (Number) The length of a CPU period in microseconds
@@ -143,7 +143,7 @@ Optional:
 - `memory_swap` (Number) Total memory (memory + swap), -1 to enable unlimited swap
 - `network_mode` (String) Set the networking mode for the RUN instructions during build
 - `no_cache` (Boolean) Do not use the cache when building the image
-- `platform` (String) Set platform if server is multi-platform capable
+- `platform` (String) Set the target platform for the build. Defaults to `GOOS/GOARCH`. For more information see the [docker documentation](https://github.com/docker/buildx/blob/master/docs/reference/buildx.md#-set-the-target-platforms-for-the-build---platform)
 - `pull_parent` (Boolean) Attempt to pull the image even if an older image exists locally
 - `remote_context` (String) A Git repository URI or HTTP/HTTPS context URI. Will be ignored if `builder` is set.
 - `remove` (Boolean) Remove intermediate containers after a successful build. Defaults to `true`.

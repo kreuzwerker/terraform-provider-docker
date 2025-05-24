@@ -59,13 +59,13 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 
 				err = runBuild(ctx, dockerCli, options, buildLogFile)
 				if err != nil {
-					return diag.FromErr(err)
+					return diag.Errorf("Error running buildx build: %v", err)
 				}
 			} else {
 
 				err := buildDockerImage(ctx, rawBuild, imageName, client)
 				if err != nil {
-					return diag.FromErr(err)
+					return diag.Errorf("Error running legacy build: %v", err)
 				}
 			}
 		}
