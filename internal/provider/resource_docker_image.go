@@ -406,9 +406,8 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"builder": {
 							Type:        schema.TypeString,
-							Description: "Set the name of the buildx builder to use. Defaults to the `default` builder.",
+							Description: "Set the name of the buildx builder to use. If not set, the legacy builder is used.",
 							Optional:    true,
-							Default:     "default",
 							ForceNew:    true,
 						},
 						"build_log_file": {

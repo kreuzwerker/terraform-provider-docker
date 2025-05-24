@@ -28,7 +28,7 @@ you need to use it in combination with `docker_registry_image` as follows:
 
 ### Build
 
-You can also use the resource to build an image. By default the build block is using the old legacy docker build. In order to use a buildx builder, please read the section below
+You can also use the resource to build an image. If you want to use a buildx builder with all of its features, please read the section below.
 
 -> **Note**: The default timeout for the building is 20 minutes. If you need to increase this, you can use [operation timeouts](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts).
 
@@ -46,7 +46,7 @@ You can use the `triggers` argument to specify when the image should be rebuild.
 
 -> **Note**: The buildx feature is currently in preview and may have some quirks. Known issues: Setting `ulimits` will not work.
 
-The `build` argument uses the legacy docker builder. If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
+If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
 
 The single platform build result is automatically loaded to `docker images`.
 

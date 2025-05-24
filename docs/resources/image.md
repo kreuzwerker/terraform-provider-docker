@@ -43,7 +43,7 @@ resource "docker_image" "ubuntu" {
 
 ### Build
 
-You can also use the resource to build an image. By default the build block is using the old legacy docker build. In order to use a buildx builder, please read the section below
+You can also use the resource to build an image. If you want to use a buildx builder with all of its features, please read the section below.
 
 -> **Note**: The default timeout for the building is 20 minutes. If you need to increase this, you can use [operation timeouts](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts).
 
@@ -85,7 +85,7 @@ resource "docker_image" "zoo" {
 
 -> **Note**: The buildx feature is currently in preview and may have some quirks. Known issues: Setting `ulimits` will not work.
 
-The `build` argument uses the legacy docker builder. If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
+If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
 
 The single platform build result is automatically loaded to `docker images`.
 
@@ -125,7 +125,7 @@ Optional:
 - `build_args` (Map of String) Pairs for build-time variables in the form of `ENDPOINT : "https://example.com"`
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
-- `builder` (String) Set the name of the buildx builder to use. Defaults to the `default` builder.
+- `builder` (String) Set the name of the buildx builder to use. If not set, the legacy builder is used.
 - `cache_from` (List of String) Images to consider as cache sources
 - `cgroup_parent` (String) Optional parent cgroup for the container
 - `cpu_period` (Number) The length of a CPU period in microseconds
