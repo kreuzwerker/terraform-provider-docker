@@ -20,14 +20,13 @@ import (
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
-	"github.com/docker/docker/pkg/archive"
-	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/secrets/secretsprovider"
+	"github.com/moby/go-archive"
 	"github.com/pkg/errors"
 )
 
@@ -487,7 +486,7 @@ func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	}
 	ctx, _ := archive.TarWithOptions(filePath, &archive.TarOptions{
 		ExcludePatterns: excludes,
-		ChownOpts:       &idtools.Identity{UID: 0, GID: 0},
+		ChownOpts:       &archive.ChownOpts{UID: 0, GID: 0},
 	})
 	return ctx
 }
