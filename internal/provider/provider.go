@@ -224,13 +224,13 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 
 		// Check if the Docker daemon is running
 		if !d.Get("disable_docker_daemon_check").(bool) {
-			_, err = client.ServerVersion(ctx)
-			if err != nil {
-				return nil, diag.Errorf("Error connecting to Docker daemon: %s", err)
-			}
 			_, err = client.Ping(ctx)
 			if err != nil {
-				return nil, diag.Errorf("Error pinging Docker server: %s", err)
+				return nil, diag.Errorf("Error pinging Docker server, please make sure that %s is reachable and has a  '_ping' endpoint. Error: %s", host, err)
+			}
+			_, err = client.ServerVersion(ctx)
+			if err != nil {
+				log.Printf("[WARN] Error connecting to Docker daemon. Is your endpoint a valid docker host? This warning will be changed to an error in the next major version. Error: %s", err)
 			}
 		} else {
 			log.Printf("[DEBUG] Skipping Docker daemon check")
