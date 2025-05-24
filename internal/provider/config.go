@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/docker/cli/cli/connhelper"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
 
@@ -44,7 +44,7 @@ func buildHTTPClientFromBytes(caPEMCert, certPEMBlock, keyPEMBlock []byte) (*htt
 	} else {
 		caPool := x509.NewCertPool()
 		if !caPool.AppendCertsFromPEM(caPEMCert) {
-			return nil, errors.New("Could not add RootCA pem")
+			return nil, errors.New("could not add RootCA pem")
 		}
 		tlsConfig.RootCAs = caPool
 	}
@@ -140,7 +140,7 @@ func (c *Config) NewClient() (*client.Client, error) {
 
 // Data structure for holding data that we fetch from Docker.
 type Data struct {
-	DockerImages map[string]*types.ImageSummary
+	DockerImages map[string]*image.Summary
 }
 
 // ProviderConfig for the custom registry provider

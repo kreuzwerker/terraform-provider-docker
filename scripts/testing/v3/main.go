@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 const listenAddr = ":8085" // changed here on purpose
@@ -15,7 +15,7 @@ type config struct {
 }
 
 func main() {
-	configsContent, err := ioutil.ReadFile("configs.json")
+	configsContent, err := os.ReadFile("configs.json")
 	if err != nil {
 		log.Fatalf("cannot open 'configs.json': %s", err)
 	}
@@ -32,7 +32,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, err = w.Write([]byte(fmt.Sprintf("%s - Hello World!", configs.Prefix)))
+		_, err = w.Write([]byte(fmt.Sprintf("%s - Hello World!", configs.Prefix))) //nolint:staticcheck
 		if err != nil {
 			log.Fatalln("failed to write for path '/'")
 		}

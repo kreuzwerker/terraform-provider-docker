@@ -18,7 +18,7 @@ resource "docker_container" "foo" {
 
   capabilities {
     add  = ["ALL"]
-    drop = ["SYS_ADMIN"]
+    drop = ["CAP_SYS_ADMIN"]
   }
 
   security_opts = ["apparmor=unconfined", "label=disable"]

@@ -6,10 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,12 +24,9 @@ const (
 func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	createOpts := types.NetworkCreate{}
+	createOpts := network.CreateOptions{}
 	if v, ok := d.GetOk("labels"); ok {
 		createOpts.Labels = labelSetToMap(v.(*schema.Set))
-	}
-	if v, ok := d.GetOk("check_duplicate"); ok {
-		createOpts.CheckDuplicate = v.(bool)
 	}
 	if v, ok := d.GetOk("driver"); ok {
 		createOpts.Driver = v.(string)
@@ -48,7 +44,8 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 		createOpts.Ingress = v.(bool)
 	}
 	if v, ok := d.GetOk("ipv6"); ok {
-		createOpts.EnableIPv6 = v.(bool)
+		enableIPv6 := v.(bool)
+		createOpts.EnableIPv6 = &enableIPv6
 	}
 
 	ipamOpts := &network.IPAM{}
@@ -83,7 +80,7 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), networkReadRefreshTimeout)
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
 		Refresh:    resourceDockerNetworkReadRefreshFunc(ctx, d, meta),
@@ -104,7 +101,7 @@ func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta
 func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), networkRemoveRefreshTimeout)
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"removed"},
 		Refresh:    resourceDockerNetworkRemoveRefreshFunc(ctx, d, meta),
@@ -147,12 +144,12 @@ func ipamConfigSetToIpamConfigs(ipamConfigSet *schema.Set) []network.IPAMConfig 
 }
 
 func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
-		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
+		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
 		if err != nil {
 			log.Printf("[WARN] Network (%s) not found, removing from state", networkID)
 			d.SetId("")
@@ -173,7 +170,7 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 		d.Set("ipam_options", retNetwork.IPAM.Options)
 		d.Set("scope", retNetwork.Scope)
 		if retNetwork.Scope == "overlay" {
-			if retNetwork.Options != nil && len(retNetwork.Options) != 0 {
+			if len(retNetwork.Options) != 0 {
 				d.Set("options", retNetwork.Options)
 			} else {
 				log.Printf("[DEBUG] options: %v not exposed", retNetwork.Options)
@@ -193,12 +190,12 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 }
 
 func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
-		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, types.NetworkInspectOptions{})
+		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
 		if err != nil {
 			log.Printf("[INFO] Network (%s) not found. Already removed", networkID)
 			return networkID, "removed", nil

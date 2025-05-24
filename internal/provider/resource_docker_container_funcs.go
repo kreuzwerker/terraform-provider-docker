@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -148,6 +149,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				if rawStartPeriod, ok := rawHealthCheck["start_period"]; ok {
 					config.Healthcheck.StartPeriod, _ = time.ParseDuration(rawStartPeriod.(string))
 				}
+				if rawStartInterval, ok := rawHealthCheck["start_interval"]; ok {
+					config.Healthcheck.StartInterval, _ = time.ParseDuration(rawStartInterval.(string))
+				}
 				if rawRetries, ok := rawHealthCheck["retries"]; ok {
 					config.Healthcheck.Retries, _ = rawRetries.(int)
 				}
@@ -170,7 +174,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				mountInstance.ReadOnly = value.(bool)
 			}
 
-			if mountType == mount.TypeBind {
+			// QF1003: could use tagged switch on mountType
+			if mountType == mount.TypeBind { //nolint:staticcheck
 				if value, ok := rawMount["bind_options"]; ok {
 					if len(value.([]interface{})) > 0 {
 						mountInstance.BindOptions = &mount.BindOptions{}
@@ -207,6 +212,13 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 								}
 								mountInstance.VolumeOptions.DriverConfig.Options = mapTypeMapValsToString(value.(map[string]interface{}))
 							}
+							if client.ClientVersion() >= "1.45" {
+								if value, ok := rawVolumeOptions["subpath"]; ok {
+									mountInstance.VolumeOptions.Subpath = value.(string)
+								}
+							} else {
+								return diag.Errorf("Setting VolumeOptions.Subpath requires docker version 1.45 or higher")
+							}
 						}
 					}
 				}
@@ -235,7 +247,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		Privileged:      d.Get("privileged").(bool),
 		PublishAllPorts: d.Get("publish_all_ports").(bool),
 		RestartPolicy: container.RestartPolicy{
-			Name:              d.Get("restart").(string),
+			Name:              container.RestartPolicyMode(d.Get("restart").(string)),
 			MaximumRetryCount: d.Get("max_retry_count").(int),
 		},
 		Runtime:        d.Get("runtime").(string),
@@ -310,6 +322,23 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if v, ok := d.GetOk("shm_size"); ok {
 		hostConfig.ShmSize = int64(v.(int)) * 1024 * 1024
+	}
+
+	if v, ok := d.GetOk("cpus"); ok {
+		if client.ClientVersion() >= "1.28" {
+			cpu, ok := new(big.Rat).SetString(v.(string))
+			if !ok {
+				return diag.Errorf("Error setting cpus: Failed to parse %v as a rational number", v.(string))
+			}
+			nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
+			if !nano.IsInt() {
+				return diag.Errorf("Error setting cpus: value is too precise")
+			}
+
+			hostConfig.NanoCPUs = nano.Num().Int64()
+		} else {
+			log.Printf("[WARN] Setting CPUs count/quota requires docker version 1.28 or higher")
+		}
 	}
 
 	if v, ok := d.GetOk("cpu_shares"); ok {
@@ -399,7 +428,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.StorageOpt = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
-	var retContainer container.ContainerCreateCreatedBody
+	var retContainer container.CreateResponse
 
 	// TODO mavogel add platform later which comes from API v1.41. Currently we pass nil
 	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
@@ -470,7 +499,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				contentToUpload = string(decoded)
 			}
 			if source != "" {
-				sourceContent, err := ioutil.ReadFile(source)
+				sourceContent, err := os.ReadFile(source)
 				if err != nil {
 					return diag.Errorf("could not read file: %s", err)
 				}
@@ -478,10 +507,16 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 			file := upload.(map[string]interface{})["file"].(string)
 			executable := upload.(map[string]interface{})["executable"].(bool)
+			permission := upload.(map[string]interface{})["permissions"].(string)
 
 			buf := new(bytes.Buffer)
 			tw := tar.NewWriter(buf)
-			if executable {
+			if permission != "" {
+				mode, err = strconv.ParseInt(permission, 8, 32)
+				if err != nil {
+					return diag.Errorf("Error parsing permission: %s", err)
+				}
+			} else if executable {
 				mode = 0o744
 			} else {
 				mode = 0o644
@@ -504,7 +539,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 			dstPath := "/"
 			uploadContent := bytes.NewReader(buf.Bytes())
-			options := types.CopyToContainerOptions{}
+			options := container.CopyToContainerOptions{}
 			if err := client.CopyToContainer(ctx, retContainer.ID, dstPath, uploadContent, options); err != nil {
 				return diag.Errorf("Unable to upload volume content: %s", err)
 			}
@@ -513,7 +548,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if d.Get("start").(bool) {
 		creationTime = time.Now()
-		options := types.ContainerStartOptions{}
+		options := container.StartOptions{}
 		if err := client.ContainerStart(ctx, retContainer.ID, options); err != nil {
 			return diag.Errorf("Unable to start container: %s", err)
 		}
@@ -525,9 +560,15 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					if err != nil {
 						result <- fmt.Errorf("error inspecting container state: %s", err)
 					}
-					//infos.ContainerJSONBase.State.Health is only set when there is a healthcheck defined on the container resource
-					if infos.ContainerJSONBase.State.Health.Status == types.Healthy {
+
+					if infos.ContainerJSONBase == nil || infos.ContainerJSONBase.State == nil || infos.ContainerJSONBase.State.Health == nil { //nolint:staticcheck
+						result <- fmt.Errorf("you have supplied a 'wait' argument, but the container does not have a healthcheck defined. Please remove the 'wait' argument or add a 'healthcheck' attribute")
+						break
+					}
+
+					if infos.ContainerJSONBase.State.Health.Status == types.Healthy { //nolint:staticcheck
 						log.Printf("[DEBUG] container state is healthy")
+						result <- nil
 						break
 					}
 					log.Printf("[DEBUG] waiting for container healthy state")
@@ -559,7 +600,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		if d.Get("logs").(bool) {
 			go func() {
 				defer func() { logsRead <- true }()
-				reader, err := client.ContainerLogs(ctx, retContainer.ID, types.ContainerLogsOptions{
+				reader, err := client.ContainerLogs(ctx, retContainer.ID, container.LogsOptions{
 					ShowStdout: true,
 					ShowStderr: true,
 					Follow:     true,
@@ -568,7 +609,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				if err != nil {
 					log.Panic(err)
 				}
-				defer reader.Close()
+				defer reader.Close() //nolint:errcheck
 
 				scanner := bufio.NewScanner(reader)
 				for scanner.Scan() {
@@ -624,7 +665,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		return nil
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"running"},
 		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
@@ -647,7 +688,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	container := containerRaw.(types.ContainerJSON)
+	container := containerRaw.(container.InspectResponse)
 	jsonObj, _ := json.MarshalIndent(container, "", "\t")
 	log.Printf("[DEBUG] Docker container inspect from stateFunc: %s", jsonObj)
 
@@ -685,7 +726,17 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// logs
 	// "must_run" can't be imported
 	// container_logs
-	d.Set("image", container.Image)
+
+	// get image value from plan. If it begins with sha256: then we need to use {{ .Image }} value
+	//  If not, we can use Config.Image
+	// See https://github.com/kreuzwerker/terraform-provider-docker/issues/426#issuecomment-2828954974 for more details
+	imageValue := d.Get("image").(string)
+	if strings.HasPrefix(imageValue, "sha256:") {
+		d.Set("image", container.Image)
+	} else {
+		d.Set("image", container.Config.Image)
+	}
+
 	d.Set("hostname", container.Config.Hostname)
 	d.Set("domainname", container.Config.Domainname)
 	d.Set("command", container.Config.Cmd)
@@ -748,6 +799,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		d.Set("memory_swap", container.HostConfig.MemorySwap)
 	}
 	d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
+	if container.HostConfig.NanoCPUs > 0 {
+		d.Set("cpus", container.HostConfig.NanoCPUs)
+	}
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
@@ -760,11 +814,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if container.Config.Healthcheck != nil {
 		d.Set("healthcheck", []interface{}{
 			map[string]interface{}{
-				"test":         container.Config.Healthcheck.Test,
-				"interval":     container.Config.Healthcheck.Interval.String(),
-				"timeout":      container.Config.Healthcheck.Timeout.String(),
-				"start_period": container.Config.Healthcheck.StartPeriod.String(),
-				"retries":      container.Config.Healthcheck.Retries,
+				"test":           container.Config.Healthcheck.Test,
+				"interval":       container.Config.Healthcheck.Interval.String(),
+				"timeout":        container.Config.Healthcheck.Timeout.String(),
+				"start_period":   container.Config.Healthcheck.StartPeriod.String(),
+				"start_interval": container.Config.Healthcheck.StartInterval.String(),
+				"retries":        container.Config.Healthcheck.Retries,
 			},
 		})
 	}
@@ -787,12 +842,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDockerContainerReadRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		containerID := d.Id()
 
-		var container types.ContainerJSON
+		var container container.InspectResponse
 		container, err := client.ContainerInspect(ctx, containerID)
 		if err != nil {
 			return container, "pending", err
@@ -855,7 +910,7 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 
 			updateConfig := container.UpdateConfig{
 				RestartPolicy: container.RestartPolicy{
-					Name:              d.Get("restart").(string),
+					Name:              container.RestartPolicyMode(d.Get("restart").(string)),
 					MaximumRetryCount: d.Get("max_retry_count").(int),
 				},
 				Resources: container.Resources{
@@ -871,7 +926,8 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 				if a > 0 {
 					a = a * 1024 * 1024
 				}
-				updateConfig.Resources.MemorySwap = a
+				// QF1008: could remove embedded field "Resources" from selector
+				updateConfig.Resources.MemorySwap = a //nolint:staticcheck
 			}
 			client := meta.(*ProviderConfig).DockerClient
 			_, err := client.ContainerUpdate(ctx, d.Id(), updateConfig)
@@ -889,18 +945,18 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 	if !d.Get("attach").(bool) {
 		// Stop the container before removing if destroy_grace_seconds is defined
-		var timeout time.Duration
+		var timeout int
 		if d.Get("destroy_grace_seconds").(int) > 0 {
-			timeout = time.Duration(int32(d.Get("destroy_grace_seconds").(int))) * time.Second
+			timeout = d.Get("destroy_grace_seconds").(int)
 		}
 
 		log.Printf("[INFO] Stopping Container '%s' with timeout %v", d.Id(), timeout)
-		if err := client.ContainerStop(ctx, d.Id(), &timeout); err != nil {
+		if err := client.ContainerStop(ctx, d.Id(), *&container.StopOptions{Timeout: &timeout}); err != nil { //nolint
 			return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
 		}
 	}
 
-	removeOpts := types.ContainerRemoveOptions{
+	removeOpts := container.RemoveOptions{
 		RemoveVolumes: d.Get("remove_volumes").(bool),
 		RemoveLinks:   d.Get("rm").(bool),
 		Force:         true,
@@ -934,10 +990,11 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func fetchDockerContainer(ctx context.Context, ID string, client *client.Client) (*types.Container, error) {
-	apiContainers, err := client.ContainerList(ctx, types.ContainerListOptions{All: true})
+func fetchDockerContainer(ctx context.Context, ID string, client *client.Client) (*container.Summary, error) {
+	apiContainers, err := client.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching container information from Docker: %s\n", err)
+		// ST1005: error strings should not end with punctuation or newlines
+		return nil, fmt.Errorf("error fetching container information from Docker: %s\n", err) //nolint:staticcheck
 	}
 
 	for _, apiContainer := range apiContainers {

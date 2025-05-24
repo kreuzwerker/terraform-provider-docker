@@ -42,6 +42,7 @@ func resourceDockerNetwork() *schema.Resource {
 				Description: "Requests daemon to check for networks with same name.",
 				Optional:    true,
 				ForceNew:    true,
+				Deprecated:  "This option is deprecated and will be removed in a future version. The Docker daemon will always check for duplicate networks.",
 			},
 
 			"driver": {

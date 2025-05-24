@@ -33,6 +33,7 @@ website/vendor
 scripts/testing/auth
 scripts/testing/certs
 scripts/testing/testingFile*
+scripts/testing/**/to_be_ignored
 
 # build outputs
 results

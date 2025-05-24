@@ -4,8 +4,16 @@ import (
 	"testing"
 )
 
-func TestIsECRRepositoryURL(t *testing.T) {
+func TestIsECRPublicRepositoryURL(t *testing.T) {
+	if !isECRPublicRepositoryURL("public.ecr.aws") {
+		t.Fatalf("Expected true")
+	}
+	if isECRPublicRepositoryURL("public.ecr.aws.com") {
+		t.Fatalf("Expected false")
+	}
+}
 
+func TestIsECRRepositoryURL(t *testing.T) {
 	if !isECRRepositoryURL("2385929435838.dkr.ecr.eu-central-1.amazonaws.com") {
 		t.Fatalf("Expected true")
 	}
@@ -21,15 +29,26 @@ func TestIsECRRepositoryURL(t *testing.T) {
 }
 
 func TestParseAuthHeaders(t *testing.T) {
+	_, err := parseAuthHeader("")
+	if err == nil || err.Error() != "missing or invalid www-authenticate header, does not start with 'Bearer'" {
+		t.Fatalf("wanted \"missing or invalid www-authenticate header, does not start with 'Bearer'\", got nil")
+	}
+
 	header := "Bearer realm=\"https://gcr.io/v2/token\",service=\"gcr.io\",scope=\"repository:<owner>/:<repo>/<name>:pull\""
-	result := parseAuthHeader(header)
+	result, err := parseAuthHeader(header)
+	if err != nil {
+		t.Errorf("wanted no error, got %s", err)
+	}
 	wantScope := "repository:<owner>/:<repo>/<name>:pull"
 	if result["scope"] != wantScope {
 		t.Errorf("want: %#v, got: %#v", wantScope, result["scope"])
 	}
 
 	header = "Bearer realm=\"https://gcr.io/v2/token\",service=\"gcr.io\",scope=\"repository:<owner>/:<repo>/<name>:push,pull\""
-	result = parseAuthHeader(header)
+	result, err = parseAuthHeader(header)
+	if err != nil {
+		t.Errorf("wanted no error, got %s", err)
+	}
 	wantScope = "repository:<owner>/:<repo>/<name>:push,pull"
 	if result["scope"] != wantScope {
 		t.Errorf("want: %#v, got: %#v", wantScope, result["scope"])

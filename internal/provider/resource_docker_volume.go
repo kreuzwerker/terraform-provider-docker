@@ -6,10 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -80,7 +79,7 @@ func resourceDockerVolume() *schema.Resource {
 func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	createOpts := volume.VolumeCreateBody{}
+	createOpts := volume.CreateOptions{}
 
 	if v, ok := d.GetOk("name"); ok {
 		createOpts.Name = v.(string)
@@ -96,7 +95,7 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	var err error
-	var retVolume types.Volume
+	var retVolume volume.Volume
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
 	if err != nil {
@@ -131,7 +130,7 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for volume: '%s' to get removed: max '%v seconds'", d.Id(), volumeReadRefreshTimeout)
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"in_use"},
 		Target:     []string{"removed"},
 		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta),
@@ -151,7 +150,7 @@ func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerVolumeRemoveRefreshFunc(
-	volumeID string, meta interface{}) resource.StateRefreshFunc {
+	volumeID string, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		forceDelete := true

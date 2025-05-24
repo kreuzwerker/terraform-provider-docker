@@ -47,6 +47,8 @@ func resourceDockerRegistryImage() *schema.Resource {
 				Description: "The sha256 digest of the image.",
 				Computed:    true,
 			},
+
+			"auth_config": AuthConfigSchema,
 		},
 	}
 }

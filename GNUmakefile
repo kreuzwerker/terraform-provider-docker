@@ -2,7 +2,7 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 PKG_NAME=internal/provider
 
-GOLANGCI_VERSION = 1.49.0
+GOLANGCI_VERSION = 2.1.1
 
 # Values to install the provider locally for testing purposes
 HOSTNAME=registry.terraform.io
@@ -115,14 +115,14 @@ chlog-%:
 
 replace-occurences-%:
 	@echo "Replace occurences of old version strings..."
-	sed -i '' "s/$(shell (svu --strip-prefix current))/$*/g" README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf
+	sed -i "s/$(shell (svu --tag.prefix='' current))/$*/g" README.md docs/index.md examples/provider/provider-tf13.tf
 
 release-%:
 	@echo "Review the changes made by this script then execute the following:"
 	@${MAKE} website-generation
 	@echo "Review the changes made by this script then execute the following:"
 	@echo
-	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf12.tf examples/provider/provider-tf13.tf && git commit -m 'chore: Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
+	@echo "git add CHANGELOG.md README.md docs/index.md examples/provider/provider-tf13.tf && git commit -m 'chore: Prepare release $*' && git tag -m 'Release $*' ${TAG_PREFIX}$*"
 	@echo
 	@echo "Finally, push the changes:"
 	@echo
@@ -130,15 +130,15 @@ release-%:
 
 patch:
 	@${MAKE} chlog-$(shell (svu patch))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix patch))
+	@${MAKE} replace-occurences-$(shell (svu --tag.prefix='' patch))
 	@${MAKE} release-$(shell (svu patch))
 
 minor:
 	@${MAKE} chlog-$(shell (svu minor))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix minor))
+	@${MAKE} replace-occurences-$(shell (svu --tag.prefix='' minor))
 	@${MAKE} release-$(shell (svu minor))
 
 major:
 	@${MAKE} chlog-$(shell (svu major))
-	@${MAKE} replace-occurences-$(shell (svu --strip-prefix major))
+	@${MAKE} replace-occurences-$(shell (svu --tag.prefix='' major))
 	@${MAKE} release-$(shell (svu major))

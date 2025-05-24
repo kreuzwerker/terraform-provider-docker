@@ -25,7 +25,7 @@ Please use issue templates as much as possible.
 Prerequisites:
 
 - `make`, `git`, `bash`
-- [Go 1.18+](https://golang.org/doc/install)
+- [Go 1.22+](https://golang.org/doc/install)
 - [Docker](https://www.docker.com/)
 - [Terraform 0.12+](https://terraform.io/)
 - [git-chglog](https://github.com/git-chglog/git-chglog)
@@ -67,7 +67,7 @@ make testacc_setup
 TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -timeout 60s -run ^TestAccDockerImage_data_private_config_file$
 
 ## run all test for a resource, e.g docker_container
-TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -timeout 360s -run TestAccDockerContainer 
+TF_LOG=INFO TF_ACC=1 go test -v ./internal/provider -timeout 360s -run TestAccDockerContainer
 
 ## cleanup the local testing resources
 make testacc_cleanup
@@ -181,12 +181,12 @@ You can follow the documentation on
 
 ## Submit a pull request
 
-Push your branch to your `terraform-provider-docker` fork and open a 
+Push your branch to your `terraform-provider-docker` fork and open a
 pull request against the master branch.
 
 ## Releasing
 
-Run one of the following commands (depending on the semver version you want to release): 
+Run one of the following commands (depending on the semver version you want to release):
 
 ```sh
 make patch
@@ -196,5 +196,5 @@ make major
 
 Those commands will automatically:
 - Replace all occurrences of the latest release, e.g. `2.11.0` with the new one, e.g. `2.12.0`: ``
-- Generate the `CHANGELOG.md` 
+- Generate the `CHANGELOG.md`
 - Regenerate the website (`make website-generation`)

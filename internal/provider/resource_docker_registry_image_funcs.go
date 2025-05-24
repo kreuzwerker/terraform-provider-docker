@@ -14,11 +14,23 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
+	auth := v.([]interface{})[0].(map[string]interface{})
+	return registry.AuthConfig{
+		ServerAddress: normalizeRegistryAddress(auth["address"].(string)),
+		Username:      auth["username"].(string),
+		Password:      auth["password"].(string),
+	}
+
+}
 
 func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
@@ -28,10 +40,19 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 
 	pushOpts := createPushImageOptions(name)
 
-	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
-	if err != nil {
-		return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
+	var authConfig registry.AuthConfig
+	if v, ok := d.GetOk("auth_config"); ok {
+		log.Printf("[INFO] Using auth config from resource: %s", v)
+		authConfig = buildAuthConfigFromResource(v)
+	} else {
+		log.Printf("[INFO] Using auth config from provider: %s", v)
+		var err error
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		if err != nil {
+			return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
+		}
 	}
+
 	if err := pushDockerRegistryImage(ctx, client, pushOpts, authConfig.Username, authConfig.Password); err != nil {
 		return diag.Errorf("Error pushing docker image: %s", err)
 	}
@@ -39,7 +60,7 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
 	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
-		return diag.Errorf("Unable to create image, image not found: %s", err)
+		return diag.Errorf("Got error getting registry image digest inside resourceDockerRegistryImageCreate: %s", err)
 	}
 	d.SetId(digest)
 	d.Set("sha256_digest", digest)
@@ -50,9 +71,16 @@ func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
-	if err != nil {
-		return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+
+	var authConfig registry.AuthConfig
+	if v, ok := d.GetOk("auth_config"); ok {
+		authConfig = buildAuthConfigFromResource(v)
+	} else {
+		var err error
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		if err != nil {
+			return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
+		}
 	}
 
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
@@ -73,13 +101,20 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
-	authConfig, err := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
-	if err != nil {
-		return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
+
+	var authConfig registry.AuthConfig
+	if v, ok := d.GetOk("auth_config"); ok {
+		authConfig = buildAuthConfigFromResource(v)
+	} else {
+		var err error
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		if err != nil {
+			return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
+		}
 	}
 
 	digest := d.Get("sha256_digest").(string)
-	err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
+	err := deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
 	if err != nil {
 		err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, pushOpts.Tag, authConfig.Username, authConfig.Password, true, true)
 		if err != nil {
@@ -143,11 +178,11 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 		return ulimits
 	}
 
-	readAuthConfigs := func(options []interface{}) map[string]types.AuthConfig {
-		authConfigs := make(map[string]types.AuthConfig, len(options))
+	readAuthConfigs := func(options []interface{}) map[string]registry.AuthConfig {
+		authConfigs := make(map[string]registry.AuthConfig, len(options))
 		for _, v := range options {
 			authOptions := v.(map[string]interface{})
-			auth := types.AuthConfig{
+			auth := registry.AuthConfig{
 				Username:      authOptions["user_name"].(string),
 				Password:      authOptions["password"].(string),
 				Auth:          authOptions["auth"].(string),
@@ -199,9 +234,9 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 }
 
 func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpts internalPushImageOptions, username string, password string) error {
-	pushOptions := types.ImagePushOptions{}
+	pushOptions := image.PushOptions{}
 	if username != "" {
-		auth := types.AuthConfig{Username: username, Password: password}
+		auth := registry.AuthConfig{Username: username, Password: password}
 		authBytes, err := json.Marshal(auth)
 		if err != nil {
 			return fmt.Errorf("Error creating push options: %s", err)
@@ -214,7 +249,7 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer out.Close() //nolint:errcheck
 
 	type ErrorMessage struct {
 		Error string
@@ -239,11 +274,11 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 
 func getAuthConfigForRegistry(
 	registryWithoutProtocol string,
-	providerConfig *ProviderConfig) (types.AuthConfig, error) {
+	providerConfig *ProviderConfig) (registry.AuthConfig, error) {
 	if authConfig, ok := providerConfig.AuthConfigs.Configs[registryWithoutProtocol]; ok {
 		return authConfig, nil
 	}
-	return types.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
+	return registry.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
 }
 
 func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkipVerify bool) *http.Client {
@@ -261,25 +296,10 @@ func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkip
 func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithProtocol string, sha256Digest, username, password string, insecureSkipVerify, fallback bool) error {
 	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
-	req, err := http.NewRequest("DELETE", registryWithProtocol+"/v2/"+pushOpts.Repository+"/manifests/"+sha256Digest, nil)
+	req, err := setupHTTPRequestForRegistry("DELETE", pushOpts.Registry, registryWithProtocol, pushOpts.Repository, sha256Digest, username, password, fallback)
 	if err != nil {
-		return fmt.Errorf("Error deleting registry image: %s", err)
+		return err
 	}
-
-	if username != "" {
-		if pushOpts.Registry != "ghcr.io" && !isECRRepositoryURL(pushOpts.Registry) && !isAzureCRRepositoryURL(pushOpts.Registry) && pushOpts.Registry != "gcr.io" {
-			req.SetBasicAuth(username, password)
-		} else {
-			if isECRRepositoryURL(pushOpts.Registry) {
-				password = normalizeECRPasswordForHTTPUsage(password)
-				req.Header.Add("Authorization", "Basic "+password)
-			} else {
-				req.Header.Add("Authorization", "Bearer "+base64.StdEncoding.EncodeToString([]byte(password)))
-			}
-		}
-	}
-
-	setupHTTPHeadersForRegistryRequests(req, fallback)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -293,11 +313,12 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 
 	// Either OAuth is required or the basic auth creds were invalid
 	case http.StatusUnauthorized:
-		if !strings.HasPrefix(resp.Header.Get("www-authenticate"), "Bearer") {
-			return fmt.Errorf("Bad credentials: " + resp.Status)
+		auth, err := parseAuthHeader(resp.Header.Get("www-authenticate"))
+		if err != nil {
+			return fmt.Errorf("bad credentials: %s", resp.Status)
 		}
 
-		token, err := getAuthToken(resp.Header.Get("www-authenticate"), username, password, client)
+		token, err := getAuthToken(auth, username, password, "repository:"+pushOpts.Repository+":*", client)
 		if err != nil {
 			return err
 		}

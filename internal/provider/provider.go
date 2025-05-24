@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -52,6 +53,12 @@ func New(version string) func() *schema.Provider {
 						return "unix:///var/run/docker.sock", nil
 					},
 					Description: "The Docker daemon address",
+				},
+				"context": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONTEXT", ""),
+					Description: "The name of the Docker context to use. Can also be set via `DOCKER_CONTEXT` environment variable. Overrides the `host` if set.",
 				},
 				"ssh_opts": {
 					Type:     schema.TypeList,
@@ -140,6 +147,12 @@ func New(version string) func() *schema.Provider {
 						},
 					},
 				},
+				"disable_docker_daemon_check": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.",
+				},
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
@@ -153,14 +166,16 @@ func New(version string) func() *schema.Provider {
 				"docker_service":        resourceDockerService(),
 				"docker_plugin":         resourceDockerPlugin(),
 				"docker_tag":            resourceDockerTag(),
+				"docker_buildx_builder": resourceDockerBuildxBuilder(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"docker_registry_image": dataSourceDockerRegistryImage(),
-				"docker_network":        dataSourceDockerNetwork(),
-				"docker_plugin":         dataSourceDockerPlugin(),
-				"docker_image":          dataSourceDockerImage(),
-				"docker_logs":           dataSourceDockerLogs(),
+				"docker_registry_image":           dataSourceDockerRegistryImage(),
+				"docker_network":                  dataSourceDockerNetwork(),
+				"docker_plugin":                   dataSourceDockerPlugin(),
+				"docker_image":                    dataSourceDockerImage(),
+				"docker_logs":                     dataSourceDockerLogs(),
+				"docker_registry_image_manifests": dataSourceDockerRegistryImageManifests(),
 			},
 		}
 
@@ -172,13 +187,29 @@ func New(version string) func() *schema.Provider {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		var host string
+		if contextName := d.Get("context").(string); contextName != "" {
+			usr, err := user.Current()
+			if err != nil {
+				return nil, diag.Errorf("Could not determine current user. We don't know what the homedir is to look for docker contexts: %v", err)
+			}
+			log.Printf("[DEBUG] Homedir %s", usr.HomeDir)
+			contextHost, err := getContextHost(contextName, usr.HomeDir)
+			if err != nil {
+				return nil, diag.Errorf("Error loading Docker context '%s': %s", contextName, err)
+			}
+			host = contextHost
+		} else {
+			host = d.Get("host").(string)
+		}
+
 		SSHOptsI := d.Get("ssh_opts").([]interface{})
 		SSHOpts := make([]string, len(SSHOptsI))
 		for i, s := range SSHOptsI {
 			SSHOpts[i] = s.(string)
 		}
 		config := Config{
-			Host:     d.Get("host").(string),
+			Host:     host,
 			SSHOpts:  SSHOpts,
 			Ca:       d.Get("ca_material").(string),
 			Cert:     d.Get("cert_material").(string),
@@ -191,9 +222,18 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 			return nil, diag.Errorf("Error initializing Docker client: %s", err)
 		}
 
-		_, err = client.Ping(ctx)
-		if err != nil {
-			return nil, diag.Errorf("Error pinging Docker server: %s", err)
+		// Check if the Docker daemon is running
+		if !d.Get("disable_docker_daemon_check").(bool) {
+			_, err = client.ServerVersion(ctx)
+			if err != nil {
+				return nil, diag.Errorf("Error connecting to Docker daemon: %s", err)
+			}
+			_, err = client.Ping(ctx)
+			if err != nil {
+				return nil, diag.Errorf("Error pinging Docker server: %s", err)
+			}
+		} else {
+			log.Printf("[DEBUG] Skipping Docker daemon check")
 		}
 
 		authConfigs := &AuthConfigs{}
@@ -214,20 +254,59 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 	}
 }
 
+func getContextHost(contextName string, homedir string) (string, error) {
+	contextsDir := fmt.Sprintf("%s/.docker/contexts/meta", homedir)
+	files, err := os.ReadDir(contextsDir)
+	if err != nil {
+		return "", fmt.Errorf("could not read contexts directory: %v", err)
+	}
+
+	for _, file := range files {
+		metaFilePath := fmt.Sprintf("%s/%s/meta.json", contextsDir, file.Name())
+		metaFile, err := os.Open(metaFilePath)
+		if err != nil {
+			log.Printf("[DEBUG] Skipping file %s due to error: %v", metaFilePath, err)
+			continue
+		}
+
+		var meta struct {
+			Name      string `json:"Name"`
+			Endpoints map[string]struct {
+				Host string `json:"Host"`
+			} `json:"Endpoints"`
+		}
+		err = json.NewDecoder(metaFile).Decode(&meta)
+		// Ensure the file is closed immediately after reading
+		metaFile.Close() // nolint:errcheck
+		if err != nil {
+			log.Printf("[DEBUG] Skipping file %s due to JSON parsing error: %v", metaFilePath, err)
+			continue
+		}
+
+		if meta.Name == contextName {
+			if endpoint, ok := meta.Endpoints["docker"]; ok {
+				return endpoint.Host, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("context '%s' not found", contextName)
+}
+
 // AuthConfigs represents authentication options to use for the
 // PushImage method accommodating the new X-Registry-Config header
 type AuthConfigs struct {
-	Configs map[string]types.AuthConfig `json:"configs"`
+	Configs map[string]registry.AuthConfig `json:"configs"`
 }
 
 // Take the given registry_auth schemas and return a map of registry auth configurations
 func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 	authConfigs := AuthConfigs{
-		Configs: make(map[string]types.AuthConfig),
+		Configs: make(map[string]registry.AuthConfig),
 	}
 
 	for _, auth := range authList.List() {
-		authConfig := types.AuthConfig{}
+		authConfig := registry.AuthConfig{}
 		address := auth.(map[string]interface{})["address"].(string)
 		authConfig.ServerAddress = normalizeRegistryAddress(address)
 		registryHostname := convertToHostname(authConfig.ServerAddress)
@@ -311,11 +390,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 func loadConfigFile(configData io.Reader) (*configfile.ConfigFile, error) {
 	configFile := configfile.New("")
 	if err := configFile.LoadFromReader(configData); err != nil {
-		log.Println("[DEBUG] Error parsing registry config: ", err)
-		log.Println("[DEBUG] Will try parsing from legacy format")
-		if err := configFile.LegacyLoadFromReader(configData); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	return configFile, nil
 }

@@ -12,23 +12,22 @@ on:
       - '**.go'
       - go.mod
       - '.github/workflows/**'
-    paths-ignore:
-      - '**_test.go'
+      - '!**_test.go'
 
 env:
   GOPROXY: https://proxy.golang.org,direct
-  GO_VERSION: "1.18"
+  GO_VERSION: "1.22"
 
 jobs:
   compile:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4
+        uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
           args: release --rm-dist --skip-publish --snapshot --skip-sign

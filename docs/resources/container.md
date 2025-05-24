@@ -30,7 +30,7 @@ resource "docker_image" "ubuntu" {
 
 ### Required
 
-- `image` (String) The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.
+- `image` (String) The ID of the image to back this container. The easiest way to get this value is to use the `image_id` attribute of the `docker_image` resource as is shown in the example.
 - `name` (String) The name of the container.
 
 ### Optional
@@ -38,17 +38,18 @@ resource "docker_image" "ubuntu" {
 - `attach` (Boolean) If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.
 - `capabilities` (Block Set, Max: 1) Add or drop certrain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
 - `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
-- `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.con"]`.
+- `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.conf"]`.
 - `container_read_refresh_timeout_milliseconds` (Number) The total number of milliseconds to wait for the container to reach status 'running'
 - `cpu_set` (String) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
+- `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 - `devices` (Block Set) Bind devices to the container. (see [below for nested schema](#nestedblock--devices))
 - `dns` (Set of String) DNS servers to use.
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 - `dns_search` (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
 - `domainname` (String) Domain name of the container.
-- `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogra"]`.
+- `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogram"]`.
 - `env` (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
 - `gpus` (String) GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.
 - `group_add` (Set of String) Additional groups for the container user
@@ -66,7 +67,7 @@ resource "docker_image" "ubuntu" {
 - `memory_swap` (Number) The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.
-- `network_mode` (String) Network mode of the container.
+- `network_mode` (String) Network mode of the container. See https://docs.docker.com/engine/network/ for more information.
 - `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
 - `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
@@ -92,7 +93,7 @@ resource "docker_image" "ubuntu" {
 - `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
-- `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.
+- `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.
 - `wait_timeout` (Number) The timeout in seconds to wait the container to be healthy after creation. Defaults to `60`.
 - `working_dir` (String) The working directory for commands to run in.
 
@@ -137,6 +138,7 @@ Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`.
+- `start_interval` (String) Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
@@ -201,6 +203,7 @@ Optional:
 - `driver_options` (Map of String) key/value map of driver specific options.
 - `labels` (Block Set) User-defined key/value metadata. (see [below for nested schema](#nestedblock--mounts--volume_options--labels))
 - `no_copy` (Boolean) Populate volume with data from the target.
+- `subpath` (String) Path within the volume to mount. Requires docker server version 1.45 or higher.
 
 <a id="nestedblock--mounts--volume_options--labels"></a>
 ### Nested Schema for `mounts.volume_options.labels`
@@ -263,6 +266,7 @@ Optional:
 - `content` (String) Literal string value to use as the object content, which will be uploaded as UTF-8-encoded text. Conflicts with `content_base64` & `source`
 - `content_base64` (String) Base64-encoded data that will be decoded and uploaded as raw bytes for the object content. This allows safely uploading non-UTF8 binary data, but is recommended only for larger binary content such as the result of the `base64encode` interpolation function. See [here](https://github.com/terraform-providers/terraform-provider-docker/issues/48#issuecomment-374174588) for the reason. Conflicts with `content` & `source`
 - `executable` (Boolean) If `true`, the file will be uploaded with user executable permission. Defaults to `false`.
+- `permissions` (String) The permission mode for the file in the container. Has precedence over `executable`.
 - `source` (String) A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state. Conflicts with `content` & `content_base64`
 - `source_hash` (String) If using `source`, this will force an update if the file content has updated but the filename has not.
 
