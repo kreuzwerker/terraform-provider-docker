@@ -1,17 +1,31 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerImageCreateDefaultTimeout = 20 * time.Minute
+	dockerImageUpdateDefaultTimeout = 20 * time.Minute
+	dockerImageDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Pulls a Docker image to a given Docker host from a Docker Registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](registry_image.md) data source to update the `pull_triggers` field.",
+		Description: "Manages the lifecycle of a docker image in your docker host. It can be used to build a new docker image or to pull an existing one from a registry.\n This resource will *not* pull new layers of the image automatically unless used in conjunction with [docker_registry_image](../data-sources/registry_image.md) data source to update the `pull_triggers` field.",
 
 		CreateContext: resourceDockerImageCreate,
 		ReadContext:   resourceDockerImageRead,
 		UpdateContext: resourceDockerImageUpdate,
 		DeleteContext: resourceDockerImageDelete,
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerImageCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerImageUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerImageDeleteDefaultTimeout),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -34,7 +48,7 @@ func resourceDockerImage() *schema.Resource {
 
 			"repo_digest": {
 				Type:        schema.TypeString,
-				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`.",
+				Description: "The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. This may not be populated when building an image, because it is read from the local Docker client and so may be available only when the image was either pulled from the repo or pushed to the repo (perhaps using `docker_registry_image`) in a previous run.",
 				Computed:    true,
 			},
 
@@ -61,7 +75,7 @@ func resourceDockerImage() *schema.Resource {
 
 			"build": {
 				Type:          schema.TypeSet,
-				Description:   "Configuration to build an image. Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.",
+				Description:   "Configuration to build an image. Requires the `Use containerd for pulling and storing images` option to be disabled in the Docker Host(https://github.com/kreuzwerker/terraform-provider-docker/issues/534). Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too.",
 				Optional:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"pull_triggers"},
@@ -88,14 +102,35 @@ func resourceDockerImage() *schema.Resource {
 							Default:     true,
 							Optional:    true,
 						},
-						"build_arg": {
-							Type:        schema.TypeMap,
-							Description: "Set build-time variables",
+						"secrets": {
+							Type:        schema.TypeList,
+							Description: "Set build-time secrets. Only available when you use a buildx builder.",
 							Optional:    true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Description: "ID of the secret. By default, secrets are mounted to /run/secrets/<id>",
+										Optional:    false,
+										Required:    true,
+										ForceNew:    true,
+									},
+									"src": {
+										Type:        schema.TypeString,
+										Description: "File source of the secret. Takes precedence over `env`",
+										Optional:    true,
+										Required:    false,
+										ForceNew:    true,
+									},
+									"env": {
+										Type:        schema.TypeString,
+										Description: "Environment variable source of the secret",
+										Optional:    true,
+										Required:    false,
+										ForceNew:    true,
+									},
+								},
 							},
-							ForceNew: true,
 						},
 						"label": {
 							Type:        schema.TypeMap,
@@ -113,7 +148,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"remote_context": {
 							Type:        schema.TypeString,
-							Description: "A Git repository URI or HTTP/HTTPS context URI",
+							Description: "A Git repository URI or HTTP/HTTPS context URI. Will be ignored if `builder` is set.",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -230,7 +265,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"build_args": {
 							Type:        schema.TypeMap,
-							Description: "Pairs for build-time variables in the form TODO",
+							Description: "Pairs for build-time variables in the form of `ENDPOINT : \"https://example.com\"`",
 							Optional:    true,
 							ForceNew:    true,
 							Elem: &schema.Schema{
@@ -289,7 +324,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"context": {
 							Type:        schema.TypeString,
-							Description: "Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.",
+							Description: "Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. This always refers to the local working directory, even when building images on remote hosts. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.",
 							Required:    true,
 							ForceNew:    true,
 						},
@@ -353,7 +388,7 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"platform": {
 							Type:        schema.TypeString,
-							Description: "Set platform if server is multi-platform capable",
+							Description: "Set the target platform for the build. Defaults to `GOOS/GOARCH`. For more information see the [docker documentation](https://github.com/docker/buildx/blob/master/docs/reference/buildx.md#-set-the-target-platforms-for-the-build---platform)",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -366,6 +401,18 @@ func resourceDockerImage() *schema.Resource {
 						"build_id": {
 							Type:        schema.TypeString,
 							Description: "BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.",
+							Optional:    true,
+							ForceNew:    true,
+						},
+						"builder": {
+							Type:        schema.TypeString,
+							Description: "Set the name of the buildx builder to use. If not set, the legacy builder is used.",
+							Optional:    true,
+							ForceNew:    true,
+						},
+						"build_log_file": {
+							Type:        schema.TypeString,
+							Description: "Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.",
 							Optional:    true,
 							ForceNew:    true,
 						},

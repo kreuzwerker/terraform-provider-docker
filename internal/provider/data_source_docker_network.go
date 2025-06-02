@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -104,7 +103,7 @@ func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, me
 
 	client := meta.(*ProviderConfig).DockerClient
 
-	network, err := client.NetworkInspect(ctx, name.(string), types.NetworkInspectOptions{})
+	network, err := client.NetworkInspect(ctx, name.(string), network.InspectOptions{})
 	if err != nil {
 		return diag.Errorf("Could not find docker network: %s", err)
 	}

@@ -11,7 +11,9 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -227,8 +229,8 @@ func TestMigrateServiceLabelState_with_labels(t *testing.T) {
 }
 
 func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
-	authConfigs := make(map[string]types.AuthConfig)
-	authConfigs["repo.my-company.com:8787"] = types.AuthConfig{
+	authConfigs := make(map[string]registry.AuthConfig)
+	authConfigs["repo.my-company.com:8787"] = registry.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
@@ -243,20 +245,20 @@ func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
 }
 
 func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
-	authConfigs := make(map[string]types.AuthConfig)
-	authConfigs["repo.my-company.com:8787"] = types.AuthConfig{
+	authConfigs := make(map[string]registry.AuthConfig)
+	authConfigs["repo.my-company.com:8787"] = registry.AuthConfig{
 		Username:      "myuser",
 		Password:      "mypass",
 		Email:         "",
 		ServerAddress: "https://repo.my-company.com:8787",
 	}
-	authConfigs["nexus.my-fancy-company.com"] = types.AuthConfig{
+	authConfigs["nexus.my-fancy-company.com"] = registry.AuthConfig{
 		Username:      "myuser33",
 		Password:      "mypass123",
 		Email:         "test@example.com",
 		ServerAddress: "https://nexus.my-fancy-company.com",
 	}
-	authConfigs["http-nexus.my-fancy-company.com"] = types.AuthConfig{
+	authConfigs["http-nexus.my-fancy-company.com"] = registry.AuthConfig{
 		Username:      "myuser33",
 		Password:      "mypass123",
 		Email:         "test@example.com",
@@ -1385,7 +1387,7 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 
 	filters := filters.NewArgs()
 	filters.Add("reference", imagePattern)
-	images, err := client.ImageList(ctx, types.ImageListOptions{
+	images, err := client.ImageList(ctx, image.ListOptions{
 		Filters: filters,
 	})
 	if err != nil {
@@ -1394,14 +1396,14 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 
 	retryDeleteCount := 0
 	for i := 0; i < len(images); {
-		image := images[i]
-		_, err := client.ImageRemove(ctx, image.ID, types.ImageRemoveOptions{
+		currentImage := images[i]
+		_, err := client.ImageRemove(ctx, currentImage.ID, image.RemoveOptions{
 			Force: true,
 		})
 		if err != nil {
 			if containsIgnorableErrorMessage(err.Error(), "image is being used by running container") {
 				if retryDeleteCount == maxRetryDeleteCount {
-					return fmt.Errorf("could not delete image '%s' after %d retries", image.ID, maxRetryDeleteCount)
+					return fmt.Errorf("could not delete image '%s' after %d retries", currentImage.ID, maxRetryDeleteCount)
 				}
 				<-time.After(time.Duration(retrySleepSeconds) * time.Second)
 				retryDeleteCount++
@@ -1412,7 +1414,7 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 		i++
 	}
 
-	imagesAfterDelete, err := client.ImageList(ctx, types.ImageListOptions{
+	imagesAfterDelete, err := client.ImageList(ctx, image.ListOptions{
 		Filters: filters,
 	})
 	if err != nil {

@@ -7,7 +7,7 @@ resource "docker_network" "test" {
   }
 
   ipam_config {
-    subnet = "fd00::1/64"
+    subnet = "fd00::/64"
   }
 }
 resource "docker_image" "foo" {

@@ -361,6 +361,8 @@ Required:
 Optional:
 
 - `args` (List of String) Arguments to the command
+- `cap_add` (List of String) List of Linux capabilities to add to the container
+- `cap_drop` (List of String) List of Linux capabilities to drop from the container
 - `command` (List of String) The command/entrypoint to be run in the image. According to the [docker cli](https://github.com/docker/cli/blob/v20.10.7/cli/command/service/opts.go#L705) the override of the entrypoint is also passed to the `command` property and there is no `entrypoint` attribute in the `ContainerSpec` of the service.
 - `configs` (Block Set) References to zero or more configs that will be exposed to the service (see [below for nested schema](#nestedblock--task_spec--container_spec--configs))
 - `dir` (String) The working directory for commands to run in

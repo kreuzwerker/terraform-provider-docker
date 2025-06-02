@@ -39,11 +39,11 @@ func TestValidateStringIsFloatRatio(t *testing.T) {
 	}
 	w := false
 	if diags := validateStringIsFloatRatio()(w, *new(cty.Path)); !diags.HasError() {
-		t.Fatalf("%v should be an invalid float because it is a bool", v)
+		t.Fatalf("%v should be an invalid float because it is a bool", w)
 	}
 	i := 0
 	if diags := validateStringIsFloatRatio()(i, *new(cty.Path)); diags.HasError() {
-		t.Fatalf("%v should be a valid float because int can be casted", v)
+		t.Fatalf("%v should be a valid float because int can be casted", i)
 	}
 	i = 1
 	if diags := validateStringIsFloatRatio()(i, *new(cty.Path)); diags.HasError() {

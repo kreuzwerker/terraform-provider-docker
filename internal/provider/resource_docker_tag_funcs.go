@@ -15,7 +15,7 @@ func resourceDockerTagCreate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("failed to create docker tag: %s", err)
 	}
-	imageInspect, _, err := client.ImageInspectWithRaw(ctx, sourceImage)
+	imageInspect, err := client.ImageInspect(ctx, sourceImage)
 	if err != nil {
 		return diag.Errorf("failed to ImageInspectWithRaw: %s", err)
 	}

@@ -66,7 +66,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"wait": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the Docker container is waited for being healthy state after creation. If `false`, then the container health state is not checked. Defaults to `false`.",
+				Description: "If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.",
 				Default:     false,
 				Optional:    true,
 			},
@@ -126,12 +126,9 @@ func resourceDockerContainer() *schema.Resource {
 				Computed:    true,
 			},
 
-			// ForceNew is not true for image because we need to
-			// sane this against Docker image IDs, as each image
-			// can have multiple names/tags attached do it.
 			"image": {
 				Type:        schema.TypeString,
-				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `docker_image` resource as is shown in the example.",
+				Description: "The ID of the image to back this container. The easiest way to get this value is to use the `image_id` attribute of the `docker_image` resource as is shown in the example.",
 				Required:    true,
 				ForceNew:    true,
 			},
@@ -153,7 +150,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"command": {
 				Type:        schema.TypeList,
-				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.con\"]`.",
+				Description: "The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `[\"/usr/bin/myprogram\",\"-f\",\"baz.conf\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -162,7 +159,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"entrypoint": {
 				Type:        schema.TypeList,
-				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogra\"]`.",
+				Description: "The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `\"/usr/bin/myprogram\"]`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -381,6 +378,12 @@ func resourceDockerContainer() *schema.Resource {
 										Description: "key/value map of driver specific options.",
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+									"subpath": {
+										Type:        schema.TypeString,
+										Description: "Path within the volume to mount. Requires docker server version 1.45 or higher.",
+										Optional:    true,
+										ForceNew:    true,
 									},
 								},
 							},
@@ -729,19 +732,10 @@ func resourceDockerContainer() *schema.Resource {
 
 			"network_mode": {
 				Type:        schema.TypeString,
-				Description: "Network mode of the container.",
+				Description: "Network mode of the container. See https://docs.docker.com/engine/network/ for more information.",
 				Optional:    true,
 				ForceNew:    true,
-				DiffSuppressFunc: func(k, oldV, newV string, d *schema.ResourceData) bool {
-					// treat "" as "default", which is Docker's default value
-					if oldV == "" {
-						oldV = "default"
-					}
-					if newV == "" {
-						newV = "default"
-					}
-					return oldV == newV
-				},
+				Default:     "bridge",
 			},
 
 			"networks_advanced": {
@@ -829,6 +823,13 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 						},
+						"permissions": {
+							Type:             schema.TypeString,
+							Description:      "The permission mode for the file in the container. Has precedence over `executable`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateStringMatchesPattern(`^0[0-7]{3}$`),
+						},
 						"source": {
 							Type:        schema.TypeString,
 							Description: "A filename that references a file which will be uploaded as the object content. This allows for large file uploads that do not get stored in state. Conflicts with `content` & `content_base64`",
@@ -876,6 +877,13 @@ func resourceDockerContainer() *schema.Resource {
 						"start_period": {
 							Type:             schema.TypeString,
 							Description:      "Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.",
+							Default:          "0s",
+							Optional:         true,
+							ValidateDiagFunc: validateDurationGeq0(),
+						},
+						"start_interval": {
+							Type:             schema.TypeString,
+							Description:      "Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.",
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
@@ -950,6 +958,24 @@ func resourceDockerContainer() *schema.Resource {
 				Description: "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
 				Optional:    true,
 				ForceNew:    true,
+			},
+			"cpus": {
+				Type:        schema.TypeString,
+				Description: "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.",
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"cpu_period": {
+				Type:             schema.TypeInt,
+				Description:      "Specify the CPU CFS scheduler period (in microseconds), which is used alongside `cpu-quota`. Is ignored if `cpus` is set.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+			},
+			"cpu_quota": {
+				Type:             schema.TypeInt,
+				Description:      "Impose a CPU CFS quota on the container (in microseconds). The number of microseconds per `cpu-period` that the container is limited to before throttled. Is ignored if `cpus` is set.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
 			"cgroupns_mode": {
 				Type:        schema.TypeString,

@@ -20,6 +20,10 @@ Creates a docker tag. It has the exact same functionality as the `docker tag` co
 - `source_image` (String) Name of the source image.
 - `target_image` (String) Name of the target image.
 
+### Optional
+
+- `tag_triggers` (Set of String) List of values which cause the tag to be (re)created. This is useful for triggering a new tag when the source image changes.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.

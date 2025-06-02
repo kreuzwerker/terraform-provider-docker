@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,7 +17,6 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 
-	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -40,7 +38,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 	dockerConfig := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "dockerconfig.json"), "\\", "\\\\")
 	ctx := context.Background()
 
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -60,7 +58,7 @@ func TestAccDockerContainer_private_image(t *testing.T) {
 
 func TestAccDockerContainer_basic(t *testing.T) {
 	resourceName := "docker_container.foo"
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -109,7 +107,7 @@ func TestAccDockerContainer_basic(t *testing.T) {
 
 func TestAccDockerContainer_init(t *testing.T) {
 	resourceName := "docker_container.fooinit"
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -150,7 +148,7 @@ func TestAccDockerContainer_init(t *testing.T) {
 }
 
 func TestAccDockerContainer_basic_network(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -176,7 +174,7 @@ func TestAccDockerContainer_basic_network(t *testing.T) {
 }
 
 func TestAccDockerContainer_2networks_withmode(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -208,7 +206,7 @@ func TestAccDockerContainer_2networks_withmode(t *testing.T) {
 }
 
 func TestAccDockerContainer_volume(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.Mounts) != 1 {
@@ -250,7 +248,7 @@ func TestAccDockerContainer_volume(t *testing.T) {
 }
 
 func TestAccDockerContainer_mounts(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.Mounts) != 2 {
@@ -282,7 +280,7 @@ func TestAccDockerContainer_mounts(t *testing.T) {
 }
 
 func TestAccDockerContainer_tmpfs(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.HostConfig.Tmpfs) != 1 {
@@ -314,7 +312,7 @@ func TestAccDockerContainer_tmpfs(t *testing.T) {
 }
 
 func TestAccDockerContainer_sysctls(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.HostConfig.Sysctls) != 1 {
@@ -348,7 +346,7 @@ func TestAccDockerContainer_sysctls(t *testing.T) {
 }
 
 func TestAccDockerContainer_groupadd_id(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.HostConfig.GroupAdd) != 1 || c.HostConfig.GroupAdd[0] != "100" {
@@ -373,7 +371,7 @@ func TestAccDockerContainer_groupadd_id(t *testing.T) {
 }
 
 func TestAccDockerContainer_groupadd_name(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.HostConfig.GroupAdd) != 1 || c.HostConfig.GroupAdd[0] != "users" {
@@ -398,7 +396,7 @@ func TestAccDockerContainer_groupadd_name(t *testing.T) {
 }
 
 func TestAccDockerContainer_groupadd_multiple(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.HostConfig.GroupAdd) != 3 {
@@ -423,7 +421,7 @@ func TestAccDockerContainer_groupadd_multiple(t *testing.T) {
 }
 
 func TestAccDockerContainer_tty(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if !c.Config.Tty {
@@ -448,7 +446,7 @@ func TestAccDockerContainer_tty(t *testing.T) {
 }
 
 func TestAccDockerContainer_STDIN_Enabled(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if !c.Config.OpenStdin {
@@ -473,7 +471,7 @@ func TestAccDockerContainer_STDIN_Enabled(t *testing.T) {
 }
 
 func TestAccDockerContainer_customized(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if len(c.Config.Entrypoint) < 3 ||
@@ -551,7 +549,7 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container does not have the correct number of Capabilities in Drop: %d", len(c.HostConfig.CapDrop))
 		}
 
-		if c.HostConfig.CapDrop[0] != "SYS_ADMIN" {
+		if c.HostConfig.CapDrop[0] != "CAP_SYS_ADMIN" {
 			return fmt.Errorf("Container has wrong CapDrop setting: %v", c.HostConfig.CapDrop[0])
 		}
 
@@ -676,40 +674,42 @@ func testAccCheckSwapLimit(t *testing.T) {
 	}
 }
 
-func TestAccDockerContainer_upload(t *testing.T) {
-	var c types.ContainerJSON
+func TestAccDockerContainer_uploadPermission(t *testing.T) {
+	var c container.InspectResponse
 	ctx := context.Background()
 
-	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	testCheck := func(expected_mode string) func(*terraform.State) error {
+		return func(*terraform.State) error {
+			client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
-		srcPath := "/terraform/test.txt"
-		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
-		if err != nil {
-			return fmt.Errorf("Unable to download a file from container: %s", err)
-		}
-
-		tr := tar.NewReader(r)
-		if header, err := tr.Next(); err != nil {
-			return fmt.Errorf("Unable to read content of tar archive: %s", err)
-		} else {
-			mode := strconv.FormatInt(header.Mode, 8)
-			if !strings.HasSuffix(mode, "744") {
-				return fmt.Errorf("File permissions are incorrect: %s", mode)
+			srcPath := "/terraform/test.txt"
+			r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
+			if err != nil {
+				return fmt.Errorf("Unable to download a file from container: %s", err)
 			}
-		}
 
-		fbuf := new(bytes.Buffer)
-		if _, err := fbuf.ReadFrom(tr); err != nil {
-			return err
-		}
-		content := fbuf.String()
+			tr := tar.NewReader(r)
+			if header, err := tr.Next(); err != nil {
+				return fmt.Errorf("Unable to read content of tar archive: %s", err)
+			} else {
+				mode := strconv.FormatInt(header.Mode, 8)
+				if !strings.HasSuffix(mode, expected_mode) {
+					return fmt.Errorf("File permissions are incorrect: %s", mode)
+				}
+			}
 
-		if content != "foo" {
-			return fmt.Errorf("file content is invalid")
-		}
+			fbuf := new(bytes.Buffer)
+			if _, err := fbuf.ReadFrom(tr); err != nil {
+				return err
+			}
+			content := fbuf.String()
 
-		return nil
+			if content != "foo" {
+				return fmt.Errorf("file content is invalid")
+			}
+
+			return nil
+		}
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -720,7 +720,7 @@ func TestAccDockerContainer_upload(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
-					testCheck,
+					testCheck("744"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
@@ -729,17 +729,30 @@ func TestAccDockerContainer_upload(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
 				),
 			},
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfigPermissions"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck("600"),
+					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.permissions", "0600"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
+				),
+			},
 		},
 	})
 }
 
 func TestAccDockerContainer_uploadSource(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	ctx := context.Background()
 
 	wd, _ := os.Getwd()
 	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
-	testFileContent, _ := ioutil.ReadFile(testFile)
+	testFileContent, _ := os.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
@@ -811,12 +824,12 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 }
 
 func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	var firstRunId string
 
 	wd, _ := os.Getwd()
 	testFile := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "testingFile"), "\\", "\\\\")
-	hash, _ := ioutil.ReadFile(testFile + ".base64")
+	hash, _ := os.ReadFile(testFile + ".base64")
 	grabFirstCheck := func(*terraform.State) error {
 		firstRunId = c.ID
 		return nil
@@ -855,7 +868,7 @@ func TestAccDockerContainer_uploadSourceHash(t *testing.T) {
 }
 
 func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	ctx := context.Background()
 
 	testCheck := func(srcPath, wantedContent, filePerm string) func(*terraform.State) error {
@@ -873,7 +886,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 			} else {
 				mode := strconv.FormatInt(header.Mode, 8)
 				if !strings.HasSuffix(mode, filePerm) {
-					return fmt.Errorf("File permissions are incorrect: %s", mode)
+					return fmt.Errorf("File permissions are incorrect: %s; wanted: %s", mode, filePerm)
 				}
 			}
 
@@ -901,7 +914,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
-					testCheck("/terraform/test2.txt", "foobar", "100644"),
+					testCheck("/terraform/test2.txt", "foobar", "644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "2"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
@@ -923,7 +936,7 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 					testAccContainerRunning("docker_container.foo", &c),
 					// DevSkim: ignore DS173237
 					testCheck("/terraform/test1.txt", "894fc3f56edf2d3a4c5fb5cb71df910f958a2ed8", "744"),
-					testCheck("/terraform/test2.txt", "foobar", "100644"),
+					testCheck("/terraform/test2.txt", "foobar", "644"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "2"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", ""),
@@ -1002,13 +1015,13 @@ func TestAccDockerContainer_noUploadContentsConfig(t *testing.T) {
 }
 
 func TestAccDockerContainer_device(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 
-		createExecOpts := types.ExecConfig{
+		createExecOpts := container.ExecOptions{
 			Cmd: []string{"dd", "if=/dev/zero_test", "of=/tmp/test.txt", "count=10", "bs=1"},
 		}
 
@@ -1017,7 +1030,7 @@ func TestAccDockerContainer_device(t *testing.T) {
 			return fmt.Errorf("Unable to create a exec instance on container: %s", err)
 		}
 
-		startExecOpts := types.ExecStartCheck{}
+		startExecOpts := container.ExecStartOptions{}
 		if err := client.ContainerExecStart(ctx, exec.ID, startExecOpts); err != nil {
 			return fmt.Errorf("Unable to run exec a instance on container: %s", err)
 		}
@@ -1067,10 +1080,11 @@ func TestAccDockerContainer_device(t *testing.T) {
 }
 
 func TestAccDockerContainer_port_internal(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1114,10 +1128,11 @@ func TestAccDockerContainer_port_internal(t *testing.T) {
 }
 
 func TestAccDockerContainer_port_multiple_internal(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1183,10 +1198,11 @@ func TestAccDockerContainer_port_multiple_internal(t *testing.T) {
 }
 
 func TestAccDockerContainer_port(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1238,10 +1254,11 @@ func TestAccDockerContainer_port(t *testing.T) {
 }
 
 func TestAccDockerContainer_multiple_ports(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
-		portMap := c.NetworkSettings.NetworkSettingsBase.Ports
+		// QF1008: could remove embedded field "NetworkSettingsBase" from selector
+		portMap := c.NetworkSettings.NetworkSettingsBase.Ports //nolint:staticcheck
 		portBindings, ok := portMap["80/tcp"]
 		if !ok || len(portMap["80/tcp"]) == 0 {
 			return fmt.Errorf("Port 80 on tcp is not set")
@@ -1307,7 +1324,7 @@ func TestAccDockerContainer_multiple_ports(t *testing.T) {
 }
 
 func TestAccDockerContainer_rm(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
@@ -1337,7 +1354,7 @@ func TestAccDockerContainer_rm(t *testing.T) {
 }
 
 func TestAccDockerContainer_readonly(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		if !c.HostConfig.ReadonlyRootfs {
@@ -1365,7 +1382,7 @@ func TestAccDockerContainer_readonly(t *testing.T) {
 }
 
 func TestAccDockerContainer_healthcheck(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	testCheck := func(*terraform.State) error {
 		if !reflect.DeepEqual(c.Config.Healthcheck.Test, []string{"CMD", "/bin/true"}) {
 			return fmt.Errorf("Container doesn't have a correct healthcheck test")
@@ -1399,8 +1416,42 @@ func TestAccDockerContainer_healthcheck(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_wait(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerWait"),
+				ExpectError: regexp.MustCompile(
+					`you have supplied a 'wait' argument.*`,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerNotRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_nameattrnochange(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerimageId"), "busybox:1.35.0"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
 func TestAccDockerContainer_nostart(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -1416,7 +1467,7 @@ func TestAccDockerContainer_nostart(t *testing.T) {
 }
 
 func TestAccDockerContainer_attach(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -1436,7 +1487,7 @@ func TestAccDockerContainer_attach(t *testing.T) {
 }
 
 func TestAccDockerContainer_logs(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -1458,7 +1509,7 @@ func TestAccDockerContainer_logs(t *testing.T) {
 }
 
 func TestAccDockerContainer_exitcode(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -1477,7 +1528,7 @@ func TestAccDockerContainer_exitcode(t *testing.T) {
 }
 
 func TestAccDockerContainer_ipv4address(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		networks := c.NetworkSettings.Networks
@@ -1517,7 +1568,7 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 
 func TestAccDockerContainer_ipv6address(t *testing.T) {
 	t.Skip("mavogel: need to fix ipv6 network state")
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		networks := c.NetworkSettings.Networks
@@ -1558,7 +1609,7 @@ func TestAccDockerContainer_ipv6address(t *testing.T) {
 }
 
 func TestAccDockerContainer_dualstackaddress(t *testing.T) {
-	var c types.ContainerJSON
+	var c container.InspectResponse
 
 	testCheck := func(*terraform.State) error {
 		networks := c.NetworkSettings.Networks
@@ -1601,7 +1652,7 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 // /////////
 // HELPERS
 // /////////
-func testAccContainerRunning(resourceName string, container *types.ContainerJSON) resource.TestCheckFunc {
+func testAccContainerRunning(resourceName string, runningContainer *container.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -1614,7 +1665,7 @@ func testAccContainerRunning(resourceName string, container *types.ContainerJSON
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		containers, err := client.ContainerList(ctx, types.ContainerListOptions{})
+		containers, err := client.ContainerList(ctx, container.ListOptions{})
 		if err != nil {
 			return err
 		}
@@ -1625,7 +1676,7 @@ func testAccContainerRunning(resourceName string, container *types.ContainerJSON
 				if err != nil {
 					return fmt.Errorf("Container could not be inspected: %s", err)
 				}
-				*container = inspected
+				*runningContainer = inspected
 				return nil
 			}
 		}
@@ -1634,7 +1685,7 @@ func testAccContainerRunning(resourceName string, container *types.ContainerJSON
 	}
 }
 
-func testAccContainerNotRunning(n string, container *types.ContainerJSON) resource.TestCheckFunc {
+func testAccContainerNotRunning(n string, runningContainer *container.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
@@ -1647,7 +1698,7 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		containers, err := client.ContainerList(ctx, types.ContainerListOptions{
+		containers, err := client.ContainerList(ctx, container.ListOptions{
 			All: true,
 		})
 		if err != nil {
@@ -1660,9 +1711,9 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 				if err != nil {
 					return fmt.Errorf("Container could not be inspected: %s", err)
 				}
-				*container = inspected
+				*runningContainer = inspected
 
-				if container.State.Running {
+				if runningContainer.State.Running {
 					return fmt.Errorf("Container is running: %s", rs.Primary.ID)
 				}
 			}
@@ -1672,7 +1723,7 @@ func testAccContainerNotRunning(n string, container *types.ContainerJSON) resour
 	}
 }
 
-func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) resource.TestCheckFunc {
+func testAccContainerWaitConditionNotRunning(n string, ct *container.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[n]
@@ -1702,7 +1753,7 @@ func testAccContainerWaitConditionNotRunning(n string, ct *types.ContainerJSON) 
 	}
 }
 
-func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *types.ContainerJSON) resource.TestCheckFunc {
+func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *container.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

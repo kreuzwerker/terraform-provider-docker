@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
@@ -41,10 +40,9 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	sort.Sort(byPortAndProtocol(internalPortKeys))
 
 	for _, portKey := range internalPortKeys {
-		m := make(map[string]interface{})
-
 		portBindings := in[nat.Port(portKey)]
 		for _, portBinding := range portBindings {
+			m := make(map[string]interface{})
 			portProtocolSplit := strings.Split(string(portKey), "/")
 			convertedInternal, _ := strconv.Atoi(portProtocolSplit[0])
 			convertedExternal, _ := strconv.Atoi(portBinding.HostPort)
@@ -58,7 +56,7 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	return out
 }
 
-func flattenContainerNetworks(in *types.NetworkSettings) []interface{} {
+func flattenContainerNetworks(in *container.NetworkSettings) []interface{} {
 	out := make([]interface{}, 0)
 	if in == nil || in.Networks == nil || len(in.Networks) == 0 {
 		return out
@@ -261,7 +259,7 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 	return retDevices
 }
 
-func getDockerContainerMounts(container types.ContainerJSON) []map[string]interface{} {
+func getDockerContainerMounts(container container.InspectResponse) []map[string]interface{} {
 	mounts := []map[string]interface{}{}
 	for _, mount := range container.HostConfig.Mounts {
 		m := map[string]interface{}{
@@ -292,6 +290,9 @@ func getDockerContainerMounts(container types.ContainerJSON) []map[string]interf
 			if mount.VolumeOptions.DriverConfig != nil {
 				opt["driver_name"] = mount.VolumeOptions.DriverConfig.Name
 				opt["driver_options"] = mount.VolumeOptions.DriverConfig.Options
+			}
+			if mount.VolumeOptions.Subpath != "" {
+				opt["subpath"] = mount.VolumeOptions.Subpath
 			}
 			m["volume_options"] = []map[string]interface{}{
 				opt,

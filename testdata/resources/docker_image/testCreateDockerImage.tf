@@ -4,7 +4,7 @@ resource "docker_image" "test" {
     context      = "."
     dockerfile   = "Dockerfile"
     force_remove = true
-    build_arg = {
+    build_args = {
       test_arg = "kenobi"
     }
     label = {

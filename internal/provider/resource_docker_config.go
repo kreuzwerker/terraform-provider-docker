@@ -74,8 +74,8 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 	log.Printf("[DEBUG] Docker config inspect from readFunc: %s", jsonObj)
 
 	d.SetId(config.ID)
-	d.Set("name", config.Spec.Name)
-	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
+	d.Set("name", config.Spec.Name)                                    //nolint:errcheck
+	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data)) //nolint:errcheck
 	return nil
 }
 
@@ -86,6 +86,6 @@ func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
+	d.SetId("") //nolint:errcheck
 	return nil
 }

@@ -28,7 +28,7 @@ resource "docker_network" "private_network" {
 ### Optional
 
 - `attachable` (Boolean) Enable manual container attachment to the network.
-- `check_duplicate` (Boolean) Requests daemon to check for networks with same name.
+- `check_duplicate` (Boolean, Deprecated) Requests daemon to check for networks with same name.
 - `driver` (String) The driver of the Docker network. Possible values are `bridge`, `host`, `overlay`, `macvlan`. See [network docs](https://docs.docker.com/network/#network-drivers) for more details.
 - `ingress` (Boolean) Create swarm routing-mesh network. Defaults to `false`.
 - `internal` (Boolean) Whether the network is internal.

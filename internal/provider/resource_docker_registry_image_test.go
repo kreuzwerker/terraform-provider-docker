@@ -66,6 +66,26 @@ func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 	})
 }
 
+func TestAccDockerRegistryImageResource_withAuthConfig(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context"), "\\", "\\\\")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageWithAuthConfig"), pushOptions.Name, context, pushOptions.Registry, "testuser", "testpwd"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+				),
+			},
+		},
+		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
+	})
+}
+
 func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)

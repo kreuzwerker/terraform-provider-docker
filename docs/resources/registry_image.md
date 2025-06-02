@@ -37,6 +37,7 @@ resource "docker_image" "image" {
 
 ### Optional
 
+- `auth_config` (Block List, Max: 1) Authentication configuration for the Docker registry. It is only used for this resource. (see [below for nested schema](#nestedblock--auth_config))
 - `insecure_skip_verify` (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
 - `keep_remotely` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation. Defaults to `false`
 - `triggers` (Map of String) A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to repush a local image
@@ -45,3 +46,12 @@ resource "docker_image" "image" {
 
 - `id` (String) The ID of this resource.
 - `sha256_digest` (String) The sha256 digest of the image.
+
+<a id="nestedblock--auth_config"></a>
+### Nested Schema for `auth_config`
+
+Required:
+
+- `address` (String) The address of the Docker registry.
+- `password` (String, Sensitive) The password for the Docker registry.
+- `username` (String) The username for the Docker registry.

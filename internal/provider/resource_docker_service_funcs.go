@@ -12,10 +12,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -51,7 +52,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		convergeConfig := createConvergeConfig(v.([]interface{}))
 		log.Printf("[INFO] Waiting for Service '%s' to be created with timeout: %v", service.ID, convergeConfig.timeoutRaw)
 		timeout, _ := time.ParseDuration(convergeConfig.timeoutRaw)
-		stateConf := &resource.StateChangeConf{
+		stateConf := &retry.StateChangeConf{
 			Pending:    serviceCreatePendingStates,
 			Target:     []string{"running", "complete"},
 			Refresh:    resourceDockerServiceCreateRefreshFunc(ctx, service.ID, meta),
@@ -81,7 +82,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for service: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
 		Refresh:    resourceDockerServiceReadRefreshFunc(ctx, d, meta),
@@ -100,7 +101,7 @@ func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerServiceReadRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 		serviceID := d.Id()
@@ -192,7 +193,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		convergeConfig := createConvergeConfig(v.([]interface{}))
 		log.Printf("[INFO] Waiting for Service '%s' to be updated with timeout: %v", service.ID, convergeConfig.timeoutRaw)
 		timeout, _ := time.ParseDuration(convergeConfig.timeoutRaw)
-		stateConf := &resource.StateChangeConf{
+		stateConf := &retry.StateChangeConf{
 			Pending:    serviceUpdatePendingStates,
 			Target:     []string{"completed"},
 			Refresh:    resourceDockerServiceUpdateRefreshFunc(ctx, service.ID, meta),
@@ -305,7 +306,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 				}
 			}
 
-			removeOpts := types.ContainerRemoveOptions{
+			removeOpts := container.RemoveOptions{
 				RemoveVolumes: true,
 				Force:         true,
 			}
@@ -344,7 +345,7 @@ func (err *DidNotConvergeError) Error() string {
 
 // resourceDockerServiceCreateRefreshFunc refreshes the state of a service when it is created and needs to converge
 func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
-	serviceID string, meta interface{}) resource.StateRefreshFunc {
+	serviceID string, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 
@@ -394,7 +395,7 @@ func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
 
 // resourceDockerServiceUpdateRefreshFunc refreshes the state of a service when it is updated and needs to converge
 func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
-	serviceID string, meta interface{}) resource.StateRefreshFunc {
+	serviceID string, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		client := meta.(*ProviderConfig).DockerClient
 
@@ -593,25 +594,25 @@ func terminalState(state swarm.TaskState) bool {
 }
 
 // authToServiceAuth maps the auth to AuthConfiguration
-func authToServiceAuth(auths []interface{}) types.AuthConfig {
+func authToServiceAuth(auths []interface{}) registry.AuthConfig {
 	if len(auths) == 0 {
-		return types.AuthConfig{}
+		return registry.AuthConfig{}
 	}
 	// it's maxItems = 1
 	auth := auths[0].(map[string]interface{})
 	if auth["username"] != nil && len(auth["username"].(string)) > 0 && auth["password"] != nil && len(auth["password"].(string)) > 0 {
-		return types.AuthConfig{
+		return registry.AuthConfig{
 			Username:      auth["username"].(string),
 			Password:      auth["password"].(string),
 			ServerAddress: auth["server_address"].(string),
 		}
 	}
 
-	return types.AuthConfig{}
+	return registry.AuthConfig{}
 }
 
 // fromRegistryAuth extract the desired AuthConfiguration for the given image
-func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) types.AuthConfig {
+func fromRegistryAuth(image string, authConfigs map[string]registry.AuthConfig) registry.AuthConfig {
 	// Remove normalized prefixes to simplify substring
 	// DevSkim: ignore DS137138
 	image = strings.Replace(strings.Replace(image, "http://", "", 1), "https://", "", 1)
@@ -625,12 +626,12 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 		}
 	}
 
-	return types.AuthConfig{}
+	return registry.AuthConfig{}
 }
 
 // retrieveAndMarshalAuth retrieves and marshals the service registry auth
 func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType string) []byte {
-	var auth types.AuthConfig
+	var auth registry.AuthConfig
 	// when a service is updated/set for the first time the auth is set but empty
 	// this is why we need this additional check
 	if rawAuth, ok := d.GetOk("auth"); ok && len(rawAuth.([]interface{})) != 0 {

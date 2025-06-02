@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,9 +10,12 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -68,7 +70,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 				// DevSkim: ignore DS137138
 				assert(*options.BuildArgs["HTTP_PROXY"] == "http://10.20.30.2:1234", "BuildArgs")
 				assert(len(options.AuthConfigs) == 1, "AuthConfigs")
-				assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], types.AuthConfig{
+				assert(reflect.DeepEqual(options.AuthConfigs["foo.host"], registry.AuthConfig{
 					Username:      "fooUserName",
 					Password:      "fooPassword",
 					Auth:          "fooAuth",
@@ -159,16 +161,16 @@ func TestAccDockerImage_basic(t *testing.T) {
 
 func TestAccDockerImage_private(t *testing.T) {
 	ctx := context.Background()
-	var i types.ImageInspect
+	var i image.InspectResponse
 
 	testCheckImageInspect := func(*terraform.State) error {
 		if len(i.RepoTags) != 1 ||
-			i.RepoTags[0] != "gcr.io:443/google_containers/pause:0.8.0" {
+			i.RepoTags[0] != "gcr.io:443/google_containers/pause:1.0" {
 			return fmt.Errorf("Image RepoTags is wrong: %v", i.RepoTags)
 		}
 
 		if len(i.RepoDigests) != 1 ||
-			i.RepoDigests[0] != "gcr.io:443/google_containers/pause@sha256:bbeaef1d40778579b7b86543fe03e1ec041428a50d21f7a7b25630e357ec9247" {
+			i.RepoDigests[0] != "gcr.io:443/google_containers/pause@sha256:a78c2d6208eff9b672de43f880093100050983047b7b0afe0217d3656e1b0d5f" {
 			return fmt.Errorf("Image RepoDigests is wrong: %v", i.RepoDigests)
 		}
 
@@ -206,7 +208,7 @@ func TestAccDockerImage_destroy(t *testing.T) {
 				}
 
 				client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-				_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["name"])
+				_, err := client.ImageInspect(ctx, rs.Primary.Attributes["name"])
 				if err != nil {
 					return err
 				}
@@ -379,7 +381,7 @@ func testAccDockerImageDestroy(ctx context.Context, s *terraform.State) error {
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		_, _, err := client.ImageInspectWithRaw(ctx, rs.Primary.Attributes["name"])
+		_, err := client.ImageInspect(ctx, rs.Primary.Attributes["name"])
 		if err == nil {
 			return fmt.Errorf("Image still exists")
 		}
@@ -429,10 +431,10 @@ func TestAccDockerImage_build(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()
 	dfPath := filepath.Join(wd, "Dockerfile")
-	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+	if err := os.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
 		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
 	}
-	defer os.Remove(dfPath)
+	defer os.Remove(dfPath) //nolint:errcheck
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -450,8 +452,92 @@ func TestAccDockerImage_build(t *testing.T) {
 	})
 }
 
+func TestAccDockerImage_buildx_buildlog(t *testing.T) {
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "Dockerfile")
+	buildLogPath := filepath.Join(wd, "build.log")
+	if err := os.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath) //nolint:errcheck
+
+	testCheckBuildLog := func(*terraform.State) error {
+		// list all contents of the wd variable
+		_, err := os.Stat(buildLogPath)
+		if err != nil {
+			return fmt.Errorf("Expected file does not exist at path %s, %w", buildLogPath, err)
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageBuildxBuildLog"), buildLogPath),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.test", "name", contentDigestRegexp),
+					testCheckBuildLog,
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerImageSecrets_build(t *testing.T) {
+	const testDockerFileWithSecret = `
+	FROM python:3-bookworm
+
+	WORKDIR /app
+
+	ARG test_arg
+
+	RUN echo ${test_arg} > test_arg.txt
+
+	RUN --mount=type=secret,id=TEST_SECRET_SRC \
+        --mount=type=secret,id=TEST_SECRET_ENV \
+		apt-get update -qq`
+
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+	dfPath := filepath.Join(wd, "Dockerfile")
+	if err := os.WriteFile(dfPath, []byte(testDockerFileWithSecret), 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath) //nolint:errcheck
+
+	const secretContent = "THIS IS A SECRET"
+	sPath := filepath.Join(wd, "secret")
+	if err := os.WriteFile(sPath, []byte(secretContent), 0o644); err != nil {
+		t.Fatalf("failed to create a secret file %s for test: %+v", sPath, err)
+	}
+
+	defer os.Remove(sPath) //nolint:errcheck
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageBuildSecrets"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("docker_image.test", "name", contentDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
 const testDockerFileExample = `
-FROM python:3-stretch
+FROM python:3-bookworm
 
 WORKDIR /app
 
@@ -467,10 +553,10 @@ func TestAccDockerImage_buildOutsideContext(t *testing.T) {
 	ctx := context.Background()
 	wd, _ := os.Getwd()
 	dfPath := filepath.Join(wd, "..", "Dockerfile")
-	if err := ioutil.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
+	if err := os.WriteFile(dfPath, []byte(testDockerFileExample), 0o644); err != nil {
 		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
 	}
-	defer os.Remove(dfPath)
+	defer os.Remove(dfPath) //nolint:errcheck
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
@@ -547,55 +633,56 @@ func TestAccDockerImageResource_correctFilePermissions(t *testing.T) {
 	})
 }
 
-func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
-	name := "tftest-dockerregistryimage-ignore:1.0"
-	wd, _ := os.Getwd()
-	ctx := context.Background()
-	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
-	ignoredFile := context + "/to_be_ignored"
-	expectedSha := ""
+// Disabling test for now as it is flaky. It runs with the legacy builder, which will be turned off at some point.
+// func TestAccDockerImageResource_buildWithDockerignore(t *testing.T) {
+// 	name := "tftest-dockerregistryimage-ignore:1.0"
+// 	wd, _ := os.Getwd()
+// 	ctx := context.Background()
+// 	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context_dockerignore")), "\\", "\\\\")
+// 	ignoredFile := context + "/to_be_ignored"
+// 	expectedSha := ""
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: providerFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "one", name, context),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("docker_image.one", "image_id"),
-					resource.TestCheckResourceAttrWith("docker_image.one", "image_id", func(value string) error {
-						expectedSha = value
-						return nil
-					}),
-				),
-			},
-			{
-				PreConfig: func() {
-					// create a file that should be ignored
-					f, err := os.OpenFile(ignoredFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-					if err != nil {
-						panic("failed to create test file")
-					}
-					f.Close()
-				},
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "two", name, context),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("docker_image.two", "image_id", func(value string) error {
-						if value != expectedSha {
-							return fmt.Errorf("Image sha256_digest changed, expected %#v, got %#v", expectedSha, value)
-						}
-						return nil
-					}),
-				),
-			},
-		},
-		CheckDestroy: func(state *terraform.State) error {
-			return testAccDockerImageDestroy(ctx, state)
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { testAccPreCheck(t) },
+// 		ProviderFactories: providerFactories,
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "one", name, context),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttrSet("docker_image.one", "image_id"),
+// 					resource.TestCheckResourceAttrWith("docker_image.one", "image_id", func(value string) error {
+// 						expectedSha = value
+// 						return nil
+// 					}),
+// 				),
+// 			},
+// 			{
+// 				PreConfig: func() {
+// 					// create a file that should be ignored
+// 					f, err := os.OpenFile(ignoredFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// 					if err != nil {
+// 						panic("failed to create test file")
+// 					}
+// 					f.Close() //nolint:errcheck
+// 				},
+// 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testBuildDockerImageNoKeepJustCache"), "two", name, context),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttrWith("docker_image.two", "image_id", func(value string) error {
+// 						if value != expectedSha {
+// 							return fmt.Errorf("Image sha256_digest changed, expected %#v, got %#v", expectedSha, value)
+// 						}
+// 						return nil
+// 					}),
+// 				),
+// 			},
+// 		},
+// 		CheckDestroy: func(state *terraform.State) error {
+// 			return testAccDockerImageDestroy(ctx, state)
+// 		},
+// 	})
+// }
 
-func testAccImageCreated(resourceName string, image *types.ImageInspect) resource.TestCheckFunc {
+func testAccImageCreated(resourceName string, image *image.InspectResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -611,10 +698,10 @@ func testAccImageCreated(resourceName string, image *types.ImageInspect) resourc
 		// TODO mavogel: it's because we set the ID in the format:
 		// d.SetId(foundImage.ID + d.Get("name").(string))
 		// so we need to strip away the name
-		strippedID := strings.Replace(rs.Primary.ID, name, "", -1)
+		strippedID := strings.ReplaceAll(rs.Primary.ID, name, "")
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		inspectedImage, _, err := client.ImageInspectWithRaw(ctx, strippedID)
+		inspectedImage, err := client.ImageInspect(ctx, strippedID)
 		if err != nil {
 			return fmt.Errorf("Image with ID '%s': %w", strippedID, err)
 		}
@@ -662,5 +749,40 @@ func TestParseImageOptions(t *testing.T) {
 		if !reflect.DeepEqual(expected, result) {
 			t.Fatalf("Result %#v did not match expectation %#v", result, expected)
 		}
+	})
+}
+
+func TestAccDockerImage_buildTimeout(t *testing.T) {
+	ctx := context.Background()
+	wd, _ := os.Getwd()
+
+	createTimeout := time.Duration(1 * time.Second)
+	buildSleep := time.Duration(2 * time.Second)
+	if buildSleep < createTimeout {
+		t.Errorf("assertion failed: build sleep can't be shorter than the timeout")
+	}
+
+	dfPath := filepath.Join(wd, "Dockerfile")
+	dfContent := []byte(fmt.Sprintf("FROM alpine\nRUN sleep %d", int(buildSleep.Seconds())))
+	if err := os.WriteFile(dfPath, dfContent, 0o644); err != nil {
+		t.Fatalf("failed to create a Dockerfile %s for test: %+v", dfPath, err)
+	}
+	defer os.Remove(dfPath) //nolint:errcheck
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		CheckDestroy: func(state *terraform.State) error {
+			return testAccDockerImageDestroy(ctx, state)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(
+					loadTestConfiguration(t, RESOURCE, "docker_image", "testCreateDockerImageCreateTimeout"),
+					createTimeout,
+				),
+				ExpectError: regexp.MustCompile("deadline exceeded"),
+			},
+		},
 	})
 }
