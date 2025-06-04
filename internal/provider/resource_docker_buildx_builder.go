@@ -107,6 +107,13 @@ func resourceDockerBuildxBuilder() *schema.Resource {
 				Description: "Automatically boot the builder after creation. Defaults to `false`",
 				ForceNew:    true,
 			},
+			"endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The endpoint or context to use for the Buildx builder, where context is the name of a context from docker context ls and endpoint is the address for Docker socket (eg. DOCKER_HOST value). By default, the current Docker configuration is used for determining the context/endpoint value.",
+				Default:     "",
+				ForceNew:    true,
+			},
 			"kubernetes": {
 				Type:          schema.TypeList,
 				Optional:      true,
@@ -448,6 +455,12 @@ func resourceDockerBuildxBuilderCreate(ctx context.Context, d *schema.ResourceDa
 	log.Printf("[DEBUG] Driver: %s", driver)
 	log.Printf("[DEBUG] Driver options: %s", driverOptions)
 
+	var ep string
+	v = d.Get("endpoint").(string)
+	if v != "" {
+		ep = v.(string)
+	}
+
 	b, err := builder.Create(ctx, txn, t, builder.CreateOpts{
 		Name:                name,
 		Driver:              driver,
@@ -457,7 +470,7 @@ func resourceDockerBuildxBuilderCreate(ctx context.Context, d *schema.ResourceDa
 		BuildkitdFlags:      d.Get("buildkit_flags").(string),
 		BuildkitdConfigFile: d.Get("buildkit_config").(string),
 		Use:                 use,
-		Endpoint:            client.DaemonHost(),
+		Endpoint:            ep,
 		Append:              appendAction,
 	})
 
