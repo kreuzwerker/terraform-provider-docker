@@ -983,6 +983,12 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 			},
+			"cgroup_parent": {
+				Type:        schema.TypeString,
+				Description: "Optional parent cgroup for the container",
+				Optional:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }
