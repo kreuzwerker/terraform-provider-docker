@@ -39,6 +39,7 @@ connection check by setting the `disable_docker_daemon_check` argument to `true`
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
+Please make sure, that you pass in the correct `address`. For example for ECR, the `registry_auth.address` should be of format `<id>.dkr.ecr.<zone>.amazonaws.com`. AWS ECR resource gives `ecr_url` which includes image name `<id>.dkr.ecr.<zone>.amazonaws.com/<image-name>`. So if you use ecr_url make a split `split("/", ecr_url)[0]` to be used in `registry_auth.address`.
 If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**

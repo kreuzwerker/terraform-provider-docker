@@ -275,14 +275,12 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 }
 
 func createAdditionalErrorMessage(imageFqName string) string {
-	message :=  ""
-	if (strings.HasPrefix(imageFqName, "public.ecr.aws/")) {
+	message := ""
+	if strings.HasPrefix(imageFqName, "public.ecr.aws/") {
 		message = "You are trying to push to a public ECR repository. One error cause might be that the image name does not have the correct format and registry alias: public.ecr.aws/<registry_alias>/<image>"
 	}
 	return message
 }
-
-
 
 func getAuthConfigForRegistry(
 	registryWithoutProtocol string,
