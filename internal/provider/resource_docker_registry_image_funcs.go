@@ -45,9 +45,9 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 		log.Printf("[INFO] Using auth config from resource: %s", v)
 		authConfig = buildAuthConfigFromResource(v)
 	} else {
-		log.Printf("[INFO] Using auth config from provider: %s", v)
 		var err error
 		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		log.Printf("[INFO] Using auth config from provider: %#v", authConfig)
 		if err != nil {
 			return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
 		}
@@ -245,6 +245,7 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 		pushOptions.RegistryAuth = authBase64
 	}
 
+	log.Printf("[DEBUG] Pushing image %s with options %#v", pushOpts.FqName, pushOptions)
 	out, err := client.ImagePush(ctx, pushOpts.FqName, pushOptions)
 	if err != nil {
 		return err
@@ -265,11 +266,20 @@ func pushDockerRegistryImage(ctx context.Context, client *client.Client, pushOpt
 			return err
 		}
 		if errorMessage.Error != "" {
-			return fmt.Errorf("Error pushing image: %s", errorMessage.Error)
+			additionalMessage := createAdditionalErrorMessage(pushOpts.FqName)
+			return fmt.Errorf("Error pushing image. %s. Full error: %s", additionalMessage, errorMessage.Error)
 		}
 	}
 	log.Printf("[DEBUG] Pushed image: %s", pushOpts.FqName)
 	return nil
+}
+
+func createAdditionalErrorMessage(imageFqName string) string {
+	message := ""
+	if strings.HasPrefix(imageFqName, "public.ecr.aws/") {
+		message = "You are trying to push to a public ECR repository. One error cause might be that the image name does not have the correct format and registry alias: public.ecr.aws/<registry_alias>/<image>"
+	}
+	return message
 }
 
 func getAuthConfigForRegistry(
