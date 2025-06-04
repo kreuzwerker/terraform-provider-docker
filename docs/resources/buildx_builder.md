@@ -24,6 +24,7 @@ Manages a Docker Buildx builder instance. This resource allows you to create a  
 - `docker_container` (Block List, Max: 1) Configuration block for the Docker-Container driver. (see [below for nested schema](#nestedblock--docker_container))
 - `driver` (String) The driver to use for the Buildx builder (e.g., docker-container, kubernetes).
 - `driver_options` (Map of String) Additional options for the Buildx driver in the form of `key=value,...`. These options are driver-specific.
+- `endpoint` (String) The endpoint or context to use for the Buildx builder, where context is the name of a context from docker context ls and endpoint is the address for Docker socket (eg. DOCKER_HOST value). By default, the current Docker configuration is used for determining the context/endpoint value.
 - `kubernetes` (Block List, Max: 1) Configuration block for the Kubernetes driver. (see [below for nested schema](#nestedblock--kubernetes))
 - `name` (String) The name of the Buildx builder. IF not specified, a random name will be generated.
 - `node` (String) Create/modify node with given name
