@@ -1,6 +1,18 @@
 
+<a name="v3.6.1"></a>
+## [v3.6.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.0...v3.6.1) (2025-06-05)
+
+### Feat
+
+* allow to set the cgroup parent for container ([#609](https://github.com/kreuzwerker/terraform-provider-docker/issues/609))
+
+
 <a name="v3.6.0"></a>
-## [v3.6.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.5.0...v3.6.0) (2025-05-24)
+## [v3.6.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.5.0...v3.6.0) (2025-05-25)
+
+### Chore
+
+* Prepare release v3.6.0 ([#735](https://github.com/kreuzwerker/terraform-provider-docker/issues/735))
 
 ### Feat
 
