@@ -288,6 +288,12 @@ func parseImageOptions(image string) internalPullImageOptions {
 		// we have the tag, strip it
 		pullOpts.Repository = image[:prefixLength+tagIndex]
 		pullOpts.Tag = image[prefixLength+tagIndex+1:]
+		digestIndex := strings.Index(pullOpts.Tag, "@")
+		if digestIndex != -1 {
+			log.Printf("[INFO] Found digest in tag: %s, we are using the digest for pulling the image from the registry", pullOpts.Tag)
+			// prefer pinned digest over tag name
+			pullOpts.Tag = pullOpts.Tag[digestIndex+1:]
+		}
 	}
 
 	if pullOpts.Tag == "" {

@@ -21,9 +21,24 @@ func TestAccDockerRegistryImage_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"), "alpine:latest"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foo", "sha256_digest", registryDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerRegistryImage_basicWithDigest(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"), "nginx:1.28.0@sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.docker_registry_image.foo", "sha256_digest", "sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
 				),
 			},
 		},
