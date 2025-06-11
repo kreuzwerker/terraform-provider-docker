@@ -390,7 +390,6 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 		return err
 	}
 	buildOptions.Dockerfile = relDockerfile
-	buildOptions.Version = types.BuilderV1
 
 	var response types.ImageBuildResponse
 	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
