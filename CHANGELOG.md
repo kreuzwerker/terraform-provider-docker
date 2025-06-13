@@ -1,6 +1,24 @@
 
+<a name="v3.6.2"></a>
+## [v3.6.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.1...v3.6.2) (2025-06-13)
+
+### Feat
+
+* Allow digest in image name ([#744](https://github.com/kreuzwerker/terraform-provider-docker/issues/744))
+
+### Fix
+
+* Remove wrong buildkit version assignment ([#747](https://github.com/kreuzwerker/terraform-provider-docker/issues/747))
+* Reading non existant volume should recreate ([#749](https://github.com/kreuzwerker/terraform-provider-docker/issues/749))
+* Typo in cgroup_parent handling ([#746](https://github.com/kreuzwerker/terraform-provider-docker/issues/746))
+
+
 <a name="v3.6.1"></a>
 ## [v3.6.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.0...v3.6.1) (2025-06-05)
+
+### Chore
+
+* Prepare release v3.6.1 ([#743](https://github.com/kreuzwerker/terraform-provider-docker/issues/743))
 
 ### Feat
 
