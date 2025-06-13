@@ -127,6 +127,49 @@ func TestAccDockerVolume_labels(t *testing.T) {
 	})
 }
 
+func TestAccDockerVolume_RecreateAfterManualDelete(t *testing.T) {
+	var v volume.Volume
+
+	resourceName := "docker_volume.foo"
+	volumeName := "testAccDockerVolume_manual_delete"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "docker_volume" "foo" {
+						name = "%s"
+					}
+				`, volumeName),
+				Check: resource.ComposeTestCheckFunc(
+					checkDockerVolumeCreated(resourceName, &v),
+					resource.TestCheckResourceAttr(resourceName, "id", volumeName),
+				),
+			},
+			{
+				// Simulate manual deletion of the Docker volume
+				PreConfig: func() {
+					client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+					ctx := context.Background()
+					err := client.VolumeRemove(ctx, volumeName, true)
+					if err != nil {
+						t.Fatalf("failed to manually remove docker volume: %v", err)
+					}
+				},
+				Config: fmt.Sprintf(`
+					resource "docker_volume" "foo" {
+						name = "%s"
+					}
+				`, volumeName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func checkDockerVolumeCreated(n string, volumeToCheck *volume.Volume) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
