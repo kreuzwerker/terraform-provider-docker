@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"path/filepath"
@@ -368,8 +369,8 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 
 	buildContext := rawBuild["context"].(string)
 
-	buildKitSession := enableBuildKitIfSupported(ctx, client, &buildOptions)
-
+	// Each build must have its own session. Never reuse buildKitSession!
+	buildKitSession, sessionDone := enableBuildKitIfSupported(ctx, client, &buildOptions)
 	// If Buildkit is enabled, try to parse and use secrets if present.
 	if buildKitSession != nil {
 		if secretsRaw, secretsDefined := rawBuild["secrets"]; secretsDefined {
@@ -387,6 +388,13 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 
 	buildCtx, relDockerfile, err := prepareBuildContext(buildContext, buildOptions.Dockerfile)
 	if err != nil {
+		if buildKitSession != nil {
+			log.Printf("[DEBUG] Closing BuildKit session (first error path): ID=%s", buildKitSession.ID())
+			buildKitSession.Close() //nolint:errcheck
+			if sessionDone != nil {
+				<-sessionDone
+			}
+		}
 		return err
 	}
 	buildOptions.Dockerfile = relDockerfile
@@ -394,6 +402,13 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	var response types.ImageBuildResponse
 	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
 	if err != nil {
+		if buildKitSession != nil {
+			log.Printf("[DEBUG] Closing BuildKit session (second error path): ID=%s", buildKitSession.ID())
+			buildKitSession.Close() //nolint:errcheck
+			if sessionDone != nil {
+				<-sessionDone
+			}
+		}
 		return err
 	}
 	defer response.Body.Close() //nolint:errcheck
@@ -401,6 +416,13 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	buildResult, err := decodeBuildMessages(response)
 	if err != nil {
 		return fmt.Errorf("%s\n\n%s", err, buildResult)
+	}
+	if buildKitSession != nil {
+		log.Printf("[DEBUG] Closing BuildKit session (success path): ID=%s", buildKitSession.ID())
+		buildKitSession.Close() //nolint:errcheck
+		if sessionDone != nil {
+			<-sessionDone
+		}
 	}
 	return nil
 }
@@ -411,24 +433,28 @@ func enableBuildKitIfSupported(
 	ctx context.Context,
 	client *client.Client,
 	buildOptions *types.ImageBuildOptions,
-) *session.Session {
+) (*session.Session, chan struct{}) {
 	dockerClientVersion := client.ClientVersion()
 	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
 	if versions.GreaterThanOrEqualTo(dockerClientVersion, minBuildkitDockerVersion) {
-		log.Printf("[DEBUG] Enabling BuildKit")
-		s, _ := session.NewSession(ctx, "docker-provider")
+		// Generate a unique session key for each build
+		sessionKey := fmt.Sprintf("docker-provider-%d", rand.Int63())
+		log.Printf("[DEBUG] Creating BuildKit session with key: %s", sessionKey)
+		s, _ := session.NewSession(ctx, sessionKey)
 		dialSession := func(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {
 			return client.DialHijack(ctx, "/session", proto, meta)
 		}
-		//nolint
-		go s.Run(ctx, dialSession)
-		defer s.Close() //nolint:errcheck
+		done := make(chan struct{})
+		go func() {
+			s.Run(ctx, dialSession) //nolint:errcheck
+			close(done)
+		}()
 		buildOptions.SessionID = s.ID()
 		buildOptions.Version = types.BuilderBuildKit
-		return s
+		return s, done
 	} else {
 		buildOptions.Version = types.BuilderV1
-		return nil
+		return nil, nil
 	}
 }
 
