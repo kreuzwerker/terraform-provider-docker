@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/volume"
+	"github.com/docker/docker/errdefs"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -112,6 +113,11 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 	volume, err := client.VolumeInspect(ctx, d.Id())
 
 	if err != nil {
+		if errdefs.IsNotFound(err) {
+			log.Printf("[WARN] Volume with id '%s' not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("Unable to inspect volume: %s", err)
 	}
 
