@@ -2,10 +2,140 @@ package provider
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
+	"os"
+	"runtime"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+var ElemSchema = map[string]*schema.Schema{
+	"registry_auth": {
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"address": {
+					Type:         schema.TypeString,
+					Required:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
+					Description:  "Address of the registry",
+				},
+
+				"username": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
+					Description: "Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.",
+				},
+
+				"password": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
+					Description: "Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.",
+				},
+
+				"config_file": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
+					Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
+				},
+
+				"config_file_content": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
+				},
+				"auth_disabled": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.",
+				},
+			},
+		},
+	},
+	"disable_docker_daemon_check": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     true,
+		Description: "If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.",
+	},
+	"host": {
+		Type:     schema.TypeString,
+		Required: true,
+		DefaultFunc: func() (interface{}, error) {
+			if v := os.Getenv("DOCKER_HOST"); v != "" {
+				return v, nil
+			}
+			if runtime.GOOS == "windows" {
+				return "npipe:////./pipe/docker_engine", nil
+			}
+			return "unix:///var/run/docker.sock", nil
+		},
+		Description: "The Docker daemon address",
+	},
+	"context": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONTEXT", ""),
+		Description: "The name of the Docker context to use. Can also be set via `DOCKER_CONTEXT` environment variable. Overrides the `host` if set.",
+	},
+	"ssh_opts": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem:     &schema.Schema{Type: schema.TypeString},
+		DefaultFunc: func() (interface{}, error) {
+			if v := os.Getenv("DOCKER_SSH_OPTS"); v != "" {
+				return strings.Fields(v), nil
+			}
+
+			return nil, nil
+		},
+		Description: "Additional SSH option flags to be appended when using `ssh://` protocol",
+	},
+	"ca_material": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("DOCKER_CA_MATERIAL", ""),
+		Description: "PEM-encoded content of Docker host CA certificate",
+	},
+	"cert_material": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_MATERIAL", ""),
+		Description: "PEM-encoded content of Docker client certificate",
+	},
+	"key_material": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("DOCKER_KEY_MATERIAL", ""),
+		Description: "PEM-encoded content of Docker client private key",
+	},
+
+	"cert_path": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_PATH", ""),
+		Description: "Path to directory with Docker TLS config",
+	},
+}
+
+var dockerSchema = &schema.Schema{
+	Type:        schema.TypeSet,
+	Description: "Configure an individual docker client per resource",
+	Optional:    true,
+	ForceNew:    true,
+	MaxItems:    1,
+	Elem: &schema.Resource{
+		Schema: ElemSchema,
+	},
+}
 
 func resourceDockerContainer() *schema.Resource {
 	return &schema.Resource{
@@ -35,6 +165,7 @@ func resourceDockerContainer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name of the container.",

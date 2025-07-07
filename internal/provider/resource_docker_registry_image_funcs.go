@@ -33,7 +33,11 @@ func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
 }
 
 func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] Creating docker image %s", name)

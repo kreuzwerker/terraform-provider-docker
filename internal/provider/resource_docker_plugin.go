@@ -17,6 +17,7 @@ func resourceDockerPlugin() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"name": {
 				Type:             schema.TypeString,
 				Description:      "Docker Plugin name",

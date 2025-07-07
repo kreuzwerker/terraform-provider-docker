@@ -23,6 +23,7 @@ func resourceDockerConfig() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"name": {
 				Type:        schema.TypeString,
 				Description: "User-defined name of the config",
@@ -42,7 +43,11 @@ func resourceDockerConfig() *schema.Resource {
 }
 
 func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
 	configSpec := swarm.ConfigSpec{
@@ -62,7 +67,11 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	config, _, err := client.ConfigInspectWithRaw(ctx, d.Id())
 	if err != nil {
 		log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
@@ -80,8 +89,12 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
-	err := client.ConfigRemove(ctx, d.Id())
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
+	err = client.ConfigRemove(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

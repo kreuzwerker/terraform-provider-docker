@@ -8,10 +8,14 @@ import (
 )
 
 func resourceDockerTagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	sourceImage := d.Get("source_image").(string)
 	targetImage := d.Get("target_image").(string)
-	err := client.ImageTag(ctx, sourceImage, targetImage)
+	err = client.ImageTag(ctx, sourceImage, targetImage)
 	if err != nil {
 		return diag.Errorf("failed to create docker tag: %s", err)
 	}

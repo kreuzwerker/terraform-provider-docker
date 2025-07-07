@@ -31,6 +31,7 @@ func resourceDockerVolume() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name of the Docker volume (will be generated if not provided).",
@@ -78,7 +79,11 @@ func resourceDockerVolume() *schema.Resource {
 }
 
 func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 
 	createOpts := volume.CreateOptions{}
 
@@ -95,7 +100,6 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 		createOpts.DriverOpts = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
-	var err error
 	var retVolume volume.Volume
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
@@ -108,7 +112,11 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 
 	volume, err := client.VolumeInspect(ctx, d.Id())
 
@@ -139,7 +147,7 @@ func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, met
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"in_use"},
 		Target:     []string{"removed"},
-		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta),
+		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d, meta),
 		Timeout:    volumeReadRefreshTimeout,
 		MinTimeout: volumeReadRefreshWaitBeforeRefreshes,
 		Delay:      volumeReadRefreshDelay,
@@ -156,9 +164,15 @@ func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerVolumeRemoveRefreshFunc(
-	volumeID string, meta interface{}) retry.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
+	volumeID := d.Id()
+
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := NewDockerClient(context.Background(), d)
+
+		if err != nil {
+			client = meta.(*ProviderConfig).DockerClient
+		}
 		forceDelete := true
 
 		if err := client.VolumeRemove(context.Background(), volumeID, forceDelete); err != nil {

@@ -32,7 +32,13 @@ import (
 )
 
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
+
 	imageName := d.Get("name").(string)
 
 	if value, ok := d.GetOk("build"); ok {
@@ -86,7 +92,11 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	var data Data
 	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return diag.Errorf("Error reading docker image list: %s", err)
@@ -116,9 +126,13 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// We need to re-read in case switching parameters affects
 	// the value of "latest" or others
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	imageName := d.Get("name").(string)
-	_, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
+	_, err = findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -127,9 +141,13 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	// TODO mavogel: add retries. see e.g. service updateFailsAndRollbackConvergeConfig test
-	err := removeImage(ctx, d, client)
+	err = removeImage(ctx, d, client)
 	if err != nil {
 		return diag.Errorf("Unable to remove Docker image: %s", err)
 	}
@@ -234,6 +252,8 @@ func pullImage(ctx context.Context, data *Data, client *client.Client, authConfi
 	if err != nil {
 		return fmt.Errorf("error creating auth config: %w", err)
 	}
+
+	fmt.Println(client)
 
 	out, err := client.ImagePull(ctx, imageName, image.PullOptions{
 		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),

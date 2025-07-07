@@ -20,6 +20,7 @@ func resourceDockerSecret() *schema.Resource {
 		DeleteContext: resourceDockerSecretDelete,
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"name": {
 				Type:        schema.TypeString,
 				Description: "User-defined name of the secret",
@@ -89,7 +90,11 @@ func resourceDockerSecretV0() *schema.Resource {
 }
 
 func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
 	secretSpec := swarm.SecretSpec{
@@ -115,7 +120,11 @@ func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	secret, _, err := client.SecretInspectWithRaw(ctx, d.Id())
 	if err != nil {
 		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
@@ -135,8 +144,12 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDockerSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
-	err := client.SecretRemove(ctx, d.Id())
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
+	err = client.SecretRemove(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

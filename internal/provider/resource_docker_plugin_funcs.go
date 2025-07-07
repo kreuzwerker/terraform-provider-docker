@@ -15,7 +15,11 @@ import (
 )
 
 func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(context.Background(), d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	ctx := context.Background()
 	pluginName := d.Get("name").(string)
 	alias := d.Get("alias").(string)
@@ -48,7 +52,11 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(context.Background(), d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	ctx := context.Background()
 	pluginID := d.Id()
 	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
@@ -66,7 +74,11 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(context.Background(), d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	ctx := context.Background()
 	pluginID := d.Id()
 	log.Printf("[DEBUG] Remove a Docker plugin " + pluginID)

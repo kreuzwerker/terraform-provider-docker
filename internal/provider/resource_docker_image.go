@@ -28,6 +28,7 @@ func resourceDockerImage() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"id": {
 				Type:        schema.TypeString,
 				Computed:    true,
