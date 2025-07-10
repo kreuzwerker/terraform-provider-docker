@@ -31,7 +31,11 @@ type convergeConfig struct {
 // ///////////////
 func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var err error
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 
 	serviceSpec, err := createServiceSpec(d)
 	if err != nil {
@@ -55,7 +59,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		stateConf := &retry.StateChangeConf{
 			Pending:    serviceCreatePendingStates,
 			Target:     []string{"running", "complete"},
-			Refresh:    resourceDockerServiceCreateRefreshFunc(ctx, service.ID, meta),
+			Refresh:    resourceDockerServiceCreateRefreshFunc(ctx, service.ID, meta, d),
 			Timeout:    timeout,
 			MinTimeout: 5 * time.Second,
 			Delay:      convergeConfig.delay,
@@ -103,7 +107,11 @@ func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta
 func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := NewDockerClient(ctx, d)
+
+		if err != nil {
+			client = meta.(*ProviderConfig).DockerClient
+		}
 		serviceID := d.Id()
 
 		apiService, err := fetchDockerService(ctx, serviceID, d.Get("name").(string), client)
@@ -162,7 +170,11 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 }
 
 func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 
 	service, _, err := client.ServiceInspectWithRaw(ctx, d.Id(), types.ServiceInspectOptions{})
 	if err != nil {
@@ -196,7 +208,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		stateConf := &retry.StateChangeConf{
 			Pending:    serviceUpdatePendingStates,
 			Target:     []string{"completed"},
-			Refresh:    resourceDockerServiceUpdateRefreshFunc(ctx, service.ID, meta),
+			Refresh:    resourceDockerServiceUpdateRefreshFunc(ctx, service.ID, meta, d),
 			Timeout:    timeout,
 			MinTimeout: 5 * time.Second,
 			Delay:      7 * time.Second,
@@ -217,7 +229,11 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 
 	if err := deleteService(ctx, d.Id(), d, client); err != nil {
 		return diag.FromErr(err)
@@ -345,9 +361,13 @@ func (err *DidNotConvergeError) Error() string {
 
 // resourceDockerServiceCreateRefreshFunc refreshes the state of a service when it is created and needs to converge
 func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
-	serviceID string, meta interface{}) retry.StateRefreshFunc {
+	serviceID string, meta interface{}, d *schema.ResourceData) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := NewDockerClient(ctx, d)
+
+		if err != nil {
+			client = meta.(*ProviderConfig).DockerClient
+		}
 
 		var updater progressUpdater
 
@@ -395,9 +415,13 @@ func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
 
 // resourceDockerServiceUpdateRefreshFunc refreshes the state of a service when it is updated and needs to converge
 func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
-	serviceID string, meta interface{}) retry.StateRefreshFunc {
+	serviceID string, meta interface{}, d *schema.ResourceData) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
+		client, err := NewDockerClient(ctx, d)
+
+		if err != nil {
+			client = meta.(*ProviderConfig).DockerClient
+		}
 
 		var (
 			updater  progressUpdater
