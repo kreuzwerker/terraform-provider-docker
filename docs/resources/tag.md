@@ -28,5 +28,3 @@ Creates a docker tag. It has the exact same functionality as the `docker tag` co
 
 - `id` (String) The ID of this resource.
 - `source_image_id` (String) ImageID of the source image in the format of `sha256:<<ID>>`
-
-

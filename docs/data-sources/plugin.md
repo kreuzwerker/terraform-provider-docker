@@ -39,5 +39,3 @@ data "docker_plugin" "by_id" {
 - `grant_all_permissions` (Boolean) If true, grant all permissions necessary to run the plugin
 - `name` (String) The plugin name. If the tag is omitted, `:latest` is complemented to the attribute value.
 - `plugin_reference` (String) The Docker Plugin Reference
-
-
