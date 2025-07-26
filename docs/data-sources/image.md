@@ -45,5 +45,3 @@ data "docker_image" "tag_and_digest" {
 
 - `id` (String) The ID of this resource.
 - `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. It may be empty in the edge case where the local image was pulled from a repo, tagged locally, and then referred to in the data source by that local name/tag.
-
-

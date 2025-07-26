@@ -47,7 +47,8 @@ resource "docker_image" "ubuntu" {
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
 - `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
-- `devices` (Block Set) Bind devices to the container. (see [below for nested schema](#nestedblock--devices))
+- `device_requests` (Block Set) Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. (see [below for nested schema](#nestedblock--device_requests))
+- `devices` (Block Set) Bind traditional devices to the container (e.g., `/dev/nvidia0`). For CDI devices, use `device_requests` instead. (see [below for nested schema](#nestedblock--devices))
 - `dns` (Set of String) DNS servers to use.
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 - `dns_search` (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
@@ -115,6 +116,18 @@ Optional:
 
 - `add` (Set of String) List of linux capabilities to add.
 - `drop` (Set of String) List of linux capabilities to drop.
+
+
+<a id="nestedblock--device_requests"></a>
+### Nested Schema for `device_requests`
+
+Optional:
+
+- `capabilities` (Set of String) List of device capabilities. Only used with `nvidia` driver (e.g., `gpu`, `compute`, `utility`).
+- `count` (Number) Number of devices to request. Use -1 for all devices. Only used with `nvidia` driver.
+- `device_ids` (Set of String) List of device IDs or CDI device identifiers (e.g., `nvidia.com/gpu=all`).
+- `driver` (String) The device driver to use. Common values: `cdi` for CDI devices, `nvidia` for NVIDIA GPU requests.
+- `options` (Map of String) Driver-specific options.
 
 
 <a id="nestedblock--devices"></a>

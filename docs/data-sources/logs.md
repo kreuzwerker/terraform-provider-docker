@@ -36,5 +36,3 @@ description: |-
 
 - `id` (String) The ID of this resource.
 - `logs_list_string` (List of String) List of container logs, each element is a line.
-
-
