@@ -111,6 +111,15 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
+// testAccCheckNvidiaGPURequired skips test if NVIDIA GPU is not available for CDI testing
+func testAccCheckNvidiaGPURequired(t *testing.T) {
+	// Check if nvidia-smi is available and can detect GPUs
+	cmd := exec.Command("nvidia-smi", "-L")
+	if err := cmd.Run(); err != nil {
+		t.Skip("Skipping CDI test: no NVIDIA GPU detected")
+	}
+}
+
 func TestGetContextHost_ValidContext(t *testing.T) {
 	// Create a temporary directory to simulate Docker contexts
 	tempDir := t.TempDir()

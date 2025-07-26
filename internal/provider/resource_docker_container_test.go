@@ -1814,3 +1814,50 @@ func testValueHigherEqualThan(name, key string, value int) resource.TestCheckFun
 		return nil
 	}
 }
+
+func TestAccDockerContainer_cdi_devices(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t); testAccCheckNvidiaGPURequired(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDeviceCDIConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "device_requests.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_gpus_all(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t); testAccCheckNvidiaGPURequired(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGpusAllConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "gpus", "all"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_gpus_and_cdi_conflict(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGpusAndCDIConfig"),
+				ExpectError: regexp.MustCompile(`"gpus": conflicts with device_requests`),
+			},
+		},
+	})
+}
