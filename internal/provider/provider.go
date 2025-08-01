@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/docker/docker/client"
 	"io"
 	"log"
 	"os"
 	"os/user"
-	"runtime"
 	"strings"
 
 	"github.com/docker/cli/cli/config/configfile"
@@ -16,7 +16,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func init() {
@@ -39,121 +38,7 @@ func init() {
 func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
-			Schema: map[string]*schema.Schema{
-				"host": {
-					Type:     schema.TypeString,
-					Required: true,
-					DefaultFunc: func() (interface{}, error) {
-						if v := os.Getenv("DOCKER_HOST"); v != "" {
-							return v, nil
-						}
-						if runtime.GOOS == "windows" {
-							return "npipe:////./pipe/docker_engine", nil
-						}
-						return "unix:///var/run/docker.sock", nil
-					},
-					Description: "The Docker daemon address",
-				},
-				"context": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONTEXT", ""),
-					Description: "The name of the Docker context to use. Can also be set via `DOCKER_CONTEXT` environment variable. Overrides the `host` if set.",
-				},
-				"ssh_opts": {
-					Type:     schema.TypeList,
-					Optional: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
-					DefaultFunc: func() (interface{}, error) {
-						if v := os.Getenv("DOCKER_SSH_OPTS"); v != "" {
-							return strings.Fields(v), nil
-						}
-
-						return nil, nil
-					},
-					Description: "Additional SSH option flags to be appended when using `ssh://` protocol",
-				},
-				"ca_material": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CA_MATERIAL", ""),
-					Description: "PEM-encoded content of Docker host CA certificate",
-				},
-				"cert_material": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_MATERIAL", ""),
-					Description: "PEM-encoded content of Docker client certificate",
-				},
-				"key_material": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("DOCKER_KEY_MATERIAL", ""),
-					Description: "PEM-encoded content of Docker client private key",
-				},
-
-				"cert_path": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("DOCKER_CERT_PATH", ""),
-					Description: "Path to directory with Docker TLS config",
-				},
-
-				"registry_auth": {
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"address": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.StringIsNotEmpty,
-								Description:  "Address of the registry",
-							},
-
-							"username": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
-								Description: "Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.",
-							},
-
-							"password": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								Sensitive:   true,
-								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
-								Description: "Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.",
-							},
-
-							"config_file": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
-								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
-							},
-
-							"config_file_content": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								Description: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
-							},
-							"auth_disabled": {
-								Type:        schema.TypeBool,
-								Optional:    true,
-								Default:     false,
-								Description: "Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.",
-							},
-						},
-					},
-				},
-				"disable_docker_daemon_check": {
-					Type:        schema.TypeBool,
-					Optional:    true,
-					Default:     false,
-					Description: "If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.",
-				},
-			},
+			Schema: ElemSchema,
 
 			ResourcesMap: map[string]*schema.Resource{
 				"docker_container":      resourceDockerContainer(),
@@ -185,58 +70,97 @@ func New(version string) func() *schema.Provider {
 	}
 }
 
+type proxy struct {
+	d *schema.ResourceData
+}
+
+// When a provider is configured, everything is stored top level
+// When a docker client is inside a resource, we need to unwrap it to actually use it
+func (p *proxy) Get(name string) interface{} {
+	if p.d.Get("docker_client") == nil {
+		return p.d.Get(name)
+	}
+
+	set := p.d.Get("docker_client").(*schema.Set)
+
+	// iterates over all possible configs and tries to get what is needed
+	// if found, retuns it
+	for _, item := range set.List() {
+		config := item.(map[string]interface{})
+		if config[name] != nil {
+			return config[name]
+		}
+	}
+
+	return nil
+}
+
+func NewDockerClient(ctx context.Context, dockerResource *schema.ResourceData) (*client.Client, error) {
+	var host string
+
+	p := &proxy{d: dockerResource}
+
+	if contextName := p.Get("context").(string); contextName != "" {
+		usr, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("[DEBUG] Homedir %s", usr.HomeDir)
+		contextHost, err := getContextHost(contextName, usr.HomeDir)
+		if err != nil {
+			return nil, err
+		}
+		host = contextHost
+	} else {
+		host = p.Get("host").(string)
+	}
+
+	SSHOptsI := p.Get("ssh_opts").([]interface{})
+	SSHOpts := make([]string, len(SSHOptsI))
+	for i, s := range SSHOptsI {
+		SSHOpts[i] = s.(string)
+	}
+	config := Config{
+		Host:     host,
+		SSHOpts:  SSHOpts,
+		Ca:       p.Get("ca_material").(string),
+		Cert:     p.Get("cert_material").(string),
+		Key:      p.Get("key_material").(string),
+		CertPath: p.Get("cert_path").(string),
+	}
+
+	client, err := config.NewClient()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the Docker daemon is running
+	if !p.Get("disable_docker_daemon_check").(bool) {
+		_, err = client.Ping(ctx)
+		if err != nil {
+			return nil, err
+		}
+		_, err = client.ServerVersion(ctx)
+		if err != nil {
+			log.Printf("[WARN] Error connecting to Docker daemon. Is your endpoint a valid docker host? This warning will be changed to an error in the next major version. Error: %s", err)
+		}
+	} else {
+		log.Printf("[DEBUG] Skipping Docker daemon check")
+	}
+
+	return client, nil
+}
+
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		var host string
-		if contextName := d.Get("context").(string); contextName != "" {
-			usr, err := user.Current()
-			if err != nil {
-				return nil, diag.Errorf("Could not determine current user. We don't know what the homedir is to look for docker contexts: %v", err)
-			}
-			log.Printf("[DEBUG] Homedir %s", usr.HomeDir)
-			contextHost, err := getContextHost(contextName, usr.HomeDir)
-			if err != nil {
-				return nil, diag.Errorf("Error loading Docker context '%s': %s", contextName, err)
-			}
-			host = contextHost
-		} else {
-			host = d.Get("host").(string)
-		}
-
-		SSHOptsI := d.Get("ssh_opts").([]interface{})
-		SSHOpts := make([]string, len(SSHOptsI))
-		for i, s := range SSHOptsI {
-			SSHOpts[i] = s.(string)
-		}
-		config := Config{
-			Host:     host,
-			SSHOpts:  SSHOpts,
-			Ca:       d.Get("ca_material").(string),
-			Cert:     d.Get("cert_material").(string),
-			Key:      d.Get("key_material").(string),
-			CertPath: d.Get("cert_path").(string),
-		}
-
-		client, err := config.NewClient()
-		if err != nil {
-			return nil, diag.Errorf("Error initializing Docker client: %s", err)
-		}
-
-		// Check if the Docker daemon is running
-		if !d.Get("disable_docker_daemon_check").(bool) {
-			_, err = client.Ping(ctx)
-			if err != nil {
-				return nil, diag.Errorf("Error pinging Docker server, please make sure that %s is reachable and has a  '_ping' endpoint. Error: %s", host, err)
-			}
-			_, err = client.ServerVersion(ctx)
-			if err != nil {
-				log.Printf("[WARN] Error connecting to Docker daemon. Is your endpoint a valid docker host? This warning will be changed to an error in the next major version. Error: %s", err)
-			}
-		} else {
-			log.Printf("[DEBUG] Skipping Docker daemon check")
-		}
 
 		authConfigs := &AuthConfigs{}
+
+		client, err := NewDockerClient(ctx, d)
+
+		if err != nil {
+			return nil, diag.Errorf("Error loading docker client: %s", err)
+		}
 
 		if v, ok := d.GetOk("registry_auth"); ok {
 			authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
