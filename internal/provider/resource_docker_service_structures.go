@@ -183,6 +183,9 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.CapabilityDrop) > 0 {
 		m["cap_drop"] = in.CapabilityDrop
 	}
+	if in.Init != nil {
+		m["init"] = *in.Init
+	}
 	out = append(out, m)
 	return out
 }
@@ -964,6 +967,10 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 				for _, cap := range value.([]interface{}) {
 					containerSpec.CapabilityDrop = append(containerSpec.CapabilityDrop, cap.(string))
 				}
+			}
+			if value, ok := rawContainerSpec["init"]; ok {
+				v := value.(bool)
+				containerSpec.Init = &v
 			}
 
 		}
