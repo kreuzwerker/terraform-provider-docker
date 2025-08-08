@@ -22,6 +22,7 @@ func resourceDockerNetwork() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"name": {
 				Type:        schema.TypeString,
 				Description: "The name of the Docker network.",
