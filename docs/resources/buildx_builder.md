@@ -118,5 +118,3 @@ Optional:
 - `default_load` (Boolean) Automatically load images to the Docker Engine image store. Defaults to `false`
 - `key` (String) Sets the TLS client key.
 - `servername` (String) TLS server name used in requests.
-
-

@@ -48,5 +48,3 @@ Read-Only:
 - `media_type` (String)
 - `os` (String)
 - `sha256_digest` (String)
-
-
