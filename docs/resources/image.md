@@ -4,7 +4,7 @@ page_title: "Resource docker_image - terraform-provider-docker"
 subcategory: ""
 description: |-
   Manages the lifecycle of a docker image in your docker host. It can be used to build a new docker image or to pull an existing one from a registry.
-   This resource will not pull new layers of the image automatically unless used in conjunction with dockerregistryimage ../data-sources/registry_image.md data source to update the pull_triggers field.
+  This resource will not pull new layers of the image automatically unless used in conjunction with docker_registry_image ../data-sources/registry_image.md data source to update the pull_triggers field.
 ---
 <!-- Bug: Type and Name are switched -->
 # Resource (docker_image)

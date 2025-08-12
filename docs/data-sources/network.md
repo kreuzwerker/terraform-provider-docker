@@ -43,5 +43,3 @@ Read-Only:
 - `gateway` (String)
 - `ip_range` (String)
 - `subnet` (String)
-
-
