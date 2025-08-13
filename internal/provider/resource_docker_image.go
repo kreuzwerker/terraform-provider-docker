@@ -346,12 +346,22 @@ func resourceDockerImage() *schema.Resource {
 						},
 						"cache_from": {
 							Type:        schema.TypeList,
-							Description: "Images to consider as cache sources",
+							Description: "External cache sources (e.g., `user/app:cache`, `type=local,src=path/to/dir`). Only supported when using a buildx builder.",
 							Optional:    true,
 							ForceNew:    true,
 							Elem: &schema.Schema{
 								Type:        schema.TypeString,
-								Description: "The image",
+								Description: "A cache source",
+							},
+						},
+						"cache_to": {
+							Type:        schema.TypeList,
+							Description: "Cache export destinations (e.g., `user/app:cache`, `type=local,dest=path/to/dir`). Only supported when using a buildx builder.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type:        schema.TypeString,
+								Description: "A cache destination",
 							},
 						},
 						"security_opt": {

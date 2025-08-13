@@ -136,6 +136,14 @@ func containsIgnorableErrorMessage(errorMsg string, ignorableErrorMessages ...st
 	return false
 }
 
+func interfaceArrayToStringArray(interfaceArray []interface{}) []string {
+	stringArray := make([]string, len(interfaceArray))
+	for i, v := range interfaceArray {
+		stringArray[i] = fmt.Sprintf("%v", v)
+	}
+	return stringArray
+}
+
 // Convert nanoseconds to seconds as a decimal string
 // e.g., 1,000,000,000 nanoseconds = 1.0 seconds
 func nanoInt64ToDecimalString(nanoInt64 int64) string {

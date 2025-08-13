@@ -353,6 +353,14 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, im
 		options.target = target
 	}
 
+	if cacheFrom, ok := buildAttributes["cache_from"].([]interface{}); ok {
+		options.cacheFrom = interfaceArrayToStringArray(cacheFrom)
+	}
+
+	if cacheTo, ok := buildAttributes["cache_to"].([]interface{}); ok {
+		options.cacheTo = interfaceArrayToStringArray(cacheTo)
+	}
+
 	if platform, ok := buildAttributes["platform"].(string); ok && len(platform) > 0 {
 		options.platforms = append(options.platforms, platform)
 	}
@@ -475,8 +483,10 @@ func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, 
 	var inputs *build.Inputs
 	var retErr error
 	if confutil.IsExperimental() {
+		log.Printf("[DEBUG] using controller build")
 		resp, inputs, retErr = runControllerBuild(ctx, dockerCli, opts, options, printer)
 	} else {
+		log.Printf("[DEBUG] using basic build")
 		resp, inputs, retErr = runBasicBuild(ctx, dockerCli, opts, printer)
 	}
 
