@@ -1450,6 +1450,23 @@ func TestAccDockerContainer_nameattrnochange(t *testing.T) {
 		},
 	})
 }
+
+func TestAccDockerContainer_cpus(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerCpus"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_nostart(t *testing.T) {
 	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{

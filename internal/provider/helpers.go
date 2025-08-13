@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -133,4 +134,24 @@ func containsIgnorableErrorMessage(errorMsg string, ignorableErrorMessages ...st
 	}
 
 	return false
+}
+
+// Convert nanoseconds to seconds as a decimal string
+// e.g., 1,000,000,000 nanoseconds = 1.0 seconds
+func nanoInt64ToDecimalString(nanoInt64 int64) string {
+	if nanoInt64 == 0 {
+		return "0"
+	}
+
+	rat := new(big.Rat).SetFrac64(nanoInt64, 1e9)
+	str := rat.FloatString(9)
+
+	// If we have a "round" value like 100000000, we want to return "1.0" instead of further processing
+	if strings.Count(str, "0") == 9 {
+		return rat.FloatString(1)
+	}
+
+	// Remove trailing zeros to ensure a clean representation without unnecessary decimal places
+	str = strings.TrimRight(str, "0")
+	return str
 }
