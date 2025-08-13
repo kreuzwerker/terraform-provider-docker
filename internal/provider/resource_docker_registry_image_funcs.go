@@ -147,14 +147,6 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 		return mapOfStrings
 	}
 
-	interfaceArrayToStringArray := func(interfaceArray []interface{}) []string {
-		stringArray := make([]string, len(interfaceArray))
-		for i, v := range interfaceArray {
-			stringArray[i] = fmt.Sprintf("%v", v)
-		}
-		return stringArray
-	}
-
 	mapToBuildArgs := func(buildArgsOptions map[string]interface{}) map[string]*string {
 		buildArgs := make(map[string]*string, len(buildArgsOptions))
 		for k, v := range buildArgsOptions {

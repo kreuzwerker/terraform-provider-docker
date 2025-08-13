@@ -591,6 +591,23 @@ func TestAccDockerImageResource_build(t *testing.T) {
 		},
 	})
 }
+func TestAccDockerImageResource_buildxCacheFromCacheTo(t *testing.T) {
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context")), "\\", "\\\\")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageCacheFromCacheTo"), context, context, context, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.test_cache_from", "image_id"),
+				),
+			},
+		},
+	})
+}
 
 // Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
 func TestAccDockerImageResource_whitelistDockerignore(t *testing.T) {

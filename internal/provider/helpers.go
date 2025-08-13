@@ -134,3 +134,11 @@ func containsIgnorableErrorMessage(errorMsg string, ignorableErrorMessages ...st
 
 	return false
 }
+
+func interfaceArrayToStringArray(interfaceArray []interface{}) []string {
+	stringArray := make([]string, len(interfaceArray))
+	for i, v := range interfaceArray {
+		stringArray[i] = fmt.Sprintf("%v", v)
+	}
+	return stringArray
+}

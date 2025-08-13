@@ -126,7 +126,8 @@ Optional:
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
 - `builder` (String) Set the name of the buildx builder to use. If not set, the legacy builder is used.
-- `cache_from` (List of String) Images to consider as cache sources
+- `cache_from` (List of String) External cache sources (e.g., `user/app:cache`, `type=local,src=path/to/dir`). Only supported when using a buildx builder.
+- `cache_to` (List of String) Cache export destinations (e.g., `user/app:cache`, `type=local,dest=path/to/dir`). Only supported when using a buildx builder.
 - `cgroup_parent` (String) Optional parent cgroup for the container
 - `cpu_period` (Number) The length of a CPU period in microseconds
 - `cpu_quota` (Number) Microseconds of CPU time that the container can get in a CPU period
