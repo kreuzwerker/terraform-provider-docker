@@ -324,8 +324,12 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if v, ok := d.GetOk("cpus"); ok {
-		hostConfig.CPUPeriod = 100000
-		hostConfig.CPUQuota = int64(v.(float32) * 100000)
+		nanocpus, err := opts.ParseCPUs(v.(string))
+		if err != nil {
+			return diag.Errorf("Error setting cpus: %s", err)
+		}
+
+		hostConfig.NanoCPUs = nanocpus
 
 		if _, ook := d.GetOk("cpu_period"); ook {
 			log.Printf("[WARN] Value for cpus is set, ignore cpu_period setting")
@@ -786,7 +790,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	}
 	d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
 	if container.HostConfig.NanoCPUs > 0 {
-		d.Set("cpus", container.HostConfig.NanoCPUs)
+		d.Set("cpus", nanoInt64ToDecimalString(container.HostConfig.NanoCPUs))
 	}
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
