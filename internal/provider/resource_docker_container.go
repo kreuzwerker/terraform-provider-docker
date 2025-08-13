@@ -684,6 +684,13 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:         true,
 				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
+			"memory_reservation": {
+				Type:             schema.TypeInt,
+				Description:      "The memory-resveration for the container in MBs. Defaults to 0. Allows you to specify a soft limit smaller than `memory` which is activated when Docker detects contention or low memory on the host machine. If you use `memory-reservation`, it must be set lower than `memory` for it to take precedence. Because it is a soft limit, it doesn't guarantee that the container doesn't exceed the limit.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+				Default:          0,
+			},
 
 			"memory_swap": {
 				Type:             schema.TypeInt,
@@ -732,7 +739,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"network_mode": {
 				Type:        schema.TypeString,
-				Description: "Network mode of the container. See https://docs.docker.com/engine/network/ for more information.",
+				Description: "Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.",
 				Optional:    true,
 				ForceNew:    true,
 				Default:     "bridge",
