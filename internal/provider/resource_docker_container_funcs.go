@@ -311,6 +311,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.Memory = int64(v.(int)) * 1024 * 1024
 	}
 
+	if v, ok := d.GetOk("memory_reservation"); ok {
+		hostConfig.MemoryReservation = int64(v.(int)) * 1024 * 1024
+	}
+
 	if v, ok := d.GetOk("memory_swap"); ok {
 		swap := int64(v.(int))
 		if swap > 0 {
@@ -362,6 +366,11 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	networkingConfig := &network.NetworkingConfig{}
 	if v, ok := d.GetOk("network_mode"); ok {
+		// if the client OS is any other than Linux and the value is "bridge", print a warning
+		info, _ := client.Info(ctx)
+		if v.(string) == "bridge" && !strings.Contains(info.OSType, "linux") {
+			log.Printf("[WARN] You are using a non-Linux host OS, but the network_mode is set to 'bridge'. This may not work as expected. Please set the network_mode explicitly to 'nat' or another appropriate value for your host OS.")
+		}
 		hostConfig.NetworkMode = container.NetworkMode(v.(string))
 	}
 
@@ -783,6 +792,13 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	}
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
+
+	if container.HostConfig.MemoryReservation > 0 {
+		d.Set("memory_reservation", container.HostConfig.MemoryReservation/1024/1024)
+	} else {
+		d.Set("memory_reservation", container.HostConfig.MemoryReservation)
+	}
+
 	if container.HostConfig.MemorySwap > 0 {
 		d.Set("memory_swap", container.HostConfig.MemorySwap/1024/1024)
 	} else {
@@ -884,7 +900,7 @@ func resourceDockerContainerReadRefreshFunc(ctx context.Context,
 
 func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	attrs := []string{
-		"restart", "max_retry_count", "cpu_shares", "memory", "cpu_set", "memory_swap",
+		"restart", "max_retry_count", "cpu_shares", "memory", "memory_reservation", "cpu_set", "memory_swap",
 	}
 	for _, attr := range attrs {
 		if d.HasChange(attr) {
@@ -904,9 +920,10 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 					MaximumRetryCount: d.Get("max_retry_count").(int),
 				},
 				Resources: container.Resources{
-					CPUShares:  int64(d.Get("cpu_shares").(int)),
-					Memory:     int64(d.Get("memory").(int)) * 1024 * 1024,
-					CpusetCpus: d.Get("cpu_set").(string),
+					CPUShares:         int64(d.Get("cpu_shares").(int)),
+					Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
+					MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
+					CpusetCpus:        d.Get("cpu_set").(string),
 					// Ulimits:    ulimits,
 				},
 			}

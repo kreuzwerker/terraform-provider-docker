@@ -67,10 +67,11 @@ resource "docker_image" "ubuntu" {
 - `logs` (Boolean) Save the container logs (`attach` must be enabled). Defaults to `false`.
 - `max_retry_count` (Number) The maximum amount of times to an attempt a restart when `restart` is set to 'on-failure'.
 - `memory` (Number) The memory limit for the container in MBs.
+- `memory_reservation` (Number) The memory-resveration for the container in MBs. Defaults to 0. Allows you to specify a soft limit smaller than `memory` which is activated when Docker detects contention or low memory on the host machine. If you use `memory-reservation`, it must be set lower than `memory` for it to take precedence. Because it is a soft limit, it doesn't guarantee that the container doesn't exceed the limit.
 - `memory_swap` (Number) The total memory limit (memory + swap) for the container in MBs. This setting may compute to `-1` after `terraform apply` if the target host doesn't support memory swap, when that is the case docker will use a soft limitation.
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.
-- `network_mode` (String) Network mode of the container. See https://docs.docker.com/engine/network/ for more information.
+- `network_mode` (String) Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.
 - `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
 - `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
