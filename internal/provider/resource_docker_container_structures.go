@@ -233,6 +233,40 @@ func volumeSetToDockerVolumes(volumes *schema.Set) (map[string]struct{}, []strin
 	return retVolumeMap, retHostConfigBinds, retVolumeFromContainers, nil
 }
 
+// deviceRequestsSetToDockerRequests converts device_requests schema to Docker DeviceRequest structs
+func deviceRequestsSetToDockerRequests(deviceRequests *schema.Set) []container.DeviceRequest {
+	var dockerRequests []container.DeviceRequest
+
+	for _, requestInt := range deviceRequests.List() {
+		requestMap := requestInt.(map[string]interface{})
+
+		deviceRequest := container.DeviceRequest{
+			Driver: requestMap["driver"].(string),
+			Count:  requestMap["count"].(int),
+		}
+
+		// Handle device_ids
+		if deviceIDs, ok := requestMap["device_ids"]; ok && deviceIDs != nil {
+			deviceRequest.DeviceIDs = stringSetToStringSlice(deviceIDs.(*schema.Set))
+		}
+
+		// Handle capabilities
+		if capabilities, ok := requestMap["capabilities"]; ok && capabilities != nil {
+			capabilityList := stringSetToStringSlice(capabilities.(*schema.Set))
+			deviceRequest.Capabilities = [][]string{capabilityList}
+		}
+
+		// Handle options
+		if options, ok := requestMap["options"]; ok && options != nil {
+			deviceRequest.Options = mapTypeMapValsToString(options.(map[string]interface{}))
+		}
+
+		dockerRequests = append(dockerRequests, deviceRequest)
+	}
+
+	return dockerRequests
+}
+
 func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 	retDevices := []container.DeviceMapping{}
 	for _, deviceInt := range devices.List() {
@@ -349,4 +383,31 @@ func flattenDevices(in []container.DeviceMapping) []interface{} {
 	}
 
 	return devices
+}
+
+// flattenDeviceRequests converts Docker DeviceRequest structs back to device_requests schema
+func flattenDeviceRequests(deviceRequests []container.DeviceRequest) []interface{} {
+	requests := make([]interface{}, len(deviceRequests))
+	for i, req := range deviceRequests {
+		requestMap := map[string]interface{}{
+			"driver": req.Driver,
+			"count":  req.Count,
+		}
+
+		if len(req.DeviceIDs) > 0 {
+			requestMap["device_ids"] = req.DeviceIDs
+		}
+
+		if len(req.Capabilities) > 0 && req.Capabilities[0] != nil && len(req.Capabilities[0]) > 0 {
+			requestMap["capabilities"] = req.Capabilities[0]
+		}
+
+		if len(req.Options) > 0 {
+			requestMap["options"] = req.Options
+		}
+
+		requests[i] = requestMap
+	}
+
+	return requests
 }
