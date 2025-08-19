@@ -1,6 +1,23 @@
 
+<a name="v3.7.0"></a>
+## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-13)
+
+### Feat
+
+* Implement memory_reservation and network_mode enhancements ([#773](https://github.com/kreuzwerker/terraform-provider-docker/issues/773))
+* Implement cache_from and cache_to for docker_image ([#772](https://github.com/kreuzwerker/terraform-provider-docker/issues/772))
+
+### Fix
+
+* Correctly get and set nanoCPUs for docker_container ([#771](https://github.com/kreuzwerker/terraform-provider-docker/issues/771))
+
+
 <a name="v3.6.2"></a>
 ## [v3.6.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.1...v3.6.2) (2025-06-13)
+
+### Chore
+
+* Prepare release v3.6.2 ([#750](https://github.com/kreuzwerker/terraform-provider-docker/issues/750))
 
 ### Feat
 
