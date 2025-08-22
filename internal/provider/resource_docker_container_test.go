@@ -1669,6 +1669,28 @@ func TestAccDockerContainer_dualstackaddress(t *testing.T) {
 	})
 }
 
+func TestAccDockerContainer_timeout(t *testing.T) {
+	createTimeout := time.Duration(5 * time.Second)
+	sleepTime := time.Duration(10 * time.Second)
+	if createTimeout > sleepTime {
+		t.Errorf("assertion failed: sleep time cannot be shorter than the timeout")
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(
+					loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerAttachTimeoutConfig"),
+					sleepTime.Seconds(),
+					createTimeout,
+				),
+				ExpectError: regexp.MustCompile("deadline exceeded"),
+			},
+		},
+	})
+}
+
 // /////////
 // HELPERS
 // /////////
