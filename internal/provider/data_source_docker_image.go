@@ -32,7 +32,11 @@ func dataSourceDockerImage() *schema.Resource {
 }
 
 func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(ctx, d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 
 	var data Data
 	if err := fetchLocalImages(ctx, &data, client); err != nil {
