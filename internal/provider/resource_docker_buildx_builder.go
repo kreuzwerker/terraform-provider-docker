@@ -28,6 +28,7 @@ func resourceDockerBuildxBuilder() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDockerBuildxBuilderCreate,
 		ReadContext:   resourceDockerBuildxBuilderRead,
+		UpdateContext: resourceDockerBuildxBuilderUpdate,
 		DeleteContext: resourceDockerBuildxBuilderDelete,
 		Description:   "Manages a Docker Buildx builder instance. This resource allows you to create a  buildx builder with various configurations such as driver, nodes, and platform settings. Please see https://github.com/docker/buildx/blob/master/docs/reference/buildx_create.md for more documentation",
 		Schema: map[string]*schema.Schema{
@@ -106,6 +107,13 @@ func resourceDockerBuildxBuilder() *schema.Resource {
 				Default:     false,
 				Description: "Automatically boot the builder after creation. Defaults to `false`",
 				ForceNew:    true,
+			},
+			"auto_recreate": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Automatically recreate this builder if it exists in Terraform state but missing in Docker. Defaults to `false`",
+				ForceNew:    false,
 			},
 			"endpoint": {
 				Type:        schema.TypeString,
@@ -396,101 +404,37 @@ func resourceDockerBuildxBuilder() *schema.Resource {
 
 // resourceDockerBuildxBuilderCreate handles the creation of a Buildx builder
 func resourceDockerBuildxBuilderCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	name := d.Get("name").(string)
-	driver := d.Get("driver").(string)
-	platform := d.Get("platform").([]interface{})
-	driverOptions := make([]string, 0)
-	v, ok := d.GetOk("driver_options")
-	if ok {
-		driverOptions = processDriverOptions(v.(map[string]interface{}))
-	}
-	appendAction := d.Get("append").(bool)
-	use := d.Get("use").(bool)
-
 	log.Printf("[DEBUG] Creating Buildx builder: %s", name)
-
-	if kubernetesConfig, ok := d.GetOk("kubernetes"); ok {
-		driver = "kubernetes"
-		kubernetes := kubernetesConfig.([]interface{})[0].(map[string]interface{})
-		driverOptions = processDriverOptions(kubernetes)
-	}
-
-	if dockerContainerConfig, ok := d.GetOk("docker_container"); ok {
-		driver = "docker-container"
-		dockerContainer := dockerContainerConfig.([]interface{})[0].(map[string]interface{})
-		driverOptions = processDriverOptions(dockerContainer)
-	}
-
-	// Updated the Create function to handle all Remote driver-specific parameters
-	if remoteConfig, ok := d.GetOk("remote"); ok {
-		driver = "remote"
-		remote := remoteConfig.([]interface{})[0].(map[string]interface{})
-		driverOptions = processDriverOptions(remote)
-	}
 
 	client := meta.(*ProviderConfig).DockerClient
 
-	t, error := command.NewDockerCli()
-	if error != nil {
-		return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", error))
+	dockerCli, err := command.NewDockerCli()
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", err))
 	}
 
 	log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
-	err := t.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
-
+	err = dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
 	}
 
-	txn, release, err := storeutil.GetStore(t)
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	// Ensure the file lock gets released no matter what happens.
-	defer release()
-
-	log.Printf("[DEBUG] Creating Buildx builder with name: %s", name)
-	log.Printf("[DEBUG] Driver: %s", driver)
-	log.Printf("[DEBUG] Driver options: %s", driverOptions)
-
-	var ep string
-	v = d.Get("endpoint").(string)
-	if v != "" {
-		ep = v.(string)
-	}
-
-	b, err := builder.Create(ctx, txn, t, builder.CreateOpts{
-		Name:                name,
-		Driver:              driver,
-		NodeName:            d.Get("node").(string),
-		Platforms:           stringListToStringSlice(platform),
-		DriverOpts:          driverOptions,
-		BuildkitdFlags:      d.Get("buildkit_flags").(string),
-		BuildkitdConfigFile: d.Get("buildkit_config").(string),
-		Use:                 use,
-		Endpoint:            ep,
-		Append:              appendAction,
-	})
-
+	b, err := createBuilderFromResourceData(ctx, dockerCli, d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Buildx builder: %w", err))
-	}
-
-	// The store is no longer used from this point.
-	// Release it so we aren't holding the file lock during the boot.
-	release()
-
-	if d.Get("bootstrap").(bool) {
-		if _, err = b.Boot(ctx); err != nil {
-			return diag.FromErr(fmt.Errorf("failed to bootstrap Buildx builder: %w", err))
-		}
 	}
 
 	d.SetId(b.Name)
 	d.Set("name", b.Name)
 
+	return resourceDockerBuildxBuilderRead(ctx, d, meta)
+}
+
+// resourceDockerBuildxBuilderUpdate handles updates to the buildx builder resource
+// Currently only supports updating the auto_recreate flag since other changes require ForceNew
+func resourceDockerBuildxBuilderUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// For auto_recreate changes, just refresh the state
 	return resourceDockerBuildxBuilderRead(ctx, d, meta)
 }
 
@@ -517,6 +461,92 @@ func processDriverOptions(driverOptionsMap map[string]interface{}) []string {
 	return resultStringList
 }
 
+// createBuilderFromResourceData creates a builder using the configuration from ResourceData
+// This is shared between create and auto-recreate operations
+func createBuilderFromResourceData(ctx context.Context, dockerCli command.Cli, d *schema.ResourceData) (*builder.Builder, error) {
+	name := d.Get("name").(string)
+	driver := d.Get("driver").(string)
+	platform := d.Get("platform").([]interface{})
+
+	// Extract all builder configuration from the resource
+	driverOptions := make([]string, 0)
+	if v, ok := d.GetOk("driver_options"); ok {
+		driverOptions = processDriverOptions(v.(map[string]interface{}))
+	}
+
+	// Handle different driver configurations
+	if kubernetesConfig, ok := d.GetOk("kubernetes"); ok {
+		driver = "kubernetes"
+		kubernetes := kubernetesConfig.([]interface{})[0].(map[string]interface{})
+		driverOptions = processDriverOptions(kubernetes)
+	}
+
+	if dockerContainerConfig, ok := d.GetOk("docker_container"); ok {
+		driver = "docker-container"
+		dockerContainer := dockerContainerConfig.([]interface{})[0].(map[string]interface{})
+		driverOptions = processDriverOptions(dockerContainer)
+	}
+
+	if remoteConfig, ok := d.GetOk("remote"); ok {
+		driver = "remote"
+		remote := remoteConfig.([]interface{})[0].(map[string]interface{})
+		driverOptions = processDriverOptions(remote)
+	}
+
+	// Get store and create builder
+	txn, release, err := storeutil.GetStore(dockerCli)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
+	var ep string
+	if v := d.Get("endpoint").(string); v != "" {
+		ep = v
+	}
+
+	// Create the builder
+	b, err := builder.Create(ctx, txn, dockerCli, builder.CreateOpts{
+		Name:                name,
+		Driver:              driver,
+		NodeName:            d.Get("node").(string),
+		Platforms:           stringListToStringSlice(platform),
+		DriverOpts:          driverOptions,
+		BuildkitdFlags:      d.Get("buildkit_flags").(string),
+		BuildkitdConfigFile: d.Get("buildkit_config").(string),
+		Use:                 d.Get("use").(bool),
+		Endpoint:            ep,
+		Append:              d.Get("append").(bool),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Bootstrap if required
+	if d.Get("bootstrap").(bool) {
+		if _, err = b.Boot(ctx); err != nil {
+			return nil, fmt.Errorf("failed to bootstrap builder %s: %w", name, err)
+		}
+	}
+
+	return b, nil
+}
+
+// recreateBuilderFromResourceData recreates a builder from its current Terraform resource configuration
+func recreateBuilderFromResourceData(ctx context.Context, dockerCli command.Cli, d *schema.ResourceData) error {
+	name := d.Get("name").(string)
+	log.Printf("[INFO] Auto-recreating builder '%s'", name)
+
+	_, err := createBuilderFromResourceData(ctx, dockerCli, d)
+	if err != nil {
+		return fmt.Errorf("failed to auto-recreate builder %s: %w", name, err)
+	}
+
+	log.Printf("[INFO] Successfully auto-recreated builder: %s", name)
+	return nil
+}
+
 // resourceDockerBuildxBuilderRead handles reading the state of a Buildx builder
 // corresponding file in buildx repo: https://github.com/docker/buildx/blob/master/commands/inspect.go
 func resourceDockerBuildxBuilderRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -539,7 +569,25 @@ func resourceDockerBuildxBuilderRead(ctx context.Context, d *schema.ResourceData
 		builder.WithSkippedValidation(),
 	)
 	if err != nil {
-		return diag.FromErr(err)
+		// Check if auto_recreate is enabled
+		if d.Get("auto_recreate").(bool) {
+			log.Printf("[INFO] Builder '%s' not found in Docker but auto_recreate is enabled, recreating...", name)
+
+			// Recreate the builder using current resource configuration
+			if recreateErr := recreateBuilderFromResourceData(ctx, dockerCli, d); recreateErr != nil {
+				return diag.FromErr(fmt.Errorf("failed to auto-recreate builder '%s': %w", name, recreateErr))
+			}
+
+			// Try reading again after recreation
+			_, err = builder.New(dockerCli,
+				builder.WithName(d.Get("name").(string)),
+				builder.WithSkippedValidation(),
+			)
+		}
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	return nil
 }
