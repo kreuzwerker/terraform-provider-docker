@@ -1,4 +1,10 @@
 
+## [Unreleased]
+
+### Feat
+
+* Add `auto_recreate` attribute to `docker_buildx_builder` resource - Automatically recreate missing builders in CI/CD environments
+
 <a name="v3.7.0"></a>
 ## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-13)
 
