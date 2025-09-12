@@ -77,7 +77,11 @@ func dataSourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := NewDockerClient(context.Background(), d)
+
+	if err != nil {
+		client = meta.(*ProviderConfig).DockerClient
+	}
 	ctx := context.Background()
 	plugin, _, err := client.PluginInspectWithRaw(ctx, key)
 	if err != nil {

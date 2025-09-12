@@ -19,6 +19,7 @@ func resourceDockerService() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"auth": {
 				Type:        schema.TypeList,
 				Description: "Configuration for the authentication for pulling the images of the service",

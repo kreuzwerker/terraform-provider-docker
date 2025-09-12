@@ -10,6 +10,7 @@ func resourceDockerTag() *schema.Resource {
 		ReadContext:   resourceDockerTagRead,
 
 		Schema: map[string]*schema.Schema{
+			"docker_client": dockerSchema,
 			"source_image": {
 				Type:        schema.TypeString,
 				Description: "Name of the source image.",
