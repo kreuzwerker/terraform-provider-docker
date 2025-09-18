@@ -33,7 +33,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 	var err error
 	client := meta.(*ProviderConfig).DockerClient
 
-	serviceSpec, err := createServiceSpec(d)
+	serviceSpec, err := createServiceSpec(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,7 +132,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 		d.Set("name", service.Spec.Name)
 		d.Set("labels", mapToLabelSet(service.Spec.Labels))
 
-		if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate, d)); err != nil {
+		if err = d.Set("task_spec", flattenTaskSpec(service.Spec.TaskTemplate, d, meta)); err != nil {
 			log.Printf("[WARN] failed to set task spec from API: %s", err)
 		}
 		if err = d.Set("mode", flattenServiceMode(service.Spec.Mode)); err != nil {
@@ -169,7 +169,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	serviceSpec, err := createServiceSpec(d)
+	serviceSpec, err := createServiceSpec(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}

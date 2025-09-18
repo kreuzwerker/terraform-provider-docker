@@ -18,10 +18,10 @@ import (
 // flatten API objects to the terraform schema
 // ////////////
 // see https://learn.hashicorp.com/tutorials/terraform/provider-create?in=terraform/providers#add-flattening-functions
-func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData) []interface{} {
+func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData, meta interface{}) []interface{} {
 	m := make(map[string]interface{})
 	if in.ContainerSpec != nil {
-		m["container_spec"] = flattenContainerSpec(in.ContainerSpec)
+		m["container_spec"] = flattenContainerSpec(in.ContainerSpec, meta)
 	}
 	if in.Resources != nil {
 		m["resources"] = flattenTaskResources(in.Resources)
@@ -111,7 +111,8 @@ func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
 }
 
 // /// start TaskSpec
-func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
+func flattenContainerSpec(in *swarm.ContainerSpec, meta interface{}) []interface{} {
+	client := meta.(*ProviderConfig).DockerClient
 	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
 	if len(in.Image) > 0 {
@@ -183,8 +184,10 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	if len(in.CapabilityDrop) > 0 {
 		m["cap_drop"] = in.CapabilityDrop
 	}
-	if in.Init != nil {
-		m["init"] = *in.Init
+	if client.ClientVersion() >= "1.37" {
+		if in.Init != nil {
+			m["init"] = *in.Init
+		}
 	}
 	out = append(out, m)
 	return out
@@ -577,7 +580,7 @@ func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 // create API object from the terraform resource schema
 // ////////////
 // createServiceSpec creates the service spec: https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
-func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
+func createServiceSpec(d *schema.ResourceData, meta interface{}) (swarm.ServiceSpec, error) {
 	serviceSpec := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name: d.Get("name").(string),
@@ -590,7 +593,7 @@ func createServiceSpec(d *schema.ResourceData) (swarm.ServiceSpec, error) {
 	}
 	serviceSpec.Labels = labels
 
-	taskTemplate, err := createServiceTaskSpec(d)
+	taskTemplate, err := createServiceTaskSpec(d, meta)
 	if err != nil {
 		return serviceSpec, err
 	}
@@ -633,7 +636,7 @@ func createServiceLabels(d *schema.ResourceData) (map[string]string, error) {
 
 // == start taskSpec
 // createServiceTaskSpec creates the task template for the service
-func createServiceTaskSpec(d *schema.ResourceData) (swarm.TaskSpec, error) {
+func createServiceTaskSpec(d *schema.ResourceData, meta interface{}) (swarm.TaskSpec, error) {
 	taskSpec := swarm.TaskSpec{}
 	if v, ok := d.GetOk("task_spec"); ok {
 		if len(v.([]interface{})) > 0 {
@@ -641,7 +644,7 @@ func createServiceTaskSpec(d *schema.ResourceData) (swarm.TaskSpec, error) {
 				rawTaskSpec := rawTaskSpec.(map[string]interface{})
 
 				if rawContainerSpec, ok := rawTaskSpec["container_spec"]; ok {
-					containerSpec, err := createContainerSpec(rawContainerSpec)
+					containerSpec, err := createContainerSpec(rawContainerSpec, meta)
 					if err != nil {
 						return taskSpec, err
 					}
@@ -696,7 +699,8 @@ func createServiceTaskSpec(d *schema.ResourceData) (swarm.TaskSpec, error) {
 }
 
 // createContainerSpec creates the container spec
-func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
+func createContainerSpec(v interface{}, meta interface{}) (*swarm.ContainerSpec, error) {
+	client := meta.(*ProviderConfig).DockerClient
 	containerSpec := swarm.ContainerSpec{}
 	if len(v.([]interface{})) > 0 {
 		for _, rawContainerSpec := range v.([]interface{}) {
@@ -968,9 +972,11 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 					containerSpec.CapabilityDrop = append(containerSpec.CapabilityDrop, cap.(string))
 				}
 			}
-			if value, ok := rawContainerSpec["init"]; ok {
-				v := value.(bool)
-				containerSpec.Init = &v
+			if client.ClientVersion() >= "1.37" {
+				if value, ok := rawContainerSpec["init"]; ok {
+					v := value.(bool)
+					containerSpec.Init = &v
+				}
 			}
 
 		}
