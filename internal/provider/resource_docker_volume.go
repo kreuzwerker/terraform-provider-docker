@@ -73,7 +73,6 @@ func resourceDockerVolume() *schema.Resource {
 				Type:        schema.TypeList,
 				Description: "Cluster-specific options for volume creation. Only works if the Docker daemon is running in swarm mode and is the swarm manager.",
 				Optional:    true,
-				ForceNew:    true,
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
