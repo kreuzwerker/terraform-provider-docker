@@ -778,6 +778,12 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 						},
+						"mac_address": {
+							Type:        schema.TypeString,
+							Description: "The MAC address of the container in the specific network.",
+							Optional:    true,
+							ForceNew:    true,
+						},
 					},
 				},
 			},
