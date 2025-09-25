@@ -31,6 +31,7 @@ func resourceDockerVolume() *schema.Resource {
 		CreateContext: resourceDockerVolumeCreate,
 		ReadContext:   resourceDockerVolumeRead,
 		DeleteContext: resourceDockerVolumeDelete,
+		UpdateContext: resourceDockerVolumeUpdate,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -209,13 +210,17 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 			vcr := &volume.CapacityRange{}
 			var memBytes opts.MemBytes
 			if r := clusterConfig["required_bytes"].(string); len(r) > 0 {
-				memBytes.Set(r)
+				if err := memBytes.Set(r); err != nil {
+					return diag.Errorf("Invalid value for required_bytes: %s", err)
+				}
 				vcr.RequiredBytes = memBytes.Value()
 				fmt.Printf("[DEBUG] Required bytes set to %d\n", vcr.RequiredBytes)
 			}
 
 			if l := clusterConfig["limit_bytes"].(string); len(l) > 0 {
-				memBytes.Set(l)
+				if err := memBytes.Set(l); err != nil {
+					return diag.Errorf("Invalid value for limit_bytes: %s", err)
+				}
 				vcr.LimitBytes = memBytes.Value()
 				fmt.Printf("[DEBUG] Limit bytes set to %d\n", vcr.LimitBytes)
 			}
