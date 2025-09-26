@@ -460,6 +460,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 			endpointConfig.IPAMConfig = endpointIPAMConfig
 
+			if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok {
+				endpointConfig.MacAddress = v.(string)
+			}
+
 			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
 				return diag.Errorf("Unable to connect to network '%s': %s", networkID, err)
 			}

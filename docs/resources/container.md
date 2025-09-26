@@ -232,6 +232,7 @@ Optional:
 - `aliases` (Set of String) The network aliases of the container in the specific network.
 - `ipv4_address` (String) The IPV4 address of the container in the specific network.
 - `ipv6_address` (String) The IPV6 address of the container in the specific network.
+- `mac_address` (String) The MAC address of the container in the specific network.
 
 
 <a id="nestedblock--ports"></a>
