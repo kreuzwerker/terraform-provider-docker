@@ -304,7 +304,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if v, ok := d.GetOk("security_opts"); ok {
-		hostConfig.SecurityOpt = stringSetToStringSlice(v.(*schema.Set))
+		securityOpts, maskedPaths, readonlyPaths := parseSystemPaths(stringSetToStringSlice(v.(*schema.Set)))
+		hostConfig.SecurityOpt = securityOpts
+		hostConfig.MaskedPaths = maskedPaths
+		hostConfig.ReadonlyPaths = readonlyPaths
 	}
 
 	if v, ok := d.GetOk("memory"); ok {
@@ -646,6 +649,25 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	return resourceDockerContainerRead(ctx, d, meta)
+}
+
+// parseSystemPaths checks if `systempaths=unconfined` security option is set,
+// and returns the `MaskedPaths` and `ReadonlyPaths` accordingly. An updated
+// list of security options is returned with this option removed, because the
+// `unconfined` option is handled client-side, and should not be sent to the
+// daemon.
+func parseSystemPaths(securityOpts []string) (filtered, maskedPaths, readonlyPaths []string) {
+	filtered = securityOpts[:0]
+	for _, opt := range securityOpts {
+		if opt == "systempaths=unconfined" {
+			maskedPaths = []string{}
+			readonlyPaths = []string{}
+		} else {
+			filtered = append(filtered, opt)
+		}
+	}
+
+	return filtered, maskedPaths, readonlyPaths
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
