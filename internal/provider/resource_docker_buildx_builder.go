@@ -539,8 +539,15 @@ func resourceDockerBuildxBuilderRead(ctx context.Context, d *schema.ResourceData
 		builder.WithSkippedValidation(),
 	)
 	if err != nil {
+		log.Printf("[DEBUG] Failed to read Buildx builder %s: %v", name, err)
+		if strings.Contains(err.Error(), fmt.Sprintf("no builder \"%s\" found", name)) {
+			log.Printf("[DEBUG] Buildx builder %s not found, removing from state", name)
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
+
 	return nil
 }
 
