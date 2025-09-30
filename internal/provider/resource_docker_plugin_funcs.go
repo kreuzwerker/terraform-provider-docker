@@ -19,7 +19,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	ctx := context.Background()
 	pluginName := d.Get("name").(string)
 	alias := d.Get("alias").(string)
-	log.Printf("[DEBUG] Install a Docker plugin " + pluginName)
+	log.Printf("[DEBUG] Install a Docker plugin %s", pluginName)
 	opts := types.PluginInstallOptions{
 		RemoteRef:            pluginName,
 		AcceptAllPermissions: d.Get("grant_all_permissions").(bool),
@@ -69,11 +69,11 @@ func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error 
 	client := meta.(*ProviderConfig).DockerClient
 	ctx := context.Background()
 	pluginID := d.Id()
-	log.Printf("[DEBUG] Remove a Docker plugin " + pluginID)
+	log.Printf("[DEBUG] Remove a Docker plugin %s", pluginID)
 	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
 		Force: d.Get("force_destroy").(bool),
 	}); err != nil {
-		return fmt.Errorf("remove the Docker plugin "+pluginID+": %w", err)
+		return fmt.Errorf("remove the Docker plugin %s: %w", pluginID, err)
 	}
 	return nil
 }
@@ -176,11 +176,11 @@ func setDockerPlugin(d *schema.ResourceData, plugin *types.Plugin) {
 
 func disablePlugin(ctx context.Context, d *schema.ResourceData, cl *client.Client) error {
 	pluginID := d.Id()
-	log.Printf("[DEBUG] Disable a Docker plugin " + pluginID)
+	log.Printf("[DEBUG] Disable a Docker plugin %s", pluginID)
 	if err := cl.PluginDisable(ctx, pluginID, types.PluginDisableOptions{
 		Force: d.Get("force_disable").(bool),
 	}); err != nil {
-		return fmt.Errorf("disable the Docker plugin "+pluginID+": %w", err)
+		return fmt.Errorf("disable the Docker plugin %s: %w", pluginID, err)
 	}
 	return nil
 }
@@ -198,7 +198,7 @@ func enablePlugin(ctx context.Context, d *schema.ResourceData, cl *client.Client
 
 func pluginSet(ctx context.Context, d *schema.ResourceData, cl *client.Client) error {
 	pluginID := d.Id()
-	log.Printf("[DEBUG] Update settings of a Docker plugin " + pluginID)
+	log.Printf("[DEBUG] Update settings of a Docker plugin %s", pluginID)
 	// currently, only environment variables are supported.
 	// TODO support other args
 	// https://docs.docker.com/engine/reference/commandline/plugin_set/#extended-description

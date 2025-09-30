@@ -334,11 +334,11 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 		case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
 			return nil
 		default:
-			return fmt.Errorf("Got bad response from registry: " + resp.Status)
+			return fmt.Errorf("got bad response from registry: %s", resp.Status)
 		}
 		// Some unexpected status was given, return an error
 	default:
-		return fmt.Errorf("Got bad response from registry: " + resp.Status)
+		return fmt.Errorf("got bad response from registry: %s", resp.Status)
 	}
 }
 
