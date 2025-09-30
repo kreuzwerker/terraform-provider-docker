@@ -609,6 +609,25 @@ func TestAccDockerImageResource_buildxCacheFromCacheTo(t *testing.T) {
 	})
 }
 
+func TestAccDockerImageResource_buildxAdditionalContexts(t *testing.T) {
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context")), "\\", "\\\\")
+	additional_context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "buildx_additional_context")), "\\", "\\\\")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageAdditionalContexts"), context, context, additional_context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.test_additional_contexts", "image_id"),
+				),
+			},
+		},
+	})
+}
+
 // Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
 func TestAccDockerImageResource_whitelistDockerignore(t *testing.T) {
 	name := "tftest-dockerregistryimage-whitelistdockerignore:1.0"

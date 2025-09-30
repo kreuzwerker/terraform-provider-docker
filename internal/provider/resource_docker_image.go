@@ -328,6 +328,16 @@ func resourceDockerImage() *schema.Resource {
 							Required:    true,
 							ForceNew:    true,
 						},
+						"additional_contexts": {
+							Type:        schema.TypeList,
+							Description: "A list of additional build contexts. Only supported when using a buildx builder. Example: `[\"name=path\", \"src = https://example.org\"}`. Please see https://docs.docker.com/reference/cli/docker/buildx/build/#build-context for more information.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type:        schema.TypeString,
+								Description: "An additional context in the form of `key=value`",
+							},
+						},
 						"labels": {
 							Type:        schema.TypeMap,
 							Description: "User-defined key/value metadata",
