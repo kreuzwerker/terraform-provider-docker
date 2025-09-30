@@ -227,6 +227,10 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, im
 		options.tags = append(options.tags, t.(string))
 	}
 
+	if contexts, ok := buildAttributes["additional_contexts"].([]interface{}); ok {
+		options.contexts = interfaceArrayToStringArray(contexts)
+	}
+
 	if builder, ok := buildAttributes["builder"].(string); ok {
 		options.builder = builder
 	}
