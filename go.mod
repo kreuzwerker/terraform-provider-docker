@@ -7,6 +7,7 @@ toolchain go1.24.6
 require (
 	github.com/client9/misspell v0.3.4
 	github.com/containerd/console v1.0.5
+	github.com/containerd/errdefs v1.0.0
 	github.com/distribution/reference v0.6.0
 	github.com/docker/buildx v0.23.0
 	github.com/docker/cli v28.4.0+incompatible
@@ -95,7 +96,6 @@ require (
 	github.com/containerd/containerd/api v1.8.0 // indirect
 	github.com/containerd/containerd/v2 v2.0.5 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
-	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v1.0.0-rc.1 // indirect

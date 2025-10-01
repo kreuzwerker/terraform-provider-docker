@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/registry"
@@ -38,7 +37,7 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	serviceOptions := types.ServiceCreateOptions{}
+	serviceOptions := swarm.ServiceCreateOptions{}
 	marshalledAuth := retrieveAndMarshalAuth(d, meta, "create")
 	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
 	serviceOptions.QueryRegistry = true
@@ -115,7 +114,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 			d.SetId("")
 			return serviceID, "removed", nil
 		}
-		service, _, err := client.ServiceInspectWithRaw(ctx, apiService.ID, types.ServiceInspectOptions{})
+		service, _, err := client.ServiceInspectWithRaw(ctx, apiService.ID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return serviceID, "", fmt.Errorf("Error inspecting service %s: %s", apiService.ID, err)
 		}
@@ -164,7 +163,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*ProviderConfig).DockerClient
 
-	service, _, err := client.ServiceInspectWithRaw(ctx, d.Id(), types.ServiceInspectOptions{})
+	service, _, err := client.ServiceInspectWithRaw(ctx, d.Id(), swarm.ServiceInspectOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,7 +173,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	updateOptions := types.ServiceUpdateOptions{}
+	updateOptions := swarm.ServiceUpdateOptions{}
 	marshalledAuth := retrieveAndMarshalAuth(d, meta, "update")
 	if err != nil {
 		return diag.Errorf("error creating auth config: %s", err)
@@ -232,7 +231,7 @@ func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, me
 // ///////////////
 // fetchDockerService fetches a service by its name or id
 func fetchDockerService(ctx context.Context, ID string, name string, client *client.Client) (*swarm.Service, error) {
-	apiServices, err := client.ServiceList(ctx, types.ServiceListOptions{})
+	apiServices, err := client.ServiceList(ctx, swarm.ServiceListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching service information from Docker: %s", err)
 	}
@@ -253,7 +252,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
 		filters := filters.NewArgs()
 		filters.Add("service", d.Get("name").(string))
-		tasks, err := client.TaskList(ctx, types.TaskListOptions{
+		tasks, err := client.TaskList(ctx, swarm.TaskListOptions{
 			Filters: filters,
 		})
 		if err != nil {
@@ -360,12 +359,12 @@ func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
 		filters.Add("desired-state", "running")
 
 		getUpToDateTasks := func() ([]swarm.Task, error) {
-			return client.TaskList(ctx, types.TaskListOptions{
+			return client.TaskList(ctx, swarm.TaskListOptions{
 				Filters: filters,
 			})
 		}
 
-		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
+		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return nil, "", err
 		}
@@ -414,12 +413,12 @@ func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
 		filters.Add("desired-state", "running")
 
 		getUpToDateTasks := func() ([]swarm.Task, error) {
-			return client.TaskList(ctx, types.TaskListOptions{
+			return client.TaskList(ctx, swarm.TaskListOptions{
 				Filters: filters,
 			})
 		}
 
-		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
+		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return nil, "", err
 		}
@@ -470,7 +469,7 @@ func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
 
 // getActiveNodes gets the actives nodes withon a swarm
 func getActiveNodes(ctx context.Context, client *client.Client) (map[string]struct{}, error) {
-	nodes, err := client.NodeList(ctx, types.NodeListOptions{})
+	nodes, err := client.NodeList(ctx, swarm.NodeListOptions{})
 	if err != nil {
 		return nil, err
 	}
