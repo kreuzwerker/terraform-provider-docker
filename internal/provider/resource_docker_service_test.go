@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -240,7 +239,6 @@ func TestDockerSecretFromRegistryAuth_basic(t *testing.T) {
 	foundAuthConfig := fromRegistryAuth("repo.my-company.com:8787/my_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass")
-	checkAttribute(t, "Email", foundAuthConfig.Email, "")
 	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "https://repo.my-company.com:8787")
 }
 
@@ -268,19 +266,16 @@ func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
 	foundAuthConfig := fromRegistryAuth("nexus.my-fancy-company.com/the_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser33")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass123")
-	checkAttribute(t, "Email", foundAuthConfig.Email, "test@example.com")
 	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "https://nexus.my-fancy-company.com")
 
 	foundAuthConfig = fromRegistryAuth("http-nexus.my-fancy-company.com/the_image", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "myuser33")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "mypass123")
-	checkAttribute(t, "Email", foundAuthConfig.Email, "test@example.com")
 	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "http://http-nexus.my-fancy-company.com")
 
 	foundAuthConfig = fromRegistryAuth("alpine:3.1", authConfigs)
 	checkAttribute(t, "Username", foundAuthConfig.Username, "")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "")
-	checkAttribute(t, "Email", foundAuthConfig.Email, "")
 	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "")
 }
 
@@ -1360,7 +1355,7 @@ func isServiceRemoved(serviceName string) resource.TestCheckFunc {
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 		filters := filters.NewArgs()
 		filters.Add("name", serviceName)
-		services, err := client.ServiceList(ctx, types.ServiceListOptions{
+		services, err := client.ServiceList(ctx, swarm.ServiceListOptions{
 			Filters: filters,
 		})
 		if err != nil {
@@ -1441,7 +1436,7 @@ func testAccServiceRunning(resourceName string, service *swarm.Service) resource
 		}
 
 		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		inspectedService, _, err := client.ServiceInspectWithRaw(ctx, rs.Primary.ID, types.ServiceInspectOptions{})
+		inspectedService, _, err := client.ServiceInspectWithRaw(ctx, rs.Primary.ID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return fmt.Errorf("Service with ID '%s': %w", rs.Primary.ID, err)
 		}

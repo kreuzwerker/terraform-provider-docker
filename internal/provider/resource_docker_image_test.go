@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	dockerBuildTypes "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -87,7 +87,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 				assert(options.Target == "fooTarget", "Target")
 				assert(options.SessionID == "fooSessionId", "SessionID")
 				assert(options.Platform == "fooPlatform", "Platform")
-				assert(options.Version == types.BuilderVersion("1"), "Version")
+				assert(options.Version == dockerBuildTypes.BuilderVersion("1"), "Version")
 				assert(options.BuildID == "fooBuildId", "BuildID")
 				// output
 				d.SetId("foo")

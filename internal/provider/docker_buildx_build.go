@@ -33,7 +33,7 @@ import (
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
 	dockeropts "github.com/docker/cli/opts"
-	"github.com/docker/docker/api/types"
+	dockerBuildTypes "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/versions"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -391,7 +391,7 @@ func canUseBuildx(ctx context.Context, client *dockerclient.Client) (bool, error
 	si, _ := client.Ping(ctx)
 
 	if !useBuilder {
-		if si.BuilderVersion != types.BuilderBuildKit && si.OSType == "windows" {
+		if si.BuilderVersion != dockerBuildTypes.BuilderBuildKit && si.OSType == "windows" {
 			// The daemon didn't advertise BuildKit as the preferred builder,
 			// so use the legacy builder, which is still the default for
 			// Windows / WCOW.

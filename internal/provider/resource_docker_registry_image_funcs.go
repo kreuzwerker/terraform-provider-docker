@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -138,7 +138,7 @@ type internalPushImageOptions struct {
 	Tag                string
 }
 
-func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBuildOptions {
+func createImageBuildOptions(buildOptions map[string]interface{}) build.ImageBuildOptions {
 	mapOfInterfacesToMapOfStrings := func(mapOfInterfaces map[string]interface{}) map[string]string {
 		mapOfStrings := make(map[string]string, len(mapOfInterfaces))
 		for k, v := range mapOfInterfaces {
@@ -188,7 +188,7 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 		return authConfigs
 	}
 
-	buildImageOptions := types.ImageBuildOptions{}
+	buildImageOptions := build.ImageBuildOptions{}
 	buildImageOptions.SuppressOutput = buildOptions["suppress_output"].(bool)
 	buildImageOptions.RemoteContext = buildOptions["remote_context"].(string)
 	buildImageOptions.NoCache = buildOptions["no_cache"].(bool)
@@ -218,7 +218,7 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 	buildImageOptions.Target = buildOptions["target"].(string)
 	buildImageOptions.SessionID = buildOptions["session_id"].(string)
 	buildImageOptions.Platform = buildOptions["platform"].(string)
-	buildImageOptions.Version = types.BuilderVersion(buildOptions["version"].(string))
+	buildImageOptions.Version = build.BuilderVersion(buildOptions["version"].(string))
 	buildImageOptions.BuildID = buildOptions["build_id"].(string)
 	// outputs
 

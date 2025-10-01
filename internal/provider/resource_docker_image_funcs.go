@@ -14,13 +14,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/containerd/errdefs"
 	"github.com/docker/cli/cli/command/image/build"
-	"github.com/docker/docker/api/types"
+	dockerBuildTypes "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -399,7 +399,7 @@ func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imag
 	}
 	buildOptions.Dockerfile = relDockerfile
 
-	var response types.ImageBuildResponse
+	var response dockerBuildTypes.ImageBuildResponse
 	response, err = client.ImageBuild(ctx, buildCtx, buildOptions)
 	if err != nil {
 		if buildKitSession != nil {
@@ -432,7 +432,7 @@ const minBuildkitDockerVersion = "1.39"
 func enableBuildKitIfSupported(
 	ctx context.Context,
 	client *client.Client,
-	buildOptions *types.ImageBuildOptions,
+	buildOptions *dockerBuildTypes.ImageBuildOptions,
 ) (*session.Session, chan struct{}) {
 	dockerClientVersion := client.ClientVersion()
 	log.Printf("[DEBUG] DockerClientVersion: %v, minBuildKitDockerVersion: %v\n", dockerClientVersion, minBuildkitDockerVersion)
@@ -450,10 +450,10 @@ func enableBuildKitIfSupported(
 			close(done)
 		}()
 		buildOptions.SessionID = s.ID()
-		buildOptions.Version = types.BuilderBuildKit
+		buildOptions.Version = dockerBuildTypes.BuilderBuildKit
 		return s, done
 	} else {
-		buildOptions.Version = types.BuilderV1
+		buildOptions.Version = dockerBuildTypes.BuilderV1
 		return nil, nil
 	}
 }
@@ -522,7 +522,7 @@ func getBuildContext(filePath string, excludes []string) io.ReadCloser {
 	return ctx
 }
 
-func decodeBuildMessages(response types.ImageBuildResponse) (string, error) {
+func decodeBuildMessages(response dockerBuildTypes.ImageBuildResponse) (string, error) {
 	buf := new(bytes.Buffer)
 	buildErr := error(nil)
 
