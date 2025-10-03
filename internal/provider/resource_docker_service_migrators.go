@@ -210,6 +210,21 @@ func resourceDockerServiceV1() *schema.Resource {
 														},
 													},
 												},
+												"seccomp": {
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "Seccomp options for container. Modes: default, unconfined.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"mode": {
+																Type:        schema.TypeString,
+																Description: "Seccomp mode: default or unconfined",
+																Optional:    true,
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -1126,6 +1141,21 @@ func resourceDockerServiceV0() *schema.Resource {
 															"level": {
 																Type:        schema.TypeString,
 																Description: "SELinux level label",
+																Optional:    true,
+															},
+														},
+													},
+												},
+												"seccomp": {
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "Seccomp options for container. Modes: default, unconfined.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"mode": {
+																Type:        schema.TypeString,
+																Description: "Seccomp mode: default or unconfined",
 																Optional:    true,
 															},
 														},

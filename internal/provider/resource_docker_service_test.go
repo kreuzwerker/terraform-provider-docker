@@ -380,6 +380,11 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Privileges.SELinuxContext)
 		}
 
+		if s.Spec.TaskTemplate.ContainerSpec.Privileges.Seccomp == nil ||
+			s.Spec.TaskTemplate.ContainerSpec.Privileges.Seccomp.Mode != swarm.SeccompModeDefault {
+			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.Privileges.Seccomp is wrong: %v", s.Spec.TaskTemplate.ContainerSpec.Privileges.Seccomp)
+		}
+
 		if s.Spec.TaskTemplate.ContainerSpec.StopSignal == "" ||
 			s.Spec.TaskTemplate.ContainerSpec.StopSignal != "SIGTERM" {
 			return fmt.Errorf("Service Spec.TaskTemplate.ContainerSpec.StopSignal is wrong: %s", s.Spec.TaskTemplate.ContainerSpec.StopSignal)
@@ -600,6 +605,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.role", "role-label"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.type", "type-label"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.se_linux_context.0.level", "level-label"),
+					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.privileges.0.seccomp.0.mode", "default"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.read_only", "true"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.target", "/mount/test2"),
 					resource.TestCheckResourceAttr("docker_service.foo", "task_spec.0.container_spec.0.mounts.0.source", "tftest-volume-2"),
