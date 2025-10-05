@@ -210,6 +210,21 @@ func resourceDockerService() *schema.Resource {
 														},
 													},
 												},
+												"apparmor": {
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "AppArmor options for container security profile. Modes: default, disabled.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"mode": {
+																Type:        schema.TypeString,
+																Description: "AppArmor mode: default or disabled",
+																Optional:    true,
+															},
+														},
+													},
+												},
 											},
 										},
 									},

@@ -70,6 +70,12 @@ resource "docker_service" "foo" {
           type    = "type-label"
           level   = "level-label"
         }
+        seccomp {
+          mode = "default"
+        }
+        apparmor {
+          mode = "default"
+        }
       }
 
       read_only = true
@@ -175,7 +181,7 @@ resource "docker_service" "foo" {
 
     force_update = 0
     runtime      = "container"
-    
+
     networks_advanced {
       name    = docker_network.test_network.id
       aliases = ["tftest-foobar"]

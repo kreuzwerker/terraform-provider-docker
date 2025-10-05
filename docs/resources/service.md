@@ -507,6 +507,8 @@ Optional:
 - `credential_spec` (Block List, Max: 1) CredentialSpec for managed service account (Windows only) (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges--credential_spec))
 - `se_linux_context` (Block List, Max: 1) SELinux labels of the container (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges--se_linux_context))
 - `seccomp` (Block List, Max: 1) Seccomp options for container. Modes: default, unconfined, custom. (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges--seccomp))
+- `apparmor` (Block List, Max: 1) AppArmor options for container. Modes: default, disabled. (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges--apparmor))
+
 
 <a id="nestedblock--task_spec--container_spec--privileges--credential_spec"></a>
 ### Nested Schema for `task_spec.container_spec.privileges.credential_spec`
@@ -537,6 +539,13 @@ Optional:
 - `mode` (String) Seccomp mode: default, unconfined or custom
 - `profile` (String) Custom seccomp profile in JSON format (required if mode is 'custom')
 
+
+<a id="nestedblock--task_spec--container_spec--privileges--apparmor"></a>
+### Nested Schema for `task_spec.container_spec.privileges.apparmor`
+
+Optional:
+
+- `mode` (String) AppArmor mode: default or disabled
 
 
 <a id="nestedblock--task_spec--container_spec--secrets"></a>

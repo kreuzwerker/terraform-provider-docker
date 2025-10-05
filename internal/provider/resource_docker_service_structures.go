@@ -225,6 +225,15 @@ func flattenPrivileges(in *swarm.Privileges) []interface{} {
 		seccomp[0] = internal
 		m["seccomp"] = seccomp
 	}
+
+	if in.AppArmor != nil {
+		apparmor := make([]interface{}, 1)
+		internal := make(map[string]interface{})
+		internal["mode"] = string(in.AppArmor.Mode)
+		apparmor[0] = internal
+		m["apparmor"] = apparmor
+	}
+
 	out[0] = m
 	return out
 }
@@ -790,6 +799,17 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 									}
 									if v, ok := rawSeccomp["profile"]; ok {
 										containerSpec.Privileges.Seccomp.Profile = []byte(v.(string))
+									}
+								}
+							}
+						}
+						if value, ok := rawPrivilegesSpec["apparmor"]; ok {
+							if len(value.([]interface{})) > 0 {
+								containerSpec.Privileges.AppArmor = &swarm.AppArmorOpts{}
+								for _, rawAppArmor := range value.([]interface{}) {
+									rawAppArmor := rawAppArmor.(map[string]interface{})
+									if v, ok := rawAppArmor["mode"]; ok {
+										containerSpec.Privileges.AppArmor.Mode = swarm.AppArmorMode(v.(string))
 									}
 								}
 							}
