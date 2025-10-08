@@ -1,6 +1,21 @@
 
+<a name="v3.8.0"></a>
+## [v3.8.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.7.0...v3.8.0) (2025-10-08)
+
+### Feat
+
+* Add build attribute for docker_registry_image ([#805](https://github.com/kreuzwerker/terraform-provider-docker/issues/805))
+* Add build option for additional contexts ([#798](https://github.com/kreuzwerker/terraform-provider-docker/issues/798))
+* implement mac_address for networks_advanced ([#794](https://github.com/kreuzwerker/terraform-provider-docker/issues/794))
+* Implement docker cluster volume ([#793](https://github.com/kreuzwerker/terraform-provider-docker/issues/793))
+
+
 <a name="v3.7.0"></a>
-## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-13)
+## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-19)
+
+### Chore
+
+* Prepare release v3.7.0 ([#774](https://github.com/kreuzwerker/terraform-provider-docker/issues/774))
 
 ### Feat
 
