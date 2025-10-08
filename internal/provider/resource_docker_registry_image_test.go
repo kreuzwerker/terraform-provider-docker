@@ -52,6 +52,27 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
 	})
 }
+func TestAccDockerRegistryImageResource_directBuildAndKeep(t *testing.T) {
+	pushOptions := createPushImageOptions("127.0.0.1:15000/tftest-dockerregistryimage:1.0")
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll(filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context"), "\\", "\\\\")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDirectBuildDockerRegistryImageKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+				),
+			},
+		},
+		// as the providerConfig obtained from testAccProvider.Meta().(*ProviderConfig)
+		// is empty after the test the credetials are passed here manually
+		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
+	})
+}
 
 func TestAccDockerRegistryImageResource_pushMissingImage(t *testing.T) {
 	resource.Test(t, resource.TestCase{
