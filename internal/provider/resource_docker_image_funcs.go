@@ -37,42 +37,9 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	if value, ok := d.GetOk("build"); ok {
 		for _, rawBuild := range value.(*schema.Set).List() {
-			rawBuild := rawBuild.(map[string]interface{})
-			// now we need to determine whether we can use buildx or need to use the legacy builder
-			canUseBuildx, err := canUseBuildx(ctx, client)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			builder := rawBuild["builder"].(string)
-			log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
-			// buildx is enabled
-			if canUseBuildx && builder != "" {
-				log.Printf("[DEBUG] Using buildx")
-				dockerCli, err := createAndInitDockerCli(client)
-				if err != nil {
-					return diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
-				}
-
-				options, err := mapBuildAttributesToBuildOptions(rawBuild, imageName)
-
-				if err != nil {
-					return diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
-				}
-				buildLogFile := rawBuild["build_log_file"].(string)
-
-				log.Printf("[DEBUG] build options %#v", options)
-
-				err = runBuild(ctx, dockerCli, options, buildLogFile)
-				if err != nil {
-					return diag.Errorf("Error running buildx build: %v", err)
-				}
-			} else {
-
-				err := buildDockerImage(ctx, rawBuild, imageName, client)
-				if err != nil {
-					return diag.Errorf("Error running legacy build: %v", err)
-				}
+			shouldReturn, d1 := buildImage(ctx, rawBuild, client, imageName)
+			if shouldReturn {
+				return d1
 			}
 		}
 	}
@@ -83,6 +50,47 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	d.SetId(apiImage.ID + d.Get("name").(string))
 	return resourceDockerImageRead(ctx, d, meta)
+}
+
+func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client, imageName string) (bool, diag.Diagnostics) {
+	rawBuildValue := rawBuild.(map[string]interface{})
+	// now we need to determine whether we can use buildx or need to use the legacy builder
+	canUseBuildx, err := canUseBuildx(ctx, client)
+	if err != nil {
+		return true, diag.FromErr(err)
+	}
+
+	builder := rawBuildValue["builder"].(string)
+	log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
+	// buildx is enabled
+	if canUseBuildx && builder != "" {
+		log.Printf("[DEBUG] Using buildx")
+		dockerCli, err := createAndInitDockerCli(client)
+		if err != nil {
+			return true, diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
+		}
+
+		options, err := mapBuildAttributesToBuildOptions(rawBuildValue, imageName)
+
+		if err != nil {
+			return true, diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
+		}
+		buildLogFile := rawBuildValue["build_log_file"].(string)
+
+		log.Printf("[DEBUG] build options %#v", options)
+
+		err = runBuild(ctx, dockerCli, options, buildLogFile)
+		if err != nil {
+			return true, diag.Errorf("Error running buildx build: %v", err)
+		}
+	} else {
+
+		err := legacyBuildDockerImage(ctx, rawBuildValue, imageName, client)
+		if err != nil {
+			return true, diag.Errorf("Error running legacy build: %v", err)
+		}
+	}
+	return false, nil
 }
 
 func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -353,7 +361,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 	return nil, fmt.Errorf("unable to find or pull image %s", imageName)
 }
 
-func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
+func legacyBuildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
 	var (
 		err error
 	)

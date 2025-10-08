@@ -37,6 +37,14 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] Creating docker image %s", name)
+	if value, ok := d.GetOk("build"); ok {
+		for _, rawBuild := range value.(*schema.Set).List() {
+			shouldReturn, d1 := buildImage(ctx, rawBuild, client, name)
+			if shouldReturn {
+				return d1
+			}
+		}
+	}
 
 	pushOpts := createPushImageOptions(name)
 
