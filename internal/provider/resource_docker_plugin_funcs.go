@@ -11,12 +11,16 @@ import (
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
+func resourceDockerPluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
+
 	pluginName := d.Get("name").(string)
 	alias := d.Get("alias").(string)
 	log.Printf("[DEBUG] Install a Docker plugin %s", pluginName)
@@ -32,7 +36,7 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	body, err := client.PluginInstall(ctx, alias, opts)
 	if err != nil {
-		return fmt.Errorf("install a Docker plugin "+pluginName+": %w", err)
+		return diag.Errorf("install a Docker plugin "+pluginName+": %w", err)
 	}
 	_, _ = io.ReadAll(body)
 	key := pluginName
@@ -41,15 +45,18 @@ func resourceDockerPluginCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	plugin, _, err := client.PluginInspectWithRaw(ctx, key)
 	if err != nil {
-		return fmt.Errorf("inspect a Docker plugin "+key+": %w", err)
+		return diag.Errorf("inspect a Docker plugin "+key+": %w", err)
 	}
 	setDockerPlugin(d, plugin)
 	return nil
 }
 
-func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
+func resourceDockerPluginRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
+
 	pluginID := d.Id()
 	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
 	if err != nil {
@@ -65,15 +72,18 @@ func resourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceDockerPluginDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
+func resourceDockerPluginDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
+
 	pluginID := d.Id()
 	log.Printf("[DEBUG] Remove a Docker plugin %s", pluginID)
 	if err := client.PluginRemove(ctx, pluginID, types.PluginRemoveOptions{
 		Force: d.Get("force_destroy").(bool),
 	}); err != nil {
-		return fmt.Errorf("remove the Docker plugin %s: %w", pluginID, err)
+		return diag.Errorf("remove the Docker plugin %s: %v", pluginID, err)
 	}
 	return nil
 }
@@ -212,7 +222,10 @@ func pluginSet(ctx context.Context, d *schema.ResourceData, cl *client.Client) e
 }
 
 func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) (gErr error) {
-	cl := meta.(*ProviderConfig).DockerClient
+	cl, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return fmt.Errorf("failed to create Docker client: %w", err)
+	}
 	o, n := d.GetChange("enabled")
 	oldEnabled, newEnabled := o.(bool), n.(bool)
 	if d.HasChange("env") {
@@ -257,12 +270,11 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-func resourceDockerPluginUpdate(d *schema.ResourceData, meta interface{}) error {
-	ctx := context.Background()
+func resourceDockerPluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if err := pluginUpdate(ctx, d, meta); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	// call the read function to update the resource's state.
 	// https://learn.hashicorp.com/tutorials/terraform/provider-update?in=terraform/providers#implement-update
-	return resourceDockerPluginRead(d, meta)
+	return resourceDockerPluginRead(ctx, d, meta)
 }

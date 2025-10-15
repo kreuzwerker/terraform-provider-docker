@@ -1352,7 +1352,10 @@ func TestAccDockerService_mounts_issue222(t *testing.T) {
 func isServiceRemoved(serviceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		filters := filters.NewArgs()
 		filters.Add("name", serviceName)
 		services, err := client.ServiceList(ctx, swarm.ServiceListOptions{
@@ -1378,7 +1381,10 @@ func checkAndRemoveImages(ctx context.Context, s *terraform.State) error {
 	maxRetryDeleteCount := 6
 	imagePattern := "127.0.0.1:15000/tftest-service*"
 
-	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create Docker client: %w", err)
+	}
 
 	filters := filters.NewArgs()
 	filters.Add("reference", imagePattern)
@@ -1435,7 +1441,10 @@ func testAccServiceRunning(resourceName string, service *swarm.Service) resource
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		inspectedService, _, err := client.ServiceInspectWithRaw(ctx, rs.Primary.ID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return fmt.Errorf("Service with ID '%s': %w", rs.Primary.ID, err)
