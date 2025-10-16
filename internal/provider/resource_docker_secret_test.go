@@ -140,7 +140,10 @@ func TestAccDockerSecret_labels(t *testing.T) {
 // Helpers
 // ///////////
 func testCheckDockerSecretDestroy(ctx context.Context, s *terraform.State) error {
-	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create Docker client: %w", err)
+	}
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "secrets" {
 			continue
@@ -169,7 +172,10 @@ func testAccServiceSecretCreated(resourceName string, secret *swarm.Secret) reso
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		inspectedSecret, _, err := client.SecretInspectWithRaw(ctx, rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Secret with ID '%s': %w", rs.Primary.ID, err)

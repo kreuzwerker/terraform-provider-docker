@@ -84,7 +84,10 @@ func dataSourceDockerLogs() *schema.Resource {
 }
 
 func dataSourceDockerLogsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 	containerId := d.Get("name").(string)
 	d.SetId(containerId)
 

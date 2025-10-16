@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types/registry"
@@ -208,35 +209,20 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		for i, s := range SSHOptsI {
 			SSHOpts[i] = s.(string)
 		}
-		config := Config{
-			Host:     host,
-			SSHOpts:  SSHOpts,
-			Ca:       d.Get("ca_material").(string),
-			Cert:     d.Get("cert_material").(string),
-			Key:      d.Get("key_material").(string),
-			CertPath: d.Get("cert_path").(string),
-		}
 
-		client, err := config.NewClient()
-		if err != nil {
-			return nil, diag.Errorf("Error initializing Docker client: %s", err)
-		}
-
-		// Check if the Docker daemon is running
-		if !d.Get("disable_docker_daemon_check").(bool) {
-			_, err = client.Ping(ctx)
-			if err != nil {
-				return nil, diag.Errorf("Error pinging Docker server, please make sure that %s is reachable and has a  '_ping' endpoint. Error: %s", host, err)
-			}
-			_, err = client.ServerVersion(ctx)
-			if err != nil {
-				log.Printf("[WARN] Error connecting to Docker daemon. Is your endpoint a valid docker host? This warning will be changed to an error in the next major version. Error: %s", err)
-			}
-		} else {
-			log.Printf("[DEBUG] Skipping Docker daemon check")
+		defaultConfig := Config{
+			Host:                     host,
+			SSHOpts:                  SSHOpts,
+			Ca:                       d.Get("ca_material").(string),
+			Cert:                     d.Get("cert_material").(string),
+			Key:                      d.Get("key_material").(string),
+			CertPath:                 d.Get("cert_path").(string),
+			DisableDockerDaemonCheck: d.Get("disable_docker_daemon_check").(bool),
 		}
 
 		authConfigs := &AuthConfigs{}
+
+		var err error
 
 		if v, ok := d.GetOk("registry_auth"); ok {
 			authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
@@ -246,8 +232,10 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		}
 
 		providerConfig := ProviderConfig{
-			DockerClient: client,
-			AuthConfigs:  authConfigs,
+			DefaultConfig: &defaultConfig,
+			Hosts:         make(map[string]*schema.ResourceData),
+			clientCache:   sync.Map{},
+			AuthConfigs:   authConfigs,
 		}
 
 		return &providerConfig, nil

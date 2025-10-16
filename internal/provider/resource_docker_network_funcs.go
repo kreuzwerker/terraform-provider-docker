@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -22,7 +24,10 @@ const (
 )
 
 func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 
 	createOpts := network.CreateOptions{}
 	if v, ok := d.GetOk("labels"); ok {
@@ -80,17 +85,22 @@ func resourceDockerNetworkCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to expose all fields: max '%v seconds'", d.Id(), networkReadRefreshTimeout)
 
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
+
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
-		Refresh:    resourceDockerNetworkReadRefreshFunc(ctx, d, meta),
+		Refresh:    resourceDockerNetworkReadRefreshFunc(ctx, d, meta, client),
 		Timeout:    networkReadRefreshTimeout,
 		MinTimeout: networkReadRefreshWaitBeforeRefreshes,
 		Delay:      networkReadRefreshDelay,
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForStateContext(ctx)
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,17 +111,22 @@ func resourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta
 func resourceDockerNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for network: '%s' to be removed: max '%v seconds'", d.Id(), networkRemoveRefreshTimeout)
 
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
+
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"removed"},
-		Refresh:    resourceDockerNetworkRemoveRefreshFunc(ctx, d, meta),
+		Refresh:    resourceDockerNetworkRemoveRefreshFunc(ctx, d, meta, client),
 		Timeout:    networkRemoveRefreshTimeout,
 		MinTimeout: networkRemoveRefreshWaitBeforeRefreshes,
 		Delay:      networkRemoveRefreshDelay,
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForStateContext(ctx)
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,9 +159,8 @@ func ipamConfigSetToIpamConfigs(ipamConfigSet *schema.Set) []network.IPAMConfig 
 }
 
 func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}, client *client.Client) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
 		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
@@ -190,9 +204,8 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 }
 
 func resourceDockerNetworkRemoveRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}, client *client.Client) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
 		networkID := d.Id()
 
 		_, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
