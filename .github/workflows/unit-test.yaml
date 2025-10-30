@@ -6,10 +6,6 @@ on:
       - "release/**"
   pull_request:
     types: ['opened', 'synchronize']
-    paths:
-      - '**.go'
-      - go.mod
-      - '.github/workflows/**'
 
 env:
   GOPROXY: https://proxy.golang.org,direct
