@@ -56,22 +56,27 @@ func mapToLabelSet(labels map[string]string) *schema.Set {
 	return schema.NewSet(hashLabel, mapped)
 }
 
-var labelSchema = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"label": {
-			Type:        schema.TypeString,
-			Description: "Name of the label",
-			Required:    true,
-			ForceNew:    true,
+func newLabelSchema(forceNew bool) *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"label": {
+				Type:        schema.TypeString,
+				Description: "Name of the label",
+				Required:    true,
+				ForceNew:    forceNew,
+			},
+			"value": {
+				Type:        schema.TypeString,
+				Description: "Value of the label",
+				Required:    true,
+				ForceNew:    forceNew,
+			},
 		},
-		"value": {
-			Type:        schema.TypeString,
-			Description: "Value of the label",
-			Required:    true,
-			ForceNew:    true,
-		},
-	},
+	}
 }
+
+var labelSchema = newLabelSchema(true)
+var labelSchemaUpdatable = newLabelSchema(false)
 
 // gatherImmediateSubkeys given an incomplete attribute identifier, find all
 // the strings (if any) that appear after this one in the various dot-separated

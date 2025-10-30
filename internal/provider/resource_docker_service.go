@@ -62,7 +62,7 @@ func resourceDockerService() *schema.Resource {
 				Description: "User-defined key/value metadata",
 				Optional:    true,
 				Computed:    true,
-				Elem:        labelSchema,
+				Elem:        labelSchemaUpdatable,
 			},
 			"task_spec": {
 				Type:        schema.TypeList,
