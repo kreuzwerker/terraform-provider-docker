@@ -311,7 +311,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"healthcheck": {
 										Type:        schema.TypeList,
-										Description: "A test to perform to check that the container is healthy",
+										Description: "A test to perform to check that the container is healthy. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile.",
 										MaxItems:    1,
 										Optional:    true,
 										Computed:    true,
@@ -320,7 +320,7 @@ func resourceDockerService() *schema.Resource {
 												"test": {
 													Type:        schema.TypeList,
 													Description: "The test to perform as list",
-													Required:    true,
+													Optional:    true,
 													Elem:        &schema.Schema{Type: schema.TypeString},
 												},
 												"interval": {
