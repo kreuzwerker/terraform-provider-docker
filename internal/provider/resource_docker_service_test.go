@@ -317,6 +317,54 @@ func TestAccDockerService_minimalSpec(t *testing.T) {
 	})
 }
 
+func TestAccDockerService_updateLabels(t *testing.T) {
+	ctx := context.Background()
+	var serviceID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceUpdateLabels"), "prod"),
+				Check: resource.ComposeTestCheckFunc(
+					func(state *terraform.State) error {
+						rs, ok := state.RootModule().Resources["docker_service.foo"]
+						if !ok {
+							return fmt.Errorf("service resource not found in state")
+						}
+						if rs.Primary.ID == "" {
+							return fmt.Errorf("service id not set")
+						}
+						serviceID = rs.Primary.ID
+						return nil
+					},
+					testCheckLabelMap("docker_service.foo", "labels", map[string]string{"env": "prod"}),
+				),
+			},
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_service", "testAccDockerServiceUpdateLabels"), "staging"),
+				Check: resource.ComposeTestCheckFunc(
+					func(state *terraform.State) error {
+						rs, ok := state.RootModule().Resources["docker_service.foo"]
+						if !ok {
+							return fmt.Errorf("service resource not found in state")
+						}
+						if rs.Primary.ID != serviceID {
+							return fmt.Errorf("expected service to be updated in place, but ID changed from %s to %s", serviceID, rs.Primary.ID)
+						}
+						return nil
+					},
+					testCheckLabelMap("docker_service.foo", "labels", map[string]string{"env": "staging"}),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
+
 func TestAccDockerService_fullSpec(t *testing.T) {
 	var s swarm.Service
 
