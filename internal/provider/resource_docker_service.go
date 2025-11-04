@@ -190,6 +190,41 @@ func resourceDockerService() *schema.Resource {
 														},
 													},
 												},
+												"seccomp": {
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "Seccomp options for container. Modes: default, unconfined, custom.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"mode": {
+																Type:        schema.TypeString,
+																Description: "Seccomp mode: default, unconfined or custom",
+																Optional:    true,
+															},
+															"profile": {
+																Type:        schema.TypeString,
+																Description: "Custom seccomp profile in JSON format (required if mode is 'custom')",
+																Optional:    true,
+															},
+														},
+													},
+												},
+												"apparmor": {
+													Type:        schema.TypeList,
+													MaxItems:    1,
+													Optional:    true,
+													Description: "AppArmor options for container security profile. Modes: default, disabled.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"mode": {
+																Type:        schema.TypeString,
+																Description: "AppArmor mode: default or disabled",
+																Optional:    true,
+															},
+														},
+													},
+												},
 											},
 										},
 									},
