@@ -1,4 +1,22 @@
 
+<a name="v3.9.0"></a>
+## [v3.9.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.8.0...v3.9.0) (2025-11-09)
+
+### Chore
+
+* Add file requested by hashicorp ([#813](https://github.com/kreuzwerker/terraform-provider-docker/issues/813))
+* Prepare release v3.8.0 ([#806](https://github.com/kreuzwerker/terraform-provider-docker/issues/806))
+
+### Feat
+
+* Implement caching of docker provider ([#808](https://github.com/kreuzwerker/terraform-provider-docker/issues/808))
+
+### Fix
+
+* test attribute of docker_service healthcheck is not required ([#815](https://github.com/kreuzwerker/terraform-provider-docker/issues/815))
+* docker_service label can be updated without recreate ([#814](https://github.com/kreuzwerker/terraform-provider-docker/issues/814))
+
+
 <a name="v3.8.0"></a>
 ## [v3.8.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.7.0...v3.8.0) (2025-10-08)
 

@@ -369,7 +369,7 @@ Optional:
 - `dns_config` (Block List, Max: 1) Specification for DNS related configurations in resolver configuration file (`resolv.conf`) (see [below for nested schema](#nestedblock--task_spec--container_spec--dns_config))
 - `env` (Map of String) A list of environment variables in the form VAR="value"
 - `groups` (List of String) A list of additional groups that the container process will run as
-- `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--task_spec--container_spec--healthcheck))
+- `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile. (see [below for nested schema](#nestedblock--task_spec--container_spec--healthcheck))
 - `hostname` (String) The hostname to use for the container, as a valid RFC 1123 hostname
 - `hosts` (Block Set) A list of hostname/IP mappings to add to the container's hosts file (see [below for nested schema](#nestedblock--task_spec--container_spec--hosts))
 - `isolation` (String) Isolation technology of the containers running the service. (Windows only). Defaults to `default`.
@@ -415,15 +415,12 @@ Optional:
 <a id="nestedblock--task_spec--container_spec--healthcheck"></a>
 ### Nested Schema for `task_spec.container_spec.healthcheck`
 
-Required:
-
-- `test` (List of String) The test to perform as list
-
 Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
+- `test` (List of String) The test to perform as list
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
 
