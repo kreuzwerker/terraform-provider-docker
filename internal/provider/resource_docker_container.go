@@ -869,8 +869,8 @@ func resourceDockerContainer() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"test": {
 							Type:        schema.TypeList,
-							Description: "Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `[\"CMD\", \"curl\", \"-f\", \"localhost/health\"]`.",
-							Required:    true,
+							Description: "Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `[\"CMD\", \"curl\", \"-f\", \"localhost/health\"]`. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile.",
+							Optional:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"interval": {
