@@ -26,7 +26,7 @@ require (
 	github.com/moby/sys/atomicwriter v0.1.0
 	github.com/morikuni/aec v1.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	golang.org/x/sync v0.19.0
 	google.golang.org/protobuf v1.36.11
 )
