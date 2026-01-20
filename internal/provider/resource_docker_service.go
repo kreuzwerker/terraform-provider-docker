@@ -700,9 +700,16 @@ func resourceDockerService() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"name": {
 										Type:        schema.TypeString,
-										Description: "The name/id of the network.",
-										Required:    true,
+										Description: "Deprecated attribute. The name/id of the docker network. Conflicts with `id` attribute.",
 										ForceNew:    true,
+										Optional:    true,
+										Deprecated:  "Use the id attribute.",
+									},
+									"id": {
+										Type:        schema.TypeString,
+										Description: "The id of the docker network to use. Please use `docker_network.id`. Using the name attribute of the docker network will lead to constant replacements.",
+										ForceNew:    true,
+										Optional:    true,
 									},
 									"aliases": {
 										Type:        schema.TypeSet,
