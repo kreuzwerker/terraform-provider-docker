@@ -558,14 +558,12 @@ Optional:
 <a id="nestedblock--task_spec--networks_advanced"></a>
 ### Nested Schema for `task_spec.networks_advanced`
 
-Required:
-
-- `name` (String) The name/id of the network.
-
 Optional:
 
 - `aliases` (Set of String) The network aliases of the container in the specific network.
 - `driver_opts` (Set of String) An array of driver options for the network, e.g. `opts1=value`
+- `id` (String) The id of the docker network to use. Please use `docker_network.id`. Using the name attribute of the docker network will lead to constant replacements.
+- `name` (String, Deprecated) Deprecated attribute. The name/id of the docker network. Conflicts with `id` attribute.
 
 
 <a id="nestedblock--task_spec--placement"></a>
