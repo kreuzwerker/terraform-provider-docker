@@ -1,5 +1,9 @@
 # V3 to V4 Migration Guide
 
+## General
+
+Bump of minimum terraform version to `1.1.5` or newer. This is done as part of introducing the new `terraform-plugin-framework` to develop this provider.
+
 
 ## `docker_network`
 
