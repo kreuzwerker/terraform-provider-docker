@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -39,12 +40,77 @@ func (p *frameworkProvider) Metadata(ctx context.Context, req provider.MetadataR
 }
 
 // Schema defines the provider-level schema for configuration data.
-// For now, this is empty as all configuration is handled by the SDK v2 provider.
-// Once we start migrating resources/data sources, we may need to add configuration here.
+// This schema must match the SDK v2 provider schema exactly for muxing to work.
 func (p *frameworkProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "The Docker provider is used to interact with Docker resources. " +
-			"This is the Plugin Framework implementation that will gradually replace the SDK v2 implementation.",
+		Attributes: map[string]schema.Attribute{
+			"host": schema.StringAttribute{
+				MarkdownDescription: "The Docker daemon address",
+				Optional:            true,
+			},
+			"context": schema.StringAttribute{
+				MarkdownDescription: "The name of the Docker context to use. Can also be set via `DOCKER_CONTEXT` environment variable. Overrides the `host` if set.",
+				Optional:            true,
+			},
+			"ssh_opts": schema.ListAttribute{
+				MarkdownDescription: "Additional SSH option flags to be appended when using `ssh://` protocol",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"ca_material": schema.StringAttribute{
+				MarkdownDescription: "PEM-encoded content of Docker host CA certificate",
+				Optional:            true,
+			},
+			"cert_material": schema.StringAttribute{
+				MarkdownDescription: "PEM-encoded content of Docker client certificate",
+				Optional:            true,
+			},
+			"key_material": schema.StringAttribute{
+				MarkdownDescription: "PEM-encoded content of Docker client private key",
+				Optional:            true,
+			},
+			"cert_path": schema.StringAttribute{
+				MarkdownDescription: "Path to directory with Docker TLS config",
+				Optional:            true,
+			},
+			"disable_docker_daemon_check": schema.BoolAttribute{
+				MarkdownDescription: "If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.",
+				Optional:            true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"registry_auth": schema.SetNestedBlock{
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"address": schema.StringAttribute{
+							MarkdownDescription: "Address of the registry",
+							Required:            true,
+						},
+						"username": schema.StringAttribute{
+							MarkdownDescription: "Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.",
+							Optional:            true,
+						},
+						"password": schema.StringAttribute{
+							MarkdownDescription: "Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.",
+							Optional:            true,
+							Sensitive:           true,
+						},
+						"config_file": schema.StringAttribute{
+							MarkdownDescription: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
+							Optional:            true,
+						},
+						"config_file_content": schema.StringAttribute{
+							MarkdownDescription: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
+							Optional:            true,
+						},
+						"auth_disabled": schema.BoolAttribute{
+							MarkdownDescription: "Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
