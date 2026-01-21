@@ -4,9 +4,6 @@
 <a href="https://terraform.io">
     <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="100" />
 </a>
-<a href="https://kreuzwerker.de">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/xw-logo.png" alt="Kreuzwerker logo" title="Kreuzwerker" align="right" height="100" />
-</a>
 
 # Terraform Provider for Docker
 
@@ -21,6 +18,7 @@
 ## Documentation
 
 The documentation for the provider is available on the [Terraform Registry](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs).
+You need at least Terraform `1.1.5` to use this provider.
 
 Migration guides:
 * Do you want to migrate from `v3.x` to `v4.x`? Please read the [V3 - V4 migration guide](docs/v3_v4_migration.md)

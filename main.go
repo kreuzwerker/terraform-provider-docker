@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/terraform-providers/terraform-provider-docker/internal/provider"
 )
 
@@ -32,13 +38,49 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	opts := &plugin.ServeOpts{ProviderFunc: provider.New(version)}
+	ctx := context.Background()
 
-	if debugMode {
-		debugOpts := &plugin.ServeOpts{ProviderFunc: provider.New(version), ProviderAddr: "registry.terraform.io/kreuzwerker/docker", Debug: true}
-		plugin.Serve(debugOpts)
-		return
+	// Create the SDK v2 provider server
+	var sdkV2Provider = provider.New(version)
+
+	// Create the Plugin Framework provider server
+	frameworkProviderServer := provider.NewFrameworkProvider(version)
+
+	upgradedSdkPluginProvider, err := tf5to6server.UpgradeServer(
+		context.Background(),
+		sdkV2Provider().GRPCProvider,
+	)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	plugin.Serve(opts)
+	providers := []func() tfprotov6.ProviderServer{
+		func() tfprotov6.ProviderServer {
+			return upgradedSdkPluginProvider
+		},
+		providerserver.NewProtocol6(frameworkProviderServer()),
+	}
+
+	muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var serveOpts []tf6server.ServeOpt
+
+	if debugMode {
+		serveOpts = append(serveOpts, tf6server.WithManagedDebug())
+	}
+
+	err = tf6server.Serve(
+		"registry.terraform.io/kreuzwerker/docker",
+		muxServer.ProviderServer,
+		serveOpts...,
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
