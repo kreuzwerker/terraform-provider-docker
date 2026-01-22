@@ -53,6 +53,12 @@ resource "docker_service" "foo" {
           type    = "type-label"
           level   = "level-label"
         }
+        seccomp {
+          mode = "default"
+        }
+        apparmor {
+          mode = "default"
+        }
       }
 
       read_only = true
