@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1556,6 +1557,44 @@ func TestAccDockerContainer_exitcode(t *testing.T) {
 					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "exit_code", "123"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_RecreateWhenStopped(t *testing.T) {
+	var c container.InspectResponse
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRecreate"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.redis-container-2", &c),
+					resource.TestCheckResourceAttr("docker_container.redis-container-2", "name", "redis-2"),
+				),
+			},
+			{
+				PreConfig: func() {
+					ctx := context.Background()
+					client, _ := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+					err := client.ContainerStop(ctx, "redis-2", container.StopOptions{})
+					if err != nil {
+						log.Fatalf("During preconfig container stopping: Error stopping container: %s", err)
+					}
+				},
+				Config:             loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRecreate"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRecreate"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.redis-container-2", &c),
+					resource.TestCheckResourceAttr("docker_container.redis-container-2", "name", "redis-2"),
 				),
 			},
 		},

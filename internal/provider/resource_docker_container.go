@@ -97,7 +97,7 @@ func resourceDockerContainer() *schema.Resource {
 			// An assumption is made that configured containers
 			// should be running; if not, they should not be in
 			// the configuration. Therefore a stopped container
-			// should be started. Set to false to have the
+			// should be restarted. Set to false to have the
 			// provider leave the container alone.
 			//
 			// Actively-debugged containers are likely to be
@@ -109,7 +109,7 @@ func resourceDockerContainer() *schema.Resource {
 			// should be pristine when started.
 			"must_run": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.",
+				Description: "If `true`, then the Docker container will be kept running. If `false`, Terraform leaves the container alone. This attribute is also used to trigger a restart of a stopped container. If your container is stopped, Terraform will set `must_run` to `false` and this will trigger a change. Defaults to `true`.",
 				Default:     true,
 				Optional:    true,
 			},
