@@ -241,12 +241,9 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 		containerPath := deviceMap["container_path"].(string)
 		permissions := deviceMap["permissions"].(string)
 
-		switch {
-		case len(containerPath) == 0:
+		// Default container_path to host_path if not specified
+		if len(containerPath) == 0 {
 			containerPath = hostPath
-			fallthrough
-		case len(permissions) == 0:
-			permissions = "rwm"
 		}
 
 		device := container.DeviceMapping{
@@ -338,14 +335,23 @@ func flattenUlimits(in []*units.Ulimit) []interface{} {
 	return ulimits
 }
 
-func flattenDevices(in []container.DeviceMapping) []interface{} {
+func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set) []interface{} {
 	devices := make([]interface{}, len(in))
+	list := configuredDevices.List()
 	for i, device := range in {
-		devices[i] = map[string]interface{}{
-			"host_path":      device.PathOnHost,
-			"container_path": device.PathInContainer,
-			"permissions":    device.CgroupPermissions,
+		configuredDevice := list[i].(map[string]interface{})
+
+		deviceMap := map[string]interface{}{
+			"host_path":   device.PathOnHost,
+			"permissions": device.CgroupPermissions,
 		}
+
+		// Only set container_path if it was explicitly configured by the user
+		if value, ok := configuredDevice["container_path"].(string); ok && value != "" {
+			deviceMap["container_path"] = device.PathInContainer
+		}
+
+		devices[i] = deviceMap
 	}
 
 	return devices

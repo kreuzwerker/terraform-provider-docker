@@ -649,7 +649,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"container_path": {
 							Type:        schema.TypeString,
-							Description: "The path in the container where the device will be bound.",
+							Description: "The path in the container where the device will be bound. If not set, it defaults to the value of `host_path`.",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -658,6 +658,7 @@ func resourceDockerContainer() *schema.Resource {
 							Description: "The cgroup permissions given to the container to access the device. Defaults to `rwm`.",
 							Optional:    true,
 							ForceNew:    true,
+							Default:     "rwm",
 						},
 					},
 				},

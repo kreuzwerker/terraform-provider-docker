@@ -127,7 +127,7 @@ Required:
 
 Optional:
 
-- `container_path` (String) The path in the container where the device will be bound.
+- `container_path` (String) The path in the container where the device will be bound. If not set, it defaults to the value of `host_path`.
 - `permissions` (String) The cgroup permissions given to the container to access the device. Defaults to `rwm`.
 
 

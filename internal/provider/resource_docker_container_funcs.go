@@ -797,7 +797,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
 	d.Set("privileged", container.HostConfig.Privileged)
-	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
+	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 	}
 	// "destroy_grace_seconds" can't be imported
