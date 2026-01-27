@@ -695,6 +695,22 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	jsonObj, _ := json.MarshalIndent(container, "", "\t")
 	log.Printf("[DEBUG] Docker container inspect from stateFunc: %s", jsonObj)
 
+	// Read Network Settings
+	if container.NetworkSettings != nil {
+		d.Set("bridge", container.NetworkSettings.Bridge)
+		// if the container exited, NetworkSettings.Ports is nil
+		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
+		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77
+		if container.State.Running || d.Get("must_run").(bool) {
+			if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+				log.Printf("[WARN] failed to set ports from API: %s", err)
+			}
+		}
+		if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
+			log.Printf("[WARN] failed to set network settings from API: %s", err)
+		}
+	}
+
 	// Check if container is stopped when it should be running
 	// If container is stopped and must_run is true in config, set must_run to false in state
 	// This creates a state drift that Terraform will detect and trigger an update
@@ -706,17 +722,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		if d.Get("must_run").(bool) {
 			log.Printf("[WARN] Container %s is stopped but must_run is configured as true. Setting must_run to false in state to trigger update.", container.ID)
 			d.Set("must_run", false)
-		}
-	}
-
-	// Read Network Settings
-	if container.NetworkSettings != nil {
-		d.Set("bridge", container.NetworkSettings.Bridge)
-		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
-			log.Printf("[WARN] failed to set ports from API: %s", err)
-		}
-		if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
-			log.Printf("[WARN] failed to set network settings from API: %s", err)
 		}
 	}
 
