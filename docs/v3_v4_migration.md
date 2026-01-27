@@ -5,6 +5,11 @@
 Bump of minimum terraform version to `1.1.5` or newer. This is done as part of introducing the new `terraform-plugin-framework` to develop this provider.
 
 
+## `docker_container`
+
+Reworked handling of stopped containers: If a container is stopped (or exists for some other reason), Terraform now correctly shows a change on `plan` and restarts the container on `apply`. To trigger the change, the `must_run` attribute is exploited. `must_run` defaults to `true` and when a container is in a not running state, the provider sets `must_run` to `false` to trigger a state change.
+This fixes the cases where a stopped container gets deleted during a `plan`
+
 ## `docker_network`
 
 Removed attributes:
