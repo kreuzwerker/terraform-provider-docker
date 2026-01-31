@@ -284,6 +284,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
 	}
 
+	if v, ok := d.GetOk("device_requests"); ok {
+		hostConfig.DeviceRequests = deviceRequestsSetToDockerRequests(v.(*schema.Set))
+	}
+
 	if v, ok := d.GetOk("dns"); ok {
 		hostConfig.DNS = stringSetToStringSlice(v.(*schema.Set))
 	}
@@ -800,6 +804,39 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 	}
+	// Handle device_requests and gpus reconstruction
+	if _, hasGpus := d.GetOk("gpus"); hasGpus {
+		// If config has gpus, check if any device request is a GPU request and reconstruct
+		foundGpuRequest := false
+		for _, deviceRequest := range container.HostConfig.DeviceRequests {
+			if deviceRequest.Count == -1 && len(deviceRequest.Capabilities) > 0 {
+				for _, capabilitySet := range deviceRequest.Capabilities {
+					for _, capability := range capabilitySet {
+						if capability == "gpu" {
+							d.Set("gpus", "all")
+							foundGpuRequest = true
+							break
+						}
+					}
+					if foundGpuRequest {
+						break
+					}
+				}
+			}
+			if foundGpuRequest {
+				break
+			}
+		}
+		// When gpus is set in config, always set device_requests to empty (whether GPU was found or not)
+		if err = d.Set("device_requests", []interface{}{}); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+		}
+	} else {
+		// Config doesn't have gpus, so include all device requests in state
+		if err = d.Set("device_requests", flattenDeviceRequests(container.HostConfig.DeviceRequests)); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+		}
+	}
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
 
@@ -846,13 +883,6 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("stdin_open", container.Config.OpenStdin)
 	d.Set("stop_signal", container.Config.StopSignal)
 	d.Set("stop_timeout", container.Config.StopTimeout)
-
-	if len(container.HostConfig.DeviceRequests) > 0 {
-		// TODO pass the original gpus property string back to the resource
-		// var gpuOpts opts.GpuOpts
-		// gpuOpts = opts.GpuOpts{container.HostConfig.DeviceRequests}
-		d.Set("gpus", "all")
-	}
 
 	return nil
 }
