@@ -957,7 +957,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 	log.Printf("[INFO] Removing Container '%s'", d.Id())
 	if err := client.ContainerRemove(ctx, d.Id(), removeOpts); err != nil {
-		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
+		if !alreadyDeleted(err) {
 			return diag.Errorf("Error deleting container %s: %s", d.Id(), err)
 		}
 	}
@@ -973,7 +973,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 	case waitOk := <-waitOkC:
 		log.Printf("[INFO] Container exited with code [%v]: '%s'", waitOk.StatusCode, d.Id())
 	case err := <-errorC:
-		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
+		if !alreadyDeleted(err) {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
 		log.Printf("[INFO] Waiting for Container '%s' errord: '%s'", d.Id(), err.Error())
