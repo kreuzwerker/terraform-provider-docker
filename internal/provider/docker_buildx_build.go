@@ -215,11 +215,20 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 
 func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, imageName string) (buildOptions, error) {
 	options := buildOptions{}
-	if dockerfile, ok := buildAttributes["dockerfile"].(string); ok {
-		options.dockerfileName = dockerfile
+	
+	contextPath := buildAttributes["context"].(string)
+	dockerfileName := buildAttributes["dockerfile"].(string)
+	absoluteContextDir, dockerfilePath, _, err := resolveDockerfilePath(contextPath, dockerfileName)
+
+	if err != nil {
+		return options, fmt.Errorf("error resolving dockerfile path: %w", err)
 	}
 
-	options.contextPath = buildAttributes["context"].(string)
+	options.contextPath = absoluteContextDir
+	options.dockerfileName = dockerfilePath
+	log.Printf("[DEBUG] dockerfile: %s, %s, %s", options.dockerfileName, contextPath, dockerfileName)
+
+
 	options.exportLoad = true
 
 	options.tags = append(options.tags, imageName)
@@ -577,6 +586,7 @@ func runControllerBuild(ctx context.Context, dockerCli command.Cli, opts *contro
 	// NOTE: buildx server has the current working directory different from the client
 	// so we need to resolve paths to abosolute ones in the client.
 	opts, err = controllerapi.ResolveOptionPaths(opts)
+	log.Printf("[DEBUG] runControllerbuild options %#v", opts)
 	if err != nil {
 		return nil, nil, err
 	}
