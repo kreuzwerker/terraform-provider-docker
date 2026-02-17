@@ -842,7 +842,11 @@ func TestResolveDockerfilePath(t *testing.T) {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	log.Printf("[DEBUG] working dir %s", tmpDir)
-	defer os.RemoveAll(tmpDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Fatalf("Failed to cleanup temp dir %s: %v", tmpDir, err)
+		}
+	})
 
 	// Create test structure:
 	// tmpDir/
