@@ -4,6 +4,10 @@
 
 Bump of minimum terraform version to `1.1.5` or newer. This is done as part of introducing the new `terraform-plugin-framework` to develop this provider.
 
+## `docker_image`
+
+**Reworked handling of context and Dockerfile:** This probably is not a breaking change, but more a big bugfix. The build logic now correctly resolves the Dockerfile path for both relative and absolute cases.
+
 
 ## `docker_container`
 
