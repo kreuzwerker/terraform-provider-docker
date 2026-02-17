@@ -215,7 +215,7 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 
 func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, imageName string) (buildOptions, error) {
 	options := buildOptions{}
-	
+
 	contextPath := buildAttributes["context"].(string)
 	dockerfileName := buildAttributes["dockerfile"].(string)
 	absoluteContextDir, dockerfilePath, _, err := resolveDockerfilePath(contextPath, dockerfileName)
@@ -227,7 +227,6 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, im
 	options.contextPath = absoluteContextDir
 	options.dockerfileName = dockerfilePath
 	log.Printf("[DEBUG] dockerfile: %s, %s, %s", options.dockerfileName, contextPath, dockerfileName)
-
 
 	options.exportLoad = true
 
