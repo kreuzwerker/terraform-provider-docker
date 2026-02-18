@@ -3,7 +3,8 @@ resource "docker_network" "test" {
   ipv6 = true
 
   ipam_config {
-    subnet = "10.0.1.0/24"
+    subnet  = "10.0.1.0/24"
+    gateway = "10.0.1.1"
   }
 
   ipam_config {

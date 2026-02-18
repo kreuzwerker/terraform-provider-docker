@@ -23,7 +23,8 @@ func TestAccDockerTag_basic(t *testing.T) {
 			{
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_tag", "testAccDockerTag"), "nginx:1.17.6@sha256:36b77d8bb27ffca25c7f6f53cadd059aca2747d46fb6ef34064e31727325784e", "nginx:new_tag"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:f7bb5701a33c0e572ed06ca554edca1bee96cbbc1f76f3b01c985de7e19d0657"),
+					// This test actually fails when being run with docker engine 28.x, but in the pipeline we are use docker 29.x which is fine
+					resource.TestCheckResourceAttr("docker_tag.foobar", "source_image_id", "sha256:36b77d8bb27ffca25c7f6f53cadd059aca2747d46fb6ef34064e31727325784e"),
 				),
 			},
 		},
