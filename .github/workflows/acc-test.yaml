@@ -56,6 +56,10 @@ jobs:
         run: |
           cat /etc/issue
           bash scripts/gogetcookie.sh
+      - name: Set up Docker v28
+        uses: docker/setup-docker-action@v4
+        with:
+          version: "28.5.1"
       - name: Used docker version
         run: |
           docker version
