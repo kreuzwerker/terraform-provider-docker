@@ -2,14 +2,11 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -95,89 +92,23 @@ func TestAccDockerProvider_WithDisabledRegistryAuth(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	if out, err := exec.Command("docker", "version").CombinedOutput(); err != nil {
-		t.Fatalf("Docker must be available: %s\n%s", err, strings.TrimSpace(string(out)))
+	cmd := exec.Command("docker", "version")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("Docker must be available: %s", err)
 	}
 
-	ensureSwarmManager(t)
+	cmd = exec.Command("docker", "node", "ls")
+	if err := cmd.Run(); err != nil {
+		cmd = exec.Command("docker", "swarm", "init", "--advertise-addr", "127.0.0.1")
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("Docker swarm could not be initialized: %s", err)
+		}
+	}
 
 	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-type dockerSwarmInfo struct {
-	LocalNodeState   string `json:"LocalNodeState"`
-	ControlAvailable bool   `json:"ControlAvailable"`
-}
-
-func ensureSwarmManager(t *testing.T) {
-	t.Helper()
-
-	getSwarmInfo := func() (dockerSwarmInfo, string, error) {
-		out, err := exec.Command("docker", "info", "--format", "{{json .Swarm}}").CombinedOutput()
-		trimmed := strings.TrimSpace(string(out))
-		if err != nil {
-			return dockerSwarmInfo{}, trimmed, err
-		}
-		var info dockerSwarmInfo
-		if unmarshalErr := json.Unmarshal([]byte(trimmed), &info); unmarshalErr != nil {
-			return dockerSwarmInfo{}, trimmed, unmarshalErr
-		}
-		return info, trimmed, nil
-	}
-
-	isManager := func(info dockerSwarmInfo) bool {
-		return strings.EqualFold(info.LocalNodeState, "active") && info.ControlAvailable
-	}
-
-	info, raw, err := getSwarmInfo()
-	if err == nil && isManager(info) {
-		return
-	}
-
-	// If we're in a swarm but not a manager (e.g. worker), `docker node ls` and
-	// swarm-scoped API calls will fail with "This node is not a swarm manager".
-	// The easiest self-heal in CI is to leave and re-init a single-node swarm.
-	_, _ = exec.Command("docker", "swarm", "leave", "--force").CombinedOutput()
-
-	initAttempts := [][]string{
-		{"docker", "swarm", "init", "--advertise-addr", "127.0.0.1"},
-		{"docker", "swarm", "init"},
-	}
-	var lastInitOut string
-	var lastInitErr error
-	for _, args := range initAttempts {
-		out, initErr := exec.Command(args[0], args[1:]...).CombinedOutput()
-		lastInitOut = strings.TrimSpace(string(out))
-		lastInitErr = initErr
-		if initErr == nil {
-			break
-		}
-		// If the node is still considered part of a swarm, retry after leaving.
-		if strings.Contains(lastInitOut, "already part of a swarm") {
-			_, _ = exec.Command("docker", "swarm", "leave", "--force").CombinedOutput()
-		}
-	}
-	if lastInitErr != nil {
-		t.Fatalf("Docker swarm could not be initialized: %s\n%s\n(docker info swarm: %s)", lastInitErr, lastInitOut, raw)
-	}
-
-	// Wait for Swarm to become manager-ready (can be slightly async on CI).
-	var lastRaw string
-	for i := 0; i < 20; i++ {
-		current, currentRaw, infoErr := getSwarmInfo()
-		if infoErr == nil {
-			lastRaw = currentRaw
-			if isManager(current) {
-				return
-			}
-		}
-		time.Sleep(time.Duration(100+(i*50)) * time.Millisecond)
-	}
-
-	t.Fatalf("Docker swarm did not become manager-ready (last swarm info: %s)", lastRaw)
 }
 
 func TestGetContextHost_ValidContext(t *testing.T) {

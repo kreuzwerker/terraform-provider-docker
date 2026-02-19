@@ -541,22 +541,19 @@ func resolveDockerfilePath(specifiedContext string, specifiedDockerfile string) 
 func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (io.ReadCloser, string, error) {
 	var (
 		dockerfileCtx io.ReadCloser
+		contextDir    string
+		relDockerfile string
 		err           error
 	)
 
-	// Use our custom path resolution instead of build.GetContextFromLocalDir
-	contextDir, dockerfilePath, isOutsideContext, err := resolveDockerfilePath(specifiedContext, specifiedDockerfile)
-	if err != nil {
-		return nil, "", err
-	}
+	contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, specifiedDockerfile)
 
 	log.Printf("[DEBUG] contextDir %s", contextDir)
-	log.Printf("[DEBUG] dockerfilePath %s", dockerfilePath)
-
-	// If dockerfile is outside the context, we need to read it separately
-	if isOutsideContext {
+	log.Printf("[DEBUG] relDockerfile %s", relDockerfile)
+	if err == nil && strings.HasPrefix(relDockerfile, ".."+string(filepath.Separator)) {
+		// Dockerfile is outside of build-context; read the Dockerfile and pass it as dockerfileCtx
 		log.Printf("[DEBUG] Dockerfile is outside of build-context")
-		dockerfileCtx, err = os.Open(dockerfilePath)
+		dockerfileCtx, err = os.Open(specifiedDockerfile)
 		if err != nil {
 			return nil, "", errors.Errorf("unable to open Dockerfile: %v", err)
 		}
@@ -567,28 +564,18 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		return nil, "", err
 	}
 
-	// Use the dockerfile path for exclusions - if inside context, use relative path
-	// If outside context, it won't matter as it's not in the build context anyway
-	excludeDockerfilePath := dockerfilePath
-	if isOutsideContext {
-		// For dockerfiles outside context, use the relative path for exclusion purposes
-		// (though it likely won't match anything in the context)
-		excludeDockerfilePath = filepath.Base(dockerfilePath)
-	}
-	excludes = build.TrimBuildFilesFromExcludes(excludes, excludeDockerfilePath, false)
+	// specifiedDockerfile = archive.CanonicalTarNameForPath(specifiedDockerfile)
+	excludes = build.TrimBuildFilesFromExcludes(excludes, specifiedDockerfile, false)
 	log.Printf("[DEBUG] Excludes: %v", excludes)
 	buildCtx := getBuildContext(contextDir, excludes)
 
 	// replace Dockerfile if it was added from stdin or a file outside the build-context, and there is archive context
-	var finalDockerfilePath string
 	if dockerfileCtx != nil && buildCtx != nil {
 		log.Printf("[DEBUG] Adding dockerfile to build context")
-		buildCtx, finalDockerfilePath, err = build.AddDockerfileToBuildContext(dockerfileCtx, buildCtx)
+		buildCtx, relDockerfile, err = build.AddDockerfileToBuildContext(dockerfileCtx, buildCtx)
 		if err != nil {
 			return nil, "", err
 		}
-	} else {
-		finalDockerfilePath = dockerfilePath
 	}
 
 	// Compress build context to avoid Docker misinterpreting it as plain text
@@ -599,7 +586,10 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		}
 	}
 
-	return buildCtx, finalDockerfilePath, nil
+	if relDockerfile != "" {
+		return buildCtx, relDockerfile, nil
+	}
+	return buildCtx, specifiedDockerfile, nil
 }
 
 func getBuildContext(filePath string, excludes []string) io.ReadCloser {

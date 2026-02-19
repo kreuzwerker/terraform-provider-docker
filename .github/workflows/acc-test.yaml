@@ -60,7 +60,7 @@ jobs:
         id: setup-docker
         uses: docker/setup-docker-action@v4
         with:
-          version: "28.5.1"
+          version: "28.0.4"
       - name: Used docker version
         run: |
           docker version
