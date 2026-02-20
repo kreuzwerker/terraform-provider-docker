@@ -64,7 +64,7 @@ jobs:
           # should map to base names like "container", "logs", "registry_image".
           stop_suffixes = {"funcs", "migrators", "structures", "test"}
           def base_type_from_provider_file(path: str) -> str | None:
-            m = re.match(r'^internal/provider/(resource|data_source)_docker_(.+)\\.go$', path)
+            m = re.match(r'^internal/provider/(resource|data_source)_docker_(.+)\.go$', path)
             if not m:
               return None
             raw = m.group(2)
