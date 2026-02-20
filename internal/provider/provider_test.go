@@ -99,7 +99,7 @@ func testAccPreCheck(t *testing.T) {
 
 	cmd = exec.Command("docker", "node", "ls")
 	if err := cmd.Run(); err != nil {
-		cmd = exec.Command("docker", "swarm", "init")
+		cmd = exec.Command("docker", "swarm", "init", "--advertise-addr", "127.0.0.1")
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("Docker swarm could not be initialized: %s", err)
 		}
