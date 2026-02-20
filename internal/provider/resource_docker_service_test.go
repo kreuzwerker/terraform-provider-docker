@@ -585,7 +585,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 			s.Spec.RollbackConfig.Delay != 5*time.Millisecond ||
 			s.Spec.RollbackConfig.FailureAction != "pause" ||
 			s.Spec.RollbackConfig.Monitor != 10*time.Hour ||
-			s.Spec.RollbackConfig.MaxFailureRatio != 0.0 ||
+			s.Spec.RollbackConfig.MaxFailureRatio != 0.9 ||
 			s.Spec.RollbackConfig.Order != "stop-first" {
 			return fmt.Errorf("Service s.Spec.RollbackConfig is wrong: %#v", s.Spec.RollbackConfig)
 		}
@@ -703,7 +703,7 @@ func TestAccDockerService_fullSpec(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_service.foo", "rollback_config.0.delay", "5ms"),
 					resource.TestCheckResourceAttr("docker_service.foo", "rollback_config.0.failure_action", "pause"),
 					resource.TestCheckResourceAttr("docker_service.foo", "rollback_config.0.monitor", "10h"),
-					resource.TestCheckResourceAttr("docker_service.foo", "rollback_config.0.max_failure_ratio", "0.0"),
+					resource.TestCheckResourceAttr("docker_service.foo", "rollback_config.0.max_failure_ratio", "0.9"),
 					resource.TestCheckResourceAttr("docker_service.foo", "rollback_config.0.order", "stop-first"),
 					resource.TestCheckResourceAttr("docker_service.foo", "endpoint_spec.0.mode", "vip"),
 					resource.TestCheckResourceAttr("docker_service.foo", "endpoint_spec.0.ports.0.name", "random"),
