@@ -3,8 +3,15 @@ package provider
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerContainerCreateDefaultTimeout = 20 * time.Minute
+	dockerContainerUpdateDefaultTimeout = 20 * time.Minute
+	dockerContainerDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerContainer() *schema.Resource {
@@ -19,6 +26,11 @@ func resourceDockerContainer() *schema.Resource {
 		SchemaVersion: 2,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerContainerCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerContainerUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerContainerDeleteDefaultTimeout),
 		},
 		StateUpgraders: []schema.StateUpgrader{
 			{

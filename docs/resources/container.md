@@ -90,6 +90,7 @@ resource "docker_image" "ubuntu" {
 - `stop_timeout` (Number) Timeout (in seconds) to stop a container.
 - `storage_opts` (Map of String) Key/value pairs for the storage driver options, e.g. `size`: `120G`
 - `sysctls` (Map of String) A map of kernel parameters (sysctls) to set in the container.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `tmpfs` (Map of String) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
 - `tty` (Boolean) If `true`, allocate a pseudo-tty (`docker run -t`). Defaults to `false`.
 - `ulimit` (Block Set) Ulimit options to add. (see [below for nested schema](#nestedblock--ulimit))
@@ -247,6 +248,16 @@ Optional:
 - `external` (Number) Port exposed out of the container. If not given a free random port `>= 32768` will be used.
 - `ip` (String) IP address/mask that can access this port. Defaults to `0.0.0.0`.
 - `protocol` (String) Protocol that can be used over this port. Defaults to `tcp`.
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 
 <a id="nestedblock--ulimit"></a>
