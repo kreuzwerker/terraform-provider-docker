@@ -63,17 +63,16 @@ func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client
 		return true, diag.FromErr(err)
 	}
 
-	builder := rawBuildValue["builder"].(string)
-	log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
+	log.Printf("[DEBUG] canUseBuildx: %v", canUseBuildx)
 	// buildx is enabled
-	if canUseBuildx && builder != "" {
+	if canUseBuildx {
 		log.Printf("[DEBUG] Using buildx")
 		dockerCli, err := createAndInitDockerCli(client)
 		if err != nil {
 			return true, diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
 		}
 
-		options, err := mapBuildAttributesToBuildOptions(rawBuildValue, imageName)
+		options, err := mapBuildAttributesToBuildOptions(rawBuildValue, imageName, dockerCli)
 
 		if err != nil {
 			return true, diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
