@@ -8,10 +8,10 @@ func resourceDockerPlugin() *schema.Resource {
 	return &schema.Resource{
 		Description: "Manages the lifecycle of a Docker plugin.",
 
-		Create: resourceDockerPluginCreate,
-		Read:   resourceDockerPluginRead,
-		Update: resourceDockerPluginUpdate,
-		Delete: resourceDockerPluginDelete,
+		CreateContext: resourceDockerPluginCreate,
+		ReadContext:   resourceDockerPluginRead,
+		UpdateContext: resourceDockerPluginUpdate,
+		DeleteContext: resourceDockerPluginDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},

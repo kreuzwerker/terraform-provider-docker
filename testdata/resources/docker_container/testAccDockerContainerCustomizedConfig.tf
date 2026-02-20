@@ -11,6 +11,7 @@ resource "docker_container" "foo" {
   destroy_grace_seconds = 10
   max_retry_count       = 5
   memory                = 512
+  memory_reservation    = 256
   shm_size              = 128
   memory_swap           = 2048
   cpu_shares            = 32
@@ -18,7 +19,7 @@ resource "docker_container" "foo" {
 
   capabilities {
     add  = ["ALL"]
-    drop = ["SYS_ADMIN"]
+    drop = ["CAP_SYS_ADMIN"]
   }
 
   security_opts = ["apparmor=unconfined", "label=disable"]

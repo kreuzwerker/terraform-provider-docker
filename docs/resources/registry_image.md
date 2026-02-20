@@ -37,11 +37,123 @@ resource "docker_image" "image" {
 
 ### Optional
 
+- `auth_config` (Block List, Max: 1) Authentication configuration for the Docker registry. It is only used for this resource. (see [below for nested schema](#nestedblock--auth_config))
+- `build` (Block Set, Max: 1) Configuration to build an image. Requires the `Use containerd for pulling and storing images` option to be disabled in the Docker Host(https://github.com/kreuzwerker/terraform-provider-docker/issues/534). Please see [docker build command reference](https://docs.docker.com/engine/reference/commandline/build/#options) too. (see [below for nested schema](#nestedblock--build))
 - `insecure_skip_verify` (Boolean) If `true`, the verification of TLS certificates of the server/registry is disabled. Defaults to `false`
 - `keep_remotely` (Boolean) If true, then the Docker image won't be deleted on destroy operation. If this is false, it will delete the image from the docker registry on destroy operation. Defaults to `false`
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `triggers` (Map of String) A map of arbitrary strings that, when changed, will force the `docker_registry_image` resource to be replaced. This can be used to repush a local image
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `sha256_digest` (String) The sha256 digest of the image.
+
+<a id="nestedblock--auth_config"></a>
+### Nested Schema for `auth_config`
+
+Required:
+
+- `address` (String) The address of the Docker registry.
+- `password` (String, Sensitive) The password for the Docker registry.
+- `username` (String) The username for the Docker registry.
+
+
+<a id="nestedblock--build"></a>
+### Nested Schema for `build`
+
+Required:
+
+- `context` (String) Value to specify the build context. Currently, only a `PATH` context is supported. You can use the helper function '${path.cwd}/context-dir'. This always refers to the local working directory, even when building images on remote hosts. Please see https://docs.docker.com/build/building/context/ for more information about build contexts.
+
+Optional:
+
+- `additional_contexts` (List of String) A list of additional build contexts. Only supported when using a buildx builder. Example: `["name=path", "src = https://example.org"}`. Please see https://docs.docker.com/reference/cli/docker/buildx/build/#build-context for more information.
+- `auth_config` (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
+- `build_args` (Map of String) Pairs for build-time variables in the form of `ENDPOINT : "https://example.com"`
+- `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
+- `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
+- `builder` (String) Set the name of the buildx builder to use. If not set, the legacy builder is used.
+- `cache_from` (List of String) External cache sources (e.g., `user/app:cache`, `type=local,src=path/to/dir`). Only supported when using a buildx builder.
+- `cache_to` (List of String) Cache export destinations (e.g., `user/app:cache`, `type=local,dest=path/to/dir`). Only supported when using a buildx builder.
+- `cgroup_parent` (String) Optional parent cgroup for the container
+- `cpu_period` (Number) The length of a CPU period in microseconds
+- `cpu_quota` (Number) Microseconds of CPU time that the container can get in a CPU period
+- `cpu_set_cpus` (String) CPUs in which to allow execution (e.g., `0-3`, `0`, `1`)
+- `cpu_set_mems` (String) MEMs in which to allow execution (`0-3`, `0`, `1`)
+- `cpu_shares` (Number) CPU shares (relative weight)
+- `dockerfile` (String) Name of the Dockerfile. Defaults to `Dockerfile`.
+- `extra_hosts` (List of String) A list of hostnames/IP mappings to add to the container’s /etc/hosts file. Specified in the form ["hostname:IP"]
+- `force_remove` (Boolean) Always remove intermediate containers
+- `isolation` (String) Isolation represents the isolation technology of a container. The supported values are
+- `label` (Map of String) Set metadata for an image
+- `labels` (Map of String) User-defined key/value metadata
+- `memory` (Number) Set memory limit for build
+- `memory_swap` (Number) Total memory (memory + swap), -1 to enable unlimited swap
+- `network_mode` (String) Set the networking mode for the RUN instructions during build
+- `no_cache` (Boolean) Do not use the cache when building the image
+- `platform` (String) Set the target platform for the build. Defaults to `GOOS/GOARCH`. For more information see the [docker documentation](https://github.com/docker/buildx/blob/master/docs/reference/buildx.md#-set-the-target-platforms-for-the-build---platform)
+- `pull_parent` (Boolean) Attempt to pull the image even if an older image exists locally
+- `remote_context` (String) A Git repository URI or HTTP/HTTPS context URI. Will be ignored if `builder` is set.
+- `remove` (Boolean) Remove intermediate containers after a successful build. Defaults to `true`.
+- `secrets` (Block List) Set build-time secrets. Only available when you use a buildx builder. (see [below for nested schema](#nestedblock--build--secrets))
+- `security_opt` (List of String) The security options
+- `session_id` (String) Set an ID for the build session
+- `shm_size` (Number) Size of /dev/shm in bytes. The size must be greater than 0
+- `squash` (Boolean) If true the new layers are squashed into a new image with a single new layer
+- `suppress_output` (Boolean) Suppress the build output and print image ID on success
+- `tag` (List of String) Name and optionally a tag in the 'name:tag' format
+- `target` (String) Set the target build stage to build
+- `ulimit` (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
+- `version` (String) Version of the underlying builder to use
+
+<a id="nestedblock--build--auth_config"></a>
+### Nested Schema for `build.auth_config`
+
+Required:
+
+- `host_name` (String) hostname of the registry
+
+Optional:
+
+- `auth` (String) the auth token
+- `email` (String) the user emal
+- `identity_token` (String) the identity token
+- `password` (String) the registry password
+- `registry_token` (String) the registry token
+- `server_address` (String) the server address
+- `user_name` (String) the registry user name
+
+
+<a id="nestedblock--build--secrets"></a>
+### Nested Schema for `build.secrets`
+
+Required:
+
+- `id` (String) ID of the secret. By default, secrets are mounted to /run/secrets/<id>
+
+Optional:
+
+- `env` (String) Environment variable source of the secret
+- `src` (String) File source of the secret. Takes precedence over `env`
+
+
+<a id="nestedblock--build--ulimit"></a>
+### Nested Schema for `build.ulimit`
+
+Required:
+
+- `hard` (Number) soft limit
+- `name` (String) type of ulimit, e.g. `nofile`
+- `soft` (Number) hard limit
+
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)

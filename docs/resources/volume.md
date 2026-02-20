@@ -23,6 +23,7 @@ resource "docker_volume" "shared_volume" {
 
 ### Optional
 
+- `cluster` (Block List, Max: 1) Cluster-specific options for volume creation. Only works if the Docker daemon is running in swarm mode and is the swarm manager. (see [below for nested schema](#nestedblock--cluster))
 - `driver` (String) Driver type for the volume. Defaults to `local`.
 - `driver_opts` (Map of String) Options specific to the driver.
 - `labels` (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
@@ -32,6 +33,26 @@ resource "docker_volume" "shared_volume" {
 
 - `id` (String) The ID of this resource.
 - `mountpoint` (String) The mountpoint of the volume.
+
+<a id="nestedblock--cluster"></a>
+### Nested Schema for `cluster`
+
+Optional:
+
+- `availability` (String) Availability of the volume. Can be `active` (default), `pause`, or `drain`.
+- `group` (String) Cluster Volume group
+- `limit_bytes` (String) Minimum size of the Cluster Volume in human readable memory bytes (like 128MiB, 2GiB, etc). Must be in format of KiB, MiB, Gib, Tib or PiB.
+- `required_bytes` (String) Maximum size of the Cluster Volume in human readable memory bytes (like 128MiB, 2GiB, etc). Must be in format of KiB, MiB, Gib, Tib or PiB.
+- `scope` (String) The scope of the volume. Can be `single` (default) or `multi`.
+- `sharing` (String) The sharing mode. Can be `none` (default), `readonly`, `onewriter` or `all`.
+- `topology_preferred` (String) A topology that the Cluster Volume would be preferred in
+- `topology_required` (String) A topology that the Cluster Volume must be accessible from
+- `type` (String) Cluster Volume access type. Can be `mount` or `block` (default).
+
+Read-Only:
+
+- `id` (String) The ID of the cluster volume.
+
 
 <a id="nestedblock--labels"></a>
 ### Nested Schema for `labels`

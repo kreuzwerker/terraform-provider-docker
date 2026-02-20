@@ -3,11 +3,12 @@ resource "docker_network" "test" {
   ipv6 = true
 
   ipam_config {
-    subnet = "10.0.1.0/24"
+    subnet  = "10.0.1.0/24"
+    gateway = "10.0.1.1"
   }
 
   ipam_config {
-    subnet = "fd00::1/64"
+    subnet = "fd00::/64"
   }
 }
 resource "docker_image" "foo" {

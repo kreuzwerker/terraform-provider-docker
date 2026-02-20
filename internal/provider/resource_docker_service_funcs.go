@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -29,15 +29,17 @@ type convergeConfig struct {
 // TF CRUD funcs
 // ///////////////
 func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var err error
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
 	serviceSpec, err := createServiceSpec(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	serviceOptions := types.ServiceCreateOptions{}
+	serviceOptions := swarm.ServiceCreateOptions{}
 	marshalledAuth := retrieveAndMarshalAuth(d, meta, "create")
 	serviceOptions.EncodedRegistryAuth = base64.URLEncoding.EncodeToString(marshalledAuth)
 	serviceOptions.QueryRegistry = true
@@ -51,10 +53,10 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		convergeConfig := createConvergeConfig(v.([]interface{}))
 		log.Printf("[INFO] Waiting for Service '%s' to be created with timeout: %v", service.ID, convergeConfig.timeoutRaw)
 		timeout, _ := time.ParseDuration(convergeConfig.timeoutRaw)
-		stateConf := &resource.StateChangeConf{
+		stateConf := &retry.StateChangeConf{
 			Pending:    serviceCreatePendingStates,
 			Target:     []string{"running", "complete"},
-			Refresh:    resourceDockerServiceCreateRefreshFunc(ctx, service.ID, meta),
+			Refresh:    resourceDockerServiceCreateRefreshFunc(ctx, service.ID, meta, client),
 			Timeout:    timeout,
 			MinTimeout: 5 * time.Second,
 			Delay:      convergeConfig.delay,
@@ -81,17 +83,22 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for service: '%s' to expose all fields: max '%v seconds'", d.Id(), 30)
 
-	stateConf := &resource.StateChangeConf{
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
+
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"pending"},
 		Target:     []string{"all_fields", "removed"},
-		Refresh:    resourceDockerServiceReadRefreshFunc(ctx, d, meta),
+		Refresh:    resourceDockerServiceReadRefreshFunc(ctx, d, meta, client),
 		Timeout:    30 * time.Second,
 		MinTimeout: 5 * time.Second,
 		Delay:      2 * time.Second,
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForStateContext(ctx)
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -100,9 +107,8 @@ func resourceDockerServiceRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerServiceReadRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	d *schema.ResourceData, meta interface{}, client *client.Client) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
 		serviceID := d.Id()
 
 		apiService, err := fetchDockerService(ctx, serviceID, d.Get("name").(string), client)
@@ -114,7 +120,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 			d.SetId("")
 			return serviceID, "removed", nil
 		}
-		service, _, err := client.ServiceInspectWithRaw(ctx, apiService.ID, types.ServiceInspectOptions{})
+		service, _, err := client.ServiceInspectWithRaw(ctx, apiService.ID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return serviceID, "", fmt.Errorf("Error inspecting service %s: %s", apiService.ID, err)
 		}
@@ -161,9 +167,12 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 }
 
 func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
-	service, _, err := client.ServiceInspectWithRaw(ctx, d.Id(), types.ServiceInspectOptions{})
+	service, _, err := client.ServiceInspectWithRaw(ctx, d.Id(), swarm.ServiceInspectOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -173,7 +182,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	updateOptions := types.ServiceUpdateOptions{}
+	updateOptions := swarm.ServiceUpdateOptions{}
 	marshalledAuth := retrieveAndMarshalAuth(d, meta, "update")
 	if err != nil {
 		return diag.Errorf("error creating auth config: %s", err)
@@ -192,10 +201,10 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		convergeConfig := createConvergeConfig(v.([]interface{}))
 		log.Printf("[INFO] Waiting for Service '%s' to be updated with timeout: %v", service.ID, convergeConfig.timeoutRaw)
 		timeout, _ := time.ParseDuration(convergeConfig.timeoutRaw)
-		stateConf := &resource.StateChangeConf{
+		stateConf := &retry.StateChangeConf{
 			Pending:    serviceUpdatePendingStates,
 			Target:     []string{"completed"},
-			Refresh:    resourceDockerServiceUpdateRefreshFunc(ctx, service.ID, meta),
+			Refresh:    resourceDockerServiceUpdateRefreshFunc(ctx, service.ID, meta, client),
 			Timeout:    timeout,
 			MinTimeout: 5 * time.Second,
 			Delay:      7 * time.Second,
@@ -216,7 +225,10 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
 	if err := deleteService(ctx, d.Id(), d, client); err != nil {
 		return diag.FromErr(err)
@@ -231,7 +243,7 @@ func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, me
 // ///////////////
 // fetchDockerService fetches a service by its name or id
 func fetchDockerService(ctx context.Context, ID string, name string, client *client.Client) (*swarm.Service, error) {
-	apiServices, err := client.ServiceList(ctx, types.ServiceListOptions{})
+	apiServices, err := client.ServiceList(ctx, swarm.ServiceListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching service information from Docker: %s", err)
 	}
@@ -252,7 +264,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
 		filters := filters.NewArgs()
 		filters.Add("service", d.Get("name").(string))
-		tasks, err := client.TaskList(ctx, types.TaskListOptions{
+		tasks, err := client.TaskList(ctx, swarm.TaskListOptions{
 			Filters: filters,
 		})
 		if err != nil {
@@ -305,7 +317,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 				}
 			}
 
-			removeOpts := types.ContainerRemoveOptions{
+			removeOpts := container.RemoveOptions{
 				RemoveVolumes: true,
 				Force:         true,
 			}
@@ -344,10 +356,8 @@ func (err *DidNotConvergeError) Error() string {
 
 // resourceDockerServiceCreateRefreshFunc refreshes the state of a service when it is created and needs to converge
 func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
-	serviceID string, meta interface{}) resource.StateRefreshFunc {
+	serviceID string, meta interface{}, client *client.Client) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
-
 		var updater progressUpdater
 
 		if updater == nil {
@@ -359,12 +369,12 @@ func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
 		filters.Add("desired-state", "running")
 
 		getUpToDateTasks := func() ([]swarm.Task, error) {
-			return client.TaskList(ctx, types.TaskListOptions{
+			return client.TaskList(ctx, swarm.TaskListOptions{
 				Filters: filters,
 			})
 		}
 
-		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
+		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return nil, "", err
 		}
@@ -394,10 +404,8 @@ func resourceDockerServiceCreateRefreshFunc(ctx context.Context,
 
 // resourceDockerServiceUpdateRefreshFunc refreshes the state of a service when it is updated and needs to converge
 func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
-	serviceID string, meta interface{}) resource.StateRefreshFunc {
+	serviceID string, meta interface{}, client *client.Client) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
-
 		var (
 			updater  progressUpdater
 			rollback bool
@@ -413,12 +421,12 @@ func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
 		filters.Add("desired-state", "running")
 
 		getUpToDateTasks := func() ([]swarm.Task, error) {
-			return client.TaskList(ctx, types.TaskListOptions{
+			return client.TaskList(ctx, swarm.TaskListOptions{
 				Filters: filters,
 			})
 		}
 
-		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
+		service, _, err := client.ServiceInspectWithRaw(ctx, serviceID, swarm.ServiceInspectOptions{})
 		if err != nil {
 			return nil, "", err
 		}
@@ -469,7 +477,7 @@ func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
 
 // getActiveNodes gets the actives nodes withon a swarm
 func getActiveNodes(ctx context.Context, client *client.Client) (map[string]struct{}, error) {
-	nodes, err := client.NodeList(ctx, types.NodeListOptions{})
+	nodes, err := client.NodeList(ctx, swarm.NodeListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -593,25 +601,25 @@ func terminalState(state swarm.TaskState) bool {
 }
 
 // authToServiceAuth maps the auth to AuthConfiguration
-func authToServiceAuth(auths []interface{}) types.AuthConfig {
+func authToServiceAuth(auths []interface{}) registry.AuthConfig {
 	if len(auths) == 0 {
-		return types.AuthConfig{}
+		return registry.AuthConfig{}
 	}
 	// it's maxItems = 1
 	auth := auths[0].(map[string]interface{})
 	if auth["username"] != nil && len(auth["username"].(string)) > 0 && auth["password"] != nil && len(auth["password"].(string)) > 0 {
-		return types.AuthConfig{
+		return registry.AuthConfig{
 			Username:      auth["username"].(string),
 			Password:      auth["password"].(string),
 			ServerAddress: auth["server_address"].(string),
 		}
 	}
 
-	return types.AuthConfig{}
+	return registry.AuthConfig{}
 }
 
 // fromRegistryAuth extract the desired AuthConfiguration for the given image
-func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) types.AuthConfig {
+func fromRegistryAuth(image string, authConfigs map[string]registry.AuthConfig) registry.AuthConfig {
 	// Remove normalized prefixes to simplify substring
 	// DevSkim: ignore DS137138
 	image = strings.Replace(strings.Replace(image, "http://", "", 1), "https://", "", 1)
@@ -625,12 +633,12 @@ func fromRegistryAuth(image string, authConfigs map[string]types.AuthConfig) typ
 		}
 	}
 
-	return types.AuthConfig{}
+	return registry.AuthConfig{}
 }
 
 // retrieveAndMarshalAuth retrieves and marshals the service registry auth
 func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType string) []byte {
-	var auth types.AuthConfig
+	var auth registry.AuthConfig
 	// when a service is updated/set for the first time the auth is set but empty
 	// this is why we need this additional check
 	if rawAuth, ok := d.GetOk("auth"); ok && len(rawAuth.([]interface{})) != 0 {

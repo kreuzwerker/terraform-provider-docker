@@ -211,8 +211,11 @@ func Test_getDockerPluginGrantPermissions(t *testing.T) {
 		d := d
 		t.Run(d.title, func(t *testing.T) {
 			t.Parallel()
+
 			f := getDockerPluginGrantPermissions(d.src)
-			b, err := f(d.privileges)
+			c := context.Background()
+
+			b, err := f(c, d.privileges)
 			if d.isErr {
 				if err == nil {
 					t.Fatal("error must be returned")
@@ -394,7 +397,10 @@ func testAccPluginCreated(resourceName string, plugin *types.Plugin) resource.Te
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		inspectedPlugin, _, err := client.PluginInspectWithRaw(ctx, rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Plugin with ID '%s': %w", rs.Primary.ID, err)

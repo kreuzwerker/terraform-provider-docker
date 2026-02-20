@@ -89,7 +89,10 @@ func resourceDockerSecretV0() *schema.Resource {
 }
 
 func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
 	secretSpec := swarm.SecretSpec{
@@ -100,7 +103,8 @@ func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	if v, ok := d.GetOk("labels"); ok {
-		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set))
+		//  QF1008: could remove embedded field "Annotations" from selector
+		secretSpec.Annotations.Labels = labelSetToMap(v.(*schema.Set)) //nolint:staticcheck
 	}
 
 	secret, err := client.SecretCreate(ctx, secretSpec)
@@ -114,7 +118,10 @@ func resourceDockerSecretCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 	secret, _, err := client.SecretInspectWithRaw(ctx, d.Id())
 	if err != nil {
 		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
@@ -134,8 +141,11 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceDockerSecretDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
-	err := client.SecretRemove(ctx, d.Id())
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
+	err = client.SecretRemove(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

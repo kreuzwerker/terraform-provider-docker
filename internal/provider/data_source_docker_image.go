@@ -5,14 +5,14 @@ import (
 	"log"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceDockerImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "`docker_image` provides details about a specific Docker Image which need to be presend on the Docker Host",
+		Description: "`docker_image` provides details about a specific Docker Image which need to be present on the Docker Host",
 
 		ReadContext: dataSourceDockerImageRead,
 
@@ -32,16 +32,15 @@ func dataSourceDockerImage() *schema.Resource {
 }
 
 func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
 	var data Data
 	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return diag.Errorf("Error reading docker image list: %s", err)
 	}
-	for id := range data.DockerImages {
-		log.Printf("[DEBUG] local images data: %v", id)
-	}
-
 	imageName := d.Get("name").(string)
 
 	foundImage, err := searchLocalImages(ctx, client, data, imageName)
@@ -64,7 +63,7 @@ func dataSourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta
 // determineRepoDigest determines the repo digest for a local image name.
 // It will always return a digest and if none was found it returns an empty string.
 // See https://github.com/kreuzwerker/terraform-provider-docker/pull/212#discussion_r646025706 for details
-func determineRepoDigest(imageName string, imageToQuery *types.ImageSummary) string {
+func determineRepoDigest(imageName string, imageToQuery *image.Summary) string {
 	// the edge case where the local image was pulled from a repo, tagged locally,
 	// and then referred to in the data source by that local name/tag...
 	if len(imageToQuery.RepoDigests) == 0 {

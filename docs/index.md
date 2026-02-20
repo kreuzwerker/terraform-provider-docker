@@ -25,33 +25,13 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "3.0.2"
+      version = "3.9.0"
     }
   }
 }
 
 provider "docker" {
   host = "unix:///var/run/docker.sock"
-}
-
-# Pulls the image
-resource "docker_image" "ubuntu" {
-  name = "ubuntu:latest"
-}
-
-# Create a container
-resource "docker_container" "foo" {
-  image = docker_image.ubuntu.image_id
-  name  = "foo"
-}
-```
-
-Terraform 0.12 and earlier:
-
-```terraform
-provider "docker" {
-  version = "~> 3.0.2"
-  host    = "unix:///var/run/docker.sock"
 }
 
 # Pulls the image
@@ -79,10 +59,16 @@ provider "docker" {
 
 When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
 
+## Disabling Docker Daemon Checking
+
+The `docker_registry_image` `data_source` and `resource` do not require a connection to the Docker daemon. If you want to use those in an environment without a Docker daemon, you can disable the
+connection check by setting the `disable_docker_daemon_check` argument to `true`. Be careful, this will break the provider for any resources that require a connection to the Docker daemon.
+
 ## Registry credentials
 
 Registry credentials can be provided on a per-registry basis with the `registry_auth`
 field, passing either a config file or the username/password directly.
+Please make sure, that you pass in the correct `address`. For example for ECR, the `registry_auth.address` should be of format `<id>.dkr.ecr.<zone>.amazonaws.com`. AWS ECR resource gives `ecr_url` which includes image name `<id>.dkr.ecr.<zone>.amazonaws.com/<image-name>`. So if you use ecr_url make a split `split("/", ecr_url)[0]` to be used in `registry_auth.address`.
 If you want to use an insecure http registry, please explicitly specify the `address` with the `http` protocol.
 
 -> **Note**
@@ -169,6 +155,8 @@ provider "docker" {
 - `ca_material` (String) PEM-encoded content of Docker host CA certificate
 - `cert_material` (String) PEM-encoded content of Docker client certificate
 - `cert_path` (String) Path to directory with Docker TLS config
+- `context` (String) The name of the Docker context to use. Can also be set via `DOCKER_CONTEXT` environment variable. Overrides the `host` if set.
+- `disable_docker_daemon_check` (Boolean) If set to `true`, the provider will not check if the Docker daemon is running. This is useful for resources/data_sourcess that do not require a running Docker daemon, such as the data source `docker_registry_image`.
 - `host` (String) The Docker daemon address
 - `key_material` (String) PEM-encoded content of Docker client private key
 - `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--registry_auth))
@@ -184,7 +172,7 @@ Required:
 Optional:
 
 - `auth_disabled` (Boolean) Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.
-- `config_file` (String) Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.
+- `config_file` (String) Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` env variable is set, the value of `DOCKER_CONFIG` is used as the path. `DOCKER_CONFIG` can be set to a directory (as per Docker CLI) or a file path directly. `config_file` has precedence over all other options.
 - `config_file_content` (String) Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.
 - `password` (String, Sensitive) Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.
 - `username` (String) Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.

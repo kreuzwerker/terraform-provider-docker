@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -55,22 +56,27 @@ func mapToLabelSet(labels map[string]string) *schema.Set {
 	return schema.NewSet(hashLabel, mapped)
 }
 
-var labelSchema = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"label": {
-			Type:        schema.TypeString,
-			Description: "Name of the label",
-			Required:    true,
-			ForceNew:    true,
+func newLabelSchema(forceNew bool) *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"label": {
+				Type:        schema.TypeString,
+				Description: "Name of the label",
+				Required:    true,
+				ForceNew:    forceNew,
+			},
+			"value": {
+				Type:        schema.TypeString,
+				Description: "Value of the label",
+				Required:    true,
+				ForceNew:    forceNew,
+			},
 		},
-		"value": {
-			Type:        schema.TypeString,
-			Description: "Value of the label",
-			Required:    true,
-			ForceNew:    true,
-		},
-	},
+	}
 }
+
+var labelSchema = newLabelSchema(true)
+var labelSchemaUpdatable = newLabelSchema(false)
 
 // gatherImmediateSubkeys given an incomplete attribute identifier, find all
 // the strings (if any) that appear after this one in the various dot-separated
@@ -127,10 +133,38 @@ func testCheckLabelMap(name string, partialKey string, expectedLabels map[string
 // message to ignore. Returns true if so, false otherwise (also if no ignorable message is given)
 func containsIgnorableErrorMessage(errorMsg string, ignorableErrorMessages ...string) bool {
 	for _, ignorableErrorMessage := range ignorableErrorMessages {
-		if strings.Contains(errorMsg, ignorableErrorMessage) {
+		if strings.Contains(strings.ToLower(errorMsg), strings.ToLower(ignorableErrorMessage)) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func interfaceArrayToStringArray(interfaceArray []interface{}) []string {
+	stringArray := make([]string, len(interfaceArray))
+	for i, v := range interfaceArray {
+		stringArray[i] = fmt.Sprintf("%v", v)
+	}
+	return stringArray
+}
+
+// Convert nanoseconds to seconds as a decimal string
+// e.g., 1,000,000,000 nanoseconds = 1.0 seconds
+func nanoInt64ToDecimalString(nanoInt64 int64) string {
+	if nanoInt64 == 0 {
+		return "0"
+	}
+
+	rat := new(big.Rat).SetFrac64(nanoInt64, 1e9)
+	str := rat.FloatString(9)
+
+	// If we have a "round" value like 100000000, we want to return "1.0" instead of further processing
+	if strings.Count(str, "0") == 9 {
+		return rat.FloatString(1)
+	}
+
+	// Remove trailing zeros to ensure a clean representation without unnecessary decimal places
+	str = strings.TrimRight(str, "0")
+	return str
 }

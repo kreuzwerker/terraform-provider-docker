@@ -37,13 +37,6 @@ func resourceDockerNetwork() *schema.Resource {
 				Elem:        labelSchema,
 			},
 
-			"check_duplicate": {
-				Type:        schema.TypeBool,
-				Description: "Requests daemon to check for networks with same name.",
-				Optional:    true,
-				ForceNew:    true,
-			},
-
 			"driver": {
 				Type:        schema.TypeString,
 				Description: "The driver of the Docker network. Possible values are `bridge`, `host`, `overlay`, `macvlan`. See [network docs](https://docs.docker.com/network/#network-drivers) for more details.",

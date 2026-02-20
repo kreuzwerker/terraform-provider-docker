@@ -1,6 +1,221 @@
 
+<a name="v3.9.0"></a>
+## [v3.9.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.8.0...v3.9.0) (2025-11-09)
+
+### Chore
+
+* Add file requested by hashicorp ([#813](https://github.com/kreuzwerker/terraform-provider-docker/issues/813))
+* Prepare release v3.8.0 ([#806](https://github.com/kreuzwerker/terraform-provider-docker/issues/806))
+
+### Feat
+
+* Implement caching of docker provider ([#808](https://github.com/kreuzwerker/terraform-provider-docker/issues/808))
+
+### Fix
+
+* test attribute of docker_service healthcheck is not required ([#815](https://github.com/kreuzwerker/terraform-provider-docker/issues/815))
+* docker_service label can be updated without recreate ([#814](https://github.com/kreuzwerker/terraform-provider-docker/issues/814))
+
+
+<a name="v3.8.0"></a>
+## [v3.8.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.7.0...v3.8.0) (2025-10-08)
+
+### Feat
+
+* Add build attribute for docker_registry_image ([#805](https://github.com/kreuzwerker/terraform-provider-docker/issues/805))
+* Add build option for additional contexts ([#798](https://github.com/kreuzwerker/terraform-provider-docker/issues/798))
+* implement mac_address for networks_advanced ([#794](https://github.com/kreuzwerker/terraform-provider-docker/issues/794))
+* Implement docker cluster volume ([#793](https://github.com/kreuzwerker/terraform-provider-docker/issues/793))
+
+
+<a name="v3.7.0"></a>
+## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-19)
+
+### Chore
+
+* Prepare release v3.7.0 ([#774](https://github.com/kreuzwerker/terraform-provider-docker/issues/774))
+
+### Feat
+
+* Implement memory_reservation and network_mode enhancements ([#773](https://github.com/kreuzwerker/terraform-provider-docker/issues/773))
+* Implement cache_from and cache_to for docker_image ([#772](https://github.com/kreuzwerker/terraform-provider-docker/issues/772))
+
+### Fix
+
+* Correctly get and set nanoCPUs for docker_container ([#771](https://github.com/kreuzwerker/terraform-provider-docker/issues/771))
+
+
+<a name="v3.6.2"></a>
+## [v3.6.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.1...v3.6.2) (2025-06-13)
+
+### Chore
+
+* Prepare release v3.6.2 ([#750](https://github.com/kreuzwerker/terraform-provider-docker/issues/750))
+
+### Feat
+
+* Allow digest in image name ([#744](https://github.com/kreuzwerker/terraform-provider-docker/issues/744))
+
+### Fix
+
+* Remove wrong buildkit version assignment ([#747](https://github.com/kreuzwerker/terraform-provider-docker/issues/747))
+* Reading non existant volume should recreate ([#749](https://github.com/kreuzwerker/terraform-provider-docker/issues/749))
+* Typo in cgroup_parent handling ([#746](https://github.com/kreuzwerker/terraform-provider-docker/issues/746))
+
+
+<a name="v3.6.1"></a>
+## [v3.6.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.0...v3.6.1) (2025-06-05)
+
+### Chore
+
+* Prepare release v3.6.1 ([#743](https://github.com/kreuzwerker/terraform-provider-docker/issues/743))
+
+### Feat
+
+* allow to set the cgroup parent for container ([#609](https://github.com/kreuzwerker/terraform-provider-docker/issues/609))
+
+
+<a name="v3.6.0"></a>
+## [v3.6.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.5.0...v3.6.0) (2025-05-25)
+
+### Chore
+
+* Prepare release v3.6.0 ([#735](https://github.com/kreuzwerker/terraform-provider-docker/issues/735))
+
+### Feat
+
+* Implement correct cpu scheduler settings ([#732](https://github.com/kreuzwerker/terraform-provider-docker/issues/732))
+* Add implementaion of capabilities in docker servic ([#727](https://github.com/kreuzwerker/terraform-provider-docker/issues/727))
+* implement Buildx builder resource ([#724](https://github.com/kreuzwerker/terraform-provider-docker/issues/724))
+
+### Fix
+
+* Implement buildx fixes for general buildkit support and platform handling ([#734](https://github.com/kreuzwerker/terraform-provider-docker/issues/734))
+* Make endpoint validation less strict ([#733](https://github.com/kreuzwerker/terraform-provider-docker/issues/733))
+
+
+<a name="v3.5.0"></a>
+## [v3.5.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.4.0...v3.5.0) (2025-05-06)
+
+### Chore
+
+* Prepare release v3.5.0 ([#721](https://github.com/kreuzwerker/terraform-provider-docker/issues/721))
+
+### Feat
+
+* Implement using of buildx for docker_image ([#717](https://github.com/kreuzwerker/terraform-provider-docker/issues/717))
+* Support registries that return empty auth scope [#646](https://github.com/kreuzwerker/terraform-provider-docker/issues/646)
+* Implement registry_image_manifests data source ([#714](https://github.com/kreuzwerker/terraform-provider-docker/issues/714))
+* Implement healthcheck start interval ([#713](https://github.com/kreuzwerker/terraform-provider-docker/issues/713))
+
+
+<a name="v3.4.0"></a>
+## [v3.4.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.3.0...v3.4.0) (2025-04-25)
+
+### Chore
+
+* Prepare release v3.4.0 ([#712](https://github.com/kreuzwerker/terraform-provider-docker/issues/712))
+
+### Feat
+
+* Implement volume_options subpath ([#710](https://github.com/kreuzwerker/terraform-provider-docker/issues/710))
+
+### Fix
+
+* Prevent recreation of image name is intentionally set to a fixed value ([#711](https://github.com/kreuzwerker/terraform-provider-docker/issues/711))
+* Improve container wait handling ([#709](https://github.com/kreuzwerker/terraform-provider-docker/issues/709))
+* Use auth_config block also for registry_image delete functionality ([#708](https://github.com/kreuzwerker/terraform-provider-docker/issues/708))
+
+
+<a name="v3.3.0"></a>
+## [v3.3.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.2.0...v3.3.0) (2025-04-19)
+
+### Chore
+
+* Prepare release v3.3.0 ([#705](https://github.com/kreuzwerker/terraform-provider-docker/issues/705))
+* Update terraform-plugin-sdk/v2 dependency ([#699](https://github.com/kreuzwerker/terraform-provider-docker/issues/699))
+* Update docker/docker and docker/cli to newest stable ([#695](https://github.com/kreuzwerker/terraform-provider-docker/issues/695))
+
+### Feat
+
+* Implement support for docker context ([#704](https://github.com/kreuzwerker/terraform-provider-docker/issues/704))
+* disable_docker_daemon_check for provider ([#703](https://github.com/kreuzwerker/terraform-provider-docker/issues/703))
+* Implement tag triggers for docker_tag resource ([#702](https://github.com/kreuzwerker/terraform-provider-docker/issues/702))
+* Implement auth_config for docker_registry_image ([#701](https://github.com/kreuzwerker/terraform-provider-docker/issues/701))
+
+### Fix
+
+* Store correctly ports from server ([#698](https://github.com/kreuzwerker/terraform-provider-docker/issues/698))
+
+
+<a name="v3.2.0"></a>
+## [v3.2.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.2...v3.2.0) (2025-04-16)
+
+### Chore
+
+* Prepare release v3.2.0 ([#694](https://github.com/kreuzwerker/terraform-provider-docker/issues/694))
+* Upgrade golangci-lint to next major version ([#686](https://github.com/kreuzwerker/terraform-provider-docker/issues/686))
+
+### Docs
+
+* Consolidated update of docs from several PRs ([#691](https://github.com/kreuzwerker/terraform-provider-docker/issues/691))
+
+### Feat
+
+* Implement upload permissions in docker_container resource ([#693](https://github.com/kreuzwerker/terraform-provider-docker/issues/693))
+* Implement docker_image timeouts ([#692](https://github.com/kreuzwerker/terraform-provider-docker/issues/692))
+* Add support for build-secrets ([#604](https://github.com/kreuzwerker/terraform-provider-docker/issues/604))
+
+### Fix
+
+* Authentication to ECR public ([#690](https://github.com/kreuzwerker/terraform-provider-docker/issues/690))
+
+
+<a name="v3.1.2"></a>
+## [v3.1.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.1...v3.1.2) (2025-04-15)
+
+### Chore
+
+* prepare release 3.1.2 ([#688](https://github.com/kreuzwerker/terraform-provider-docker/issues/688))
+
+
+<a name="v3.1.1"></a>
+## [v3.1.1](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.1.0...v3.1.1) (2025-04-14)
+
+### Chore
+
+* Prepare release 3.1.1 ([#687](https://github.com/kreuzwerker/terraform-provider-docker/issues/687))
+
+
+<a name="v3.1.0"></a>
+## [v3.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.2...v3.1.0) (2025-04-14)
+
+### Chore
+
+* Prepare release 3.1.0 ([#685](https://github.com/kreuzwerker/terraform-provider-docker/issues/685))
+* update Go version to 1.22 for consistency across workflows, jo… ([#613](https://github.com/kreuzwerker/terraform-provider-docker/issues/613))
+
+### Feat
+
+* support setting cpu shares ([#575](https://github.com/kreuzwerker/terraform-provider-docker/issues/575))
+
+### Fix
+
+* Use build_args everywhere and update documentation ([#681](https://github.com/kreuzwerker/terraform-provider-docker/issues/681))
+* Compress build context before sending it to Docker ([#461](https://github.com/kreuzwerker/terraform-provider-docker/issues/461))
+* Set correct default network driver and fix a test ([#677](https://github.com/kreuzwerker/terraform-provider-docker/issues/677))
+
+### Typo
+
+* s/presend/present/ ([#606](https://github.com/kreuzwerker/terraform-provider-docker/issues/606))
+
+
 <a name="v3.0.2"></a>
 ## [v3.0.2](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.0.1...v3.0.2) (2023-03-17)
+
+### Chore
+
+* Prepare release v3.0.2
 
 ### Docs
 

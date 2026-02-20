@@ -115,7 +115,10 @@ func TestAccDockerConfig_basicUpdatable(t *testing.T) {
 // Helpers
 // ///////////
 func testCheckDockerConfigDestroy(ctx context.Context, s *terraform.State) error {
-	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create Docker client: %w", err)
+	}
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "configs" {
 			continue
@@ -144,7 +147,10 @@ func testAccServiceConfigCreated(resourceName string, config *swarm.Config) reso
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		inspectedConfig, _, err := client.ConfigInspectWithRaw(ctx, rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Config with ID '%s': %w", rs.Primary.ID, err)

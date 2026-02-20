@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
@@ -41,10 +40,9 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	sort.Sort(byPortAndProtocol(internalPortKeys))
 
 	for _, portKey := range internalPortKeys {
-		m := make(map[string]interface{})
-
 		portBindings := in[nat.Port(portKey)]
 		for _, portBinding := range portBindings {
+			m := make(map[string]interface{})
 			portProtocolSplit := strings.Split(string(portKey), "/")
 			convertedInternal, _ := strconv.Atoi(portProtocolSplit[0])
 			convertedExternal, _ := strconv.Atoi(portBinding.HostPort)
@@ -58,7 +56,7 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 	return out
 }
 
-func flattenContainerNetworks(in *types.NetworkSettings) []interface{} {
+func flattenContainerNetworks(in *container.NetworkSettings) []interface{} {
 	out := make([]interface{}, 0)
 	if in == nil || in.Networks == nil || len(in.Networks) == 0 {
 		return out
@@ -243,12 +241,9 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 		containerPath := deviceMap["container_path"].(string)
 		permissions := deviceMap["permissions"].(string)
 
-		switch {
-		case len(containerPath) == 0:
+		// Default container_path to host_path if not specified
+		if len(containerPath) == 0 {
 			containerPath = hostPath
-			fallthrough
-		case len(permissions) == 0:
-			permissions = "rwm"
 		}
 
 		device := container.DeviceMapping{
@@ -261,7 +256,7 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 	return retDevices
 }
 
-func getDockerContainerMounts(container types.ContainerJSON) []map[string]interface{} {
+func getDockerContainerMounts(container container.InspectResponse) []map[string]interface{} {
 	mounts := []map[string]interface{}{}
 	for _, mount := range container.HostConfig.Mounts {
 		m := map[string]interface{}{
@@ -292,6 +287,9 @@ func getDockerContainerMounts(container types.ContainerJSON) []map[string]interf
 			if mount.VolumeOptions.DriverConfig != nil {
 				opt["driver_name"] = mount.VolumeOptions.DriverConfig.Name
 				opt["driver_options"] = mount.VolumeOptions.DriverConfig.Options
+			}
+			if mount.VolumeOptions.Subpath != "" {
+				opt["subpath"] = mount.VolumeOptions.Subpath
 			}
 			m["volume_options"] = []map[string]interface{}{
 				opt,
@@ -337,14 +335,23 @@ func flattenUlimits(in []*units.Ulimit) []interface{} {
 	return ulimits
 }
 
-func flattenDevices(in []container.DeviceMapping) []interface{} {
+func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set) []interface{} {
 	devices := make([]interface{}, len(in))
+	list := configuredDevices.List()
 	for i, device := range in {
-		devices[i] = map[string]interface{}{
-			"host_path":      device.PathOnHost,
-			"container_path": device.PathInContainer,
-			"permissions":    device.CgroupPermissions,
+		configuredDevice := list[i].(map[string]interface{})
+
+		deviceMap := map[string]interface{}{
+			"host_path":   device.PathOnHost,
+			"permissions": device.CgroupPermissions,
 		}
+
+		// Only set container_path if it was explicitly configured by the user
+		if value, ok := configuredDevice["container_path"].(string); ok && value != "" {
+			deviceMap["container_path"] = device.PathInContainer
+		}
+
+		devices[i] = deviceMap
 	}
 
 	return devices

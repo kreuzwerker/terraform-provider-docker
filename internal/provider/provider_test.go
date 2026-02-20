@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"testing"
@@ -36,7 +37,7 @@ func init() {
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = New("dev")()
+	var _ = New("dev")()
 }
 
 func TestProvider(t *testing.T) {
@@ -98,7 +99,7 @@ func testAccPreCheck(t *testing.T) {
 
 	cmd = exec.Command("docker", "node", "ls")
 	if err := cmd.Run(); err != nil {
-		cmd = exec.Command("docker", "swarm", "init")
+		cmd = exec.Command("docker", "swarm", "init", "--advertise-addr", "127.0.0.1")
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("Docker swarm could not be initialized: %s", err)
 		}
@@ -107,6 +108,54 @@ func testAccPreCheck(t *testing.T) {
 	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestGetContextHost_ValidContext(t *testing.T) {
+	// Create a temporary directory to simulate Docker contexts
+	tempDir := t.TempDir()
+	contextName := "test-context"
+	contextUUID := "1234-5678-91011"
+	contextFilePath := fmt.Sprintf("%s/.docker/contexts/meta/%s/meta.json", tempDir, contextUUID)
+
+	// Simulate a valid Docker context file
+	contextData := `{
+		"Name": "test-context",
+		"Endpoints": {
+			"docker": {
+				"Host": "tcp://docker:2375"
+			}
+		}
+	}`
+	if err := os.MkdirAll(fmt.Sprintf("%s/.docker/contexts/meta/%s", tempDir, contextUUID), 0755); err != nil {
+		t.Fatalf("Failed to create context directory: %s", err)
+	}
+	if err := os.WriteFile(contextFilePath, []byte(contextData), 0644); err != nil {
+		t.Fatalf("Failed to write context file: %s", err)
+	}
+
+	// Test the function
+	host, err := getContextHost(contextName, tempDir)
+	if err != nil {
+		t.Fatalf("Expected no error, got: %s", err)
+	}
+	if host != "tcp://docker:2375" {
+		t.Fatalf("Expected host 'tcp://docker:2375', got: %s", host)
+	}
+}
+
+func TestGetContextHost_InvalidContext(t *testing.T) {
+	// Create a temporary directory to simulate Docker contexts
+	tempDir := t.TempDir()
+
+	if err := os.MkdirAll(fmt.Sprintf("%s/.docker/contexts/meta/foobar", tempDir), 0755); err != nil {
+		t.Fatalf("Failed to create context directory: %s", err)
+	}
+
+	// Test the function with a non-existent context
+	_, err := getContextHost("non-existent-context", tempDir)
+	if err == nil || err.Error() != "context 'non-existent-context' not found" {
+		t.Fatalf("Expected error 'context 'non-existent-context' not found', got: %v", err)
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -102,9 +101,12 @@ func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("One of id or name must be assigned")
 	}
 
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
-	network, err := client.NetworkInspect(ctx, name.(string), types.NetworkInspectOptions{})
+	network, err := client.NetworkInspect(ctx, name.(string), network.InspectOptions{})
 	if err != nil {
 		return diag.Errorf("Could not find docker network: %s", err)
 	}

@@ -4,7 +4,7 @@ page_title: "Resource docker_service - terraform-provider-docker"
 subcategory: ""
 description: |-
   This resource manages the lifecycle of a Docker service. By default, the creation, update and delete of services are detached.
-   With the Converge Config the behavior of the docker cli is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform terraform that a service could no be updated and was successfully rolled back.
+  With the Converge Config the behavior of the docker cli is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform terraform that a service could no be updated and was successfully rolled back.
 ---
 <!-- Bug: Type and Name are switched -->
 # Resource (docker_service)
@@ -361,13 +361,15 @@ Required:
 Optional:
 
 - `args` (List of String) Arguments to the command
+- `cap_add` (List of String) List of Linux capabilities to add to the container
+- `cap_drop` (List of String) List of Linux capabilities to drop from the container
 - `command` (List of String) The command/entrypoint to be run in the image. According to the [docker cli](https://github.com/docker/cli/blob/v20.10.7/cli/command/service/opts.go#L705) the override of the entrypoint is also passed to the `command` property and there is no `entrypoint` attribute in the `ContainerSpec` of the service.
 - `configs` (Block Set) References to zero or more configs that will be exposed to the service (see [below for nested schema](#nestedblock--task_spec--container_spec--configs))
 - `dir` (String) The working directory for commands to run in
 - `dns_config` (Block List, Max: 1) Specification for DNS related configurations in resolver configuration file (`resolv.conf`) (see [below for nested schema](#nestedblock--task_spec--container_spec--dns_config))
 - `env` (Map of String) A list of environment variables in the form VAR="value"
 - `groups` (List of String) A list of additional groups that the container process will run as
-- `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--task_spec--container_spec--healthcheck))
+- `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile. (see [below for nested schema](#nestedblock--task_spec--container_spec--healthcheck))
 - `hostname` (String) The hostname to use for the container, as a valid RFC 1123 hostname
 - `hosts` (Block Set) A list of hostname/IP mappings to add to the container's hosts file (see [below for nested schema](#nestedblock--task_spec--container_spec--hosts))
 - `isolation` (String) Isolation technology of the containers running the service. (Windows only). Defaults to `default`.
@@ -413,15 +415,12 @@ Optional:
 <a id="nestedblock--task_spec--container_spec--healthcheck"></a>
 ### Nested Schema for `task_spec.container_spec.healthcheck`
 
-Required:
-
-- `test` (List of String) The test to perform as list
-
 Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
+- `test` (List of String) The test to perform as list
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
 
@@ -559,14 +558,12 @@ Optional:
 <a id="nestedblock--task_spec--networks_advanced"></a>
 ### Nested Schema for `task_spec.networks_advanced`
 
-Required:
-
-- `name` (String) The name/id of the network.
-
 Optional:
 
 - `aliases` (Set of String) The network aliases of the container in the specific network.
 - `driver_opts` (Set of String) An array of driver options for the network, e.g. `opts1=value`
+- `id` (String) The id of the docker network to use. Please use `docker_network.id`. Using the name attribute of the docker network will lead to constant replacements.
+- `name` (String, Deprecated) Deprecated attribute. The name/id of the docker network. Conflicts with `id` attribute.
 
 
 <a id="nestedblock--task_spec--placement"></a>

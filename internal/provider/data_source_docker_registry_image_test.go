@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"testing"
@@ -21,9 +21,24 @@ func TestAccDockerRegistryImage_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"),
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"), "alpine:latest"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foo", "sha256_digest", registryDigestRegexp),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerRegistryImage_basicWithDigest(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"), "nginx:1.28.0@sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.docker_registry_image.foo", "sha256_digest", "sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
 				),
 			},
 		},
@@ -45,6 +60,26 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 	})
 }
 
+func TestAccDockerRegistryImage_WithoutDaemon(t *testing.T) {
+	registry := "127.0.0.1:15000"
+	image := "127.0.0.1:15000/tftest-service:v1"
+	ctx := context.Background()
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSource_WithoutDaemon"), registry, image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
+				),
+			},
+		},
+		CheckDestroy: func(state *terraform.State) error {
+			return checkAndRemoveImages(ctx, state)
+		},
+	})
+}
 func TestAccDockerRegistryImage_auth(t *testing.T) {
 	registry := "127.0.0.1:15000"
 	image := "127.0.0.1:15000/tftest-service:v1"
@@ -93,7 +128,7 @@ func TestGetDigestFromResponse(t *testing.T) {
 		Header: http.Header{
 			"Docker-Content-Digest": []string{headerContent},
 		},
-		Body: ioutil.NopCloser(bytes.NewReader([]byte("foo"))),
+		Body: io.NopCloser(bytes.NewReader([]byte("foo"))),
 	}
 
 	if digest, _ := getDigestFromResponse(respWithHeaders); digest != headerContent {
@@ -103,7 +138,7 @@ func TestGetDigestFromResponse(t *testing.T) {
 	bodyDigest := "sha256:fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"
 	respWithoutHeaders := &http.Response{
 		Header: make(http.Header),
-		Body:   ioutil.NopCloser(bytes.NewReader([]byte("bar"))),
+		Body:   io.NopCloser(bytes.NewReader([]byte("bar"))),
 	}
 
 	if digest, _ := getDigestFromResponse(respWithoutHeaders); digest != bodyDigest {

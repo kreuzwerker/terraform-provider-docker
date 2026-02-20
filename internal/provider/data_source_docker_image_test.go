@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -166,7 +166,10 @@ func pullImageForTest(t *testing.T, imageName string) {
 }
 
 func removeImageForTest(ctx context.Context, s *terraform.State, imageName string) error {
-	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create Docker client: %w", err)
+	}
 
 	// for images with tag and digest like e.g.
 	// 'nginx:1.19.1@sha256:36b74457bccb56fbf8b05f79c85569501b721d4db813b684391d63e02287c0b2'
@@ -180,7 +183,7 @@ func removeImageForTest(ctx context.Context, s *terraform.State, imageName strin
 
 	filters := filters.NewArgs()
 	filters.Add("reference", imageName)
-	images, err := client.ImageList(ctx, types.ImageListOptions{
+	images, err := client.ImageList(ctx, image.ListOptions{
 		Filters: filters,
 	})
 	if err != nil {
@@ -190,12 +193,12 @@ func removeImageForTest(ctx context.Context, s *terraform.State, imageName strin
 		return fmt.Errorf("did not find any image with name '%s' to delete", imageName)
 	}
 
-	for _, image := range images {
-		_, err := client.ImageRemove(ctx, image.ID, types.ImageRemoveOptions{
+	for _, currentImage := range images {
+		_, err := client.ImageRemove(ctx, currentImage.ID, image.RemoveOptions{
 			Force: true,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to remove image with ID '%s'", image.ID)
+			return fmt.Errorf("failed to remove image with ID '%s'", currentImage.ID)
 		}
 	}
 

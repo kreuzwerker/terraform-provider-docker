@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDockerVolume_basic(t *testing.T) {
-	var v types.Volume
+	var v volume.Volume
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -39,7 +39,7 @@ func TestAccDockerVolume_basic(t *testing.T) {
 }
 
 func TestAccDockerVolume_full(t *testing.T) {
-	var v types.Volume
+	var v volume.Volume
 
 	testCheckVolumeInspect := func(*terraform.State) error {
 		if v.Driver != "local" {
@@ -88,7 +88,7 @@ func TestAccDockerVolume_full(t *testing.T) {
 }
 
 func TestAccDockerVolume_labels(t *testing.T) {
-	var v types.Volume
+	var v volume.Volume
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -127,7 +127,53 @@ func TestAccDockerVolume_labels(t *testing.T) {
 	})
 }
 
-func checkDockerVolumeCreated(n string, volume *types.Volume) resource.TestCheckFunc {
+func TestAccDockerVolume_RecreateAfterManualDelete(t *testing.T) {
+	var v volume.Volume
+
+	resourceName := "docker_volume.foo"
+	volumeName := "testAccDockerVolume_manual_delete"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "docker_volume" "foo" {
+						name = "%s"
+					}
+				`, volumeName),
+				Check: resource.ComposeTestCheckFunc(
+					checkDockerVolumeCreated(resourceName, &v),
+					resource.TestCheckResourceAttr(resourceName, "id", volumeName),
+				),
+			},
+			{
+				// Simulate manual deletion of the Docker volume
+				PreConfig: func() {
+					ctx := context.Background()
+					client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+					if err != nil {
+						t.Fatalf("failed to create Docker client: %v", err)
+					}
+					err = client.VolumeRemove(ctx, volumeName, true)
+					if err != nil {
+						t.Fatalf("failed to manually remove docker volume: %v", err)
+					}
+				},
+				Config: fmt.Sprintf(`
+					resource "docker_volume" "foo" {
+						name = "%s"
+					}
+				`, volumeName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func checkDockerVolumeCreated(n string, volumeToCheck *volume.Volume) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -139,14 +185,47 @@ func checkDockerVolumeCreated(n string, volume *types.Volume) resource.TestCheck
 		}
 
 		ctx := context.Background()
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		*volume = v
+		*volumeToCheck = v
 
 		return nil
 	}
+}
+
+func TestAccDockerVolume_cluster(t *testing.T) {
+	var v volume.Volume
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_volume", "testAccDockerVolumeCluster"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_cluster"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "name", "testAccDockerVolume_cluster"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.scope", "multi"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.required_bytes", "1MiB"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.limit_bytes", "2MiB"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.sharing", "all"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.group", "testgroup"),
+					checkDockerVolumeCreated("docker_volume.foo", &v),
+					// testCheckVolumeInspect,
+				),
+			},
+			{
+				ResourceName:      "docker_volume.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }

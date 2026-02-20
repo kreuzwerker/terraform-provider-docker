@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -176,6 +177,12 @@ func flattenContainerSpec(in *swarm.ContainerSpec) []interface{} {
 	}
 	if len(in.Sysctls) > 0 {
 		m["sysctl"] = in.Sysctls
+	}
+	if len(in.CapabilityAdd) > 0 {
+		m["cap_add"] = in.CapabilityAdd
+	}
+	if len(in.CapabilityDrop) > 0 {
+		m["cap_drop"] = in.CapabilityDrop
 	}
 	out = append(out, m)
 	return out
@@ -509,7 +516,7 @@ func flattenTaskNetworksAdvanced(in []swarm.NetworkAttachmentConfig) *schema.Set
 	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
-		m["name"] = v.Target
+		m["id"] = v.Target
 		m["driver_opts"] = stringSliceToSchemaSet(mapTypeMapValsToStringSlice(mapStringStringToMapStringInterface(v.DriverOpts)))
 		if len(v.Aliases) > 0 {
 			m["aliases"] = stringSliceToSchemaSet(v.Aliases)
@@ -948,6 +955,18 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 			if value, ok := rawContainerSpec["sysctl"]; ok {
 				containerSpec.Sysctls = mapTypeMapValsToString(value.(map[string]interface{}))
 			}
+			if value, ok := rawContainerSpec["cap_add"]; ok {
+				for _, cap := range value.([]interface{}) {
+					containerSpec.CapabilityAdd = append(containerSpec.CapabilityAdd, cap.(string))
+				}
+			}
+
+			if value, ok := rawContainerSpec["cap_drop"]; ok {
+				for _, cap := range value.([]interface{}) {
+					containerSpec.CapabilityDrop = append(containerSpec.CapabilityDrop, cap.(string))
+				}
+			}
+
 		}
 	}
 
@@ -1094,7 +1113,14 @@ func createServiceAdvancedNetworks(v interface{}) ([]swarm.NetworkAttachmentConf
 	if len(v.(*schema.Set).List()) > 0 {
 		for _, rawNetwork := range v.(*schema.Set).List() {
 			rawNetwork := rawNetwork.(map[string]interface{})
-			networkID := rawNetwork["name"].(string)
+			networkID := ""
+			if id, ok := rawNetwork["id"]; ok && id.(string) != "" {
+				networkID = id.(string)
+			} else if name, ok := rawNetwork["name"]; ok && name.(string) != "" {
+				networkID = name.(string)
+			} else {
+				return networks, fmt.Errorf("network 'name' or 'id' must be specified")
+			}
 			networkAliases := stringSetToStringSlice(rawNetwork["aliases"].(*schema.Set))
 			network := swarm.NetworkAttachmentConfig{
 				Target:  networkID,
