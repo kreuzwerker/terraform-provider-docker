@@ -455,5 +455,17 @@ var buildSchema = &schema.Resource{
 			Optional:    true,
 			ForceNew:    true,
 		},
+		"provenance": {
+			Type:        schema.TypeString,
+			Description: "Set provenance attestation for the build. BuildKit v0.11+ adds provenance attestations by default, which creates OCI image manifests that some registries (like AWS Lambda) don't support. Set to `false` to disable. Valid values: `false`, `true`, `min`, `max`, `mode=min`, `mode=max`, or a full provenance specification. Only available when using a buildx builder.",
+			Optional:    true,
+			ForceNew:    true,
+		},
+		"sbom": {
+			Type:        schema.TypeString,
+			Description: "Set SBOM (Software Bill of Materials) attestation for the build. Set to `false` to disable. Valid values: `false`, `true`, or a full SBOM specification. Only available when using a buildx builder.",
+			Optional:    true,
+			ForceNew:    true,
+		},
 	},
 }

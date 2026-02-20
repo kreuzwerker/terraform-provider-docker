@@ -377,6 +377,14 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, im
 		options.platforms = append(options.platforms, platform)
 	}
 
+	if provenance, ok := buildAttributes["provenance"].(string); ok && len(provenance) > 0 {
+		options.provenance = provenance
+	}
+
+	if sbom, ok := buildAttributes["sbom"].(string); ok && len(sbom) > 0 {
+		options.sbom = sbom
+	}
+
 	return options, nil
 }
 
