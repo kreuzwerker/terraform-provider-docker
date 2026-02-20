@@ -797,12 +797,12 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 
 		// we directly exec the container and print the creation timestamp
 		// which is easier to use the native docker sdk, by creating, running and attaching a reader to the command.
-		execReponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
+		execResponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
 		if err != nil {
 			return fmt.Errorf("Unable to exec command: %s", err)
 		}
 
-		fileCreationTime, err := time.Parse("2006-01-02", string(execReponse))
+		fileCreationTime, err := time.Parse("2006-01-02", string(execResponse))
 		if err != nil {
 			return fmt.Errorf("Unable to parse file creation time into format: %s", err)
 		}

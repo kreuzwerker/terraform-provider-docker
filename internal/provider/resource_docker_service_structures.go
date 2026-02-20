@@ -1053,7 +1053,7 @@ func createGenericResources(value interface{}) ([]swarm.GenericResource, error) 
 	return genericResources, nil
 }
 
-// createRestartPolicy creates the restart poliyc of the service
+// createRestartPolicy creates the restart policy of the service
 func createRestartPolicy(v interface{}) (*swarm.RestartPolicy, error) {
 	restartPolicy := swarm.RestartPolicy{}
 	rawRestartPolicySingleItem := v.([]interface{})
@@ -1107,7 +1107,7 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 	return &placement, nil
 }
 
-// createServiceAdvancedNetworks creates the networks the service will be attachted to
+// createServiceAdvancedNetworks creates the networks the service will be attached to
 func createServiceAdvancedNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
 	networks := []swarm.NetworkAttachmentConfig{}
 	if len(v.(*schema.Set).List()) > 0 {

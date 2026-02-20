@@ -3,8 +3,15 @@ package provider
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerContainerCreateDefaultTimeout = 20 * time.Minute
+	dockerContainerUpdateDefaultTimeout = 20 * time.Minute
+	dockerContainerDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerContainer() *schema.Resource {
@@ -20,12 +27,17 @@ func resourceDockerContainer() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerContainerCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerContainerUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerContainerDeleteDefaultTimeout),
+		},
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
 				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					// TODO do the ohter V0-to-V1 migration, unless we're okay
+					// TODO do the other V0-to-V1 migration, unless we're okay
 					// with breaking for users who straggled on their docker
 					// provider version
 
@@ -168,7 +180,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"user": {
 				Type:        schema.TypeString,
-				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.",
+				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -249,7 +261,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"capabilities": {
 				Type:        schema.TypeSet,
-				Description: "Add or drop certrain linux capabilities.",
+				Description: "Add or drop certain linux capabilities.",
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,

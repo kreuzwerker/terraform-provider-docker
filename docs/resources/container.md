@@ -36,7 +36,7 @@ resource "docker_image" "ubuntu" {
 ### Optional
 
 - `attach` (Boolean) If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.
-- `capabilities` (Block Set, Max: 1) Add or drop certrain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
+- `capabilities` (Block Set, Max: 1) Add or drop certain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
 - `cgroup_parent` (String) Optional parent cgroup for the container
 - `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
 - `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.conf"]`.
@@ -90,11 +90,12 @@ resource "docker_image" "ubuntu" {
 - `stop_timeout` (Number) Timeout (in seconds) to stop a container.
 - `storage_opts` (Map of String) Key/value pairs for the storage driver options, e.g. `size`: `120G`
 - `sysctls` (Map of String) A map of kernel parameters (sysctls) to set in the container.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `tmpfs` (Map of String) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
 - `tty` (Boolean) If `true`, allocate a pseudo-tty (`docker run -t`). Defaults to `false`.
 - `ulimit` (Block Set) Ulimit options to add. (see [below for nested schema](#nestedblock--ulimit))
 - `upload` (Block Set) Specifies files to upload to the container before starting it. Only one of `content` or `content_base64` can be set and at least one of them has to be set. (see [below for nested schema](#nestedblock--upload))
-- `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
+- `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
 - `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.
@@ -247,6 +248,16 @@ Optional:
 - `external` (Number) Port exposed out of the container. If not given a free random port `>= 32768` will be used.
 - `ip` (String) IP address/mask that can access this port. Defaults to `0.0.0.0`.
 - `protocol` (String) Protocol that can be used over this port. Defaults to `tcp`.
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 
 <a id="nestedblock--ulimit"></a>
