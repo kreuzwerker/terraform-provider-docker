@@ -357,7 +357,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			log.Println("[DEBUG] Parsing file for registry auths:", filePath)
 
 			// We manually expand the path and do not use the 'pathexpand' interpolation function
-			// because in the default of this varable we refer to '~/.docker/config.json'
+			// because in the default of this variable we refer to '~/.docker/config.json'
 			if strings.HasPrefix(filePath, "~/") {
 				usr, err := user.Current()
 				if err != nil {

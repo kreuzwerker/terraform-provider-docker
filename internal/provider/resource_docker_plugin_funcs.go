@@ -216,7 +216,7 @@ func pluginSet(ctx context.Context, d *schema.ResourceData, cl *client.Client) e
 	// path of devices .Settings.Devices
 	// args .Settings.Args
 	if err := cl.PluginSet(ctx, pluginID, getDockerPluginEnv(d.Get("env"))); err != nil {
-		return fmt.Errorf("modifiy settings for the Docker plugin "+pluginID+": %w", err)
+		return fmt.Errorf("modify settings for the Docker plugin "+pluginID+": %w", err)
 	}
 	return nil
 }

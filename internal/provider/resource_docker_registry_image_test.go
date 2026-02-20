@@ -48,7 +48,7 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 			},
 		},
 		// as the providerConfig obtained from testAccProvider.Meta().(*ProviderConfig)
-		// is empty after the test the credetials are passed here manually
+		// is empty after the test the credentials are passed here manually
 		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
 	})
 }
@@ -69,7 +69,7 @@ func TestAccDockerRegistryImageResource_directBuildAndKeep(t *testing.T) {
 			},
 		},
 		// as the providerConfig obtained from testAccProvider.Meta().(*ProviderConfig)
-		// is empty after the test the credetials are passed here manually
+		// is empty after the test the credentials are passed here manually
 		CheckDestroy: testDockerRegistryImageInRegistry("testuser", "testpwd", pushOptions, true),
 	})
 }

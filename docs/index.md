@@ -57,7 +57,7 @@ provider "docker" {
 }
 ```
 
-When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by appling log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
+When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by applying log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
 
 ## Disabling Docker Daemon Checking
 
@@ -110,7 +110,7 @@ When passing in a config file either the corresponding `auth` string of the repo
 used to retrieve the authentication credentials.
 
 -> **Note**
-`config_file` has predence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
+`config_file` has precedence over all other options. You can theoretically specify values for every attribute but the credentials obtained through the `config_file` will override the manually set `username`/`password`
 
 You can still use the environment variables `DOCKER_REGISTRY_USER` and `DOCKER_REGISTRY_PASS`.
 
