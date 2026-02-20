@@ -96,7 +96,7 @@ func (p *frameworkProvider) Schema(ctx context.Context, req provider.SchemaReque
 							Sensitive:           true,
 						},
 						"config_file": schema.StringAttribute{
-							MarkdownDescription: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
+							MarkdownDescription: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` env variable is set, the value of `DOCKER_CONFIG` is used as the path. `DOCKER_CONFIG` can be set to a directory (as per Docker CLI) or a file path directly. `config_file` has precedence over all other options.",
 							Optional:            true,
 						},
 						"config_file_content": schema.StringAttribute{
