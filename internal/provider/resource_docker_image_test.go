@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -831,4 +832,122 @@ func TestAccDockerImage_buildTimeout(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestResolveDockerfilePath tests the path resolution logic for dockerfiles
+func TestResolveDockerfilePath(t *testing.T) {
+	// Create a temporary directory structure for testing
+	tmpDir, err := os.MkdirTemp("", "terraform-docker-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	log.Printf("[DEBUG] working dir %s", tmpDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Fatalf("Failed to cleanup temp dir %s: %v", tmpDir, err)
+		}
+	})
+
+	// Create test structure:
+	// tmpDir/
+	//   context/
+	//		 files/
+	//		 		testfile.txt
+	//     Dockerfile
+	//     subdir/
+	//       Dockerfile.sub
+	//   outside/
+	//     Dockerfile.outside
+
+	contextDir := filepath.Join(tmpDir, "context")
+	filesDir := filepath.Join(contextDir, "files")
+	subDir := filepath.Join(contextDir, "subdir")
+	outsideDir := filepath.Join(tmpDir, "outside")
+
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatalf("Failed to create subdir: %v", err)
+	}
+	if err := os.MkdirAll(outsideDir, 0755); err != nil {
+		t.Fatalf("Failed to create outside dir: %v", err)
+	}
+	if err := os.MkdirAll(filesDir, 0755); err != nil {
+		t.Fatalf("Failed to create files dir: %v", err)
+	}
+
+	// Create test dockerfiles
+	testFiles := map[string]string{
+		filepath.Join(contextDir, "Dockerfile"):         "FROM alpine:latest\nCOPY files/testfile.txt /testfile.txt\n",
+		filepath.Join(subDir, "Dockerfile.sub"):         "FROM alpine:latest\n",
+		filepath.Join(outsideDir, "Dockerfile.outside"): "FROM alpine:latest\n",
+		filepath.Join(filesDir, "testfile.txt"):         "This is a test file\n",
+	}
+
+	for path, content := range testFiles {
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", path, err)
+		}
+	}
+
+	tests := []struct {
+		name       string
+		context    string
+		dockerfile string
+	}{
+		{
+			name:       "dockerfile in context root - relative path, context is absolute",
+			context:    contextDir,
+			dockerfile: "Dockerfile",
+		},
+		{
+			name:       "dockerfile in context root - absolute path",
+			context:    contextDir,
+			dockerfile: filepath.Join(contextDir, "Dockerfile"),
+		},
+		{
+			name:       "dockerfile in subdirectory - relative path",
+			context:    contextDir,
+			dockerfile: "subdir/Dockerfile.sub",
+		},
+		{
+			name:       "dockerfile in subdirectory - absolute path",
+			context:    contextDir,
+			dockerfile: filepath.Join(subDir, "Dockerfile.sub"),
+		},
+		{
+			name:       "dockerfile outside context - absolute path",
+			context:    contextDir,
+			dockerfile: filepath.Join(outsideDir, "Dockerfile.outside"),
+		},
+		{
+			name:       "dockerfile outside context - relative path with parent",
+			context:    contextDir,
+			dockerfile: "../outside/Dockerfile.outside",
+		},
+		// {
+		// 	name:               "non-existent dockerfile",
+		// 	context:            contextDir,
+		// 	dockerfile:         "does-not-exist"
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			resource.Test(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: providerFactories,
+				CheckDestroy: func(state *terraform.State) error {
+					return testAccDockerImageDestroy(ctx, state)
+				},
+				Steps: []resource.TestStep{
+					{
+						Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageDockerfileInsideContext"), tt.context, tt.dockerfile),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestMatchResourceAttr("docker_image.backend", "name", regexp.MustCompile(`\Aempty:latest\z`)),
+						),
+					},
+				},
+			})
+		})
+	}
 }
