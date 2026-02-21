@@ -105,6 +105,7 @@ Optional:
 - `tag` (List of String) Name and optionally a tag in the 'name:tag' format
 - `target` (String) Set the target build stage to build
 - `ulimit` (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
+- `use_legacy_builder` (Boolean) Force using the legacy Docker builder for image builds, even if buildx/buildkit would be available.
 - `version` (String) Version of the underlying builder to use
 
 <a id="nestedblock--build--auth_config"></a>

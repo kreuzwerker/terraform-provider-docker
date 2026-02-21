@@ -91,7 +91,14 @@ jobs:
           else:
             provider_bases = set()
             other_go_change = False
+            buildx_build_changed = False
             for f in go_files:
+              # This file doesn't follow the resource/data_source naming convention,
+              # but changes here affect image build/push behaviors.
+              if f.endswith('docker_buildx_build.go'):
+                buildx_build_changed = True
+                continue
+
               base = base_type_from_provider_file(f)
               if base:
                 provider_bases.add(base)
@@ -120,6 +127,14 @@ jobs:
               should_run = True
             else:
               selected = sorted({test_prefix_for_base(b) for b in provider_bases})
+
+              # docker_buildx_build.go impacts both image-related and registry image flows.
+              if buildx_build_changed:
+                selected = sorted(set(selected) | {
+                  'TestAccDockerImage',
+                  'TestAccDockerRegistryImage',
+                })
+
               should_run = True
 
               # Drop prefixes that don't match any tests in this repo.

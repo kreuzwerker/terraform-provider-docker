@@ -57,10 +57,15 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 
 func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client, imageName string) (bool, diag.Diagnostics) {
 	rawBuildValue := rawBuild.(map[string]interface{})
+	useLegacyBuilder, _ := rawBuildValue["use_legacy_builder"].(bool)
 	// now we need to determine whether we can use buildx or need to use the legacy builder
 	canUseBuildx, err := canUseBuildx(ctx, client)
 	if err != nil {
 		return true, diag.FromErr(err)
+	}
+	if useLegacyBuilder {
+		log.Printf("[DEBUG] use_legacy_builder=true, forcing legacy builder")
+		canUseBuildx = false
 	}
 
 	log.Printf("[DEBUG] canUseBuildx: %v", canUseBuildx)

@@ -86,7 +86,11 @@ resource "docker_image" "zoo" {
 
 -> **Note**: The buildx feature is currently in preview and may have some quirks. Known issues: Setting `ulimits` will not work.
 
-If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
+If buildx is available, the provider will use it by default.
+
+To force the legacy builder, set `use_legacy_builder = true` in the `build` block.
+
+To select a specific buildx builder, set the `builder` argument (for the default buildx builder, use `default`). For a custom buildx builder, set `builder` to the builder name (see `docker buildx ls`).
 
 The single platform build result is automatically loaded to `docker images`.
 
@@ -159,6 +163,7 @@ Optional:
 - `tag` (List of String) Name and optionally a tag in the 'name:tag' format
 - `target` (String) Set the target build stage to build
 - `ulimit` (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
+- `use_legacy_builder` (Boolean) Force using the legacy Docker builder for image builds, even if buildx/buildkit would be available.
 - `version` (String) Version of the underlying builder to use
 
 <a id="nestedblock--build--auth_config"></a>
