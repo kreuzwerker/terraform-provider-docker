@@ -4,11 +4,17 @@ on:
     branches:
       - master
       - "release/**"
+    paths:
+      - '**.go'
+      - go.mod
+      - go.sum
+      - '.github/workflows/**'
   pull_request:
     types: ['opened', 'synchronize']
     paths:
       - '**.go'
       - go.mod
+      - go.sum
       - '.github/workflows/**'
 
 env:
@@ -18,34 +24,183 @@ env:
   TESTSUITE_TIMEOUT: "720s"
 
 jobs:
+  detect:
+    name: Detect acc-test matrix
+    runs-on: ubuntu-22.04
+    outputs:
+      should_run: ${{ steps.compute.outputs.should_run }}
+      matrix: ${{ steps.compute.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        id: changed
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a
+        with:
+          separator: "\n"
+
+      - name: Compute matrix
+        id: compute
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.all_changed_files }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          files = []
+          for f in os.environ.get('CHANGED_FILES', '').splitlines():
+            f = f.strip()
+            if not f:
+              continue
+            if f.startswith('./'):
+              f = f[2:]
+            files.append(f)
+
+          def snake_to_camel(s: str) -> str:
+            return ''.join(part[:1].upper() + part[1:] for part in s.split('_') if part)
+
+          # Files like:
+          # - internal/provider/resource_docker_container.go
+          # - internal/provider/resource_docker_container_funcs.go
+          # - internal/provider/data_source_docker_logs_test.go
+          # should map to base names like "container", "logs", "registry_image".
+          stop_suffixes = {"funcs", "migrators", "structures", "test"}
+          def base_type_from_provider_file(path: str) -> str | None:
+            m = re.match(r'^internal/provider/(resource|data_source)_docker_(.+)\.go$', path)
+            if not m:
+              return None
+            raw = m.group(2)
+            parts = raw.split('_')
+            while parts and parts[-1] in stop_suffixes:
+              parts.pop()
+            return '_'.join(parts) if parts else None
+
+          special_test_prefix = {
+            # Historical naming mismatch: manifests tests are named "RegistryMultiarchImageDataSource".
+            'registry_image_manifests': 'TestAccDockerRegistryMultiarchImageDataSource',
+          }
+
+          def test_prefix_for_base(base: str) -> str:
+            if base in special_test_prefix:
+              return special_test_prefix[base]
+            return 'TestAccDocker' + snake_to_camel(base)
+
+          go_mod_changed = any(f in {'go.mod', 'go.sum'} for f in files)
+          workflow_changed = any(
+            f.startswith('.github/workflows/') or f.startswith('github/workflows/')
+            for f in files
+          )
+          go_files = [f for f in files if f.endswith('.go')]
+
+          if not go_files and not go_mod_changed and not workflow_changed:
+            should_run = False
+            selected = []
+          else:
+            provider_bases = set()
+            other_go_change = False
+            buildx_build_changed = False
+            for f in go_files:
+              # This file doesn't follow the resource/data_source naming convention,
+              # but changes here affect image build/push behaviors.
+              if f.endswith('docker_buildx_build.go'):
+                buildx_build_changed = True
+                continue
+
+              base = base_type_from_provider_file(f)
+              if base:
+                provider_bases.add(base)
+              else:
+                other_go_change = True
+
+            full_matrix_prefixes = [
+              'TestAccDockerBuildxBuilder',
+              'TestAccDockerConfig',
+              'TestAccDockerContainer',
+              'TestAccDockerImage',
+              'TestAccDockerLogs',
+              'TestAccDockerNetwork',
+              'TestAccDockerPlugin',
+              'TestAccDockerProvider',
+              'TestAccDockerRegistryImage',
+              'TestAccDockerRegistryMultiarchImageDataSource',
+              'TestAccDockerSecret',
+              'TestAccDockerService',
+              'TestAccDockerTag',
+              'TestAccDockerVolume',
+            ]
+
+            if workflow_changed or other_go_change or go_mod_changed:
+              selected = full_matrix_prefixes
+              should_run = True
+            else:
+              selected = sorted({test_prefix_for_base(b) for b in provider_bases})
+
+              # docker_buildx_build.go impacts both image-related and registry image flows.
+              if buildx_build_changed:
+                selected = sorted(set(selected) | {
+                  'TestAccDockerImage',
+                  'TestAccDockerRegistryImage',
+                })
+
+              should_run = True
+
+              # Drop prefixes that don't match any tests in this repo.
+              # (e.g., data sources without acceptance tests yet)
+              test_files = list(Path('internal/provider').rglob('*_test.go'))
+              test_text = ''
+              for p in test_files:
+                try:
+                  test_text += p.read_text(encoding='utf-8', errors='ignore')
+                except Exception:
+                  pass
+              selected = [p for p in selected if f'func {p}' in test_text]
+
+              # If we couldn't map anything to existing acc tests, fall back to full suite.
+              if not selected:
+                selected = full_matrix_prefixes
+
+          registry_required = {
+            'TestAccDockerContainer',
+            'TestAccDockerImage',
+            'TestAccDockerRegistryImage',
+            'TestAccDockerRegistryMultiarchImageDataSource',
+            'TestAccDockerService',
+            'TestAccDockerProvider',
+          }
+          terraform_versions = ['1.8.x']
+
+          include = []
+          for tfv in terraform_versions:
+            for prefix in selected:
+              include.append({
+                'terraform_version': tfv,
+                'resource_type': prefix,
+                'registry': prefix in registry_required,
+              })
+
+          matrix = {'include': include}
+
+          github_output = os.environ.get('GITHUB_OUTPUT')
+          if not github_output:
+            raise SystemExit('GITHUB_OUTPUT is not set')
+          with open(github_output, 'a', encoding='utf-8') as fp:
+            fp.write(f"should_run={'true' if should_run else 'false'}\n")
+            fp.write(f"matrix={json.dumps(matrix)}\n")
+          PY
+
   acc-test:
+    needs: [detect]
+    if: ${{ needs.detect.outputs.should_run == 'true' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
-      matrix:
-        terraform_version:
-        - "1.8.x"
-        resource_type:
-        - "TestAccDockerConfig"
-        - "TestAccDockerContainer"
-        - "TestAccDockerImage"
-        - "TestAccDockerNetwork"
-        - "TestAccDockerPlugin"
-        - "TestAccDockerRegistryImage"
-        - "TestAccDockerSecret"
-        - "TestAccDockerService"
-        - "TestAccDockerVolume"
-        - "TestAccDockerTag"
-        include:
-          - resource_type: TestAccDockerImage
-            registry: true
-          - resource_type: TestAccDockerContainer
-            registry: true
-          - resource_type: TestAccDockerRegistryImage
-            registry: true
-          - resource_type: TestAccDockerService
-            registry: true
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v5

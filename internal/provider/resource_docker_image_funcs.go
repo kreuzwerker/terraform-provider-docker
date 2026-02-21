@@ -57,23 +57,27 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 
 func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client, imageName string) (bool, diag.Diagnostics) {
 	rawBuildValue := rawBuild.(map[string]interface{})
+	useLegacyBuilder, _ := rawBuildValue["use_legacy_builder"].(bool)
 	// now we need to determine whether we can use buildx or need to use the legacy builder
 	canUseBuildx, err := canUseBuildx(ctx, client)
 	if err != nil {
 		return true, diag.FromErr(err)
 	}
+	if useLegacyBuilder {
+		log.Printf("[DEBUG] use_legacy_builder=true, forcing legacy builder")
+		canUseBuildx = false
+	}
 
-	builder := rawBuildValue["builder"].(string)
-	log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
+	log.Printf("[DEBUG] canUseBuildx: %v", canUseBuildx)
 	// buildx is enabled
-	if canUseBuildx && builder != "" {
+	if canUseBuildx {
 		log.Printf("[DEBUG] Using buildx")
 		dockerCli, err := createAndInitDockerCli(client)
 		if err != nil {
 			return true, diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
 		}
 
-		options, err := mapBuildAttributesToBuildOptions(rawBuildValue, imageName)
+		options, err := mapBuildAttributesToBuildOptions(rawBuildValue, imageName, dockerCli)
 
 		if err != nil {
 			return true, diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))

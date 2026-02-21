@@ -11,8 +11,7 @@ func TestAccDockerLogsDataSource_basic(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:             loadTestConfiguration(t, DATA_SOURCE, "docker_logs", "testAccDockerLogsDataSourceBasic"),
-				ExpectNonEmptyPlan: true,
+				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_logs", "testAccDockerLogsDataSourceBasic"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_logs.logs_discard_headers_false", "logs_list_string.0", "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\fHello World"),
 					resource.TestCheckResourceAttr("data.docker_logs.logs_discard_headers_false", "logs_list_string.1", "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\fHello World"),

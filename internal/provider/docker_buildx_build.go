@@ -26,9 +26,12 @@ import (
 	controllererrors "github.com/docker/buildx/controller/errdefs"
 	controllerapi "github.com/docker/buildx/controller/pb"
 	"github.com/docker/buildx/monitor"
+	"github.com/docker/buildx/store"
+	"github.com/docker/buildx/store/storeutil"
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/desktop"
+	"github.com/docker/buildx/util/dockerutil"
 	"github.com/docker/buildx/util/ioset"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
@@ -101,6 +104,21 @@ type buildOptions struct {
 	control.ControlOptions
 
 	invokeConfig *invokeConfig
+}
+
+const (
+	SourceExplicit BuilderSource = "explicit"
+	SourceEnv      BuilderSource = "env:BUILDX_BUILDER"
+	SourceStore    BuilderSource = "buildx-store"
+	SourceContext  BuilderSource = "docker-context"
+)
+
+type BuilderSource string
+
+type ResolvedBuilder struct {
+	Name   string
+	Source BuilderSource
+	NG     *store.NodeGroup // may be a synthetic “context builder” nodegroup
 }
 
 func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error) {
@@ -213,7 +231,7 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 	return &opts, nil
 }
 
-func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, imageName string) (buildOptions, error) {
+func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, imageName string, dockerCli command.Cli) (buildOptions, error) {
 	options := buildOptions{}
 
 	contextPath := buildAttributes["context"].(string)
@@ -241,6 +259,13 @@ func mapBuildAttributesToBuildOptions(buildAttributes map[string]interface{}, im
 
 	if builder, ok := buildAttributes["builder"].(string); ok {
 		options.builder = builder
+	} else {
+		// if builder is not set, try to resolve default builder
+		resolvedBuilder, err := ResolveBuilderLikeBuildx(context.Background(), dockerCli, "")
+		if err != nil {
+			return options, fmt.Errorf("error resolving default builder: %w", err)
+		}
+		options.builder = resolvedBuilder.Name
 	}
 
 	if remove, ok := buildAttributes["remove"].(bool); ok {
@@ -421,6 +446,56 @@ func canUseBuildx(ctx context.Context, client *dockerclient.Client) (bool, error
 	}
 
 	return true, nil
+}
+
+// ResolveBuilderLikeBuildx picks the same builder buildx CLI would pick by default.
+func ResolveBuilderLikeBuildx(ctx context.Context, dockerCli command.Cli, explicitName string) (ResolvedBuilder, error) {
+	name := strings.TrimSpace(explicitName)
+	if name != "" {
+		return resolveByName(dockerCli, name, SourceExplicit)
+	}
+
+	if v := strings.TrimSpace(os.Getenv("BUILDX_BUILDER")); v != "" {
+		return resolveByName(dockerCli, v, SourceEnv)
+	}
+
+	txn, release, err := storeutil.GetStore(dockerCli)
+	if err != nil {
+		return ResolvedBuilder{}, err
+	}
+	defer release()
+
+	// Ask the store for “current/default” for the active endpoint key.
+	epKey, err := dockerutil.GetCurrentEndpoint(dockerCli)
+	if err != nil {
+		return ResolvedBuilder{}, err
+	}
+	if ng, err := txn.Current(epKey); err != nil {
+		return ResolvedBuilder{}, err
+	} else if ng != nil {
+		return ResolvedBuilder{Name: ng.Name, Source: SourceStore, NG: ng}, nil
+	}
+
+	// Fallback: implicit context builder (current context name).
+	ng, err := storeutil.GetNodeGroup(txn, dockerCli, dockerCli.CurrentContext())
+	if err != nil {
+		return ResolvedBuilder{}, err
+	}
+	return ResolvedBuilder{Name: ng.Name, Source: SourceContext, NG: ng}, nil
+}
+
+func resolveByName(dockerCli command.Cli, name string, src BuilderSource) (ResolvedBuilder, error) {
+	txn, release, err := storeutil.GetStore(dockerCli)
+	if err != nil {
+		return ResolvedBuilder{}, err
+	}
+	defer release()
+
+	ng, err := storeutil.GetNodeGroup(txn, dockerCli, name)
+	if err != nil {
+		return ResolvedBuilder{}, err
+	}
+	return ResolvedBuilder{Name: ng.Name, Source: src, NG: ng}, nil
 }
 
 func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, buildLogFile string) (err error) {

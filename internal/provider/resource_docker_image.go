@@ -443,11 +443,19 @@ var buildSchema = &schema.Resource{
 			Optional:    true,
 			ForceNew:    true,
 		},
+		"use_legacy_builder": {
+			Type:        schema.TypeBool,
+			Description: "Force using the legacy Docker builder for image builds, even if buildx/buildkit would be available.",
+			Optional:    true,
+			Default:     false,
+			ForceNew:    true,
+		},
 		"builder": {
 			Type:        schema.TypeString,
-			Description: "Set the name of the buildx builder to use. If not set, the legacy builder is used.",
+			Description: "The name of the buildx builder to use. If BUILDX_BUILDER environment variable is set, it will be used. If left empty, the provider tries to resolve to the default builder - which might not always work. If you are in Windows, the legacy builder is used.",
 			Optional:    true,
 			ForceNew:    true,
+			DefaultFunc: schema.EnvDefaultFunc("BUILDX_BUILDER", ""),
 		},
 		"build_log_file": {
 			Type:        schema.TypeString,
