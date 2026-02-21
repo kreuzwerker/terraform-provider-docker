@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -76,6 +77,54 @@ func flattenContainerNetworks(in *container.NetworkSettings) []interface{} {
 		out = append(out, m)
 	}
 	return out
+}
+
+func flattenContainerNetworksAdvanced(in map[string]*network.EndpointSettings) *schema.Set {
+	out := make([]interface{}, 0)
+	if len(in) == 0 {
+		return schema.NewSet(schema.HashString, make([]interface{}, 0))
+	}
+
+	for networkName, endpoint := range in {
+		m := make(map[string]interface{})
+		if endpoint != nil && endpoint.NetworkID != "" {
+			m["name"] = endpoint.NetworkID
+		} else {
+			m["name"] = networkName
+		}
+
+		if endpoint != nil {
+			if len(endpoint.Aliases) > 0 {
+				m["aliases"] = stringSliceToSchemaSet(endpoint.Aliases)
+			}
+			if endpoint.IPAMConfig != nil {
+				if endpoint.IPAMConfig.IPv4Address != "" {
+					m["ipv4_address"] = endpoint.IPAMConfig.IPv4Address
+				}
+				if endpoint.IPAMConfig.IPv6Address != "" {
+					m["ipv6_address"] = endpoint.IPAMConfig.IPv6Address
+				}
+				if len(endpoint.IPAMConfig.LinkLocalIPs) > 0 {
+					m["link_local_ips"] = stringSliceToSchemaSet(endpoint.IPAMConfig.LinkLocalIPs)
+				}
+			}
+			if endpoint.MacAddress != "" {
+				m["mac_address"] = endpoint.MacAddress
+			}
+			if len(endpoint.DriverOpts) > 0 {
+				m["driver_opts"] = stringSliceToSchemaSet(mapTypeMapValsToStringSlice(mapStringStringToMapStringInterface(endpoint.DriverOpts)))
+			}
+			if endpoint.GwPriority != 0 {
+				m["gw_priority"] = endpoint.GwPriority
+			}
+		}
+
+		out = append(out, m)
+	}
+
+	networksAdvancedResource := resourceDockerContainer().Schema["networks_advanced"].Elem.(*schema.Resource)
+	f := schema.HashResource(networksAdvancedResource)
+	return schema.NewSet(f, out)
 }
 
 func stringListToStringSlice(stringList []interface{}) []string {

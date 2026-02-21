@@ -454,10 +454,19 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			if v, ok := rawNetwork.(map[string]interface{})["ipv6_address"]; ok {
 				endpointIPAMConfig.IPv6Address = v.(string)
 			}
+			if v, ok := rawNetwork.(map[string]interface{})["link_local_ips"]; ok {
+				endpointIPAMConfig.LinkLocalIPs = stringSetToStringSlice(v.(*schema.Set))
+			}
 			endpointConfig.IPAMConfig = endpointIPAMConfig
 
 			if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok {
 				endpointConfig.MacAddress = v.(string)
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["driver_opts"]; ok {
+				endpointConfig.DriverOpts = stringSetToMapStringString(v.(*schema.Set))
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["gw_priority"]; ok {
+				endpointConfig.GwPriority = v.(int)
 			}
 
 			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
@@ -698,6 +707,17 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// Read Network Settings
 	if container.NetworkSettings != nil {
 		d.Set("bridge", container.NetworkSettings.Bridge)
+		// Best-effort support for `terraform import`: only set `networks_advanced` when
+		// it is currently empty, to avoid introducing drift for normal managed resources.
+		if currentNetworksAdvanced, ok := d.GetOk("networks_advanced"); ok {
+			if set, ok := currentNetworksAdvanced.(*schema.Set); ok && set.Len() == 0 {
+				if container.NetworkSettings.Networks != nil {
+					if err := d.Set("networks_advanced", flattenContainerNetworksAdvanced(container.NetworkSettings.Networks)); err != nil {
+						log.Printf("[WARN] failed to set networks_advanced from API: %s", err)
+					}
+				}
+			}
+		}
 		// if the container exited, NetworkSettings.Ports is nil
 		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
 		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77

@@ -72,7 +72,7 @@ resource "docker_image" "ubuntu" {
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, Terraform leaves the container alone. This attribute is also used to trigger a restart of a stopped container. If your container is stopped, Terraform will set `must_run` to `false` and this will trigger a change. Defaults to `true`.
 - `network_mode` (String) Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.
-- `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
+- `networks_advanced` (Block Set) The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run` (see [below for nested schema](#nestedblock--networks_advanced))
 - `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
 - `privileged` (Boolean) If `true`, the container runs in privileged mode.
@@ -231,8 +231,11 @@ Required:
 Optional:
 
 - `aliases` (Set of String) The network aliases of the container in the specific network.
+- `driver_opts` (Set of String) An array of driver options for the network endpoint, e.g. `opts1=value`. This is the equivalent to repeating `--driver-opt` for `docker run`.
+- `gw_priority` (Number) Gateway priority for this endpoint. The endpoint with the highest priority will provide the default gateway for the container. This is the equivalent to `--gw-priority` for `docker run`.
 - `ipv4_address` (String) The IPV4 address of the container in the specific network.
 - `ipv6_address` (String) The IPV6 address of the container in the specific network.
+- `link_local_ips` (Set of String) The link-local IPs of the container in the specific network. This is the equivalent to repeating `--link-local-ip` for `docker run`.
 - `mac_address` (String) The MAC address of the container in the specific network.
 
 
