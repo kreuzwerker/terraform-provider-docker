@@ -283,6 +283,18 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("devices"); ok {
 		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("device_read_bps"); ok {
+		hostConfig.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_read_iops"); ok {
+		hostConfig.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_bps"); ok {
+		hostConfig.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_iops"); ok {
+		hostConfig.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
 
 	if v, ok := d.GetOk("dns"); ok {
 		hostConfig.DNS = stringSetToStringSlice(v.(*schema.Set))
@@ -454,10 +466,19 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			if v, ok := rawNetwork.(map[string]interface{})["ipv6_address"]; ok {
 				endpointIPAMConfig.IPv6Address = v.(string)
 			}
+			if v, ok := rawNetwork.(map[string]interface{})["link_local_ips"]; ok {
+				endpointIPAMConfig.LinkLocalIPs = stringSetToStringSlice(v.(*schema.Set))
+			}
 			endpointConfig.IPAMConfig = endpointIPAMConfig
 
 			if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok {
 				endpointConfig.MacAddress = v.(string)
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["driver_opts"]; ok {
+				endpointConfig.DriverOpts = stringSetToMapStringString(v.(*schema.Set))
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["gw_priority"]; ok {
+				endpointConfig.GwPriority = v.(int)
 			}
 
 			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
@@ -698,6 +719,17 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// Read Network Settings
 	if container.NetworkSettings != nil {
 		d.Set("bridge", container.NetworkSettings.Bridge)
+		// Best-effort support for `terraform import`: only set `networks_advanced` when
+		// it is currently empty, to avoid introducing drift for normal managed resources.
+		if currentNetworksAdvanced, ok := d.GetOk("networks_advanced"); ok {
+			if set, ok := currentNetworksAdvanced.(*schema.Set); ok && set.Len() == 0 {
+				if container.NetworkSettings.Networks != nil {
+					if err := d.Set("networks_advanced", flattenContainerNetworksAdvanced(container.NetworkSettings.Networks)); err != nil {
+						log.Printf("[WARN] failed to set networks_advanced from API: %s", err)
+					}
+				}
+			}
+		}
 		// if the container exited, NetworkSettings.Ports is nil
 		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
 		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77
@@ -800,6 +832,18 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 	}
+	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+	}
+	if err = d.Set("device_read_iops", flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+	}
+	if err = d.Set("device_write_bps", flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+	}
+	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+	}
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
 
@@ -884,6 +928,7 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 	// Handle other attribute updates
 	attrs := []string{
 		"restart", "max_retry_count", "cpu_shares", "memory", "memory_reservation", "cpu_set", "memory_swap",
+		"device_read_bps", "device_read_iops", "device_write_bps", "device_write_iops",
 	}
 	for _, attr := range attrs {
 		if d.HasChange(attr) {
@@ -897,18 +942,32 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 			// 	ulimits = ulimitsToDockerUlimits(v.(*schema.Set))
 			// }
 
+			resources := container.Resources{
+				CPUShares:         int64(d.Get("cpu_shares").(int)),
+				Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
+				MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
+				CpusetCpus:        d.Get("cpu_set").(string),
+				// Ulimits:    ulimits,
+			}
+			if v, ok := d.GetOk("device_read_bps"); ok {
+				resources.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_read_iops"); ok {
+				resources.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_bps"); ok {
+				resources.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_iops"); ok {
+				resources.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+
 			updateConfig := container.UpdateConfig{
 				RestartPolicy: container.RestartPolicy{
 					Name:              container.RestartPolicyMode(d.Get("restart").(string)),
 					MaximumRetryCount: d.Get("max_retry_count").(int),
 				},
-				Resources: container.Resources{
-					CPUShares:         int64(d.Get("cpu_shares").(int)),
-					Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
-					MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
-					CpusetCpus:        d.Get("cpu_set").(string),
-					// Ulimits:    ulimits,
-				},
+				Resources: resources,
 			}
 
 			if ms, ok := d.GetOk("memory_swap"); ok {

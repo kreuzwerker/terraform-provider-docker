@@ -676,6 +676,87 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
+			"device_read_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_read_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+
 			"destroy_grace_seconds": {
 				Type:        schema.TypeInt,
 				Description: "If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.",
@@ -760,7 +841,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"networks_advanced": {
 				Type:        schema.TypeSet,
-				Description: "The networks the container is attached to",
+				Description: "The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run`",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -791,11 +872,33 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 						},
+						"link_local_ips": {
+							Type:        schema.TypeSet,
+							Description: "The link-local IPs of the container in the specific network. This is the equivalent to repeating `--link-local-ip` for `docker run`.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+						},
 						"mac_address": {
 							Type:        schema.TypeString,
 							Description: "The MAC address of the container in the specific network.",
 							Optional:    true,
 							ForceNew:    true,
+						},
+						"driver_opts": {
+							Type:        schema.TypeSet,
+							Description: "An array of driver options for the network endpoint, e.g. `opts1=value`. This is the equivalent to repeating `--driver-opt` for `docker run`.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"gw_priority": {
+							Type:             schema.TypeInt,
+							Description:      "Gateway priority for this endpoint. The endpoint with the highest priority will provide the default gateway for the container. This is the equivalent to `--gw-priority` for `docker run`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 					},
 				},
