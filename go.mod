@@ -9,7 +9,7 @@ require (
 	github.com/containerd/console v1.0.5
 	github.com/containerd/errdefs v1.0.0
 	github.com/distribution/reference v0.6.0
-	github.com/docker/buildx v0.23.0
+	github.com/docker/buildx v0.31.1
 	github.com/docker/cli v28.5.2+incompatible
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
