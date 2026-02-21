@@ -676,6 +676,87 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
+			"device_read_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_read_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+
 			"destroy_grace_seconds": {
 				Type:        schema.TypeInt,
 				Description: "If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.",

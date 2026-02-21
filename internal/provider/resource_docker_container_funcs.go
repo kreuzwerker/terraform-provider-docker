@@ -283,6 +283,18 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("devices"); ok {
 		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("device_read_bps"); ok {
+		hostConfig.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_read_iops"); ok {
+		hostConfig.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_bps"); ok {
+		hostConfig.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_iops"); ok {
+		hostConfig.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
 
 	if v, ok := d.GetOk("dns"); ok {
 		hostConfig.DNS = stringSetToStringSlice(v.(*schema.Set))
@@ -820,6 +832,18 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 	}
+	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+	}
+	if err = d.Set("device_read_iops", flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+	}
+	if err = d.Set("device_write_bps", flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+	}
+	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+	}
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
 
@@ -904,6 +928,7 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 	// Handle other attribute updates
 	attrs := []string{
 		"restart", "max_retry_count", "cpu_shares", "memory", "memory_reservation", "cpu_set", "memory_swap",
+		"device_read_bps", "device_read_iops", "device_write_bps", "device_write_iops",
 	}
 	for _, attr := range attrs {
 		if d.HasChange(attr) {
@@ -917,18 +942,32 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 			// 	ulimits = ulimitsToDockerUlimits(v.(*schema.Set))
 			// }
 
+			resources := container.Resources{
+				CPUShares:         int64(d.Get("cpu_shares").(int)),
+				Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
+				MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
+				CpusetCpus:        d.Get("cpu_set").(string),
+				// Ulimits:    ulimits,
+			}
+			if v, ok := d.GetOk("device_read_bps"); ok {
+				resources.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_read_iops"); ok {
+				resources.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_bps"); ok {
+				resources.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_iops"); ok {
+				resources.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+
 			updateConfig := container.UpdateConfig{
 				RestartPolicy: container.RestartPolicy{
 					Name:              container.RestartPolicyMode(d.Get("restart").(string)),
 					MaximumRetryCount: d.Get("max_retry_count").(int),
 				},
-				Resources: container.Resources{
-					CPUShares:         int64(d.Get("cpu_shares").(int)),
-					Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
-					MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
-					CpusetCpus:        d.Get("cpu_set").(string),
-					// Ulimits:    ulimits,
-				},
+				Resources: resources,
 			}
 
 			if ms, ok := d.GetOk("memory_swap"); ok {

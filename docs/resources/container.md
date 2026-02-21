@@ -47,6 +47,10 @@ resource "docker_image" "ubuntu" {
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
 - `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
+- `device_read_bps` (Block Set) Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_read_bps))
+- `device_read_iops` (Block Set) Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_read_iops))
+- `device_write_bps` (Block Set) Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_write_bps))
+- `device_write_iops` (Block Set) Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_write_iops))
 - `devices` (Block Set) Bind devices to the container. (see [below for nested schema](#nestedblock--devices))
 - `dns` (Set of String) DNS servers to use.
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
@@ -117,6 +121,42 @@ Optional:
 
 - `add` (Set of String) List of linux capabilities to add.
 - `drop` (Set of String) List of linux capabilities to drop.
+
+
+<a id="nestedblock--device_read_bps"></a>
+### Nested Schema for `device_read_bps`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The read rate limit in bytes per second.
+
+
+<a id="nestedblock--device_read_iops"></a>
+### Nested Schema for `device_read_iops`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The read IOPS limit.
+
+
+<a id="nestedblock--device_write_bps"></a>
+### Nested Schema for `device_write_bps`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The write rate limit in bytes per second.
+
+
+<a id="nestedblock--device_write_iops"></a>
+### Nested Schema for `device_write_iops`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The write IOPS limit.
 
 
 <a id="nestedblock--devices"></a>

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
@@ -124,6 +125,46 @@ func flattenContainerNetworksAdvanced(in map[string]*network.EndpointSettings) *
 
 	networksAdvancedResource := resourceDockerContainer().Schema["networks_advanced"].Elem.(*schema.Resource)
 	f := schema.HashResource(networksAdvancedResource)
+	return schema.NewSet(f, out)
+}
+
+func throttleDeviceSetToDockerThrottleDevices(in *schema.Set) []*blkiodev.ThrottleDevice {
+	if in == nil || in.Len() == 0 {
+		return nil
+	}
+
+	out := make([]*blkiodev.ThrottleDevice, 0, in.Len())
+	for _, raw := range in.List() {
+		m := raw.(map[string]interface{})
+		path := m["path"].(string)
+		rate := m["rate"].(int)
+		out = append(out, &blkiodev.ThrottleDevice{
+			Path: path,
+			Rate: uint64(rate),
+		})
+	}
+	return out
+}
+
+func flattenThrottleDevices(fieldName string, in []*blkiodev.ThrottleDevice) *schema.Set {
+	containerResource := resourceDockerContainer()
+	throttleResource := containerResource.Schema[fieldName].Elem.(*schema.Resource)
+	f := schema.HashResource(throttleResource)
+
+	if len(in) == 0 {
+		return schema.NewSet(f, make([]interface{}, 0))
+	}
+
+	out := make([]interface{}, 0, len(in))
+	for _, v := range in {
+		if v == nil {
+			continue
+		}
+		out = append(out, map[string]interface{}{
+			"path": v.Path,
+			"rate": int(v.Rate),
+		})
+	}
 	return schema.NewSet(f, out)
 }
 
