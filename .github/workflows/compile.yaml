@@ -24,7 +24,7 @@ jobs:
     if: github.event.pull_request.draft == true
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run GoReleaser (Fast)
@@ -38,7 +38,7 @@ jobs:
     if: github.event.pull_request.draft != true
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run GoReleaser
