@@ -37,7 +37,7 @@ jobs:
 
       - name: Collect changed files
         id: changed
-        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a
+        uses: tj-actions/changed-files@b7ac303c8684d5e668c6c810e61a6fe32a53fe25
         with:
           separator: "\n"
 
