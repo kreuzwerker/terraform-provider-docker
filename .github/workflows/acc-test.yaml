@@ -170,6 +170,7 @@ jobs:
             'TestAccDockerRegistryImage',
             'TestAccDockerRegistryMultiarchImageDataSource',
             'TestAccDockerService',
+            'TestAccDockerProvider',
           }
           terraform_versions = ['1.8.x']
 
