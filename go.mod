@@ -17,7 +17,7 @@ require (
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/terraform-plugin-docs v0.24.0
-	github.com/hashicorp/terraform-plugin-framework v1.17.0
+	github.com/hashicorp/terraform-plugin-framework v1.18.0
 	github.com/hashicorp/terraform-plugin-go v0.30.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-mux v0.21.0
