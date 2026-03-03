@@ -212,7 +212,7 @@ jobs:
           bash scripts/gogetcookie.sh
       - name: Set up Docker v28
         id: setup-docker
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@v5
         with:
           version: "28.0.4"
       - name: Used docker version
