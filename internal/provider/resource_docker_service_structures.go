@@ -261,7 +261,7 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 			tmpfsOptionsItem := make(map[string]interface{})
 
 			tmpfsOptionsItem["size_bytes"] = int(v.TmpfsOptions.SizeBytes)
-			tmpfsOptionsItem["mode"] = v.TmpfsOptions.Mode.Perm
+			tmpfsOptionsItem["mode"] = int(v.TmpfsOptions.Mode.Perm())
 
 			tmpfsOptions = append(tmpfsOptions, tmpfsOptionsItem)
 			m["tmpfs_options"] = tmpfsOptions
@@ -839,7 +839,7 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 							for _, rawTmpfsOptions := range value.([]interface{}) {
 								rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
 								if value, ok := rawTmpfsOptions["size_bytes"]; ok {
-									mountInstance.TmpfsOptions.SizeBytes = value.(int64)
+									mountInstance.TmpfsOptions.SizeBytes = int64(value.(int))
 								}
 								if value, ok := rawTmpfsOptions["mode"]; ok {
 									mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
