@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -76,6 +78,94 @@ func flattenContainerNetworks(in *container.NetworkSettings) []interface{} {
 		out = append(out, m)
 	}
 	return out
+}
+
+func flattenContainerNetworksAdvanced(in map[string]*network.EndpointSettings) *schema.Set {
+	out := make([]interface{}, 0)
+	if len(in) == 0 {
+		return schema.NewSet(schema.HashString, make([]interface{}, 0))
+	}
+
+	for networkName, endpoint := range in {
+		m := make(map[string]interface{})
+		if endpoint != nil && endpoint.NetworkID != "" {
+			m["name"] = endpoint.NetworkID
+		} else {
+			m["name"] = networkName
+		}
+
+		if endpoint != nil {
+			if len(endpoint.Aliases) > 0 {
+				m["aliases"] = stringSliceToSchemaSet(endpoint.Aliases)
+			}
+			if endpoint.IPAMConfig != nil {
+				if endpoint.IPAMConfig.IPv4Address != "" {
+					m["ipv4_address"] = endpoint.IPAMConfig.IPv4Address
+				}
+				if endpoint.IPAMConfig.IPv6Address != "" {
+					m["ipv6_address"] = endpoint.IPAMConfig.IPv6Address
+				}
+				if len(endpoint.IPAMConfig.LinkLocalIPs) > 0 {
+					m["link_local_ips"] = stringSliceToSchemaSet(endpoint.IPAMConfig.LinkLocalIPs)
+				}
+			}
+			if endpoint.MacAddress != "" {
+				m["mac_address"] = endpoint.MacAddress
+			}
+			if len(endpoint.DriverOpts) > 0 {
+				m["driver_opts"] = stringSliceToSchemaSet(mapTypeMapValsToStringSlice(mapStringStringToMapStringInterface(endpoint.DriverOpts)))
+			}
+			if endpoint.GwPriority != 0 {
+				m["gw_priority"] = endpoint.GwPriority
+			}
+		}
+
+		out = append(out, m)
+	}
+
+	networksAdvancedResource := resourceDockerContainer().Schema["networks_advanced"].Elem.(*schema.Resource)
+	f := schema.HashResource(networksAdvancedResource)
+	return schema.NewSet(f, out)
+}
+
+func throttleDeviceSetToDockerThrottleDevices(in *schema.Set) []*blkiodev.ThrottleDevice {
+	if in == nil || in.Len() == 0 {
+		return nil
+	}
+
+	out := make([]*blkiodev.ThrottleDevice, 0, in.Len())
+	for _, raw := range in.List() {
+		m := raw.(map[string]interface{})
+		path := m["path"].(string)
+		rate := m["rate"].(int)
+		out = append(out, &blkiodev.ThrottleDevice{
+			Path: path,
+			Rate: uint64(rate),
+		})
+	}
+	return out
+}
+
+func flattenThrottleDevices(fieldName string, in []*blkiodev.ThrottleDevice) *schema.Set {
+	containerResource := resourceDockerContainer()
+	throttleResource := containerResource.Schema[fieldName].Elem.(*schema.Resource)
+	f := schema.HashResource(throttleResource)
+
+	if len(in) == 0 {
+		return schema.NewSet(f, make([]interface{}, 0))
+	}
+
+	out := make([]interface{}, 0, len(in))
+	for _, v := range in {
+		if v == nil {
+			continue
+		}
+		out = append(out, map[string]interface{}{
+			"path": v.Path,
+			"rate": int(v.Rate),
+		})
+	}
+	return schema.NewSet(f, out)
 }
 
 func stringListToStringSlice(stringList []interface{}) []string {
@@ -241,12 +331,9 @@ func deviceSetToDockerDevices(devices *schema.Set) []container.DeviceMapping {
 		containerPath := deviceMap["container_path"].(string)
 		permissions := deviceMap["permissions"].(string)
 
-		switch {
-		case len(containerPath) == 0:
+		// Default container_path to host_path if not specified
+		if len(containerPath) == 0 {
 			containerPath = hostPath
-			fallthrough
-		case len(permissions) == 0:
-			permissions = "rwm"
 		}
 
 		device := container.DeviceMapping{
@@ -338,14 +425,23 @@ func flattenUlimits(in []*units.Ulimit) []interface{} {
 	return ulimits
 }
 
-func flattenDevices(in []container.DeviceMapping) []interface{} {
+func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set) []interface{} {
 	devices := make([]interface{}, len(in))
+	list := configuredDevices.List()
 	for i, device := range in {
-		devices[i] = map[string]interface{}{
-			"host_path":      device.PathOnHost,
-			"container_path": device.PathInContainer,
-			"permissions":    device.CgroupPermissions,
+		configuredDevice := list[i].(map[string]interface{})
+
+		deviceMap := map[string]interface{}{
+			"host_path":   device.PathOnHost,
+			"permissions": device.CgroupPermissions,
 		}
+
+		// Only set container_path if it was explicitly configured by the user
+		if value, ok := configuredDevice["container_path"].(string); ok && value != "" {
+			deviceMap["container_path"] = device.PathInContainer
+		}
+
+		devices[i] = deviceMap
 	}
 
 	return devices

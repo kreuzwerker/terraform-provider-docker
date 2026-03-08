@@ -8,8 +8,10 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types/registry"
@@ -127,12 +129,23 @@ func New(version string) func() *schema.Provider {
 							},
 
 							"config_file": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								DefaultFunc: schema.EnvDefaultFunc("DOCKER_CONFIG", "~/.docker/config.json"),
-								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` is set, the value of `DOCKER_CONFIG` is used as the path. `config_file` has predencen over all other options.",
+								Type:     schema.TypeString,
+								Optional: true,
+								DefaultFunc: func() (interface{}, error) {
+									if v := os.Getenv("DOCKER_CONFIG"); v != "" {
+										// Docker CLI expects DOCKER_CONFIG to be a directory containing config.json
+										// Check if it's a directory and append config.json if needed
+										info, err := os.Stat(v)
+										if err == nil && info.IsDir() {
+											return filepath.Join(v, "config.json"), nil
+										}
+										// If it's a file or doesn't exist, use it as-is for backwards compatibility
+										return v, nil
+									}
+									return "~/.docker/config.json", nil
+								},
+								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` env variable is set, the value of `DOCKER_CONFIG` is used as the path. `DOCKER_CONFIG` can be set to a directory (as per Docker CLI) or a file path directly. `config_file` has precedence over all other options.",
 							},
-
 							"config_file_content": {
 								Type:        schema.TypeString,
 								Optional:    true,
@@ -208,35 +221,20 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		for i, s := range SSHOptsI {
 			SSHOpts[i] = s.(string)
 		}
-		config := Config{
-			Host:     host,
-			SSHOpts:  SSHOpts,
-			Ca:       d.Get("ca_material").(string),
-			Cert:     d.Get("cert_material").(string),
-			Key:      d.Get("key_material").(string),
-			CertPath: d.Get("cert_path").(string),
-		}
 
-		client, err := config.NewClient()
-		if err != nil {
-			return nil, diag.Errorf("Error initializing Docker client: %s", err)
-		}
-
-		// Check if the Docker daemon is running
-		if !d.Get("disable_docker_daemon_check").(bool) {
-			_, err = client.Ping(ctx)
-			if err != nil {
-				return nil, diag.Errorf("Error pinging Docker server, please make sure that %s is reachable and has a  '_ping' endpoint. Error: %s", host, err)
-			}
-			_, err = client.ServerVersion(ctx)
-			if err != nil {
-				log.Printf("[WARN] Error connecting to Docker daemon. Is your endpoint a valid docker host? This warning will be changed to an error in the next major version. Error: %s", err)
-			}
-		} else {
-			log.Printf("[DEBUG] Skipping Docker daemon check")
+		defaultConfig := Config{
+			Host:                     host,
+			SSHOpts:                  SSHOpts,
+			Ca:                       d.Get("ca_material").(string),
+			Cert:                     d.Get("cert_material").(string),
+			Key:                      d.Get("key_material").(string),
+			CertPath:                 d.Get("cert_path").(string),
+			DisableDockerDaemonCheck: d.Get("disable_docker_daemon_check").(bool),
 		}
 
 		authConfigs := &AuthConfigs{}
+
+		var err error
 
 		if v, ok := d.GetOk("registry_auth"); ok {
 			authConfigs, err = providerSetToRegistryAuth(v.(*schema.Set))
@@ -246,8 +244,10 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		}
 
 		providerConfig := ProviderConfig{
-			DockerClient: client,
-			AuthConfigs:  authConfigs,
+			DefaultConfig: &defaultConfig,
+			Hosts:         make(map[string]*schema.ResourceData),
+			clientCache:   sync.Map{},
+			AuthConfigs:   authConfigs,
 		}
 
 		return &providerConfig, nil
@@ -357,7 +357,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			log.Println("[DEBUG] Parsing file for registry auths:", filePath)
 
 			// We manually expand the path and do not use the 'pathexpand' interpolation function
-			// because in the default of this varable we refer to '~/.docker/config.json'
+			// because in the default of this variable we refer to '~/.docker/config.json'
 			if strings.HasPrefix(filePath, "~/") {
 				usr, err := user.Current()
 				if err != nil {

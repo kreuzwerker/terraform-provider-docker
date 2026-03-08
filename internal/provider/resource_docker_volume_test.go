@@ -151,9 +151,12 @@ func TestAccDockerVolume_RecreateAfterManualDelete(t *testing.T) {
 			{
 				// Simulate manual deletion of the Docker volume
 				PreConfig: func() {
-					client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 					ctx := context.Background()
-					err := client.VolumeRemove(ctx, volumeName, true)
+					client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+					if err != nil {
+						t.Fatalf("failed to create Docker client: %v", err)
+					}
+					err = client.VolumeRemove(ctx, volumeName, true)
 					if err != nil {
 						t.Fatalf("failed to manually remove docker volume: %v", err)
 					}
@@ -182,7 +185,10 @@ func checkDockerVolumeCreated(n string, volumeToCheck *volume.Volume) resource.T
 		}
 
 		ctx := context.Background()
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {
 			return err

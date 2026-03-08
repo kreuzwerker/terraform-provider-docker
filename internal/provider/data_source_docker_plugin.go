@@ -3,8 +3,8 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -12,7 +12,7 @@ func dataSourceDockerPlugin() *schema.Resource {
 	return &schema.Resource{
 		Description: "Reads the local Docker plugin. The plugin must be installed locally.",
 
-		Read: dataSourceDockerPluginRead,
+		ReadContext: dataSourceDockerPluginRead,
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -72,16 +72,18 @@ func getDataSourcePluginKey(d *schema.ResourceData) (string, error) {
 	return "", errDataSourceKeyIsMissing
 }
 
-func dataSourceDockerPluginRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceDockerPluginRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	key, err := getDataSourcePluginKey(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	client := meta.(*ProviderConfig).DockerClient
-	ctx := context.Background()
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 	plugin, _, err := client.PluginInspectWithRaw(ctx, key)
 	if err != nil {
-		return fmt.Errorf("inspect a Docker plugin "+key+": %w", err)
+		return diag.Errorf("inspect a Docker plugin "+key+": %w", err)
 	}
 
 	setDockerPlugin(d, plugin)

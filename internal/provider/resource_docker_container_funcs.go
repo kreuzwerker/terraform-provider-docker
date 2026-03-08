@@ -24,7 +24,6 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -35,20 +34,14 @@ const (
 )
 
 var (
-	errContainerFailedToBeCreated        = errors.New("container failed to be created")
-	errContainerFailedToBeDeleted        = errors.New("container failed to be deleted")
-	errContainerExitedImmediately        = errors.New("container exited immediately")
-	errContainerFailedToBeInRunningState = errors.New("container failed to be in running state")
 	errContainerFailedToBeInHealthyState = errors.New("container failed to be in healthy state")
 )
 
-// NOTE mavogel: we keep this global var for tracking
-// the time in the create and read func
-var creationTime time.Time
-
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var err error
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	authConfigs := meta.(*ProviderConfig).AuthConfigs
 	image := d.Get("image").(string)
 	_, err = findImage(ctx, image, client, authConfigs, "")
@@ -290,6 +283,18 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("devices"); ok {
 		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("device_read_bps"); ok {
+		hostConfig.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_read_iops"); ok {
+		hostConfig.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_bps"); ok {
+		hostConfig.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_iops"); ok {
+		hostConfig.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
 
 	if v, ok := d.GetOk("dns"); ok {
 		hostConfig.DNS = stringSetToStringSlice(v.(*schema.Set))
@@ -461,10 +466,19 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			if v, ok := rawNetwork.(map[string]interface{})["ipv6_address"]; ok {
 				endpointIPAMConfig.IPv6Address = v.(string)
 			}
+			if v, ok := rawNetwork.(map[string]interface{})["link_local_ips"]; ok {
+				endpointIPAMConfig.LinkLocalIPs = stringSetToStringSlice(v.(*schema.Set))
+			}
 			endpointConfig.IPAMConfig = endpointIPAMConfig
 
 			if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok {
 				endpointConfig.MacAddress = v.(string)
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["driver_opts"]; ok {
+				endpointConfig.DriverOpts = stringSetToMapStringString(v.(*schema.Set))
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["gw_priority"]; ok {
+				endpointConfig.GwPriority = v.(int)
 			}
 
 			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
@@ -553,7 +567,6 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if d.Get("start").(bool) {
-		creationTime = time.Now()
 		options := container.StartOptions{}
 		if err := client.ContainerStart(ctx, retContainer.ID, options); err != nil {
 			return diag.Errorf("Unable to start container: %s", err)
@@ -678,8 +691,13 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		containerReadRefreshTimeoutMilliseconds = containerReadRefreshTimeoutMillisecondsDefault
 	}
 	log.Printf("[INFO] Waiting for container: '%s' to run: max '%v seconds'", d.Id(), containerReadRefreshTimeoutMilliseconds/1000)
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 
+	// First checking if container exists, for this we iterate over all containers
+	// Using ContainerInspect directly would return error if container does not exist, but also for other errors (e.g. permission denied)
 	apiContainer, err := fetchDockerContainer(ctx, d.Id(), client)
 	if err != nil {
 		return diag.FromErr(err)
@@ -690,54 +708,52 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		return nil
 	}
 
-	stateConf := &retry.StateChangeConf{
-		Pending:    []string{"pending"},
-		Target:     []string{"running"},
-		Refresh:    resourceDockerContainerReadRefreshFunc(ctx, d, meta),
-		Timeout:    time.Duration(containerReadRefreshTimeoutMilliseconds) * time.Millisecond,
-		MinTimeout: containerReadRefreshWaitBeforeRefreshes,
-		Delay:      containerReadRefreshDelay,
-	}
-
-	containerRaw, err := stateConf.WaitForStateContext(ctx)
+	container, err := client.ContainerInspect(ctx, d.Id())
 	if err != nil {
-		if errors.Is(err, errContainerFailedToBeCreated) {
-			return resourceDockerContainerDelete(ctx, d, meta)
-		}
-		if errors.Is(err, errContainerExitedImmediately) {
-			if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-				log.Printf("[ERROR] Container %s failed to be deleted: %v", apiContainer.ID, err)
-				return diag.FromErr(errContainerFailedToBeDeleted)
-			}
-		}
 		return diag.FromErr(err)
 	}
 
-	container := containerRaw.(container.InspectResponse)
 	jsonObj, _ := json.MarshalIndent(container, "", "\t")
 	log.Printf("[DEBUG] Docker container inspect from stateFunc: %s", jsonObj)
-
-	if !container.State.Running && d.Get("must_run").(bool) {
-		if err := resourceDockerContainerDelete(ctx, d, meta); err != nil {
-			log.Printf("[ERROR] Container %s failed to be deleted: %v", container.ID, err)
-			return err
-		}
-		log.Printf("[ERROR] Container %s failed to be in running state", container.ID)
-		return diag.FromErr(errContainerFailedToBeInRunningState)
-	}
-
-	if !container.State.Running {
-		d.Set("exit_code", container.State.ExitCode)
-	}
 
 	// Read Network Settings
 	if container.NetworkSettings != nil {
 		d.Set("bridge", container.NetworkSettings.Bridge)
-		if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
-			log.Printf("[WARN] failed to set ports from API: %s", err)
+		// Best-effort support for `terraform import`: only set `networks_advanced` when
+		// it is currently empty, to avoid introducing drift for normal managed resources.
+		if currentNetworksAdvanced, ok := d.GetOk("networks_advanced"); ok {
+			if set, ok := currentNetworksAdvanced.(*schema.Set); ok && set.Len() == 0 {
+				if container.NetworkSettings.Networks != nil {
+					if err := d.Set("networks_advanced", flattenContainerNetworksAdvanced(container.NetworkSettings.Networks)); err != nil {
+						log.Printf("[WARN] failed to set networks_advanced from API: %s", err)
+					}
+				}
+			}
+		}
+		// if the container exited, NetworkSettings.Ports is nil
+		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
+		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77
+		if container.State.Running || d.Get("must_run").(bool) {
+			if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+				log.Printf("[WARN] failed to set ports from API: %s", err)
+			}
 		}
 		if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
 			log.Printf("[WARN] failed to set network settings from API: %s", err)
+		}
+	}
+
+	// Check if container is stopped when it should be running
+	// If container is stopped and must_run is true in config, set must_run to false in state
+	// This creates a state drift that Terraform will detect and trigger an update
+	if !container.State.Running {
+		d.Set("exit_code", container.State.ExitCode)
+
+		// If must_run is configured as true but container is stopped, set it to false in state
+		// This will show as a change in terraform plan and trigger Update on apply
+		if d.Get("must_run").(bool) {
+			log.Printf("[WARN] Container %s is stopped but must_run is configured as true. Setting must_run to false in state to trigger update.", container.ID)
+			d.Set("must_run", false)
 		}
 	}
 
@@ -813,8 +829,20 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
 	d.Set("privileged", container.HostConfig.Privileged)
-	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices)); err != nil {
+	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+	}
+	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+	}
+	if err = d.Set("device_read_iops", flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+	}
+	if err = d.Set("device_write_bps", flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+	}
+	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
 	}
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
@@ -873,60 +901,34 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func resourceDockerContainerReadRefreshFunc(ctx context.Context,
-	d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
-		containerID := d.Id()
-
-		var container container.InspectResponse
-		container, err := client.ContainerInspect(ctx, containerID)
-		if err != nil {
-			return container, "pending", err
-		}
-
-		jsonObj, _ := json.MarshalIndent(container, "", "\t")
-		log.Printf("[DEBUG] Docker container inspect: %s", jsonObj)
-
-		if container.State.Running ||
-			!container.State.Running && !d.Get("must_run").(bool) {
-			log.Printf("[DEBUG] Container %s is running: %v", containerID, container.State.Running)
-			return container, "running", nil
-		}
-
-		if creationTime.IsZero() { // We didn't just create it, so don't wait around
-			log.Printf("[DEBUG] Container %s was not created", containerID)
-			return container, "pending", errContainerFailedToBeCreated
-		}
-
-		finishTime, err := time.Parse(time.RFC3339, container.State.FinishedAt)
-		if err != nil {
-			log.Printf("[ERROR] Container %s finish time could not be parsed: %s", containerID, container.State.FinishedAt)
-			return container, "pending", err
-		}
-		if finishTime.After(creationTime) {
-			log.Printf("[INFO] Container %s exited immediately: started: %v - finished: %v", containerID, creationTime, finishTime)
-			return container, "pending", errContainerExitedImmediately
-		}
-
-		// TODO mavogel wait until all properties are exposed from the API
-		// dns               = []
-		// dns_opts          = []
-		// dns_search        = []
-		// group_add         = []
-		// id                = "9e6d9e987923e2c3a99f17e8781c7ce3515558df0e45f8ab06f6adb2dda0de50"
-		// log_opts          = {}
-		// name              = "nginx"
-		// sysctls           = {}
-		// tmpfs             = {}
-
-		return container, "running", nil
-	}
-}
-
 func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
+
+	// Check if must_run changed from false to true (container was stopped, now should be running)
+	if d.HasChange("must_run") {
+		old, new := d.GetChange("must_run")
+		if !old.(bool) && new.(bool) {
+			// must_run changed from false to true - need to start the container
+			log.Printf("[INFO] must_run changed from false to true, starting container %s", d.Id())
+
+			// Check if start is enabled
+			if d.Get("start").(bool) {
+				options := container.StartOptions{}
+				if err := client.ContainerStart(ctx, d.Id(), options); err != nil {
+					return diag.Errorf("Unable to start container: %s", err)
+				}
+				log.Printf("[INFO] Successfully started container %s", d.Id())
+			}
+		}
+	}
+
+	// Handle other attribute updates
 	attrs := []string{
 		"restart", "max_retry_count", "cpu_shares", "memory", "memory_reservation", "cpu_set", "memory_swap",
+		"device_read_bps", "device_read_iops", "device_write_bps", "device_write_iops",
 	}
 	for _, attr := range attrs {
 		if d.HasChange(attr) {
@@ -940,18 +942,32 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 			// 	ulimits = ulimitsToDockerUlimits(v.(*schema.Set))
 			// }
 
+			resources := container.Resources{
+				CPUShares:         int64(d.Get("cpu_shares").(int)),
+				Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
+				MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
+				CpusetCpus:        d.Get("cpu_set").(string),
+				// Ulimits:    ulimits,
+			}
+			if v, ok := d.GetOk("device_read_bps"); ok {
+				resources.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_read_iops"); ok {
+				resources.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_bps"); ok {
+				resources.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_iops"); ok {
+				resources.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+
 			updateConfig := container.UpdateConfig{
 				RestartPolicy: container.RestartPolicy{
 					Name:              container.RestartPolicyMode(d.Get("restart").(string)),
 					MaximumRetryCount: d.Get("max_retry_count").(int),
 				},
-				Resources: container.Resources{
-					CPUShares:         int64(d.Get("cpu_shares").(int)),
-					Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
-					MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
-					CpusetCpus:        d.Get("cpu_set").(string),
-					// Ulimits:    ulimits,
-				},
+				Resources: resources,
 			}
 
 			if ms, ok := d.GetOk("memory_swap"); ok {
@@ -962,19 +978,22 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 				// QF1008: could remove embedded field "Resources" from selector
 				updateConfig.Resources.MemorySwap = a //nolint:staticcheck
 			}
-			client := meta.(*ProviderConfig).DockerClient
-			_, err := client.ContainerUpdate(ctx, d.Id(), updateConfig)
+			_, err = client.ContainerUpdate(ctx, d.Id(), updateConfig)
 			if err != nil {
 				return diag.Errorf("Unable to update a container: %v", err)
 			}
 			break
 		}
 	}
+
 	return nil
 }
 
 func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 
 	if !d.Get("attach").(bool) {
 		// Stop the container before removing if destroy_grace_seconds is defined
@@ -1016,7 +1035,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
-		log.Printf("[INFO] Waiting for Container '%s' errord: '%s'", d.Id(), err.Error())
+		log.Printf("[INFO] Waiting for Container '%s' error: '%s'", d.Id(), err.Error())
 	}
 
 	d.SetId("")

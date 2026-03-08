@@ -32,47 +32,17 @@ import (
 )
 
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	imageName := d.Get("name").(string)
 
 	if value, ok := d.GetOk("build"); ok {
 		for _, rawBuild := range value.(*schema.Set).List() {
-			rawBuild := rawBuild.(map[string]interface{})
-			// now we need to determine whether we can use buildx or need to use the legacy builder
-			canUseBuildx, err := canUseBuildx(ctx, client)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			builder := rawBuild["builder"].(string)
-			log.Printf("[DEBUG] canUseBuildx: %v, builder %s", canUseBuildx, builder)
-			// buildx is enabled
-			if canUseBuildx && builder != "" {
-				log.Printf("[DEBUG] Using buildx")
-				dockerCli, err := createAndInitDockerCli(client)
-				if err != nil {
-					return diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
-				}
-
-				options, err := mapBuildAttributesToBuildOptions(rawBuild, imageName)
-
-				if err != nil {
-					return diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
-				}
-				buildLogFile := rawBuild["build_log_file"].(string)
-
-				log.Printf("[DEBUG] build options %#v", options)
-
-				err = runBuild(ctx, dockerCli, options, buildLogFile)
-				if err != nil {
-					return diag.Errorf("Error running buildx build: %v", err)
-				}
-			} else {
-
-				err := buildDockerImage(ctx, rawBuild, imageName, client)
-				if err != nil {
-					return diag.Errorf("Error running legacy build: %v", err)
-				}
+			shouldReturn, d1 := buildImage(ctx, rawBuild, client, imageName)
+			if shouldReturn {
+				return d1
 			}
 		}
 	}
@@ -85,8 +55,56 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 	return resourceDockerImageRead(ctx, d, meta)
 }
 
+func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client, imageName string) (bool, diag.Diagnostics) {
+	rawBuildValue := rawBuild.(map[string]interface{})
+	useLegacyBuilder, _ := rawBuildValue["use_legacy_builder"].(bool)
+	// now we need to determine whether we can use buildx or need to use the legacy builder
+	canUseBuildx, err := canUseBuildx(ctx, client)
+	if err != nil {
+		return true, diag.FromErr(err)
+	}
+	if useLegacyBuilder {
+		log.Printf("[DEBUG] use_legacy_builder=true, forcing legacy builder")
+		canUseBuildx = false
+	}
+
+	log.Printf("[DEBUG] canUseBuildx: %v", canUseBuildx)
+	// buildx is enabled
+	if canUseBuildx {
+		log.Printf("[DEBUG] Using buildx")
+		dockerCli, err := createAndInitDockerCli(client)
+		if err != nil {
+			return true, diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
+		}
+
+		options, err := mapBuildAttributesToBuildOptions(rawBuildValue, imageName, dockerCli)
+
+		if err != nil {
+			return true, diag.FromErr(fmt.Errorf("Error mapping build attributes: %v", err))
+		}
+		buildLogFile := rawBuildValue["build_log_file"].(string)
+
+		log.Printf("[DEBUG] build options %#v", options)
+
+		err = runBuild(ctx, dockerCli, options, buildLogFile)
+		if err != nil {
+			return true, diag.Errorf("Error running buildx build: %v", err)
+		}
+	} else {
+
+		err := legacyBuildDockerImage(ctx, rawBuildValue, imageName, client)
+		if err != nil {
+			return true, diag.Errorf("Error running legacy build: %v", err)
+		}
+	}
+	return false, nil
+}
+
 func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	var data Data
 	if err := fetchLocalImages(ctx, &data, client); err != nil {
 		return diag.Errorf("Error reading docker image list: %s", err)
@@ -116,9 +134,12 @@ func resourceDockerImageRead(ctx context.Context, d *schema.ResourceData, meta i
 func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// We need to re-read in case switching parameters affects
 	// the value of "latest" or others
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	imageName := d.Get("name").(string)
-	_, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
+	_, err = findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -127,9 +148,12 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDockerImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	// TODO mavogel: add retries. see e.g. service updateFailsAndRollbackConvergeConfig test
-	err := removeImage(ctx, d, client)
+	err = removeImage(ctx, d, client)
 	if err != nil {
 		return diag.Errorf("Unable to remove Docker image: %s", err)
 	}
@@ -353,7 +377,7 @@ func findImage(ctx context.Context, imageName string, client *client.Client, aut
 	return nil, fmt.Errorf("unable to find or pull image %s", imageName)
 }
 
-func buildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
+func legacyBuildDockerImage(ctx context.Context, rawBuild map[string]interface{}, imageName string, client *client.Client) error {
 	var (
 		err error
 	)
@@ -458,6 +482,66 @@ func enableBuildKitIfSupported(
 	}
 }
 
+// resolveDockerfilePath resolves the dockerfile path relative to the context directory.
+// It handles both absolute and relative paths consistently and determines if the dockerfile
+// is inside or outside the build context.
+// Returns:
+// - contextDir: the absolute path to the build context
+// - dockerfilePath: the path to the dockerfile (absolute if outside context, relative if inside)
+// - isOutsideContext: true if dockerfile is outside the context directory
+func resolveDockerfilePath(specifiedContext string, specifiedDockerfile string) (contextDir string, dockerfilePath string, isOutsideContext bool, err error) {
+	// Expand and make context path absolute
+	contextDir, err = homedir.Expand(specifiedContext)
+	if err != nil {
+		return "", "", false, fmt.Errorf("error expanding context path: %w", err)
+	}
+
+	contextDir, err = filepath.Abs(contextDir)
+	if err != nil {
+		return "", "", false, fmt.Errorf("error getting absolute context path: %w", err)
+	}
+
+	log.Printf("[DEBUG] Resolved context directory: %s", contextDir)
+
+	// Handle dockerfile path
+	var absDockerfilePath string
+	if filepath.IsAbs(specifiedDockerfile) {
+		// Dockerfile path is already absolute
+		absDockerfilePath = specifiedDockerfile
+	} else {
+		// Dockerfile path is relative - resolve it relative to the context
+		absDockerfilePath = filepath.Join(contextDir, specifiedDockerfile)
+	}
+
+	// Clean the path
+	absDockerfilePath = filepath.Clean(absDockerfilePath)
+
+	// Check if dockerfile exists
+	if _, err := os.Stat(absDockerfilePath); err != nil {
+		if os.IsNotExist(err) {
+			return "", "", false, fmt.Errorf("dockerfile not found at path: %s", absDockerfilePath)
+		}
+		return "", "", false, fmt.Errorf("error accessing dockerfile at %s: %w", absDockerfilePath, err)
+	}
+
+	// Determine if the dockerfile is inside or outside the context
+	relPath, err := filepath.Rel(contextDir, absDockerfilePath)
+	if err != nil {
+		return "", "", false, fmt.Errorf("error computing relative path: %w", err)
+	}
+
+	// If the relative path starts with "..", the dockerfile is outside the context
+	if strings.HasPrefix(relPath, ".."+string(filepath.Separator)) || relPath == ".." {
+		isOutsideContext = true
+	} else {
+		// Dockerfile is inside the context - use relative path
+		isOutsideContext = false
+	}
+
+	log.Printf("[DEBUG] Resolved dockerfile path: context=%s, dockerfile=%s, isOutside=%v", contextDir, dockerfilePath, isOutsideContext)
+	return contextDir, absDockerfilePath, isOutsideContext, nil
+}
+
 func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (io.ReadCloser, string, error) {
 	var (
 		dockerfileCtx io.ReadCloser
@@ -465,7 +549,9 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 		relDockerfile string
 		err           error
 	)
+
 	contextDir, relDockerfile, err = build.GetContextFromLocalDir(specifiedContext, specifiedDockerfile)
+
 	log.Printf("[DEBUG] contextDir %s", contextDir)
 	log.Printf("[DEBUG] relDockerfile %s", relDockerfile)
 	if err == nil && strings.HasPrefix(relDockerfile, ".."+string(filepath.Separator)) {
@@ -495,6 +581,7 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 			return nil, "", err
 		}
 	}
+
 	// Compress build context to avoid Docker misinterpreting it as plain text
 	if buildCtx != nil {
 		buildCtx, err = build.Compress(buildCtx)
@@ -502,6 +589,7 @@ func prepareBuildContext(specifiedContext string, specifiedDockerfile string) (i
 			return nil, "", err
 		}
 	}
+
 	if relDockerfile != "" {
 		return buildCtx, relDockerfile, nil
 	}

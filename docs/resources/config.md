@@ -95,9 +95,21 @@ resource "docker_service" "service" {
 - `data` (String) Base64-url-safe-encoded config data
 - `name` (String) User-defined name of the config
 
+### Optional
+
+- `labels` (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--labels"></a>
+### Nested Schema for `labels`
+
+Required:
+
+- `label` (String) Name of the label
+- `value` (String) Value of the label
 
 ## Import
 

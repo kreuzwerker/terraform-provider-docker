@@ -12,6 +12,7 @@ import (
 	"github.com/containerd/errdefs"
 	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types/volume"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -163,7 +164,10 @@ func resourceDockerVolume() *schema.Resource {
 }
 
 func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
 	createOpts := volume.CreateOptions{}
 
@@ -270,7 +274,6 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 			createOpts.ClusterVolumeSpec.AccessibilityRequirements = topology
 		}
 	}
-	var err error
 	var retVolume volume.Volume
 	retVolume, err = client.VolumeCreate(ctx, createOpts)
 
@@ -283,7 +286,10 @@ func resourceDockerVolumeCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
 	volume, err := client.VolumeInspect(ctx, d.Id())
 
@@ -355,18 +361,22 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceDockerVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[INFO] Waiting for volume: `%s` to get removed: max `%v seconds`", d.Id(), volumeReadRefreshTimeout)
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 
 	stateConf := &retry.StateChangeConf{
 		Pending:    []string{"in_use"},
 		Target:     []string{"removed"},
-		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta),
+		Refresh:    resourceDockerVolumeRemoveRefreshFunc(d.Id(), meta, client),
 		Timeout:    volumeReadRefreshTimeout,
 		MinTimeout: volumeReadRefreshWaitBeforeRefreshes,
 		Delay:      volumeReadRefreshDelay,
 	}
 
 	// Wait, catching any errors
-	_, err := stateConf.WaitForStateContext(ctx)
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -379,12 +389,15 @@ func resourceDockerVolumeUpdate(ctx context.Context, d *schema.ResourceData, met
 	attrs := []string{
 		"cluster.availability",
 	}
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
 	for _, attr := range attrs {
 		if d.HasChange(attr) {
 			clusterList := d.Get("cluster").([]interface{})
 			if len(clusterList) > 0 {
 				clusterConfig := clusterList[0].(map[string]interface{})
-				client := meta.(*ProviderConfig).DockerClient
 
 				vol, _, err := client.VolumeInspectWithRaw(ctx, clusterConfig["id"].(string))
 				if err != nil {
@@ -414,9 +427,8 @@ func resourceDockerVolumeUpdate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerVolumeRemoveRefreshFunc(
-	volumeID string, meta interface{}) retry.StateRefreshFunc {
+	volumeID string, meta interface{}, client *client.Client) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		client := meta.(*ProviderConfig).DockerClient
 		forceDelete := true
 
 		if err := client.VolumeRemove(context.Background(), volumeID, forceDelete); err != nil {
