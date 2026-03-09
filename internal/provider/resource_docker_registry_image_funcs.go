@@ -76,6 +76,7 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	d.SetId(digest)
 	d.Set("sha256_digest", digest)
+	d.Set("pull_by_digest", fmt.Sprintf("%s@%s", name, digest))
 	return nil
 }
 
