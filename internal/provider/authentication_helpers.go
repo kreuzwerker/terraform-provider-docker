@@ -136,7 +136,7 @@ func getAuthToken(auth map[string]string, username string, password string, fall
 	}
 	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
 	if err != nil {
-		return "", fmt.Errorf("Error creating registry request: %s", err)
+		return "", fmt.Errorf("error creating registry request: %s", err)
 	}
 
 	if username != "" {
@@ -145,22 +145,22 @@ func getAuthToken(auth map[string]string, username string, password string, fall
 
 	tokenResponse, err := client.Do(tokenRequest)
 	if err != nil {
-		return "", fmt.Errorf("Error during registry request: %s", err)
+		return "", fmt.Errorf("error during registry request: %s", err)
 	}
 
 	if tokenResponse.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Got bad response from registry: " + tokenResponse.Status)
+		return "", fmt.Errorf("got bad response from registry: %s", tokenResponse.Status)
 	}
 
 	body, err := io.ReadAll(tokenResponse.Body)
 	if err != nil {
-		return "", fmt.Errorf("Error reading response body: %s", err)
+		return "", fmt.Errorf("error reading response body: %s", err)
 	}
 
 	token := &TokenResponse{}
 	err = json.Unmarshal(body, token)
 	if err != nil {
-		return "", fmt.Errorf("Error parsing OAuth token response: %s", err)
+		return "", fmt.Errorf("error parsing OAuth token response: %s", err)
 	}
 
 	if token.Token != "" {

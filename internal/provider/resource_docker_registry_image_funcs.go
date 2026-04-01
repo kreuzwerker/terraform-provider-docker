@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -33,10 +33,22 @@ func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
 }
 
 func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.Errorf("failed to create Docker client: %v", err)
+	}
+
 	providerConfig := meta.(*ProviderConfig)
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] Creating docker image %s", name)
+	if value, ok := d.GetOk("build"); ok {
+		for _, rawBuild := range value.(*schema.Set).List() {
+			shouldReturn, d1 := buildImage(ctx, rawBuild, client, name)
+			if shouldReturn {
+				return d1
+			}
+		}
+	}
 
 	pushOpts := createPushImageOptions(name)
 
@@ -138,21 +150,13 @@ type internalPushImageOptions struct {
 	Tag                string
 }
 
-func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBuildOptions {
+func createImageBuildOptions(buildOptions map[string]interface{}) build.ImageBuildOptions {
 	mapOfInterfacesToMapOfStrings := func(mapOfInterfaces map[string]interface{}) map[string]string {
 		mapOfStrings := make(map[string]string, len(mapOfInterfaces))
 		for k, v := range mapOfInterfaces {
 			mapOfStrings[k] = fmt.Sprintf("%v", v)
 		}
 		return mapOfStrings
-	}
-
-	interfaceArrayToStringArray := func(interfaceArray []interface{}) []string {
-		stringArray := make([]string, len(interfaceArray))
-		for i, v := range interfaceArray {
-			stringArray[i] = fmt.Sprintf("%v", v)
-		}
-		return stringArray
 	}
 
 	mapToBuildArgs := func(buildArgsOptions map[string]interface{}) map[string]*string {
@@ -196,7 +200,7 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 		return authConfigs
 	}
 
-	buildImageOptions := types.ImageBuildOptions{}
+	buildImageOptions := build.ImageBuildOptions{}
 	buildImageOptions.SuppressOutput = buildOptions["suppress_output"].(bool)
 	buildImageOptions.RemoteContext = buildOptions["remote_context"].(string)
 	buildImageOptions.NoCache = buildOptions["no_cache"].(bool)
@@ -226,7 +230,7 @@ func createImageBuildOptions(buildOptions map[string]interface{}) types.ImageBui
 	buildImageOptions.Target = buildOptions["target"].(string)
 	buildImageOptions.SessionID = buildOptions["session_id"].(string)
 	buildImageOptions.Platform = buildOptions["platform"].(string)
-	buildImageOptions.Version = types.BuilderVersion(buildOptions["version"].(string))
+	buildImageOptions.Version = build.BuilderVersion(buildOptions["version"].(string))
 	buildImageOptions.BuildID = buildOptions["build_id"].(string)
 	// outputs
 
@@ -342,11 +346,11 @@ func deleteDockerRegistryImage(pushOpts internalPushImageOptions, registryWithPr
 		case http.StatusOK, http.StatusAccepted, http.StatusNotFound:
 			return nil
 		default:
-			return fmt.Errorf("Got bad response from registry: " + resp.Status)
+			return fmt.Errorf("got bad response from registry: %s", resp.Status)
 		}
 		// Some unexpected status was given, return an error
 	default:
-		return fmt.Errorf("Got bad response from registry: " + resp.Status)
+		return fmt.Errorf("got bad response from registry: %s", resp.Status)
 	}
 }
 

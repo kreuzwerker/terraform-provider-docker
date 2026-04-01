@@ -3,8 +3,15 @@ package provider
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerContainerCreateDefaultTimeout = 20 * time.Minute
+	dockerContainerUpdateDefaultTimeout = 20 * time.Minute
+	dockerContainerDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerContainer() *schema.Resource {
@@ -20,12 +27,17 @@ func resourceDockerContainer() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerContainerCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerContainerUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerContainerDeleteDefaultTimeout),
+		},
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
 				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					// TODO do the ohter V0-to-V1 migration, unless we're okay
+					// TODO do the other V0-to-V1 migration, unless we're okay
 					// with breaking for users who straggled on their docker
 					// provider version
 
@@ -97,7 +109,7 @@ func resourceDockerContainer() *schema.Resource {
 			// An assumption is made that configured containers
 			// should be running; if not, they should not be in
 			// the configuration. Therefore a stopped container
-			// should be started. Set to false to have the
+			// should be restarted. Set to false to have the
 			// provider leave the container alone.
 			//
 			// Actively-debugged containers are likely to be
@@ -109,7 +121,7 @@ func resourceDockerContainer() *schema.Resource {
 			// should be pristine when started.
 			"must_run": {
 				Type:        schema.TypeBool,
-				Description: "If `true`, then the Docker container will be kept running. If `false`, then as long as the container exists, Terraform assumes it is successful. Defaults to `true`.",
+				Description: "If `true`, then the Docker container will be kept running. If `false`, Terraform leaves the container alone. This attribute is also used to trigger a restart of a stopped container. If your container is stopped, Terraform will set `must_run` to `false` and this will trigger a change. Defaults to `true`.",
 				Default:     true,
 				Optional:    true,
 			},
@@ -168,7 +180,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"user": {
 				Type:        schema.TypeString,
-				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.",
+				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -249,7 +261,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"capabilities": {
 				Type:        schema.TypeSet,
-				Description: "Add or drop certrain linux capabilities.",
+				Description: "Add or drop certain linux capabilities.",
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,
@@ -649,7 +661,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"container_path": {
 							Type:        schema.TypeString,
-							Description: "The path in the container where the device will be bound.",
+							Description: "The path in the container where the device will be bound. If not set, it defaults to the value of `host_path`.",
 							Optional:    true,
 							ForceNew:    true,
 						},
@@ -658,6 +670,88 @@ func resourceDockerContainer() *schema.Resource {
 							Description: "The cgroup permissions given to the container to access the device. Defaults to `rwm`.",
 							Optional:    true,
 							ForceNew:    true,
+							Default:     "rwm",
+						},
+					},
+				},
+			},
+
+			"device_read_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_read_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 					},
 				},
@@ -737,6 +831,13 @@ func resourceDockerContainer() *schema.Resource {
 				Optional:         true,
 				ValidateDiagFunc: validateIntegerGeqThan(0),
 			},
+			"memory_reservation": {
+				Type:             schema.TypeInt,
+				Description:      "The memory-resveration for the container in MBs. Defaults to 0. Allows you to specify a soft limit smaller than `memory` which is activated when Docker detects contention or low memory on the host machine. If you use `memory-reservation`, it must be set lower than `memory` for it to take precedence. Because it is a soft limit, it doesn't guarantee that the container doesn't exceed the limit.",
+				Optional:         true,
+				ValidateDiagFunc: validateIntegerGeqThan(0),
+				Default:          0,
+			},
 
 			"memory_swap": {
 				Type:             schema.TypeInt,
@@ -785,7 +886,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"network_mode": {
 				Type:        schema.TypeString,
-				Description: "Network mode of the container. See https://docs.docker.com/engine/network/ for more information.",
+				Description: "Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.",
 				Optional:    true,
 				ForceNew:    true,
 				Default:     "bridge",
@@ -793,7 +894,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"networks_advanced": {
 				Type:        schema.TypeSet,
-				Description: "The networks the container is attached to",
+				Description: "The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run`",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -823,6 +924,34 @@ func resourceDockerContainer() *schema.Resource {
 							Description: "The IPV6 address of the container in the specific network.",
 							Optional:    true,
 							ForceNew:    true,
+						},
+						"link_local_ips": {
+							Type:        schema.TypeSet,
+							Description: "The link-local IPs of the container in the specific network. This is the equivalent to repeating `--link-local-ip` for `docker run`.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+						},
+						"mac_address": {
+							Type:        schema.TypeString,
+							Description: "The MAC address of the container in the specific network.",
+							Optional:    true,
+							ForceNew:    true,
+						},
+						"driver_opts": {
+							Type:        schema.TypeSet,
+							Description: "An array of driver options for the network endpoint, e.g. `opts1=value`. This is the equivalent to repeating `--driver-opt` for `docker run`.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"gw_priority": {
+							Type:             schema.TypeInt,
+							Description:      "Gateway priority for this endpoint. The endpoint with the highest priority will provide the default gateway for the container. This is the equivalent to `--gw-priority` for `docker run`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 					},
 				},

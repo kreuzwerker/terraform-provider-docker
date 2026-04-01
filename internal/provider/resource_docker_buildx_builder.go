@@ -429,7 +429,10 @@ func resourceDockerBuildxBuilderCreate(ctx context.Context, d *schema.ResourceDa
 		driverOptions = processDriverOptions(remote)
 	}
 
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 
 	t, error := command.NewDockerCli()
 	if error != nil {
@@ -437,7 +440,7 @@ func resourceDockerBuildxBuilderCreate(ctx context.Context, d *schema.ResourceDa
 	}
 
 	log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
-	err := t.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
+	err = t.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
 
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
@@ -520,13 +523,16 @@ func processDriverOptions(driverOptionsMap map[string]interface{}) []string {
 // resourceDockerBuildxBuilderRead handles reading the state of a Buildx builder
 // corresponding file in buildx repo: https://github.com/docker/buildx/blob/master/commands/inspect.go
 func resourceDockerBuildxBuilderRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 
 	dockerCli, error := command.NewDockerCli()
 	if error != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Docker CLI: %w", error))
 	}
-	err := dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
+	err = dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to initialize Docker CLI: %w", err))
 	}
@@ -539,8 +545,15 @@ func resourceDockerBuildxBuilderRead(ctx context.Context, d *schema.ResourceData
 		builder.WithSkippedValidation(),
 	)
 	if err != nil {
+		log.Printf("[DEBUG] Failed to read Buildx builder %s: %v", name, err)
+		if strings.Contains(err.Error(), fmt.Sprintf("no builder \"%s\" found", name)) {
+			log.Printf("[DEBUG] Buildx builder %s not found, removing from state", name)
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
+
 	return nil
 }
 
@@ -550,7 +563,10 @@ func resourceDockerBuildxBuilderDelete(ctx context.Context, d *schema.ResourceDa
 	name := d.Id()
 	log.Printf("[DEBUG] Deleting Buildx builder: %s", name)
 
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 
 	dockerCli, err := command.NewDockerCli()
 	if err != nil {

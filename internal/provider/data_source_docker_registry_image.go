@@ -123,7 +123,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 
 	// Some unexpected status was given, return an error
 	default:
-		return "", fmt.Errorf("Got bad response from registry: " + resp.Status)
+		return "", fmt.Errorf("got bad response from registry: %s", resp.Status)
 	}
 }
 
@@ -133,7 +133,7 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 	if header == "" {
 		body, err := io.ReadAll(response.Body)
 		if err != nil || len(body) == 0 {
-			return "", fmt.Errorf("Error reading registry response body: %s", err)
+			return "", fmt.Errorf("error reading registry response body: %s", err)
 		}
 
 		return fmt.Sprintf("sha256:%x", sha256.Sum256(body)), nil
@@ -149,7 +149,7 @@ func doDigestRequest(req *http.Request, client *http.Client) (*http.Response, er
 	}
 
 	if digestResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Got bad response from registry: " + digestResponse.Status)
+		return nil, fmt.Errorf("got bad response from registry: %s", digestResponse.Status)
 	}
 
 	return digestResponse, nil

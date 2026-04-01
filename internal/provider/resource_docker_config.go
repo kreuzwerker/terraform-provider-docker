@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/docker/docker/api/types/swarm"
@@ -37,12 +38,22 @@ func resourceDockerConfig() *schema.Resource {
 				ForceNew:         true,
 				ValidateDiagFunc: validateStringIsBase64Encoded(),
 			},
+			"labels": {
+				Type:        schema.TypeSet,
+				Description: "User-defined key/value metadata",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        labelSchema,
+			},
 		},
 	}
 }
 
 func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
 
 	configSpec := swarm.ConfigSpec{
@@ -52,6 +63,9 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 		Data: data,
 	}
 
+	if v, ok := d.GetOk("labels"); ok {
+		configSpec.Labels = labelSetToMap(v.(*schema.Set))
+	}
 	config, err := client.ConfigCreate(ctx, configSpec)
 	if err != nil {
 		return diag.FromErr(err)
@@ -62,7 +76,10 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
 	config, _, err := client.ConfigInspectWithRaw(ctx, d.Id())
 	if err != nil {
 		log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
@@ -74,14 +91,18 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 	log.Printf("[DEBUG] Docker config inspect from readFunc: %s", jsonObj)
 
 	d.SetId(config.ID)
-	d.Set("name", config.Spec.Name)                                    //nolint:errcheck
-	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data)) //nolint:errcheck
+	d.Set("name", config.Spec.Name)
+	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
+	d.Set("labels", mapToLabelSet(config.Spec.Labels))
 	return nil
 }
 
 func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*ProviderConfig).DockerClient
-	err := client.ConfigRemove(ctx, d.Id())
+	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
+	}
+	err = client.ConfigRemove(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

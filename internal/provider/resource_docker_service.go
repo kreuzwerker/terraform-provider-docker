@@ -62,7 +62,7 @@ func resourceDockerService() *schema.Resource {
 				Description: "User-defined key/value metadata",
 				Optional:    true,
 				Computed:    true,
-				Elem:        labelSchema,
+				Elem:        labelSchemaUpdatable,
 			},
 			"task_spec": {
 				Type:        schema.TypeList,
@@ -311,7 +311,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"healthcheck": {
 										Type:        schema.TypeList,
-										Description: "A test to perform to check that the container is healthy",
+										Description: "A test to perform to check that the container is healthy. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile.",
 										MaxItems:    1,
 										Optional:    true,
 										Computed:    true,
@@ -320,7 +320,7 @@ func resourceDockerService() *schema.Resource {
 												"test": {
 													Type:        schema.TypeList,
 													Description: "The test to perform as list",
-													Required:    true,
+													Optional:    true,
 													Elem:        &schema.Schema{Type: schema.TypeString},
 												},
 												"interval": {
@@ -542,7 +542,7 @@ func resourceDockerService() *schema.Resource {
 												},
 												"memory_bytes": {
 													Type:        schema.TypeInt,
-													Description: "The amounf of memory in bytes the container allocates",
+													Description: "The amount of memory in bytes the container allocates",
 													Optional:    true,
 												},
 											},
@@ -562,7 +562,7 @@ func resourceDockerService() *schema.Resource {
 												},
 												"memory_bytes": {
 													Type:        schema.TypeInt,
-													Description: "The amounf of memory in bytes the container allocates",
+													Description: "The amount of memory in bytes the container allocates",
 													Optional:    true,
 												},
 												"generic_resources": {
@@ -700,9 +700,16 @@ func resourceDockerService() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"name": {
 										Type:        schema.TypeString,
-										Description: "The name/id of the network.",
-										Required:    true,
+										Description: "Deprecated attribute. The name/id of the docker network. Conflicts with `id` attribute.",
 										ForceNew:    true,
+										Optional:    true,
+										Deprecated:  "Use the id attribute.",
+									},
+									"id": {
+										Type:        schema.TypeString,
+										Description: "The id of the docker network to use. Please use `docker_network.id`. Using the name attribute of the docker network will lead to constant replacements.",
+										ForceNew:    true,
+										Optional:    true,
 									},
 									"aliases": {
 										Type:        schema.TypeSet,
@@ -916,7 +923,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"protocol": {
 										Type:             schema.TypeString,
-										Description:      "Rrepresents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.",
+										Description:      "Represents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.",
 										Default:          "tcp",
 										Optional:         true,
 										ValidateDiagFunc: validateStringMatchesPattern(`^(tcp|udp|sctp)$`),

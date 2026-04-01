@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -496,6 +497,9 @@ func TestAccDockerContainer_customized(t *testing.T) {
 		if c.HostConfig.Memory != (512 * 1024 * 1024) {
 			return fmt.Errorf("Container has wrong memory setting: %d", c.HostConfig.Memory)
 		}
+		if c.HostConfig.MemoryReservation != (256 * 1024 * 1024) {
+			return fmt.Errorf("Container has wrong memory-reservation setting: %d", c.HostConfig.MemoryReservation)
+		}
 
 		if c.HostConfig.MemorySwap != (2048 * 1024 * 1024) {
 			return fmt.Errorf("Container has wrong memory swap setting: %d\n\r\tPlease check that you machine supports memory swap (you can do that by running 'docker info' command).", c.HostConfig.MemorySwap)
@@ -663,7 +667,10 @@ func TestAccDockerContainer_customized(t *testing.T) {
 
 func testAccCheckSwapLimit(t *testing.T) {
 	ctx := context.Background()
-	client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		t.Fatalf("failed to create Docker client: %v", err)
+	}
 	info, err := client.Info(ctx)
 	if err != nil {
 		t.Fatalf("Failed to check swap limit capability: %s", err)
@@ -680,7 +687,10 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 
 	testCheck := func(expected_mode string) func(*terraform.State) error {
 		return func(*terraform.State) error {
-			client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+			client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create Docker client: %w", err)
+			}
 
 			srcPath := "/terraform/test.txt"
 			r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
@@ -755,7 +765,10 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 	testFileContent, _ := os.ReadFile(testFile)
 
 	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 
 		srcPath := "/terraform/test.txt"
 		r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
@@ -784,12 +797,12 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 
 		// we directly exec the container and print the creation timestamp
 		// which is easier to use the native docker sdk, by creating, running and attaching a reader to the command.
-		execReponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
+		execResponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
 		if err != nil {
 			return fmt.Errorf("Unable to exec command: %s", err)
 		}
 
-		fileCreationTime, err := time.Parse("2006-01-02", string(execReponse))
+		fileCreationTime, err := time.Parse("2006-01-02", string(execResponse))
 		if err != nil {
 			return fmt.Errorf("Unable to parse file creation time into format: %s", err)
 		}
@@ -873,7 +886,10 @@ func TestAccDockerContainer_uploadAsBase64(t *testing.T) {
 
 	testCheck := func(srcPath, wantedContent, filePerm string) func(*terraform.State) error {
 		return func(*terraform.State) error {
-			client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+			client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create Docker client: %w", err)
+			}
 
 			r, _, err := client.CopyFromContainer(ctx, c.ID, srcPath)
 			if err != nil {
@@ -1019,7 +1035,10 @@ func TestAccDockerContainer_device(t *testing.T) {
 	ctx := context.Background()
 
 	testCheck := func(*terraform.State) error {
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 
 		createExecOpts := container.ExecOptions{
 			Cmd: []string{"dd", "if=/dev/zero_test", "of=/tmp/test.txt", "count=10", "bs=1"},
@@ -1450,6 +1469,23 @@ func TestAccDockerContainer_nameattrnochange(t *testing.T) {
 		},
 	})
 }
+
+func TestAccDockerContainer_cpus(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerCpus"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDockerContainer_nostart(t *testing.T) {
 	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
@@ -1521,6 +1557,44 @@ func TestAccDockerContainer_exitcode(t *testing.T) {
 					testAccContainerWaitConditionNotRunning("docker_container.foo", &c),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "exit_code", "123"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_RecreateWhenStopped(t *testing.T) {
+	var c container.InspectResponse
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRecreate"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.redis-container-2", &c),
+					resource.TestCheckResourceAttr("docker_container.redis-container-2", "name", "redis-2"),
+				),
+			},
+			{
+				PreConfig: func() {
+					ctx := context.Background()
+					client, _ := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+					err := client.ContainerStop(ctx, "redis-2", container.StopOptions{})
+					if err != nil {
+						log.Fatalf("During preconfig container stopping: Error stopping container: %s", err)
+					}
+				},
+				Config:             loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRecreate"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerRecreate"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.redis-container-2", &c),
+					resource.TestCheckResourceAttr("docker_container.redis-container-2", "name", "redis-2"),
 				),
 			},
 		},
@@ -1664,7 +1738,10 @@ func testAccContainerRunning(resourceName string, runningContainer *container.In
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		containers, err := client.ContainerList(ctx, container.ListOptions{})
 		if err != nil {
 			return err
@@ -1697,7 +1774,10 @@ func testAccContainerNotRunning(n string, runningContainer *container.InspectRes
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		containers, err := client.ContainerList(ctx, container.ListOptions{
 			All: true,
 		})
@@ -1735,7 +1815,10 @@ func testAccContainerWaitConditionNotRunning(n string, ct *container.InspectResp
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
@@ -1764,7 +1847,10 @@ func testAccContainerWaitConditionRemoved(ctx context.Context, n string, ct *con
 			return fmt.Errorf("No ID is set")
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
