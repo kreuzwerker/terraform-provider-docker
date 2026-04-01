@@ -648,7 +648,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"devices": {
 				Type:        schema.TypeSet,
-				Description: "Bind devices to the container.",
+				Description: "Bind traditional devices to the container (e.g., `/dev/nvidia0`). For CDI devices, use `device_requests` instead.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -752,6 +752,59 @@ func resourceDockerContainer() *schema.Resource {
 							Description:      "The write IOPS limit.",
 							Required:         true,
 							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+
+			"device_requests": {
+				Type:          schema.TypeSet,
+				Description:   "Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`.",
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"gpus"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"driver": {
+							Type:        schema.TypeString,
+							Description: "The device driver to use. Common values: `cdi` for CDI devices, `nvidia` for NVIDIA GPU requests.",
+							Optional:    true,
+							Default:     "cdi",
+							ForceNew:    true,
+						},
+						"count": {
+							Type:        schema.TypeInt,
+							Description: "Number of devices to request. Use -1 for all devices. Only used with `nvidia` driver.",
+							Optional:    true,
+							Default:     0,
+							ForceNew:    true,
+						},
+						"device_ids": {
+							Type:        schema.TypeSet,
+							Description: "List of device IDs or CDI device identifiers (e.g., `nvidia.com/gpu=all`).",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"capabilities": {
+							Type:        schema.TypeSet,
+							Description: "List of device capabilities. Only used with `nvidia` driver (e.g., `gpu`, `compute`, `utility`).",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"options": {
+							Type:        schema.TypeMap,
+							Description: "Driver-specific options.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -1083,10 +1136,11 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 			},
 			"gpus": {
-				Type:        schema.TypeString,
-				Description: "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
-				Optional:    true,
-				ForceNew:    true,
+				Type:          schema.TypeString,
+				Description:   "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"device_requests"},
 			},
 			"cpus": {
 				Type:        schema.TypeString,
