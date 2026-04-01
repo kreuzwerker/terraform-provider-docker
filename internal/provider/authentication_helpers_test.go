@@ -54,3 +54,15 @@ func TestParseAuthHeaders(t *testing.T) {
 		t.Errorf("want: %#v, got: %#v", wantScope, result["scope"])
 	}
 }
+
+func TestParseAuthHeadersMalformed(t *testing.T) {
+	_, err := parseAuthHeader("Bearer")
+	if err == nil || err.Error() != "missing or invalid www-authenticate header parameters" {
+		t.Fatalf("wanted malformed header parameters error, got %#v", err)
+	}
+
+	_, err = parseAuthHeader("Bearer realm")
+	if err == nil || err.Error() != "missing or invalid www-authenticate key/value pair: realm" {
+		t.Fatalf("wanted malformed key/value error, got %#v", err)
+	}
+}

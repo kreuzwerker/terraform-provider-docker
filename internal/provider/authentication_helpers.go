@@ -114,11 +114,17 @@ func parseAuthHeader(header string) (map[string]string, error) {
 	}
 
 	parts := strings.SplitN(header, " ", 2)
+	if len(parts) < 2 {
+		return nil, errors.New("missing or invalid www-authenticate header parameters")
+	}
 	parts = regexp.MustCompile(`\w+\=\".*?\"|\w+[^\s\"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
 	opts := make(map[string]string)
 
 	for _, part := range parts {
 		vals := strings.SplitN(part, "=", 2)
+		if len(vals) != 2 {
+			return nil, fmt.Errorf("missing or invalid www-authenticate key/value pair: %s", part)
+		}
 		key := vals[0]
 		val := strings.Trim(vals[1], "\", ")
 		opts[key] = val
