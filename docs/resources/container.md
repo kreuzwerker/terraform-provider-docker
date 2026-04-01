@@ -49,9 +49,10 @@ resource "docker_image" "ubuntu" {
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 - `device_read_bps` (Block Set) Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_read_bps))
 - `device_read_iops` (Block Set) Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_read_iops))
+- `device_requests` (Block Set) Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`. (see [below for nested schema](#nestedblock--device_requests))
 - `device_write_bps` (Block Set) Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_write_bps))
 - `device_write_iops` (Block Set) Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_write_iops))
-- `devices` (Block Set) Bind devices to the container. (see [below for nested schema](#nestedblock--devices))
+- `devices` (Block Set) Bind traditional devices to the container (e.g., `/dev/nvidia0`). For CDI devices, use `device_requests` instead. (see [below for nested schema](#nestedblock--devices))
 - `dns` (Set of String) DNS servers to use.
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 - `dns_search` (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
@@ -139,6 +140,18 @@ Required:
 
 - `path` (String) The device path on the host, e.g. `/dev/sda`.
 - `rate` (Number) The read IOPS limit.
+
+
+<a id="nestedblock--device_requests"></a>
+### Nested Schema for `device_requests`
+
+Optional:
+
+- `capabilities` (Set of String) List of device capabilities. Only used with `nvidia` driver (e.g., `gpu`, `compute`, `utility`).
+- `count` (Number) Number of devices to request. Use -1 for all devices. Only used with `nvidia` driver.
+- `device_ids` (Set of String) List of device IDs or CDI device identifiers (e.g., `nvidia.com/gpu=all`).
+- `driver` (String) The device driver to use. Common values: `cdi` for CDI devices, `nvidia` for NVIDIA GPU requests.
+- `options` (Map of String) Driver-specific options.
 
 
 <a id="nestedblock--device_write_bps"></a>
