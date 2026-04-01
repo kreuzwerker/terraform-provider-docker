@@ -1136,11 +1136,10 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 			},
 			"gpus": {
-				Type:          schema.TypeString,
-				Description:   "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"device_requests"},
+				Type:        schema.TypeString,
+				Description: "GPU devices to add to the container. Supported values are `all` or `device=<id[,id...]>`, for example `device=0,2` or `device=GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a`.",
+				Optional:    true,
+				ForceNew:    true,
 			},
 			"cpus": {
 				Type:        schema.TypeString,
