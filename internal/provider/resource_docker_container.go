@@ -759,7 +759,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"device_requests": {
 				Type:          schema.TypeSet,
-				Description:   "Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests.",
+				Description:   "Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`.",
 				Optional:      true,
 				ForceNew:      true,
 				ConflictsWith: []string{"gpus"},

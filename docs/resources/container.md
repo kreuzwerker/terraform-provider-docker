@@ -49,7 +49,7 @@ resource "docker_image" "ubuntu" {
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 - `device_read_bps` (Block Set) Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_read_bps))
 - `device_read_iops` (Block Set) Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_read_iops))
-- `device_requests` (Block Set) Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. (see [below for nested schema](#nestedblock--device_requests))
+- `device_requests` (Block Set) Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`. (see [below for nested schema](#nestedblock--device_requests))
 - `device_write_bps` (Block Set) Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_write_bps))
 - `device_write_iops` (Block Set) Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_write_iops))
 - `devices` (Block Set) Bind traditional devices to the container (e.g., `/dev/nvidia0`). For CDI devices, use `device_requests` instead. (see [below for nested schema](#nestedblock--devices))
