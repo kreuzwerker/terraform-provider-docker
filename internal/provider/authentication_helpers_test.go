@@ -115,7 +115,7 @@ func TestGetAuthTokenUsesFallbackScope(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if gotScope := r.URL.Query().Get("scope"); gotScope != fallbackScope {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(fmt.Sprintf(`{"message":"unexpected scope %s"}`, gotScope)))
+			_, _ = fmt.Fprintf(w, `{"message":"unexpected scope %s"}`, gotScope)
 			return
 		}
 
