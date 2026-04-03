@@ -17,7 +17,7 @@ const (
 )
 
 // String converts the the resourceType into
-// the name of the directory the test configuartions
+// the name of the directory the test configurations
 // are int
 func (r resourceType) String() string {
 	return [...]string{

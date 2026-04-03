@@ -73,7 +73,7 @@ Optional:
 - `build_args` (Map of String) Pairs for build-time variables in the form of `ENDPOINT : "https://example.com"`
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
-- `builder` (String) Set the name of the buildx builder to use. If not set, the legacy builder is used.
+- `builder` (String) The name of the buildx builder to use. If BUILDX_BUILDER environment variable is set, it will be used. If left empty, the provider tries to resolve to the default builder - which might not always work. If you are in Windows, the legacy builder is used.
 - `cache_from` (List of String) External cache sources (e.g., `user/app:cache`, `type=local,src=path/to/dir`). Only supported when using a buildx builder.
 - `cache_to` (List of String) Cache export destinations (e.g., `user/app:cache`, `type=local,dest=path/to/dir`). Only supported when using a buildx builder.
 - `cgroup_parent` (String) Optional parent cgroup for the container
@@ -105,6 +105,7 @@ Optional:
 - `tag` (List of String) Name and optionally a tag in the 'name:tag' format
 - `target` (String) Set the target build stage to build
 - `ulimit` (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
+- `use_legacy_builder` (Boolean) Force using the legacy Docker builder for image builds, even if buildx/buildkit would be available.
 - `version` (String) Version of the underlying builder to use
 
 <a id="nestedblock--build--auth_config"></a>

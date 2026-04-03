@@ -11,4 +11,8 @@ resource "docker_container" "foo" {
     container_path = "/dev/zero_test"
     permissions    = "rwm"
   }
+
+  devices {
+    host_path = "/dev/null"
+  }
 }

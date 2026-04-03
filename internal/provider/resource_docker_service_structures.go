@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -260,7 +261,7 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 			tmpfsOptionsItem := make(map[string]interface{})
 
 			tmpfsOptionsItem["size_bytes"] = int(v.TmpfsOptions.SizeBytes)
-			tmpfsOptionsItem["mode"] = v.TmpfsOptions.Mode.Perm
+			tmpfsOptionsItem["mode"] = int(v.TmpfsOptions.Mode.Perm())
 
 			tmpfsOptions = append(tmpfsOptions, tmpfsOptionsItem)
 			m["tmpfs_options"] = tmpfsOptions
@@ -515,7 +516,7 @@ func flattenTaskNetworksAdvanced(in []swarm.NetworkAttachmentConfig) *schema.Set
 	out := make([]interface{}, len(in))
 	for i, v := range in {
 		m := make(map[string]interface{})
-		m["name"] = v.Target
+		m["id"] = v.Target
 		m["driver_opts"] = stringSliceToSchemaSet(mapTypeMapValsToStringSlice(mapStringStringToMapStringInterface(v.DriverOpts)))
 		if len(v.Aliases) > 0 {
 			m["aliases"] = stringSliceToSchemaSet(v.Aliases)
@@ -838,10 +839,20 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 							for _, rawTmpfsOptions := range value.([]interface{}) {
 								rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
 								if value, ok := rawTmpfsOptions["size_bytes"]; ok {
-									mountInstance.TmpfsOptions.SizeBytes = value.(int64)
+									switch sizeBytes := value.(type) {
+									case int:
+										mountInstance.TmpfsOptions.SizeBytes = int64(sizeBytes)
+									case int64:
+										mountInstance.TmpfsOptions.SizeBytes = sizeBytes
+									}
 								}
 								if value, ok := rawTmpfsOptions["mode"]; ok {
-									mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
+									switch mode := value.(type) {
+									case int:
+										mountInstance.TmpfsOptions.Mode = os.FileMode(mode)
+									case int64:
+										mountInstance.TmpfsOptions.Mode = os.FileMode(mode)
+									}
 								}
 							}
 						}
@@ -1052,7 +1063,7 @@ func createGenericResources(value interface{}) ([]swarm.GenericResource, error) 
 	return genericResources, nil
 }
 
-// createRestartPolicy creates the restart poliyc of the service
+// createRestartPolicy creates the restart policy of the service
 func createRestartPolicy(v interface{}) (*swarm.RestartPolicy, error) {
 	restartPolicy := swarm.RestartPolicy{}
 	rawRestartPolicySingleItem := v.([]interface{})
@@ -1106,13 +1117,20 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 	return &placement, nil
 }
 
-// createServiceAdvancedNetworks creates the networks the service will be attachted to
+// createServiceAdvancedNetworks creates the networks the service will be attached to
 func createServiceAdvancedNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
 	networks := []swarm.NetworkAttachmentConfig{}
 	if len(v.(*schema.Set).List()) > 0 {
 		for _, rawNetwork := range v.(*schema.Set).List() {
 			rawNetwork := rawNetwork.(map[string]interface{})
-			networkID := rawNetwork["name"].(string)
+			networkID := ""
+			if id, ok := rawNetwork["id"]; ok && id.(string) != "" {
+				networkID = id.(string)
+			} else if name, ok := rawNetwork["name"]; ok && name.(string) != "" {
+				networkID = name.(string)
+			} else {
+				return networks, fmt.Errorf("network 'name' or 'id' must be specified")
+			}
 			networkAliases := stringSetToStringSlice(rawNetwork["aliases"].(*schema.Set))
 			network := swarm.NetworkAttachmentConfig{
 				Target:  networkID,

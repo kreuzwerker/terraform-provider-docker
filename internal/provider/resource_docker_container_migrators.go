@@ -587,6 +587,75 @@ func resourceDockerContainerV1() *schema.Resource {
 				},
 			},
 
+			"device_read_bps": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_read_iops": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_bps": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_iops": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+
 			"destroy_grace_seconds": {
 				Type:     schema.TypeInt,
 				Optional: true,

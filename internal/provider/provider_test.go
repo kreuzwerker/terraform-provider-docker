@@ -99,7 +99,7 @@ func testAccPreCheck(t *testing.T) {
 
 	cmd = exec.Command("docker", "node", "ls")
 	if err := cmd.Run(); err != nil {
-		cmd = exec.Command("docker", "swarm", "init")
+		cmd = exec.Command("docker", "swarm", "init", "--advertise-addr", "127.0.0.1")
 		if err := cmd.Run(); err != nil {
 			t.Fatalf("Docker swarm could not be initialized: %s", err)
 		}
@@ -108,6 +108,15 @@ func testAccPreCheck(t *testing.T) {
 	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// testAccCheckNvidiaGPURequired skips test if NVIDIA GPU is not available for CDI testing
+func testAccCheckNvidiaGPURequired(t *testing.T) {
+	// Check if nvidia-smi is available and can detect GPUs
+	cmd := exec.Command("nvidia-smi", "-L")
+	if err := cmd.Run(); err != nil {
+		t.Skip("Skipping CDI test: no NVIDIA GPU detected")
 	}
 }
 

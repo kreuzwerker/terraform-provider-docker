@@ -558,14 +558,12 @@ Optional:
 <a id="nestedblock--task_spec--networks_advanced"></a>
 ### Nested Schema for `task_spec.networks_advanced`
 
-Required:
-
-- `name` (String) The name/id of the network.
-
 Optional:
 
 - `aliases` (Set of String) The network aliases of the container in the specific network.
 - `driver_opts` (Set of String) An array of driver options for the network, e.g. `opts1=value`
+- `id` (String) The id of the docker network to use. Please use `docker_network.id`. Using the name attribute of the docker network will lead to constant replacements.
+- `name` (String, Deprecated) Deprecated attribute. The name/id of the docker network. Conflicts with `id` attribute.
 
 
 <a id="nestedblock--task_spec--placement"></a>
@@ -601,7 +599,7 @@ Optional:
 
 Optional:
 
-- `memory_bytes` (Number) The amounf of memory in bytes the container allocates
+- `memory_bytes` (Number) The amount of memory in bytes the container allocates
 - `nano_cpus` (Number) CPU shares in units of `1/1e9` (or `10^-9`) of the CPU. Should be at least `1000000`
 
 
@@ -611,7 +609,7 @@ Optional:
 Optional:
 
 - `generic_resources` (Block List, Max: 1) User-defined resources can be either Integer resources (e.g, `SSD=3`) or String resources (e.g, GPU=UUID1) (see [below for nested schema](#nestedblock--task_spec--resources--reservation--generic_resources))
-- `memory_bytes` (Number) The amounf of memory in bytes the container allocates
+- `memory_bytes` (Number) The amount of memory in bytes the container allocates
 - `nano_cpus` (Number) CPU shares in units of 1/1e9 (or 10^-9) of the CPU. Should be at least `1000000`
 
 <a id="nestedblock--task_spec--resources--reservation--generic_resources"></a>
@@ -677,7 +675,7 @@ Required:
 Optional:
 
 - `name` (String) A random name for the port
-- `protocol` (String) Rrepresents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.
+- `protocol` (String) Represents the protocol of a port: `tcp`, `udp` or `sctp`. Defaults to `tcp`.
 - `publish_mode` (String) Represents the mode in which the port is to be published: 'ingress' or 'host'. Defaults to `ingress`.
 - `published_port` (Number) The port on the swarm hosts
 
