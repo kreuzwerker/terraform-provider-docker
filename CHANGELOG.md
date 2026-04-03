@@ -1,6 +1,39 @@
 
+<a name="v3.9.0"></a>
+## [v3.9.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.8.0...v3.9.0) (2025-11-09)
+
+### Chore
+
+* Add file requested by hashicorp ([#813](https://github.com/kreuzwerker/terraform-provider-docker/issues/813))
+* Prepare release v3.8.0 ([#806](https://github.com/kreuzwerker/terraform-provider-docker/issues/806))
+
+### Feat
+
+* Implement caching of docker provider ([#808](https://github.com/kreuzwerker/terraform-provider-docker/issues/808))
+
+### Fix
+
+* test attribute of docker_service healthcheck is not required ([#815](https://github.com/kreuzwerker/terraform-provider-docker/issues/815))
+* docker_service label can be updated without recreate ([#814](https://github.com/kreuzwerker/terraform-provider-docker/issues/814))
+
+
+<a name="v3.8.0"></a>
+## [v3.8.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.7.0...v3.8.0) (2025-10-08)
+
+### Feat
+
+* Add build attribute for docker_registry_image ([#805](https://github.com/kreuzwerker/terraform-provider-docker/issues/805))
+* Add build option for additional contexts ([#798](https://github.com/kreuzwerker/terraform-provider-docker/issues/798))
+* implement mac_address for networks_advanced ([#794](https://github.com/kreuzwerker/terraform-provider-docker/issues/794))
+* Implement docker cluster volume ([#793](https://github.com/kreuzwerker/terraform-provider-docker/issues/793))
+
+
 <a name="v3.7.0"></a>
-## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-13)
+## [v3.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.6.2...v3.7.0) (2025-08-19)
+
+### Chore
+
+* Prepare release v3.7.0 ([#774](https://github.com/kreuzwerker/terraform-provider-docker/issues/774))
 
 ### Feat
 

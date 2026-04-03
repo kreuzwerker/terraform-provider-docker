@@ -151,9 +151,12 @@ func TestAccDockerVolume_RecreateAfterManualDelete(t *testing.T) {
 			{
 				// Simulate manual deletion of the Docker volume
 				PreConfig: func() {
-					client := testAccProvider.Meta().(*ProviderConfig).DockerClient
 					ctx := context.Background()
-					err := client.VolumeRemove(ctx, volumeName, true)
+					client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+					if err != nil {
+						t.Fatalf("failed to create Docker client: %v", err)
+					}
+					err = client.VolumeRemove(ctx, volumeName, true)
 					if err != nil {
 						t.Fatalf("failed to manually remove docker volume: %v", err)
 					}
@@ -182,7 +185,10 @@ func checkDockerVolumeCreated(n string, volumeToCheck *volume.Volume) resource.T
 		}
 
 		ctx := context.Background()
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		v, err := client.VolumeInspect(ctx, rs.Primary.ID)
 		if err != nil {
 			return err
@@ -192,4 +198,34 @@ func checkDockerVolumeCreated(n string, volumeToCheck *volume.Volume) resource.T
 
 		return nil
 	}
+}
+
+func TestAccDockerVolume_cluster(t *testing.T) {
+	var v volume.Volume
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_volume", "testAccDockerVolumeCluster"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_volume.foo", "id", "testAccDockerVolume_cluster"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "name", "testAccDockerVolume_cluster"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.scope", "multi"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.required_bytes", "1MiB"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.limit_bytes", "2MiB"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.sharing", "all"),
+					resource.TestCheckResourceAttr("docker_volume.foo", "cluster.0.group", "testgroup"),
+					checkDockerVolumeCreated("docker_volume.foo", &v),
+					// testCheckVolumeInspect,
+				),
+			},
+			{
+				ResourceName:      "docker_volume.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }

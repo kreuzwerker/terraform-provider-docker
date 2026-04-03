@@ -41,14 +41,15 @@ resource "docker_image" "ubuntu" {
 }
 ```
 
-### Build
+## Build
 
 You can also use the resource to build an image. If you want to use a buildx builder with all of its features, please read the section below.
 
 -> **Note**: The default timeout for the building is 20 minutes. If you need to increase this, you can use [operation timeouts](https://developer.hashicorp.com/terraform/language/resources/syntax#operation-timeouts).
 
 In this case the image "zoo" and "zoo:develop" are built.
-The `context` and `dockerfile` arguments are relative to the local Terraform process (`path.cwd`).
+The `context` path is resolved on the machine running Terraform (relative paths are relative to the current working directory, i.e. `path.cwd`).
+If `dockerfile` is not an absolute path, it is resolved relative to `context`.
 There is no need to copy the files to remote hosts before creating the resource.
 
 ```terraform
@@ -81,11 +82,15 @@ resource "docker_image" "zoo" {
 }
 ```
 
-### Buildx
+## Buildx
 
 -> **Note**: The buildx feature is currently in preview and may have some quirks. Known issues: Setting `ulimits` will not work.
 
-If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
+If buildx is available, the provider will use it by default.
+
+To force the legacy builder, set `use_legacy_builder = true` in the `build` block.
+
+To select a specific buildx builder, set the `builder` argument (for the default buildx builder, use `default`). For a custom buildx builder, set `builder` to the builder name (see `docker buildx ls`).
 
 The single platform build result is automatically loaded to `docker images`.
 
@@ -121,11 +126,12 @@ Required:
 
 Optional:
 
+- `additional_contexts` (List of String) A list of additional build contexts. Only supported when using a buildx builder. Example: `["name=path", "src = https://example.org"}`. Please see https://docs.docker.com/reference/cli/docker/buildx/build/#build-context for more information.
 - `auth_config` (Block List) The configuration for the authentication (see [below for nested schema](#nestedblock--build--auth_config))
 - `build_args` (Map of String) Pairs for build-time variables in the form of `ENDPOINT : "https://example.com"`
 - `build_id` (String) BuildID is an optional identifier that can be passed together with the build request. The same identifier can be used to gracefully cancel the build with the cancel request.
 - `build_log_file` (String) Path to a file where the buildx log are written to. Only available when `builder` is set. If not set, no logs are available. The path is taken as is, so make sure to use a path that is available.
-- `builder` (String) Set the name of the buildx builder to use. If not set, the legacy builder is used.
+- `builder` (String) The name of the buildx builder to use. If BUILDX_BUILDER environment variable is set, it will be used. If left empty, the provider tries to resolve to the default builder - which might not always work. If you are in Windows, the legacy builder is used.
 - `cache_from` (List of String) External cache sources (e.g., `user/app:cache`, `type=local,src=path/to/dir`). Only supported when using a buildx builder.
 - `cache_to` (List of String) Cache export destinations (e.g., `user/app:cache`, `type=local,dest=path/to/dir`). Only supported when using a buildx builder.
 - `cgroup_parent` (String) Optional parent cgroup for the container
@@ -157,6 +163,7 @@ Optional:
 - `tag` (List of String) Name and optionally a tag in the 'name:tag' format
 - `target` (String) Set the target build stage to build
 - `ulimit` (Block List) Configuration for ulimits (see [below for nested schema](#nestedblock--build--ulimit))
+- `use_legacy_builder` (Boolean) Force using the legacy Docker builder for image builds, even if buildx/buildkit would be available.
 - `version` (String) Version of the underlying builder to use
 
 <a id="nestedblock--build--auth_config"></a>

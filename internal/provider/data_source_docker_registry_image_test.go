@@ -145,3 +145,15 @@ func TestGetDigestFromResponse(t *testing.T) {
 		t.Errorf("Expected digest calculated from body to be %s, but was %s", bodyDigest, digest)
 	}
 }
+
+func TestGetDigestFromResponse_NilBody(t *testing.T) {
+	respWithoutHeaders := &http.Response{
+		Header: make(http.Header),
+		Body:   nil,
+	}
+
+	_, err := getDigestFromResponse(respWithoutHeaders)
+	if err == nil {
+		t.Fatal("Expected error from nil response body, got nil")
+	}
+}

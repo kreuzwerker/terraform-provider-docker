@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	dockerBuildTypes "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -87,7 +88,7 @@ func TestAccDockerRegistryImageResource_mapping(t *testing.T) {
 				assert(options.Target == "fooTarget", "Target")
 				assert(options.SessionID == "fooSessionId", "SessionID")
 				assert(options.Platform == "fooPlatform", "Platform")
-				assert(options.Version == types.BuilderVersion("1"), "Version")
+				assert(options.Version == dockerBuildTypes.BuilderVersion("1"), "Version")
 				assert(options.BuildID == "fooBuildId", "BuildID")
 				// output
 				d.SetId("foo")
@@ -207,8 +208,11 @@ func TestAccDockerImage_destroy(t *testing.T) {
 					continue
 				}
 
-				client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-				_, err := client.ImageInspect(ctx, rs.Primary.Attributes["name"])
+				client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+				if err != nil {
+					return fmt.Errorf("failed to create Docker client: %w", err)
+				}
+				_, err = client.ImageInspect(ctx, rs.Primary.Attributes["name"])
 				if err != nil {
 					return err
 				}
@@ -380,8 +384,12 @@ func testAccDockerImageDestroy(ctx context.Context, s *terraform.State) error {
 			continue
 		}
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
-		_, err := client.ImageInspect(ctx, rs.Primary.Attributes["name"])
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
+
+		_, err = client.ImageInspect(ctx, rs.Primary.Attributes["name"])
 		if err == nil {
 			return fmt.Errorf("Image still exists")
 		}
@@ -609,6 +617,25 @@ func TestAccDockerImageResource_buildxCacheFromCacheTo(t *testing.T) {
 	})
 }
 
+func TestAccDockerImageResource_buildxAdditionalContexts(t *testing.T) {
+	wd, _ := os.Getwd()
+	context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "docker_registry_image_context")), "\\", "\\\\")
+	additional_context := strings.ReplaceAll((filepath.Join(wd, "..", "..", "scripts", "testing", "buildx_additional_context")), "\\", "\\\\")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testAccDockerImageAdditionalContexts"), context, context, additional_context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("docker_image.test_additional_contexts", "image_id"),
+				),
+			},
+		},
+	})
+}
+
 // Test for https://github.com/kreuzwerker/terraform-provider-docker/issues/249
 func TestAccDockerImageResource_whitelistDockerignore(t *testing.T) {
 	name := "tftest-dockerregistryimage-whitelistdockerignore:1.0"
@@ -717,7 +744,10 @@ func testAccImageCreated(resourceName string, image *image.InspectResponse) reso
 		// so we need to strip away the name
 		strippedID := strings.ReplaceAll(rs.Primary.ID, name, "")
 
-		client := testAccProvider.Meta().(*ProviderConfig).DockerClient
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client: %w", err)
+		}
 		inspectedImage, err := client.ImageInspect(ctx, strippedID)
 		if err != nil {
 			return fmt.Errorf("Image with ID '%s': %w", strippedID, err)
@@ -802,4 +832,122 @@ func TestAccDockerImage_buildTimeout(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestResolveDockerfilePath tests the path resolution logic for dockerfiles
+func TestResolveDockerfilePath(t *testing.T) {
+	// Create a temporary directory structure for testing
+	tmpDir, err := os.MkdirTemp("", "terraform-docker-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	log.Printf("[DEBUG] working dir %s", tmpDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Fatalf("Failed to cleanup temp dir %s: %v", tmpDir, err)
+		}
+	})
+
+	// Create test structure:
+	// tmpDir/
+	//   context/
+	//		 files/
+	//		 		testfile.txt
+	//     Dockerfile
+	//     subdir/
+	//       Dockerfile.sub
+	//   outside/
+	//     Dockerfile.outside
+
+	contextDir := filepath.Join(tmpDir, "context")
+	filesDir := filepath.Join(contextDir, "files")
+	subDir := filepath.Join(contextDir, "subdir")
+	outsideDir := filepath.Join(tmpDir, "outside")
+
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatalf("Failed to create subdir: %v", err)
+	}
+	if err := os.MkdirAll(outsideDir, 0755); err != nil {
+		t.Fatalf("Failed to create outside dir: %v", err)
+	}
+	if err := os.MkdirAll(filesDir, 0755); err != nil {
+		t.Fatalf("Failed to create files dir: %v", err)
+	}
+
+	// Create test dockerfiles
+	testFiles := map[string]string{
+		filepath.Join(contextDir, "Dockerfile"):         "FROM alpine:latest\nCOPY files/testfile.txt /testfile.txt\n",
+		filepath.Join(subDir, "Dockerfile.sub"):         "FROM alpine:latest\n",
+		filepath.Join(outsideDir, "Dockerfile.outside"): "FROM alpine:latest\n",
+		filepath.Join(filesDir, "testfile.txt"):         "This is a test file\n",
+	}
+
+	for path, content := range testFiles {
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", path, err)
+		}
+	}
+
+	tests := []struct {
+		name       string
+		context    string
+		dockerfile string
+	}{
+		{
+			name:       "dockerfile in context root - relative path, context is absolute",
+			context:    contextDir,
+			dockerfile: "Dockerfile",
+		},
+		{
+			name:       "dockerfile in context root - absolute path",
+			context:    contextDir,
+			dockerfile: filepath.Join(contextDir, "Dockerfile"),
+		},
+		{
+			name:       "dockerfile in subdirectory - relative path",
+			context:    contextDir,
+			dockerfile: "subdir/Dockerfile.sub",
+		},
+		{
+			name:       "dockerfile in subdirectory - absolute path",
+			context:    contextDir,
+			dockerfile: filepath.Join(subDir, "Dockerfile.sub"),
+		},
+		{
+			name:       "dockerfile outside context - absolute path",
+			context:    contextDir,
+			dockerfile: filepath.Join(outsideDir, "Dockerfile.outside"),
+		},
+		{
+			name:       "dockerfile outside context - relative path with parent",
+			context:    contextDir,
+			dockerfile: "../outside/Dockerfile.outside",
+		},
+		// {
+		// 	name:               "non-existent dockerfile",
+		// 	context:            contextDir,
+		// 	dockerfile:         "does-not-exist"
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			resource.Test(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: providerFactories,
+				CheckDestroy: func(state *terraform.State) error {
+					return testAccDockerImageDestroy(ctx, state)
+				},
+				Steps: []resource.TestStep{
+					{
+						Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_image", "testDockerImageDockerfileInsideContext"), tt.context, tt.dockerfile),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestMatchResourceAttr("docker_image.backend", "name", regexp.MustCompile(`\Aempty:latest\z`)),
+						),
+					},
+				},
+			})
+		})
+	}
 }
