@@ -639,6 +639,10 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have a correct ipc mode")
 		}
 
+		if c.Platform != "linux" {
+			return fmt.Errorf("Container doesn't have a correct platform")
+		}
+
 		// Disabled for tests due to
 		// --storage-opt is supported only for overlay over xfs with 'pquota' mount option
 		// see https://github.com/kreuzwerker/terraform-provider-docker/issues/177

@@ -304,6 +304,13 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 				Computed:    true,
 			},
+			"platform": {
+				Type:        schema.TypeString,
+				Description: "Platform in the format `os[/arch[/variant]]` used for image lookup and container runtime, for example `linux/amd64`.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
 			"stop_signal": {
 				Type:        schema.TypeString,
 				Description: "Signal to stop a container (default `SIGTERM`).",
