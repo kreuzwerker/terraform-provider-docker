@@ -1942,7 +1942,7 @@ func TestAccDockerContainer_gpus_and_cdi_conflict(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGpusAndCDIConfig"),
-				ExpectError: regexp.MustCompile(`"gpus": conflicts with device_requests`),
+				ExpectError: regexp.MustCompile(`"device_requests": conflicts with gpus`),
 			},
 		},
 	})
