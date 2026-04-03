@@ -1,9 +1,47 @@
 
+<a name="v4.0.0"></a>
+## [v4.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.9.0...v4.0.0) (2026-04-03)
+
+### Chore
+
+* Add deprecation for docker_service.networks_advanced.name ([#837](https://github.com/kreuzwerker/terraform-provider-docker/issues/837))
+
+### Feat
+
+* add selinux_relabel attribute to docker_container volumes ([#883](https://github.com/kreuzwerker/terraform-provider-docker/issues/883))
+* Implement proper parsing of GPU device requests when using gpus… ([#881](https://github.com/kreuzwerker/terraform-provider-docker/issues/881))
+* Add CDI device support ([#762](https://github.com/kreuzwerker/terraform-provider-docker/issues/762))
+* Add muxing to introduce new plugin framework ([#838](https://github.com/kreuzwerker/terraform-provider-docker/issues/838))
+
+### Feat
+
+* Make buildx builder default ([#855](https://github.com/kreuzwerker/terraform-provider-docker/issues/855))
+
+### Feature
+
+* Add new docker container attributes ([#857](https://github.com/kreuzwerker/terraform-provider-docker/issues/857))
+* Multiple enhancements ([#854](https://github.com/kreuzwerker/terraform-provider-docker/issues/854))
+
+### Fix
+
+* tests for healthcheck is not required for docker container resource ([#834](https://github.com/kreuzwerker/terraform-provider-docker/issues/834))
+* Handle size_bytes in tmpfs_options in docker_service ([#882](https://github.com/kreuzwerker/terraform-provider-docker/issues/882))
+* Use DOCKER_CONFIG env same way as with docker cli ([#849](https://github.com/kreuzwerker/terraform-provider-docker/issues/849))
+* correctly set docker_container devices ([#843](https://github.com/kreuzwerker/terraform-provider-docker/issues/843))
+* docker container stopped ports ([#842](https://github.com/kreuzwerker/terraform-provider-docker/issues/842))
+* Refactor docker container state handling to properly restart when exited ([#841](https://github.com/kreuzwerker/terraform-provider-docker/issues/841))
+
+### Fix
+
+* calculation of Dockerfile path in docker_image build ([#853](https://github.com/kreuzwerker/terraform-provider-docker/issues/853))
+
+
 <a name="v3.9.0"></a>
 ## [v3.9.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.8.0...v3.9.0) (2025-11-09)
 
 ### Chore
 
+* Prepare release v3.9.0 ([#821](https://github.com/kreuzwerker/terraform-provider-docker/issues/821))
 * Add file requested by hashicorp ([#813](https://github.com/kreuzwerker/terraform-provider-docker/issues/813))
 * Prepare release v3.8.0 ([#806](https://github.com/kreuzwerker/terraform-provider-docker/issues/806))
 

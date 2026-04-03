@@ -19,6 +19,10 @@ Bump of minimum terraform version to `1.1.5` or newer. This is done as part of i
 
 `devices` - **Fix the replacement of devices** Using `devices` blocks with not all 3 attributes now does not trigger resource replacements anymore. This fixes https://github.com/kreuzwerker/terraform-provider-docker/issues/603.
 
+`gpus` - **Fixes GPU devices support** You can now properly define GPUs. This attribute conflicts with `device_requests`
+
+`device_requests` **Full support for CDI devices** You can now properly define CDI devices. This attribute conflicts with `gpus`
+
 
 ## `docker_network`
 
