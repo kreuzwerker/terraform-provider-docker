@@ -300,6 +300,7 @@ func volumeSetToDockerVolumes(volumes *schema.Set) (map[string]struct{}, []strin
 			volumeName = volume["host_path"].(string)
 		}
 		readOnly := volume["read_only"].(bool)
+		selinuxRelabel := volume["selinux_relabel"].(string)
 
 		switch {
 		case len(fromContainer) == 0 && len(containerPath) == 0:
@@ -312,6 +313,9 @@ func volumeSetToDockerVolumes(volumes *schema.Set) (map[string]struct{}, []strin
 			readWrite := "rw"
 			if readOnly {
 				readWrite = "ro"
+			}
+			if len(selinuxRelabel) != 0 {
+				readWrite += "," + selinuxRelabel
 			}
 			retVolumeMap[containerPath] = struct{}{}
 			retHostConfigBinds = append(retHostConfigBinds, volumeName+":"+containerPath+":"+readWrite)
