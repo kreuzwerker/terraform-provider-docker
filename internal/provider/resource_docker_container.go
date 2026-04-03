@@ -462,6 +462,13 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 						},
+						"selinux_relabel": {
+							Type:             schema.TypeString,
+							Description:      "SELinux relabel mode for bind mounts. Supported values are `z` and `Z`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateStringMatchesPattern(`^(z|Z)$`),
+						},
 					},
 				},
 			},
