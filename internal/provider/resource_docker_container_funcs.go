@@ -405,7 +405,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("gpus"); ok {
 		if client.ClientVersion() >= "1.40" {
 			var gpu opts.GpuOpts
-			err := gpu.Set(v.(string))
+			err := gpu.Set(normalizeGPUOptionString(v.(string)))
 			if err != nil {
 				return diag.Errorf("Error setting gpus: %s", err)
 			}
@@ -687,6 +687,51 @@ func parseSystemPaths(securityOpts []string) (filtered, maskedPaths, readonlyPat
 	return filtered, maskedPaths, readonlyPaths
 }
 
+func normalizeGPUOptionString(value string) string {
+	normalized := strings.TrimSpace(value)
+	for len(normalized) >= 2 {
+		if (strings.HasPrefix(normalized, "\"") && strings.HasSuffix(normalized, "\"")) ||
+			(strings.HasPrefix(normalized, "'") && strings.HasSuffix(normalized, "'")) {
+			normalized = strings.TrimSpace(normalized[1 : len(normalized)-1])
+			continue
+		}
+
+		break
+	}
+
+	return normalized
+}
+
+func flattenGPUsFromDeviceRequests(deviceRequests []container.DeviceRequest) (string, bool) {
+	if len(deviceRequests) == 0 {
+		return "", true
+	}
+
+	if len(deviceRequests) != 1 {
+		return "", false
+	}
+
+	deviceRequest := deviceRequests[0]
+
+	if len(deviceRequest.DeviceIDs) != 0 {
+		return fmt.Sprintf("device=%s", strings.Join(deviceRequest.DeviceIDs, ",")), true
+	}
+
+	if deviceRequest.Count != -1 {
+		return "", false
+	}
+
+	for _, capabilities := range deviceRequest.Capabilities {
+		for _, capability := range capabilities {
+			if strings.EqualFold(capability, "gpu") {
+				return "all", true
+			}
+		}
+	}
+
+	return "", false
+}
+
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	containerReadRefreshTimeoutMilliseconds := d.Get("container_read_refresh_timeout_milliseconds").(int)
 	// Ensure the timeout can never be 0, the default integer value.
@@ -851,29 +896,11 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// Handle device_requests and gpus reconstruction
 	if _, hasGpus := d.GetOk("gpus"); hasGpus {
 		// If config has gpus, check if any device request is a GPU request and reconstruct
-		foundGpuRequest := false
-		for _, deviceRequest := range container.HostConfig.DeviceRequests {
-			if deviceRequest.Count == -1 && len(deviceRequest.Capabilities) > 0 {
-				for _, capabilitySet := range deviceRequest.Capabilities {
-					for _, capability := range capabilitySet {
-						if capability == "gpu" {
-							d.Set("gpus", "all")
-							foundGpuRequest = true
-							break
-						}
-					}
-					if foundGpuRequest {
-						break
-					}
-				}
-			}
-			if foundGpuRequest {
-				break
-			}
-		}
-		// When gpus is set in config, always set device_requests to empty (whether GPU was found or not)
-		if err = d.Set("device_requests", []interface{}{}); err != nil {
-			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+		gpusValue, canRepresent := flattenGPUsFromDeviceRequests(container.HostConfig.DeviceRequests)
+		if canRepresent {
+			d.Set("gpus", gpusValue)
+		} else {
+			log.Printf("[WARN] container has device requests that cannot be represented by the gpus attribute; preserving configured value")
 		}
 	} else {
 		// Config doesn't have gpus, so include all device requests in state
