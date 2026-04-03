@@ -56,6 +56,15 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		stopTimeout = &tmp
 	}
 
+	var platform *specs.Platform
+	if v, ok := d.GetOk("platform"); ok {
+		p, err := platforms.Parse(v.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		platform = &p
+	}
+
 	config := &container.Config{
 		Image:       image,
 		Hostname:    d.Get("hostname").(string),
@@ -64,15 +73,6 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		OpenStdin:   d.Get("stdin_open").(bool),
 		StopSignal:  d.Get("stop_signal").(string),
 		StopTimeout: stopTimeout,
-	}
-
-	var platform *specs.Platform
-	if v, ok := d.GetOk("platform"); ok {
-		p, err := platforms.Parse(v.(string))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		platform = &p
 	}
 
 	if v, ok := d.GetOk("env"); ok {
