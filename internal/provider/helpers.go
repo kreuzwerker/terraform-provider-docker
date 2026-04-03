@@ -5,9 +5,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func labelToPair(label map[string]interface{}) (string, string) {
@@ -108,25 +106,6 @@ func getLabelMapForPartialKey(attrs map[string]string, partialKey string) map[st
 	}
 
 	return labelMap
-}
-
-func testCheckLabelMap(name string, partialKey string, expectedLabels map[string]string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		attrs := s.RootModule().Resources[name].Primary.Attributes
-		labelMap := getLabelMapForPartialKey(attrs, partialKey)
-
-		if len(labelMap) != len(expectedLabels) {
-			return fmt.Errorf("expected %v labels, found %v", len(expectedLabels), len(labelMap))
-		}
-
-		for l, v := range expectedLabels {
-			if labelMap[l] != v {
-				return fmt.Errorf("expected value %v for label %v, got %v", v, l, labelMap[v])
-			}
-		}
-
-		return nil
-	}
 }
 
 // containsIgnorableErrorMessage checks if the error message contains one of the
