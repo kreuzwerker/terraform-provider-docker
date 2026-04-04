@@ -83,6 +83,7 @@ resource "docker_container" "foo" {
   pid_mode    = "host"
   userns_mode = "testuser:231072:65536"
   ipc_mode    = "private"
+  platform    = "linux"
   working_dir = "/tmp"
 }
 
