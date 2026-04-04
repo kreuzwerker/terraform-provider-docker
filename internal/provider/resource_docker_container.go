@@ -973,7 +973,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"pid_mode": {
 				Type:        schema.TypeString,
-				Description: "he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
+				Description: "The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
 				Optional:    true,
 				ForceNew:    true,
 			},
