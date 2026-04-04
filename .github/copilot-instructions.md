@@ -1,5 +1,13 @@
 # Copilot Instructions
 
+When Go code is touched, run:
+
+```bash
+make fmt
+```
+
+before finalizing changes.
+
 When documentation-related schemas or generated provider/resource/data-source docs are impacted, run:
 
 ```bash
