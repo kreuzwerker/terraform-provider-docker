@@ -35,6 +35,9 @@ Reads the image metadata for each manifest in a Docker multi-arch image from a D
 Required:
 
 - `address` (String) The address of the Docker registry.
+
+Optional:
+
 - `password` (String, Sensitive) The password for the Docker registry.
 - `username` (String) The username for the Docker registry.
 

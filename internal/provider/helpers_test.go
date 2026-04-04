@@ -1,10 +1,32 @@
 package provider
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
+
+func testCheckLabelMap(name string, partialKey string, expectedLabels map[string]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		attrs := s.RootModule().Resources[name].Primary.Attributes
+		labelMap := getLabelMapForPartialKey(attrs, partialKey)
+
+		if len(labelMap) != len(expectedLabels) {
+			return fmt.Errorf("expected %v labels, found %v", len(expectedLabels), len(labelMap))
+		}
+
+		for l, v := range expectedLabels {
+			if labelMap[l] != v {
+				return fmt.Errorf("expected value %v for label %v, got %v", v, l, labelMap[v])
+			}
+		}
+
+		return nil
+	}
+}
 
 func TestNanoInt64ToDecimalString(t *testing.T) {
 	tests := []struct {
