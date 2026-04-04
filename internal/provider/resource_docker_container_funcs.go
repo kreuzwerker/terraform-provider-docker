@@ -929,7 +929,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
-	d.Set("log_opts", container.HostConfig.LogConfig.Config)
+	d.Set("log_opts", containerLogOptsForState(d, container.HostConfig.LogConfig.Config))
 	d.Set("storage_opts", container.HostConfig.StorageOpt)
 	d.Set("network_mode", container.HostConfig.NetworkMode)
 	d.Set("pid_mode", container.HostConfig.PidMode)
@@ -954,6 +954,14 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("stdin_open", container.Config.OpenStdin)
 	d.Set("stop_signal", container.Config.StopSignal)
 	d.Set("stop_timeout", container.Config.StopTimeout)
+
+	return nil
+}
+
+func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[string]string) map[string]string {
+	if _, ok := d.GetOkExists("log_opts"); ok {
+		return containerLogOpts
+	}
 
 	return nil
 }

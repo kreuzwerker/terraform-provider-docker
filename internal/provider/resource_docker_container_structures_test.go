@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,6 +62,46 @@ func TestVolumeSetToDockerVolumes_withSELinuxRelabelModes(t *testing.T) {
 			}
 			if binds[0] != tc.expected {
 				t.Fatalf("expected bind %q, got %q", tc.expected, binds[0])
+			}
+		})
+	}
+}
+
+func TestContainerLogOptsForState(t *testing.T) {
+	containerLogOpts := map[string]string{
+		"max-size": "100m",
+		"max-file": "3",
+	}
+
+	testCases := []struct {
+		name       string
+		rawConfig  map[string]interface{}
+		wantLogOps map[string]string
+	}{
+		{
+			name:       "log_opts omitted from configuration",
+			rawConfig:  map[string]interface{}{},
+			wantLogOps: nil,
+		},
+		{
+			name: "log_opts configured",
+			rawConfig: map[string]interface{}{
+				"log_opts": map[string]interface{}{
+					"max-size": "100m",
+					"max-file": "3",
+				},
+			},
+			wantLogOps: containerLogOpts,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resourceData := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, tc.rawConfig)
+			got := containerLogOptsForState(resourceData, containerLogOpts)
+
+			if !reflect.DeepEqual(tc.wantLogOps, got) {
+				t.Fatalf("expected log opts %#v, got %#v", tc.wantLogOps, got)
 			}
 		})
 	}
