@@ -221,12 +221,12 @@ var AuthConfigSchema = &schema.Schema{
 			"username": {
 				Type:        schema.TypeString,
 				Description: "The username for the Docker registry.",
-				Required:    true,
+				Optional:    true,
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Description: "The password for the Docker registry.",
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 			},
 		},

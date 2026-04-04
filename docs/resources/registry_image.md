@@ -55,6 +55,9 @@ resource "docker_image" "image" {
 Required:
 
 - `address` (String) The address of the Docker registry.
+
+Optional:
+
 - `password` (String, Sensitive) The password for the Docker registry.
 - `username` (String) The username for the Docker registry.
 
