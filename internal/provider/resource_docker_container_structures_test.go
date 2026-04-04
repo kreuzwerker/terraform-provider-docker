@@ -76,12 +76,12 @@ func TestContainerLogOptsForState(t *testing.T) {
 	testCases := []struct {
 		name       string
 		rawConfig  map[string]interface{}
-		wantLogOps map[string]string
+		wantLogOpts map[string]string
 	}{
 		{
 			name:       "log_opts omitted from configuration",
 			rawConfig:  map[string]interface{}{},
-			wantLogOps: nil,
+			wantLogOpts: nil,
 		},
 		{
 			name: "log_opts configured",
@@ -91,7 +91,7 @@ func TestContainerLogOptsForState(t *testing.T) {
 					"max-file": "3",
 				},
 			},
-			wantLogOps: containerLogOpts,
+			wantLogOpts: containerLogOpts,
 		},
 	}
 
@@ -100,8 +100,8 @@ func TestContainerLogOptsForState(t *testing.T) {
 			resourceData := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, tc.rawConfig)
 			got := containerLogOptsForState(resourceData, containerLogOpts)
 
-			if !reflect.DeepEqual(tc.wantLogOps, got) {
-				t.Fatalf("expected log opts %#v, got %#v", tc.wantLogOps, got)
+			if !reflect.DeepEqual(tc.wantLogOpts, got) {
+				t.Fatalf("expected log opts %#v, got %#v", tc.wantLogOpts, got)
 			}
 		})
 	}

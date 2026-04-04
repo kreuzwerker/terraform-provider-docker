@@ -959,7 +959,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[string]string) map[string]string {
-	if _, ok := d.GetOkExists("log_opts"); ok {
+	if _, ok := d.GetOk("log_opts"); ok {
 		return containerLogOpts
 	}
 
