@@ -25,7 +25,7 @@ import (
 func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
 	auth := v.([]interface{})[0].(map[string]interface{})
 
-	getString := func(key string) string {
+	getOptionalString := func(key string) string {
 		if value, ok := auth[key].(string); ok {
 			return value
 		}
@@ -33,9 +33,9 @@ func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
 	}
 
 	return registry.AuthConfig{
-		ServerAddress: normalizeRegistryAddress(getString("address")),
-		Username:      getString("username"),
-		Password:      getString("password"),
+		ServerAddress: normalizeRegistryAddress(getOptionalString("address")),
+		Username:      getOptionalString("username"),
+		Password:      getOptionalString("password"),
 	}
 
 }
