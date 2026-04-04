@@ -74,13 +74,13 @@ func TestContainerLogOptsForState(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		rawConfig  map[string]interface{}
+		name        string
+		rawConfig   map[string]interface{}
 		wantLogOpts map[string]string
 	}{
 		{
-			name:       "log_opts omitted from configuration",
-			rawConfig:  map[string]interface{}{},
+			name:        "log_opts omitted from configuration",
+			rawConfig:   map[string]interface{}{},
 			wantLogOpts: nil,
 		},
 		{
