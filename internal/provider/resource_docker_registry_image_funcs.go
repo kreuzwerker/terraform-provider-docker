@@ -33,7 +33,7 @@ func buildAuthConfigFromResource(v interface{}) registry.AuthConfig {
 	}
 
 	return registry.AuthConfig{
-		ServerAddress: normalizeRegistryAddress(getOptionalString("address")),
+		ServerAddress: normalizeRegistryAddress(auth["address"].(string)),
 		Username:      getOptionalString("username"),
 		Password:      getOptionalString("password"),
 	}
