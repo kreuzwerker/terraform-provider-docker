@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/platforms"
 	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -25,6 +26,7 @@ import (
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 const (
@@ -52,6 +54,15 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("stop_timeout"); ok {
 		tmp := v.(int)
 		stopTimeout = &tmp
+	}
+
+	var platform *specs.Platform
+	if v, ok := d.GetOk("platform"); ok {
+		p, err := platforms.Parse(v.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		platform = &p
 	}
 
 	config := &container.Config{
@@ -441,8 +452,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	var retContainer container.CreateResponse
 
-	// TODO mavogel add platform later which comes from API v1.41. Currently we pass nil
-	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
+	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, d.Get("name").(string)); err != nil {
 		return diag.Errorf("Unable to create container: %s", err)
 	}
 	log.Printf("[INFO] retContainer %#v", retContainer)
@@ -860,6 +870,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		})
 	}
 	d.Set("runtime", container.HostConfig.Runtime)
+	d.Set("platform", container.Platform)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
