@@ -150,4 +150,41 @@ func TestFlattenDevices(t *testing.T) {
 			t.Fatalf("expected container_path to be preserved, got %#v", deviceMap["container_path"])
 		}
 	})
+
+	t.Run("matches configured devices by host_path instead of index", func(t *testing.T) {
+		deviceMappings := []container.DeviceMapping{
+			{
+				PathOnHost:        "/dev/test0",
+				PathInContainer:   "/dev/container0",
+				CgroupPermissions: "rwm",
+			},
+			{
+				PathOnHost:        "/dev/test1",
+				PathInContainer:   "/dev/container1",
+				CgroupPermissions: "rwm",
+			},
+		}
+
+		deviceResource := resourceDockerContainer().Schema["devices"].Elem.(*schema.Resource)
+		hash := schema.HashResource(deviceResource)
+		configuredDevices := schema.NewSet(hash, []interface{}{
+			map[string]interface{}{
+				"host_path":      "/dev/test1",
+				"container_path": "/dev/container1",
+				"permissions":    "rwm",
+			},
+		})
+
+		got := flattenDevices(deviceMappings, configuredDevices)
+
+		first := got[0].(map[string]interface{})
+		if _, ok := first["container_path"]; ok {
+			t.Fatalf("expected first device to omit container_path when not configured")
+		}
+
+		second := got[1].(map[string]interface{})
+		if second["container_path"] != "/dev/container1" {
+			t.Fatalf("expected second device container_path to be preserved, got %#v", second["container_path"])
+		}
+	})
 }
