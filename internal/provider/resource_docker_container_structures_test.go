@@ -109,7 +109,7 @@ func TestContainerLogOptsForState(t *testing.T) {
 }
 
 func TestFlattenDevices(t *testing.T) {
-	deviceMappings := []container.DeviceMapping{
+	singleDeviceMappings := []container.DeviceMapping{
 		{
 			PathOnHost:        "/dev/test0",
 			PathInContainer:   "/dev/container0",
@@ -118,7 +118,7 @@ func TestFlattenDevices(t *testing.T) {
 	}
 
 	t.Run("does not panic when configured devices are empty", func(t *testing.T) {
-		got := flattenDevices(deviceMappings, schema.NewSet(schema.HashString, []interface{}{}))
+		got := flattenDevices(singleDeviceMappings, schema.NewSet(schema.HashString, []interface{}{}))
 		if len(got) != 1 {
 			t.Fatalf("expected 1 device, got %d", len(got))
 		}
@@ -140,7 +140,7 @@ func TestFlattenDevices(t *testing.T) {
 			},
 		})
 
-		got := flattenDevices(deviceMappings, configuredDevices)
+		got := flattenDevices(singleDeviceMappings, configuredDevices)
 		if len(got) != 1 {
 			t.Fatalf("expected 1 device, got %d", len(got))
 		}

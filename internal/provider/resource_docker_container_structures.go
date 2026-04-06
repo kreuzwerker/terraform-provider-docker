@@ -465,7 +465,7 @@ func flattenUlimits(in []*units.Ulimit) []interface{} {
 
 func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set) []interface{} {
 	devices := make([]interface{}, len(in))
-	configuredContainerPaths := map[string]string{}
+	configuredDevicesByHostPath := map[string]struct{}{}
 	for _, configuredDeviceRaw := range configuredDevices.List() {
 		configuredDevice := configuredDeviceRaw.(map[string]interface{})
 		hostPath, ok := configuredDevice["host_path"].(string)
@@ -476,7 +476,7 @@ func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set)
 		if !ok || containerPath == "" {
 			continue
 		}
-		configuredContainerPaths[hostPath] = containerPath
+		configuredDevicesByHostPath[hostPath] = struct{}{}
 	}
 
 	for i, device := range in {
@@ -486,7 +486,7 @@ func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set)
 		}
 
 		// Only set container_path if it was explicitly configured by the user.
-		if _, ok := configuredContainerPaths[device.PathOnHost]; ok {
+		if _, ok := configuredDevicesByHostPath[device.PathOnHost]; ok {
 			deviceMap["container_path"] = device.PathInContainer
 		}
 
