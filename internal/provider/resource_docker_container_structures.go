@@ -472,8 +472,7 @@ func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set)
 		if !ok || hostPath == "" {
 			continue
 		}
-		containerPath, ok := configuredDevice["container_path"].(string)
-		if !ok || containerPath == "" {
+		if containerPath, ok := configuredDevice["container_path"].(string); !ok || containerPath == "" {
 			continue
 		}
 		configuredDevicesByHostPath[hostPath] = struct{}{}
