@@ -134,7 +134,7 @@ func TestMigrateServiceV1ToV2_with_auth(t *testing.T) {
 	}
 }
 
-func TestFlattenPlacementPlatformsUsesPlatformSchemaHash(t *testing.T) {
+func TestFlattenPlacementPlatformsCorrectHash(t *testing.T) {
 	platforms := []swarm.Platform{
 		{
 			Architecture: "amd64",
