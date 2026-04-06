@@ -1080,7 +1080,9 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 		log.Printf("[INFO] Stopping Container '%s' with timeout %v", d.Id(), timeout)
 		if err := client.ContainerStop(ctx, d.Id(), *&container.StopOptions{Timeout: &timeout}); err != nil { //nolint
-			return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
+			if !containsIgnorableErrorMessage(err.Error(), "No such container") {
+				return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
+			}
 		}
 	}
 
