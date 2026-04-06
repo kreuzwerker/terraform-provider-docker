@@ -134,6 +134,25 @@ func TestMigrateServiceV1ToV2_with_auth(t *testing.T) {
 	}
 }
 
+func TestFlattenPlacementPlatformsCorrectHash(t *testing.T) {
+	platforms := []swarm.Platform{
+		{
+			Architecture: "amd64",
+			OS:           "linux",
+		},
+		{
+			Architecture: "arm64",
+			OS:           "linux",
+		},
+	}
+
+	flattenedPlatforms := flattenPlacementPlatforms(platforms)
+
+	if flattenedPlatforms.Len() != 2 {
+		t.Fatalf("expected 2 platforms but got %d (%#v)", flattenedPlatforms.Len(), flattenedPlatforms.List())
+	}
+}
+
 func TestMigrateServiceLabelState_empty_labels(t *testing.T) {
 	v0State := map[string]interface{}{
 		"name": "volume-name",
