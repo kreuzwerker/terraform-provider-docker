@@ -889,8 +889,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
 	d.Set("privileged", container.HostConfig.Privileged)
-	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+	if resourceDataHasNonNullConfigAttribute(d, "devices") {
+		if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+		}
 	}
 	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
@@ -904,17 +906,16 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
 	}
-	// Handle device_requests and gpus reconstruction
-	if _, hasGpus := d.GetOk("gpus"); hasGpus {
-		// If config has gpus, check if any device request is a GPU request and reconstruct
+	// Handle device_requests and gpus reconstruction only when configured.
+	if resourceDataHasNonNullConfigAttribute(d, "gpus") {
 		gpusValue, canRepresent := flattenGPUsFromDeviceRequests(container.HostConfig.DeviceRequests)
 		if canRepresent {
 			d.Set("gpus", gpusValue)
 		} else {
 			log.Printf("[WARN] container has device requests that cannot be represented by the gpus attribute; preserving configured value")
 		}
-	} else {
-		// Config doesn't have gpus, so include all device requests in state
+	}
+	if resourceDataHasNonNullConfigAttribute(d, "device_requests") {
 		if err = d.Set("device_requests", flattenDeviceRequests(container.HostConfig.DeviceRequests)); err != nil {
 			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
 		}
@@ -975,6 +976,19 @@ func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[strin
 	}
 
 	return nil
+}
+
+func resourceDataHasNonNullConfigAttribute(d *schema.ResourceData, attribute string) bool {
+	rawConfig := d.GetRawConfig()
+	if !rawConfig.IsKnown() || rawConfig.IsNull() {
+		return false
+	}
+	if !rawConfig.Type().IsObjectType() || !rawConfig.Type().HasAttribute(attribute) {
+		return false
+	}
+
+	attributeValue := rawConfig.GetAttr(attribute)
+	return attributeValue.IsKnown() && !attributeValue.IsNull()
 }
 
 func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
