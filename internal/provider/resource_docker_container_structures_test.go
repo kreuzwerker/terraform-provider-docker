@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -105,4 +106,48 @@ func TestContainerLogOptsForState(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFlattenDevices(t *testing.T) {
+	deviceMappings := []container.DeviceMapping{
+		{
+			PathOnHost:        "/dev/test0",
+			PathInContainer:   "/dev/container0",
+			CgroupPermissions: "rwm",
+		},
+	}
+
+	t.Run("does not panic when configured devices are empty", func(t *testing.T) {
+		got := flattenDevices(deviceMappings, schema.NewSet(schema.HashString, []interface{}{}))
+		if len(got) != 1 {
+			t.Fatalf("expected 1 device, got %d", len(got))
+		}
+
+		deviceMap := got[0].(map[string]interface{})
+		if _, ok := deviceMap["container_path"]; ok {
+			t.Fatalf("expected container_path to be omitted when not explicitly configured")
+		}
+	})
+
+	t.Run("keeps container_path when explicitly configured", func(t *testing.T) {
+		deviceResource := resourceDockerContainer().Schema["devices"].Elem.(*schema.Resource)
+		hash := schema.HashResource(deviceResource)
+		configuredDevices := schema.NewSet(hash, []interface{}{
+			map[string]interface{}{
+				"host_path":      "/dev/test0",
+				"container_path": "/dev/container0",
+				"permissions":    "rwm",
+			},
+		})
+
+		got := flattenDevices(deviceMappings, configuredDevices)
+		if len(got) != 1 {
+			t.Fatalf("expected 1 device, got %d", len(got))
+		}
+
+		deviceMap := got[0].(map[string]interface{})
+		if deviceMap["container_path"] != "/dev/container0" {
+			t.Fatalf("expected container_path to be preserved, got %#v", deviceMap["container_path"])
+		}
+	})
 }

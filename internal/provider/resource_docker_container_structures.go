@@ -467,16 +467,17 @@ func flattenDevices(in []container.DeviceMapping, configuredDevices *schema.Set)
 	devices := make([]interface{}, len(in))
 	list := configuredDevices.List()
 	for i, device := range in {
-		configuredDevice := list[i].(map[string]interface{})
-
 		deviceMap := map[string]interface{}{
 			"host_path":   device.PathOnHost,
 			"permissions": device.CgroupPermissions,
 		}
 
-		// Only set container_path if it was explicitly configured by the user
-		if value, ok := configuredDevice["container_path"].(string); ok && value != "" {
-			deviceMap["container_path"] = device.PathInContainer
+		// Only set container_path if it was explicitly configured by the user.
+		if i < len(list) {
+			configuredDevice := list[i].(map[string]interface{})
+			if value, ok := configuredDevice["container_path"].(string); ok && value != "" {
+				deviceMap["container_path"] = device.PathInContainer
+			}
 		}
 
 		devices[i] = deviceMap
