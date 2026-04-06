@@ -222,6 +222,7 @@ func (p *frameworkProvider) Configure(ctx context.Context, req provider.Configur
 	}
 
 	resp.ActionData = providerConfig
+	resp.DataSourceData = providerConfig
 }
 
 // Resources returns the provider's resource implementations.
@@ -236,7 +237,7 @@ func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Res
 // Initially empty - data sources will be migrated from SDK v2 gradually.
 func (p *frameworkProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		// Data sources will be added here as they are migrated from SDK v2
+		NewDockerContainersDataSource,
 	}
 }
 
