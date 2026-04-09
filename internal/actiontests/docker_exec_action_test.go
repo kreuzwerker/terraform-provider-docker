@@ -43,12 +43,12 @@ resource "docker_container" "target" {
   lifecycle {
     action_trigger {
       events  = [after_create]
-      actions = [action.docker_docker_exec.create_file]
+      actions = [action.docker_exec.create_file]
     }
   }
 }
 
-action "docker_docker_exec" "create_file" {
+action "docker_exec" "create_file" {
   config {
     container = docker_container.target.name
     command   = ["sh", "-c", "touch %s"]

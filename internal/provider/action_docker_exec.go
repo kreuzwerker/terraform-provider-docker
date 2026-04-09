@@ -34,7 +34,7 @@ type DockerExecActionModel struct {
 
 // The action implementation
 func (a *DockerExecAction) Metadata(ctx context.Context, req action.MetadataRequest, resp *action.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_docker_exec"
+	resp.TypeName = req.ProviderTypeName + "_exec"
 }
 
 func (a *DockerExecAction) Schema(ctx context.Context, req action.SchemaRequest, resp *action.SchemaResponse) {
