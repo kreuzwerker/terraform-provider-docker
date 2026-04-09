@@ -244,6 +244,9 @@ func (p *frameworkProvider) DataSources(ctx context.Context) []func() datasource
 func (p *frameworkProvider) Actions(ctx context.Context) []func() action.Action {
 	return []func() action.Action{
 		func() action.Action {
+			return &DockerImageImportAction{}
+		},
+		func() action.Action {
 			return &DockerExecAction{}
 		},
 	}
