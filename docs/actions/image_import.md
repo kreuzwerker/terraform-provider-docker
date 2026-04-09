@@ -12,7 +12,7 @@ Import a tar archive or URL as a Docker image, similar to `docker image import`.
 
 ## Example Usage
 
-```hcl
+```terraform
 ## The following code performs an `docker image import` whenever the `import.tar` file changes
 
 resource "terraform_data" "bootstrap" {
