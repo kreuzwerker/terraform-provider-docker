@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"log"
+	"sort"
 
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -87,11 +88,52 @@ func dataSourceDockerNetwork() *schema.Resource {
 				Description: "Scope of the network. One of `swarm`, `global`, or `local`.",
 				Computed:    true,
 			},
+
+			"containers": {
+				Type:        schema.TypeList,
+				Description: "Containers attached to the network.",
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"container_id": {
+							Type:        schema.TypeString,
+							Description: "The container id.",
+							Computed:    true,
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Description: "The container name.",
+							Computed:    true,
+						},
+						"endpoint_id": {
+							Type:        schema.TypeString,
+							Description: "The endpoint id.",
+							Computed:    true,
+						},
+						"mac_address": {
+							Type:        schema.TypeString,
+							Description: "The MAC address.",
+							Computed:    true,
+						},
+						"ipv4_address": {
+							Type:        schema.TypeString,
+							Description: "The IPv4 address.",
+							Computed:    true,
+						},
+						"ipv6_address": {
+							Type:        schema.TypeString,
+							Description: "The IPv6 address.",
+							Computed:    true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
 
 type ipamMap map[string]interface{}
+type networkContainerMap map[string]interface{}
 
 func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name, nameOk := d.GetOk("name")
@@ -120,6 +162,9 @@ func dataSourceDockerNetworkRead(ctx context.Context, d *schema.ResourceData, me
 	if err = d.Set("ipam_config", flattenIpamConfig(network.IPAM.Config)); err != nil {
 		log.Printf("[WARN] failed to set ipam config from API: %s", err)
 	}
+	if err = d.Set("containers", flattenContainers(network.Containers)); err != nil {
+		log.Printf("[WARN] failed to set network containers from API: %s", err)
+	}
 
 	return nil
 }
@@ -136,4 +181,31 @@ func flattenIpamConfig(in []network.IPAMConfig) []ipamMap {
 	}
 
 	return ipam
+}
+
+func flattenContainers(in map[string]network.EndpointResource) []networkContainerMap {
+	if len(in) == 0 {
+		return []networkContainerMap{}
+	}
+
+	containerIDs := make([]string, 0, len(in))
+	for containerID := range in {
+		containerIDs = append(containerIDs, containerID)
+	}
+	sort.Strings(containerIDs)
+
+	containers := make([]networkContainerMap, 0, len(in))
+	for _, containerID := range containerIDs {
+		container := in[containerID]
+		containers = append(containers, networkContainerMap{
+			"container_id": containerID,
+			"name":         container.Name,
+			"endpoint_id":  container.EndpointID,
+			"mac_address":  container.MacAddress,
+			"ipv4_address": container.IPv4Address,
+			"ipv6_address": container.IPv6Address,
+		})
+	}
+
+	return containers
 }
