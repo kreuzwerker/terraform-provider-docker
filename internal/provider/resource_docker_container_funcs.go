@@ -630,10 +630,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if d.Get("attach").(bool) {
 		var b bytes.Buffer
-		logsRead := make(chan bool)
+		logsDone := make(chan error, 1)
 		if d.Get("logs").(bool) {
 			go func() {
-				defer func() { logsRead <- true }()
 				reader, err := client.ContainerLogs(ctx, retContainer.ID, container.LogsOptions{
 					ShowStdout: true,
 					ShowStderr: true,
@@ -641,13 +640,17 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					Timestamps: false,
 				})
 				if err != nil {
-					log.Panic(err)
+					logsDone <- fmt.Errorf("unable to read container logs: %w", err)
+					return
 				}
 				defer reader.Close() //nolint:errcheck
 
 				if err := copyContainerLogs(&b, reader, d.Get("tty").(bool)); err != nil {
-					log.Fatal(err)
+					logsDone <- fmt.Errorf("unable to copy container logs: %w", err)
+					return
 				}
+
+				logsDone <- nil
 			}()
 		}
 
@@ -659,10 +662,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 		case <-attachCh:
 			if d.Get("logs").(bool) {
-				// There is a race condition here.
-				// If the goroutine does not finish writing into the buffer by this line, we will have no logs.
-				// Thus, waiting for the goroutine to finish
-				<-logsRead
+				if err := <-logsDone; err != nil {
+					return diag.FromErr(err)
+				}
 				d.Set("container_logs", b.String())
 			}
 		}
