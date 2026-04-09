@@ -15,7 +15,8 @@ import (
 func TestDockerImageImportAction_importsTarballIntoImage(t *testing.T) {
 	preCheckDocker(t)
 
-	containerName := fmt.Sprintf("tf-acc-docker-import-%d", time.Now().UnixNano())
+	sourceContainerName := fmt.Sprintf("tf-acc-docker-import-src-%d", time.Now().UnixNano())
+	targetContainerName := fmt.Sprintf("tf-acc-docker-import-tgt-%d", time.Now().UnixNano())
 	imageRef := fmt.Sprintf("tf-acc-docker-imported-%d:latest", time.Now().UnixNano())
 	defer func() {
 		_ = exec.Command("docker", "image", "rm", "-f", imageRef).Run()
@@ -24,15 +25,15 @@ func TestDockerImageImportAction_importsTarballIntoImage(t *testing.T) {
 	tempDir := t.TempDir()
 	tarPath := filepath.Join(tempDir, "import.tar")
 
-	createCmd := exec.Command("docker", "run", "--name", containerName, "-d", "busybox:1.35.0", "sh", "-c", "sleep 300")
+	createCmd := exec.Command("docker", "run", "--name", sourceContainerName, "-d", "busybox:1.35.0", "sh", "-c", "sleep 300")
 	if output, err := createCmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to create container for export: %s: %s", err, string(output))
 	}
 	defer func() {
-		_ = exec.Command("docker", "rm", "-f", containerName).Run()
+		_ = exec.Command("docker", "rm", "-f", sourceContainerName).Run()
 	}()
 
-	createFileCmd := exec.Command("docker", "exec", containerName, "sh", "-c", "echo imported > /tmp/docker_import_action_file")
+	createFileCmd := exec.Command("docker", "exec", sourceContainerName, "sh", "-c", "echo imported > /tmp/docker_import_action_file")
 	if output, err := createFileCmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to create file inside export container: %s: %s", err, string(output))
 	}
@@ -42,7 +43,7 @@ func TestDockerImageImportAction_importsTarballIntoImage(t *testing.T) {
 		t.Fatalf("failed to create tar file: %s", err)
 	}
 
-	exportCmd := exec.Command("docker", "export", containerName)
+	exportCmd := exec.Command("docker", "export", sourceContainerName)
 	exportCmd.Stdout = exportFile
 	if err := exportCmd.Run(); err != nil {
 		_ = exportFile.Close()
@@ -66,7 +67,7 @@ resource "docker_image" "busybox" {
 }
 
 resource "docker_container" "trigger" {
-  name     = %q
+	name     = %q
   image    = docker_image.busybox.image_id
   must_run = true
   command  = ["sh", "-c", "sleep 300"]
@@ -88,7 +89,7 @@ action "docker_image_import" "import_export" {
     platform  = "linux/amd64"
   }
 }
-`, containerName, tarPath, imageRef),
+`, targetContainerName, tarPath, imageRef),
 
 				PostApplyFunc: func() {
 					checkCmd := exec.Command("docker", "image", "inspect", imageRef)
