@@ -2,13 +2,13 @@ package provider
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -22,6 +22,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -644,15 +645,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				}
 				defer reader.Close() //nolint:errcheck
 
-				scanner := bufio.NewScanner(reader)
-				for scanner.Scan() {
-					line := scanner.Text()
-					b.WriteString(line)
-					b.WriteString("\n")
-
-					log.Printf("[DEBUG] container logs: %s", line)
-				}
-				if err := scanner.Err(); err != nil {
+				if err := copyContainerLogs(&b, reader, d.Get("tty").(bool)); err != nil {
 					log.Fatal(err)
 				}
 			}()
@@ -676,6 +669,16 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	return resourceDockerContainerRead(ctx, d, meta)
+}
+
+func copyContainerLogs(dst io.Writer, reader io.Reader, tty bool) error {
+	if tty {
+		_, err := io.Copy(dst, reader)
+		return err
+	}
+
+	_, err := stdcopy.StdCopy(dst, dst, reader)
+	return err
 }
 
 // parseSystemPaths checks if `systempaths=unconfined` security option is set,
