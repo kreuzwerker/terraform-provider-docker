@@ -1,9 +1,29 @@
 
+<a name="v4.1.0"></a>
+## [v4.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.0.0...v4.1.0) (2026-04-07)
+
+### Feat
+
+* **New Action**: Implement docker_exec action ([#885](https://github.com/kreuzwerker/terraform-provider-docker/issues/885))
+* **New Datasource**:  Add docker_containers data source for Docker container enumeration ([#893](https://github.com/kreuzwerker/terraform-provider-docker/issues/893))
+* Allow docker_registry_image.auth_config to mirror provider `registry_auth` optional credentials ([#887](https://github.com/kreuzwerker/terraform-provider-docker/pull/887))
+*  Add platform support to docker_container for cross-architecture emulation ([#886](https://github.com/kreuzwerker/terraform-provider-docker/pull/886))
+
+### Fix
+
+* Prevent docker_container read panic with CDI device_requests by hardening device flattening ([#895](https://github.com/kreuzwerker/terraform-provider-docker/issues/895))
+* Make container deletion idempotent for missing containers ([#891](https://github.com/kreuzwerker/terraform-provider-docker/issues/891))
+* Avoid docker_container replacement when only daemon default `log_opts` are present ([#888](https://github.com/kreuzwerker/terraform-provider-docker/pull/888))
+*  Fix docker_service platform flattening hash to prevent platform list drift on updates ([#892](https://github.com/kreuzwerker/terraform-provider-docker/pull/892))
+
+
+
 <a name="v4.0.0"></a>
-## [v4.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v3.9.0...v4.0.0) (2026-04-03)
+## [v4.0.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.0.0-beta2...v4.0.0) (2026-04-03)
 
 ### Chore
 
+* Prepare 4.0.0 release ([#884](https://github.com/kreuzwerker/terraform-provider-docker/issues/884))
 * Add deprecation for docker_service.networks_advanced.name ([#837](https://github.com/kreuzwerker/terraform-provider-docker/issues/837))
 
 ### Feat
@@ -11,15 +31,9 @@
 * add selinux_relabel attribute to docker_container volumes ([#883](https://github.com/kreuzwerker/terraform-provider-docker/issues/883))
 * Implement proper parsing of GPU device requests when using gpus… ([#881](https://github.com/kreuzwerker/terraform-provider-docker/issues/881))
 * Add CDI device support ([#762](https://github.com/kreuzwerker/terraform-provider-docker/issues/762))
-* Add muxing to introduce new plugin framework ([#838](https://github.com/kreuzwerker/terraform-provider-docker/issues/838))
-
-### Feat
-
-* Make buildx builder default ([#855](https://github.com/kreuzwerker/terraform-provider-docker/issues/855))
-
-### Feature
-
 * Add new docker container attributes ([#857](https://github.com/kreuzwerker/terraform-provider-docker/issues/857))
+* Make buildx builder default ([#855](https://github.com/kreuzwerker/terraform-provider-docker/issues/855))
+* Add muxing to introduce new plugin framework ([#838](https://github.com/kreuzwerker/terraform-provider-docker/issues/838))
 * Multiple enhancements ([#854](https://github.com/kreuzwerker/terraform-provider-docker/issues/854))
 
 ### Fix
@@ -30,9 +44,6 @@
 * correctly set docker_container devices ([#843](https://github.com/kreuzwerker/terraform-provider-docker/issues/843))
 * docker container stopped ports ([#842](https://github.com/kreuzwerker/terraform-provider-docker/issues/842))
 * Refactor docker container state handling to properly restart when exited ([#841](https://github.com/kreuzwerker/terraform-provider-docker/issues/841))
-
-### Fix
-
 * calculation of Dockerfile path in docker_image build ([#853](https://github.com/kreuzwerker/terraform-provider-docker/issues/853))
 
 
