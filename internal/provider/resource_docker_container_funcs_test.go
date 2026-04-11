@@ -37,25 +37,38 @@ func TestDockerContainer_DeleteMissingContainer(t *testing.T) {
 }
 
 func TestBuildContainerRemoveOptions(t *testing.T) {
-	raw := map[string]interface{}{
-		"name":                  "test",
-		"image":                 "sha256:deadbeef",
-		"attach":                false,
-		"destroy_grace_seconds": 0,
-		"remove_volumes":        true,
-		"rm":                    true,
+	tests := []struct {
+		name          string
+		removeVolumes bool
+		rm            bool
+	}{
+		{name: "remove volumes enabled", removeVolumes: true, rm: true},
+		{name: "remove volumes disabled", removeVolumes: false, rm: false},
 	}
 
-	d := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, raw)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			raw := map[string]interface{}{
+				"name":                  "test",
+				"image":                 "sha256:deadbeef",
+				"attach":                false,
+				"destroy_grace_seconds": 0,
+				"remove_volumes":        test.removeVolumes,
+				"rm":                    test.rm,
+			}
 
-	got := buildContainerRemoveOptions(d)
-	want := container.RemoveOptions{
-		RemoveVolumes: true,
-		Force:         true,
-	}
+			d := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, raw)
 
-	if got != want {
-		t.Fatalf("unexpected remove options: got %#v, want %#v", got, want)
+			got := buildContainerRemoveOptions(d)
+			want := container.RemoveOptions{
+				RemoveVolumes: test.removeVolumes,
+				Force:         true,
+			}
+
+			if got != want {
+				t.Fatalf("unexpected remove options: got %#v, want %#v", got, want)
+			}
+		})
 	}
 }
 
