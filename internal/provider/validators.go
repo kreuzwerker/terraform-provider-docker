@@ -73,6 +73,22 @@ func validateStringIsFloatRatio() schema.SchemaValidateDiagFunc {
 	}
 }
 
+func suppressEquivalentFloatStrings() schema.SchemaDiffSuppressFunc {
+	return func(k, oldV, newV string, d *schema.ResourceData) bool {
+		oldValue, oldErr := strconv.ParseFloat(oldV, 64)
+		if oldErr != nil {
+			return false
+		}
+
+		newValue, newErr := strconv.ParseFloat(newV, 64)
+		if newErr != nil {
+			return false
+		}
+
+		return oldValue == newValue
+	}
+}
+
 func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		value := v.(string)
