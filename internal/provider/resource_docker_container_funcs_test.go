@@ -46,27 +46,30 @@ func TestBuildContainerRemoveOptions(t *testing.T) {
 		{name: "remove volumes disabled", removeVolumes: false, rm: false},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			raw := map[string]interface{}{
 				"name":                  "test",
 				"image":                 "sha256:deadbeef",
 				"attach":                false,
 				"destroy_grace_seconds": 0,
-				"remove_volumes":        test.removeVolumes,
-				"rm":                    test.rm,
+				"remove_volumes":        tc.removeVolumes,
+				"rm":                    tc.rm,
 			}
 
 			d := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, raw)
 
 			got := buildContainerRemoveOptions(d)
 			want := container.RemoveOptions{
-				RemoveVolumes: test.removeVolumes,
+				RemoveVolumes: tc.removeVolumes,
 				Force:         true,
 			}
 
 			if got != want {
 				t.Fatalf("unexpected remove options: got %#v, want %#v", got, want)
+			}
+			if got.RemoveLinks {
+				t.Fatalf("expected remove links to be false, got %#v", got)
 			}
 		})
 	}
