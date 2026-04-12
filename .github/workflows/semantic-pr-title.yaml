@@ -1,0 +1,27 @@
+name: Semantic PR Title
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  validate-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! printf '%s\n' "$TITLE" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\([^)]+\))?(!)?:[[:space:]].+'; then
+            cat <<'EOF'
+          PR title must follow Conventional Commits, for example:
+          feat: add registry image tags data source
+          fix(provider): handle missing auth config
+          EOF
+            exit 1
+          fi
