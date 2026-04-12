@@ -1093,7 +1093,6 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 	removeOpts := container.RemoveOptions{
 		RemoveVolumes: d.Get("remove_volumes").(bool),
-		RemoveLinks:   d.Get("rm").(bool),
 		Force:         true,
 	}
 
