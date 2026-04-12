@@ -238,6 +238,7 @@ func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Res
 func (p *frameworkProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDockerContainersDataSource,
+		NewDockerRegistryImageTagsDataSource,
 	}
 }
 
