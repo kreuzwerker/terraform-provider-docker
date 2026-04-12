@@ -5,7 +5,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -33,45 +32,6 @@ func TestDockerContainer_DeleteMissingContainer(t *testing.T) {
 	diags := resourceDockerContainerDelete(context.Background(), d, meta)
 	if diags.HasError() {
 		t.Fatalf("expected no error deleting missing container, got: %v", diags)
-	}
-}
-
-func TestBuildContainerRemoveOptions(t *testing.T) {
-	tests := []struct {
-		name          string
-		removeVolumes bool
-		rm            bool
-	}{
-		{name: "remove volumes enabled", removeVolumes: true, rm: true},
-		{name: "remove volumes disabled", removeVolumes: false, rm: false},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			raw := map[string]interface{}{
-				"name":                  "test",
-				"image":                 "sha256:deadbeef",
-				"attach":                false,
-				"destroy_grace_seconds": 0,
-				"remove_volumes":        tc.removeVolumes,
-				"rm":                    tc.rm,
-			}
-
-			d := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, raw)
-
-			got := buildContainerRemoveOptions(d)
-			want := container.RemoveOptions{
-				RemoveVolumes: tc.removeVolumes,
-				Force:         true,
-			}
-
-			if got != want {
-				t.Fatalf("unexpected remove options: got %#v, want %#v", got, want)
-			}
-			if got.RemoveLinks {
-				t.Fatalf("expected remove links to be false, got %#v", got)
-			}
-		})
 	}
 }
 

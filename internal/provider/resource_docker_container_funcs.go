@@ -1091,7 +1091,10 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	removeOpts := buildContainerRemoveOptions(d)
+	removeOpts := container.RemoveOptions{
+		RemoveVolumes: d.Get("remove_volumes").(bool),
+		Force:         true,
+	}
 
 	log.Printf("[INFO] Removing Container '%s'", d.Id())
 	if err := client.ContainerRemove(ctx, d.Id(), removeOpts); err != nil {
@@ -1119,13 +1122,6 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 	d.SetId("")
 	return nil
-}
-
-func buildContainerRemoveOptions(d *schema.ResourceData) container.RemoveOptions {
-	return container.RemoveOptions{
-		RemoveVolumes: d.Get("remove_volumes").(bool),
-		Force:         true,
-	}
 }
 
 func fetchDockerContainer(ctx context.Context, ID string, client *client.Client) (*container.Summary, error) {
