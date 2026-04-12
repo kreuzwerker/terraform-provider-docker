@@ -30,6 +30,7 @@ setup:
 	go install github.com/katbyte/terrafmt
 	go install github.com/client9/misspell/cmd/misspell
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	brew install git-cliff
 	rm -f .git/hooks/commit-msg \
 	&& curl --fail -o .git/hooks/commit-msg https://raw.githubusercontent.com/hazcod/semantic-commit-hook/master/commit-msg \
 	&& chmod 500 .git/hooks/commit-msg
@@ -107,7 +108,7 @@ website-lint-fix:
 
 chlog-%:
 	@echo "Generating CHANGELOG.md"
-	git-chglog --next-tag $* -o CHANGELOG.md
+	git cliff --config cliff.toml --tag $* --output CHANGELOG.md
 	@echo "Version updated to $*!"
 	@echo
 	@echo "Review the changes made by this script then execute the following:"

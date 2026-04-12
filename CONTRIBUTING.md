@@ -24,11 +24,10 @@ Please use issue templates as much as possible.
 
 Prerequisites:
 
-- `make`, `git`, `bash`
+- `make`, `git`, `bash`, `brew`
 - [Go 1.22+](https://golang.org/doc/install)
 - [Docker](https://www.docker.com/)
 - [Terraform 0.12+](https://terraform.io/)
-- [git-chglog](https://github.com/git-chglog/git-chglog)
 - [svu](https://github.com/caarlos0/svu)
 
 Clone `terraform-provider-docker` anywhere:
@@ -196,5 +195,5 @@ make major
 
 Those commands will automatically:
 - Replace all occurrences of the latest release, e.g. `2.11.0` with the new one, e.g. `2.12.0`: ``
-- Generate the `CHANGELOG.md`
+- Generate the `CHANGELOG.md` with `git cliff`
 - Regenerate the website (`make website-generation`)
