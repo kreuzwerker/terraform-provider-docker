@@ -832,6 +832,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "0.0",
 							Optional:         true,
 							ValidateDiagFunc: validateStringIsFloatRatio(),
+							DiffSuppressFunc: suppressEquivalentFloatRatio(),
 						},
 						"order": {
 							Type:             schema.TypeString,
@@ -884,6 +885,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "0.0",
 							Optional:         true,
 							ValidateDiagFunc: validateStringIsFloatRatio(),
+							DiffSuppressFunc: suppressEquivalentFloatRatio(),
 						},
 						"order": {
 							Type:             schema.TypeString,

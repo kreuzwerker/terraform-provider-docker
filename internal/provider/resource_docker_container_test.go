@@ -1541,7 +1541,7 @@ func TestAccDockerContainer_logs(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
 					resource.TestCheckResourceAttr("docker_container.foo", "logs", "true"),
 					resource.TestCheckResourceAttr("docker_container.foo", "must_run", "false"),
-					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00021\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00022\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00023\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00024\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00025\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00026\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00027\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00028\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00029\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u000310\n"),
+					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"),
 				),
 			},
 		},
