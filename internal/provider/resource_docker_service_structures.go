@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -19,10 +20,10 @@ import (
 // flatten API objects to the terraform schema
 // ////////////
 // see https://learn.hashicorp.com/tutorials/terraform/provider-create?in=terraform/providers#add-flattening-functions
-func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData, meta interface{}) []interface{} {
+func flattenTaskSpec(in swarm.TaskSpec, d *schema.ResourceData, client *client.Client) []interface{} {
 	m := make(map[string]interface{})
 	if in.ContainerSpec != nil {
-		m["container_spec"] = flattenContainerSpec(in.ContainerSpec, meta)
+		m["container_spec"] = flattenContainerSpec(in.ContainerSpec, client)
 	}
 	if in.Resources != nil {
 		m["resources"] = flattenTaskResources(in.Resources)
@@ -112,8 +113,7 @@ func flattenServiceEndpointSpec(in *swarm.EndpointSpec) []interface{} {
 }
 
 // /// start TaskSpec
-func flattenContainerSpec(in *swarm.ContainerSpec, meta interface{}) []interface{} {
-	client := meta.(*ProviderConfig).DockerClient
+func flattenContainerSpec(in *swarm.ContainerSpec, client *client.Client) []interface{} {
 	out := make([]interface{}, 0)
 	m := make(map[string]interface{})
 	if len(in.Image) > 0 {
@@ -582,7 +582,7 @@ func flattenServicePorts(in []swarm.PortConfig) []interface{} {
 // create API object from the terraform resource schema
 // ////////////
 // createServiceSpec creates the service spec: https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
-func createServiceSpec(d *schema.ResourceData, meta interface{}) (swarm.ServiceSpec, error) {
+func createServiceSpec(d *schema.ResourceData, client *client.Client) (swarm.ServiceSpec, error) {
 	serviceSpec := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name: d.Get("name").(string),
@@ -595,7 +595,7 @@ func createServiceSpec(d *schema.ResourceData, meta interface{}) (swarm.ServiceS
 	}
 	serviceSpec.Labels = labels
 
-	taskTemplate, err := createServiceTaskSpec(d, meta)
+	taskTemplate, err := createServiceTaskSpec(d, client)
 	if err != nil {
 		return serviceSpec, err
 	}
@@ -638,7 +638,7 @@ func createServiceLabels(d *schema.ResourceData) (map[string]string, error) {
 
 // == start taskSpec
 // createServiceTaskSpec creates the task template for the service
-func createServiceTaskSpec(d *schema.ResourceData, meta interface{}) (swarm.TaskSpec, error) {
+func createServiceTaskSpec(d *schema.ResourceData, client *client.Client) (swarm.TaskSpec, error) {
 	taskSpec := swarm.TaskSpec{}
 	if v, ok := d.GetOk("task_spec"); ok {
 		if len(v.([]interface{})) > 0 {
@@ -646,7 +646,7 @@ func createServiceTaskSpec(d *schema.ResourceData, meta interface{}) (swarm.Task
 				rawTaskSpec := rawTaskSpec.(map[string]interface{})
 
 				if rawContainerSpec, ok := rawTaskSpec["container_spec"]; ok {
-					containerSpec, err := createContainerSpec(rawContainerSpec, meta)
+					containerSpec, err := createContainerSpec(rawContainerSpec, client)
 					if err != nil {
 						return taskSpec, err
 					}
@@ -701,8 +701,7 @@ func createServiceTaskSpec(d *schema.ResourceData, meta interface{}) (swarm.Task
 }
 
 // createContainerSpec creates the container spec
-func createContainerSpec(v interface{}, meta interface{}) (*swarm.ContainerSpec, error) {
-	client := meta.(*ProviderConfig).DockerClient
+func createContainerSpec(v interface{}, client *client.Client) (*swarm.ContainerSpec, error) {
 	containerSpec := swarm.ContainerSpec{}
 	if len(v.([]interface{})) > 0 {
 		for _, rawContainerSpec := range v.([]interface{}) {
