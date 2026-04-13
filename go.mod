@@ -3,6 +3,7 @@ module github.com/terraform-providers/terraform-provider-docker
 go 1.25.0
 
 require (
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/client9/misspell v0.3.4
 	github.com/containerd/console v1.0.5
 	github.com/containerd/errdefs v1.0.0
@@ -19,7 +20,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
-	github.com/hashicorp/terraform-plugin-mux v0.23.0
+	github.com/hashicorp/terraform-plugin-mux v0.23.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.0
 	github.com/hashicorp/terraform-plugin-testing v1.15.0
 	github.com/katbyte/terrafmt v0.5.6
@@ -51,7 +52,6 @@ require (
 	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.3.1 // indirect
 	github.com/Kunde21/markdownfmt/v3 v3.1.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.2.1 // indirect
