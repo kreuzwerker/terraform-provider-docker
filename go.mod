@@ -3,7 +3,7 @@ module github.com/terraform-providers/terraform-provider-docker
 go 1.25.0
 
 require (
-	github.com/Masterminds/semver/v3 v3.3.0
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/client9/misspell v0.3.4
 	github.com/containerd/console v1.0.5
 	github.com/containerd/errdefs v1.0.0
