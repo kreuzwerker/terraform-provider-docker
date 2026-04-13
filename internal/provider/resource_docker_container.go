@@ -304,6 +304,13 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 				Computed:    true,
 			},
+			"platform": {
+				Type:        schema.TypeString,
+				Description: "Platform in the format `os[/arch[/variant]]` used for image lookup and container runtime, for example `linux/amd64`.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
 			"stop_signal": {
 				Type:        schema.TypeString,
 				Description: "Signal to stop a container (default `SIGTERM`).",
@@ -461,6 +468,13 @@ func resourceDockerContainer() *schema.Resource {
 							Description: "If `true`, this volume will be readonly. Defaults to `false`.",
 							Optional:    true,
 							ForceNew:    true,
+						},
+						"selinux_relabel": {
+							Type:             schema.TypeString,
+							Description:      "SELinux relabel mode for bind mounts. Supported values are `z` and `Z`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateStringMatchesPattern(`^(z|Z)$`),
 						},
 					},
 				},
@@ -959,7 +973,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"pid_mode": {
 				Type:        schema.TypeString,
-				Description: "he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
+				Description: "The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
 				Optional:    true,
 				ForceNew:    true,
 			},

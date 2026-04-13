@@ -78,7 +78,8 @@ resource "docker_image" "ubuntu" {
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, Terraform leaves the container alone. This attribute is also used to trigger a restart of a stopped container. If your container is stopped, Terraform will set `must_run` to `false` and this will trigger a change. Defaults to `true`.
 - `network_mode` (String) Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.
 - `networks_advanced` (Block Set) The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run` (see [below for nested schema](#nestedblock--networks_advanced))
-- `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
+- `pid_mode` (String) The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
+- `platform` (String) Platform in the format `os[/arch[/variant]]` used for image lookup and container runtime, for example `linux/amd64`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
 - `privileged` (Boolean) If `true`, the container runs in privileged mode.
 - `publish_all_ports` (Boolean) Publish all ports of the container.
@@ -188,16 +189,13 @@ Optional:
 <a id="nestedblock--healthcheck"></a>
 ### Nested Schema for `healthcheck`
 
-Required:
-
-- `test` (List of String) Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `["CMD", "curl", "-f", "localhost/health"]`.
-
 Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`.
 - `start_interval` (String) Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
+- `test` (List of String) Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `["CMD", "curl", "-f", "localhost/health"]`. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile.
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
 
@@ -352,6 +350,7 @@ Optional:
 - `from_container` (String) The container where the volume is coming from.
 - `host_path` (String) The path on the host where the volume is coming from.
 - `read_only` (Boolean) If `true`, this volume will be readonly. Defaults to `false`.
+- `selinux_relabel` (String) SELinux relabel mode for bind mounts. Supported values are `z` and `Z`.
 - `volume_name` (String) The name of the docker volume which should be mounted.
 
 

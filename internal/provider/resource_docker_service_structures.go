@@ -514,7 +514,8 @@ func flattenPlacementPlatforms(in []swarm.Platform) *schema.Set {
 	}
 	taskSpecResource := resourceDockerService().Schema["task_spec"].Elem.(*schema.Resource)
 	placementResource := taskSpecResource.Schema["placement"].Elem.(*schema.Resource)
-	f := schema.HashResource(placementResource)
+	platformsResource := placementResource.Schema["platforms"].Elem.(*schema.Resource)
+	f := schema.HashResource(platformsResource)
 	return schema.NewSet(f, out)
 }
 

@@ -2,18 +2,38 @@ package provider
 
 import (
 	"context"
+	"os"
+	"os/user"
+	"runtime"
+	"strings"
+	"sync"
 
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	sdkschema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ provider.Provider = &frameworkProvider{}
+	_ provider.Provider            = &frameworkProvider{}
+	_ provider.ProviderWithActions = &frameworkProvider{}
 )
+
+type frameworkProviderModel struct {
+	Host                     types.String `tfsdk:"host"`
+	Context                  types.String `tfsdk:"context"`
+	SSHOpts                  types.List   `tfsdk:"ssh_opts"`
+	CaMaterial               types.String `tfsdk:"ca_material"`
+	CertMaterial             types.String `tfsdk:"cert_material"`
+	KeyMaterial              types.String `tfsdk:"key_material"`
+	CertPath                 types.String `tfsdk:"cert_path"`
+	DisableDockerDaemonCheck types.Bool   `tfsdk:"disable_docker_daemon_check"`
+	RegistryAuth             types.Set    `tfsdk:"registry_auth"`
+}
 
 // frameworkProvider is the provider implementation using the Plugin Framework.
 // This provider will be muxed with the SDK v2 provider to allow gradual migration.
@@ -117,8 +137,92 @@ func (p *frameworkProvider) Schema(ctx context.Context, req provider.SchemaReque
 // Configure prepares a Docker API client for data sources and resources.
 // For now, configuration is handled by the SDK v2 provider through muxing.
 func (p *frameworkProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	// Configuration will be shared from the SDK v2 provider through the mux server
-	// No configuration needed here yet
+	var config frameworkProviderModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	host := config.Host.ValueString()
+	contextName := config.Context.ValueString()
+
+	if config.Context.IsNull() || config.Context.IsUnknown() || contextName == "" {
+		contextName = os.Getenv("DOCKER_CONTEXT")
+	}
+
+	if contextName != "" {
+		currentUser, err := user.Current()
+		if err != nil {
+			resp.Diagnostics.AddError("Docker context error", "Could not determine current user for Docker context resolution: "+err.Error())
+			return
+		}
+
+		contextHost, err := getContextHost(contextName, currentUser.HomeDir)
+		if err != nil {
+			resp.Diagnostics.AddError("Docker context error", "Error loading Docker context: "+err.Error())
+			return
+		}
+
+		host = contextHost
+	}
+
+	if host == "" {
+		if value := os.Getenv("DOCKER_HOST"); value != "" {
+			host = value
+		} else if runtime.GOOS == "windows" {
+			host = "npipe:////./pipe/docker_engine"
+		} else {
+			host = "unix:///var/run/docker.sock"
+		}
+	}
+
+	sshOpts := make([]string, 0)
+	if !config.SSHOpts.IsNull() && !config.SSHOpts.IsUnknown() {
+		resp.Diagnostics.Append(config.SSHOpts.ElementsAs(ctx, &sshOpts, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else if value := os.Getenv("DOCKER_SSH_OPTS"); value != "" {
+		sshOpts = strings.Fields(value)
+	}
+
+	caMaterial := config.CaMaterial.ValueString()
+	if caMaterial == "" {
+		caMaterial = os.Getenv("DOCKER_CA_MATERIAL")
+	}
+
+	certMaterial := config.CertMaterial.ValueString()
+	if certMaterial == "" {
+		certMaterial = os.Getenv("DOCKER_CERT_MATERIAL")
+	}
+
+	keyMaterial := config.KeyMaterial.ValueString()
+	if keyMaterial == "" {
+		keyMaterial = os.Getenv("DOCKER_KEY_MATERIAL")
+	}
+
+	certPath := config.CertPath.ValueString()
+	if certPath == "" {
+		certPath = os.Getenv("DOCKER_CERT_PATH")
+	}
+
+	providerConfig := &ProviderConfig{
+		DefaultConfig: &Config{
+			Host:                     host,
+			SSHOpts:                  sshOpts,
+			Ca:                       caMaterial,
+			Cert:                     certMaterial,
+			Key:                      keyMaterial,
+			CertPath:                 certPath,
+			DisableDockerDaemonCheck: config.DisableDockerDaemonCheck.ValueBool(),
+		},
+		Hosts:       map[string]*sdkschema.ResourceData{},
+		AuthConfigs: &AuthConfigs{},
+		clientCache: sync.Map{},
+	}
+
+	resp.ActionData = providerConfig
+	resp.DataSourceData = providerConfig
 }
 
 // Resources returns the provider's resource implementations.
@@ -133,6 +237,18 @@ func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Res
 // Initially empty - data sources will be migrated from SDK v2 gradually.
 func (p *frameworkProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		// Data sources will be added here as they are migrated from SDK v2
+		NewDockerContainersDataSource,
+		NewDockerRegistryImageTagsDataSource,
+	}
+}
+
+func (p *frameworkProvider) Actions(ctx context.Context) []func() action.Action {
+	return []func() action.Action{
+		func() action.Action {
+			return &DockerImageImportAction{}
+		},
+		func() action.Action {
+			return &DockerExecAction{}
+		},
 	}
 }

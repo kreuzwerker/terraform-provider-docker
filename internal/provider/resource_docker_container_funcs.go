@@ -2,29 +2,32 @@ package provider
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/containerd/platforms"
 	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 const (
@@ -52,6 +55,15 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("stop_timeout"); ok {
 		tmp := v.(int)
 		stopTimeout = &tmp
+	}
+
+	var platform *specs.Platform
+	if v, ok := d.GetOk("platform"); ok {
+		p, err := platforms.Parse(v.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		platform = &p
 	}
 
 	config := &container.Config{
@@ -441,8 +453,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	var retContainer container.CreateResponse
 
-	// TODO mavogel add platform later which comes from API v1.41. Currently we pass nil
-	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
+	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, d.Get("name").(string)); err != nil {
 		return diag.Errorf("Unable to create container: %s", err)
 	}
 	log.Printf("[INFO] retContainer %#v", retContainer)
@@ -619,10 +630,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if d.Get("attach").(bool) {
 		var b bytes.Buffer
-		logsRead := make(chan bool)
+		logsDone := make(chan error, 1)
 		if d.Get("logs").(bool) {
 			go func() {
-				defer func() { logsRead <- true }()
 				reader, err := client.ContainerLogs(ctx, retContainer.ID, container.LogsOptions{
 					ShowStdout: true,
 					ShowStderr: true,
@@ -630,21 +640,17 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					Timestamps: false,
 				})
 				if err != nil {
-					log.Panic(err)
+					logsDone <- fmt.Errorf("unable to read container logs: %w", err)
+					return
 				}
 				defer reader.Close() //nolint:errcheck
 
-				scanner := bufio.NewScanner(reader)
-				for scanner.Scan() {
-					line := scanner.Text()
-					b.WriteString(line)
-					b.WriteString("\n")
+				if err := copyContainerLogs(&b, reader, d.Get("tty").(bool)); err != nil {
+					logsDone <- fmt.Errorf("unable to copy container logs: %w", err)
+					return
+				}
 
-					log.Printf("[DEBUG] container logs: %s", line)
-				}
-				if err := scanner.Err(); err != nil {
-					log.Fatal(err)
-				}
+				logsDone <- nil
 			}()
 		}
 
@@ -656,16 +662,25 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 		case <-attachCh:
 			if d.Get("logs").(bool) {
-				// There is a race condition here.
-				// If the goroutine does not finish writing into the buffer by this line, we will have no logs.
-				// Thus, waiting for the goroutine to finish
-				<-logsRead
+				if err := <-logsDone; err != nil {
+					return diag.FromErr(err)
+				}
 				d.Set("container_logs", b.String())
 			}
 		}
 	}
 
 	return resourceDockerContainerRead(ctx, d, meta)
+}
+
+func copyContainerLogs(dst io.Writer, reader io.Reader, tty bool) error {
+	if tty {
+		_, err := io.Copy(dst, reader)
+		return err
+	}
+
+	_, err := stdcopy.StdCopy(dst, dst, reader)
+	return err
 }
 
 // parseSystemPaths checks if `systempaths=unconfined` security option is set,
@@ -860,6 +875,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		})
 	}
 	d.Set("runtime", container.HostConfig.Runtime)
+	d.Set("platform", container.Platform)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
@@ -878,8 +894,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
 	d.Set("privileged", container.HostConfig.Privileged)
-	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+	if _, hasDevices := d.GetOk("devices"); hasDevices {
+		if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+		}
 	}
 	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
@@ -893,17 +911,15 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
 	}
-	// Handle device_requests and gpus reconstruction
+	// Handle device_requests and gpus reconstruction only when configured.
 	if _, hasGpus := d.GetOk("gpus"); hasGpus {
-		// If config has gpus, check if any device request is a GPU request and reconstruct
 		gpusValue, canRepresent := flattenGPUsFromDeviceRequests(container.HostConfig.DeviceRequests)
 		if canRepresent {
 			d.Set("gpus", gpusValue)
 		} else {
 			log.Printf("[WARN] container has device requests that cannot be represented by the gpus attribute; preserving configured value")
 		}
-	} else {
-		// Config doesn't have gpus, so include all device requests in state
+	} else if _, hasDeviceRequests := d.GetOk("device_requests"); hasDeviceRequests {
 		if err = d.Set("device_requests", flattenDeviceRequests(container.HostConfig.DeviceRequests)); err != nil {
 			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
 		}
@@ -929,7 +945,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
-	d.Set("log_opts", container.HostConfig.LogConfig.Config)
+	d.Set("log_opts", containerLogOptsForState(d, container.HostConfig.LogConfig.Config))
 	d.Set("storage_opts", container.HostConfig.StorageOpt)
 	d.Set("network_mode", container.HostConfig.NetworkMode)
 	d.Set("pid_mode", container.HostConfig.PidMode)
@@ -954,6 +970,14 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("stdin_open", container.Config.OpenStdin)
 	d.Set("stop_signal", container.Config.StopSignal)
 	d.Set("stop_timeout", container.Config.StopTimeout)
+
+	return nil
+}
+
+func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[string]string) map[string]string {
+	if _, ok := d.GetOk("log_opts"); ok {
+		return containerLogOpts
+	}
 
 	return nil
 }
@@ -1061,13 +1085,14 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 		log.Printf("[INFO] Stopping Container '%s' with timeout %v", d.Id(), timeout)
 		if err := client.ContainerStop(ctx, d.Id(), *&container.StopOptions{Timeout: &timeout}); err != nil { //nolint
-			return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
+			if !containsIgnorableErrorMessage(err.Error(), "No such container") {
+				return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
+			}
 		}
 	}
 
 	removeOpts := container.RemoveOptions{
 		RemoveVolumes: d.Get("remove_volumes").(bool),
-		RemoveLinks:   d.Get("rm").(bool),
 		Force:         true,
 	}
 

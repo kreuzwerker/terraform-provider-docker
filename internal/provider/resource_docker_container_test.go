@@ -639,6 +639,10 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have a correct ipc mode")
 		}
 
+		if c.Platform != "linux" {
+			return fmt.Errorf("Container doesn't have a correct platform")
+		}
+
 		// Disabled for tests due to
 		// --storage-opt is supported only for overlay over xfs with 'pquota' mount option
 		// see https://github.com/kreuzwerker/terraform-provider-docker/issues/177
@@ -1537,7 +1541,7 @@ func TestAccDockerContainer_logs(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
 					resource.TestCheckResourceAttr("docker_container.foo", "logs", "true"),
 					resource.TestCheckResourceAttr("docker_container.foo", "must_run", "false"),
-					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00021\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00022\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00023\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00024\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00025\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00026\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00027\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00028\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00029\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u000310\n"),
+					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"),
 				),
 			},
 		},

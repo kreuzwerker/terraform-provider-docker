@@ -134,6 +134,64 @@ func TestMigrateServiceV1ToV2_with_auth(t *testing.T) {
 	}
 }
 
+func TestFlattenPlacementPlatformsCorrectHash(t *testing.T) {
+	platforms := []swarm.Platform{
+		{
+			Architecture: "amd64",
+			OS:           "linux",
+		},
+		{
+			Architecture: "arm64",
+			OS:           "linux",
+		},
+	}
+
+	flattenedPlatforms := flattenPlacementPlatforms(platforms)
+
+	if flattenedPlatforms.Len() != 2 {
+		t.Fatalf("expected 2 platforms but got %d (%#v)", flattenedPlatforms.Len(), flattenedPlatforms.List())
+	}
+}
+
+func TestDockerServiceMaxFailureRatioDiffSuppress(t *testing.T) {
+	resourceSchema := resourceDockerService().Schema
+	updateConfigResource := resourceSchema["update_config"].Elem.(*schema.Resource)
+	rollbackConfigResource := resourceSchema["rollback_config"].Elem.(*schema.Resource)
+
+	cases := []struct {
+		name     string
+		oldValue string
+		newValue string
+		expected bool
+	}{
+		{name: "equivalent integers and decimals", oldValue: "0.0", newValue: "0", expected: true},
+		{name: "equivalent decimals", oldValue: "0.10", newValue: "0.1", expected: true},
+		{name: "different values", oldValue: "0.0", newValue: "0.1", expected: false},
+	}
+
+	for _, tc := range cases {
+		t.Run("update_config/"+tc.name, func(t *testing.T) {
+			diffSuppress := updateConfigResource.Schema["max_failure_ratio"].DiffSuppressFunc
+			if diffSuppress == nil {
+				t.Fatal("expected update_config max_failure_ratio DiffSuppressFunc to be configured")
+			}
+			if got := diffSuppress("update_config.0.max_failure_ratio", tc.oldValue, tc.newValue, nil); got != tc.expected {
+				t.Fatalf("unexpected diff suppression result for update_config: got %t, want %t", got, tc.expected)
+			}
+		})
+
+		t.Run("rollback_config/"+tc.name, func(t *testing.T) {
+			diffSuppress := rollbackConfigResource.Schema["max_failure_ratio"].DiffSuppressFunc
+			if diffSuppress == nil {
+				t.Fatal("expected rollback_config max_failure_ratio DiffSuppressFunc to be configured")
+			}
+			if got := diffSuppress("rollback_config.0.max_failure_ratio", tc.oldValue, tc.newValue, nil); got != tc.expected {
+				t.Fatalf("unexpected diff suppression result for rollback_config: got %t, want %t", got, tc.expected)
+			}
+		})
+	}
+}
+
 func TestMigrateServiceLabelState_empty_labels(t *testing.T) {
 	v0State := map[string]interface{}{
 		"name": "volume-name",

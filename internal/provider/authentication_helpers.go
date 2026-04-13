@@ -107,6 +107,33 @@ func setupHTTPRequestForRegistry(method, registry, registryWithProtocol, image, 
 	return req, nil
 }
 
+func setupHTTPRequestForTagCollection(registry, registryWithProtocol, image, tag, username, password string, fallback bool) (*http.Request, error) {
+	req, err := http.NewRequest("GET", registryWithProtocol+"/v2/"+image+"/tags/list", nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating registry request: %s", err)
+	}
+
+	if username != "" {
+		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
+			req.SetBasicAuth(username, password)
+		} else {
+			if isECRPublicRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Bearer "+password)
+			} else if isECRRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
+			}
+		}
+	}
+
+	setupHTTPHeadersForRegistryRequests(req, fallback)
+
+	return req, nil
+}
+
 // Parses key/value pairs from a WWW-Authenticate header
 func parseAuthHeader(header string) (map[string]string, error) {
 	if !strings.HasPrefix(header, "Bearer") {
@@ -221,12 +248,12 @@ var AuthConfigSchema = &schema.Schema{
 			"username": {
 				Type:        schema.TypeString,
 				Description: "The username for the Docker registry.",
-				Required:    true,
+				Optional:    true,
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Description: "The password for the Docker registry.",
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 			},
 		},

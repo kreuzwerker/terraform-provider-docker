@@ -13,7 +13,9 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kreuzwerker/terraform-provider-docker/blob/main/LICENSE)  
 [![Go Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/Acc%20Tests/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
 [![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)  
+[![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)
+
+Sponsored by [Coder](https://coder.com/)
 
 ## Documentation
 
@@ -26,7 +28,7 @@ Migration guides:
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/3.9.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.1.0/docs) of the registry
 or use the following example:
 
 
@@ -38,7 +40,9 @@ terraform {
     # since new versions are released frequently
     docker = {
       source  = "kreuzwerker/docker"
-      version = "3.9.0"
+      # or if you want to pull from opentfu
+      source = "registry.opentofu.org/kreuzwerker/docker"
+      version = "4.1.0"
     }
   }
 }
@@ -115,3 +119,7 @@ The Terraform Provider Docker is available to everyone under the terms of the Mo
 ## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/kreuzwerker/terraform-provider-docker.svg)](https://starchart.cc/kreuzwerker/terraform-provider-docker)
+
+## Sponsors
+
+[![Coder](https://avatars.githubusercontent.com/u/95932066?s=100&v=2)](https://coder.com/)

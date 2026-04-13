@@ -229,7 +229,7 @@ jobs:
         env:
           TF_LOG: INFO
           TF_ACC: 1
-        run: DOCKER_HOST=${{ steps.setup-docker.outputs.sock}} go test -v ./internal/provider -timeout ${{ env.TESTSUITE_TIMEOUT }} -run ${{ matrix.resource_type }}
+        run: DOCKER_HOST=${{ steps.setup-docker.outputs.sock}} go test -v ./internal/... -timeout ${{ env.TESTSUITE_TIMEOUT }} -run ${{ matrix.resource_type }}
       - name: Cleanup acceptance tests
         run: make testacc_cleanup
         if: ${{ matrix.registry }}
