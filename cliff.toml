@@ -1,5 +1,5 @@
 [changelog]
-header = "Changelog"
+header = "# Changelog"
 body = """
 {% if version %}
 <a name="{{ version }}"></a>

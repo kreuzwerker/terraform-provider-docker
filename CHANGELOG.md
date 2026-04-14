@@ -1,5 +1,38 @@
 # Changelog
 
+<a name="v4.2.0"></a>
+## [v4.2.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.1.0...v4.2.0) (2026-04-12)
+
+
+
+### Chore
+
+* Replace git-chglog with git-cliff (#904) ([#904](https://github.com/kreuzwerker/terraform-provider-docker/issues/904))
+
+
+### Docs
+
+* add missing docker_exec/buildx examples and align action name to docker_exec (#898) ([#898](https://github.com/kreuzwerker/terraform-provider-docker/issues/898))
+
+
+### Feat
+
+* Expose attached container network addresses in `docker_network` data source (#897) ([#897](https://github.com/kreuzwerker/terraform-provider-docker/issues/897))
+
+* Add docker import action (#900) ([#900](https://github.com/kreuzwerker/terraform-provider-docker/issues/900))
+
+* Implement docker registry image tags data source (#903) ([#903](https://github.com/kreuzwerker/terraform-provider-docker/issues/903))
+
+
+### Fix
+
+* Fix `docker_container.container_logs` to return demultiplexed log content (#899) ([#899](https://github.com/kreuzwerker/terraform-provider-docker/issues/899))
+
+* Normalize `docker_service` `max_failure_ratio` diffs to prevent `0` vs `0.0` drift (#901) ([#901](https://github.com/kreuzwerker/terraform-provider-docker/issues/901))
+
+* Fix flaky `docker_container` destroy by disabling link removal during delete (#902) ([#902](https://github.com/kreuzwerker/terraform-provider-docker/issues/902))
+
+
 <a name="v4.1.0"></a>
 ## [v4.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.0.0...v4.1.0) (2026-04-09)
 
