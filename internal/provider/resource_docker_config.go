@@ -34,9 +34,17 @@ func resourceDockerConfig() *schema.Resource {
 			"data": {
 				Type:             schema.TypeString,
 				Description:      "Base64-url-safe-encoded config data",
-				Required:         true,
+				Optional:         true,
 				ForceNew:         true,
+				ExactlyOneOf:     []string{"data", "data_raw"},
 				ValidateDiagFunc: validateStringIsBase64Encoded(),
+			},
+			"data_raw": {
+				Type:         schema.TypeString,
+				Description:  "Raw (plain text) config data",
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"data", "data_raw"},
 			},
 			"labels": {
 				Type:        schema.TypeSet,
@@ -54,7 +62,7 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
 	}
-	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
+	data := getConfigDataBytes(d)
 
 	configSpec := swarm.ConfigSpec{
 		Annotations: swarm.Annotations{
@@ -92,9 +100,25 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	d.SetId(config.ID)
 	d.Set("name", config.Spec.Name)
-	d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
+	_, hasDataRaw := d.GetOk("data_raw")
+	if hasDataRaw {
+		d.Set("data_raw", string(config.Spec.Data))
+		d.Set("data", nil)
+	} else {
+		d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
+		d.Set("data_raw", nil)
+	}
 	d.Set("labels", mapToLabelSet(config.Spec.Labels))
 	return nil
+}
+
+func getConfigDataBytes(d *schema.ResourceData) []byte {
+	if dataRaw, ok := d.GetOk("data_raw"); ok {
+		return []byte(dataRaw.(string))
+	}
+
+	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
+	return data
 }
 
 func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

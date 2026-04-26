@@ -2,12 +2,15 @@ package provider
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
@@ -196,5 +199,53 @@ func testAccServiceConfigCreated(resourceName string, config *swarm.Config) reso
 		*config = inspectedConfig
 		return nil
 
+	}
+}
+
+func TestResourceDockerConfigSchema_dataAndDataRawAreMutuallyExclusive(t *testing.T) {
+	resourceSchema := resourceDockerConfig().Schema
+	expectedExactlyOneOf := []string{"data", "data_raw"}
+
+	if !reflect.DeepEqual(resourceSchema["data"].ExactlyOneOf, expectedExactlyOneOf) {
+		t.Fatalf("expected data ExactlyOneOf to be %v, got %v", expectedExactlyOneOf, resourceSchema["data"].ExactlyOneOf)
+	}
+
+	if !reflect.DeepEqual(resourceSchema["data_raw"].ExactlyOneOf, expectedExactlyOneOf) {
+		t.Fatalf("expected data_raw ExactlyOneOf to be %v, got %v", expectedExactlyOneOf, resourceSchema["data_raw"].ExactlyOneOf)
+	}
+}
+
+func TestGetConfigDataBytes(t *testing.T) {
+	testCases := []struct {
+		name         string
+		configValues map[string]interface{}
+		expected     []byte
+	}{
+		{
+			name: "uses base64 data",
+			configValues: map[string]interface{}{
+				"data": base64.StdEncoding.EncodeToString([]byte("config text")),
+			},
+			expected: []byte("config text"),
+		},
+		{
+			name: "prefers data_raw when present",
+			configValues: map[string]interface{}{
+				"data":     base64.StdEncoding.EncodeToString([]byte("base64 value")),
+				"data_raw": "raw value",
+			},
+			expected: []byte("raw value"),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			resourceData := schema.TestResourceDataRaw(t, resourceDockerConfig().Schema, testCase.configValues)
+
+			got := getConfigDataBytes(resourceData)
+			if !reflect.DeepEqual(got, testCase.expected) {
+				t.Fatalf("expected %q, got %q", string(testCase.expected), string(got))
+			}
+		})
 	}
 }
