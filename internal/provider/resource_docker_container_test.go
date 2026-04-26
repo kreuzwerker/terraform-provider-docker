@@ -639,6 +639,10 @@ func TestAccDockerContainer_customized(t *testing.T) {
 			return fmt.Errorf("Container doesn't have a correct ipc mode")
 		}
 
+		if c.Platform != "linux" {
+			return fmt.Errorf("Container doesn't have a correct platform")
+		}
+
 		// Disabled for tests due to
 		// --storage-opt is supported only for overlay over xfs with 'pquota' mount option
 		// see https://github.com/kreuzwerker/terraform-provider-docker/issues/177
@@ -797,12 +801,12 @@ func TestAccDockerContainer_uploadSource(t *testing.T) {
 
 		// we directly exec the container and print the creation timestamp
 		// which is easier to use the native docker sdk, by creating, running and attaching a reader to the command.
-		execReponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
+		execResponse, err := exec.Command("docker", "exec", "-t", "tf-test", "find", "/terraform", "-maxdepth", "1", "-name", "test.txt", "-printf", "%CY-%Cm-%Cd").Output()
 		if err != nil {
 			return fmt.Errorf("Unable to exec command: %s", err)
 		}
 
-		fileCreationTime, err := time.Parse("2006-01-02", string(execReponse))
+		fileCreationTime, err := time.Parse("2006-01-02", string(execResponse))
 		if err != nil {
 			return fmt.Errorf("Unable to parse file creation time into format: %s", err)
 		}
@@ -1537,7 +1541,7 @@ func TestAccDockerContainer_logs(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_container.foo", "attach", "true"),
 					resource.TestCheckResourceAttr("docker_container.foo", "logs", "true"),
 					resource.TestCheckResourceAttr("docker_container.foo", "must_run", "false"),
-					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00021\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00022\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00023\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00024\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00025\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00026\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00027\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00028\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00029\n\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u000310\n"),
+					resource.TestCheckResourceAttr("docker_container.foo", "container_logs", "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"),
 				),
 			},
 		},
@@ -1899,4 +1903,51 @@ func testValueHigherEqualThan(name, key string, value int) resource.TestCheckFun
 
 		return nil
 	}
+}
+
+func TestAccDockerContainer_cdi_devices(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t); testAccCheckNvidiaGPURequired(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDeviceCDIConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "device_requests.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_gpus_all(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t); testAccCheckNvidiaGPURequired(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGpusAllConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					resource.TestCheckResourceAttr("docker_container.foo", "gpus", "all"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_gpus_and_cdi_conflict(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerGpusAndCDIConfig"),
+				ExpectError: regexp.MustCompile(`"device_requests": conflicts with gpus`),
+			},
+		},
+	})
 }

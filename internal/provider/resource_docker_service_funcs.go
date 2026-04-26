@@ -194,7 +194,7 @@ func resourceDockerServiceUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 	if len(updateResponse.Warnings) > 0 {
-		log.Printf("[INFO] Warninig while updating Service '%s': %v", service.ID, updateResponse.Warnings)
+		log.Printf("[INFO] Warning while updating Service '%s': %v", service.ID, updateResponse.Warnings)
 	}
 
 	if v, ok := d.GetOk("converge_config"); ok {
@@ -475,7 +475,7 @@ func resourceDockerServiceUpdateRefreshFunc(ctx context.Context,
 	}
 }
 
-// getActiveNodes gets the actives nodes withon a swarm
+// getActiveNodes gets the actives nodes within a swarm
 func getActiveNodes(ctx context.Context, client *client.Client) (map[string]struct{}, error) {
 	nodes, err := client.NodeList(ctx, swarm.NodeListOptions{})
 	if err != nil {
@@ -595,7 +595,7 @@ func (u *replicatedConsoleLogUpdater) tasksBySlot(tasks []swarm.Task, activeNode
 }
 
 // terminalState determines if the given state is a terminal state
-// meaninig 'higher' than running (see numberedStates)
+// meaning 'higher' than running (see numberedStates)
 func terminalState(state swarm.TaskState) bool {
 	return numberedStates[state] > numberedStates[swarm.TaskStateRunning]
 }

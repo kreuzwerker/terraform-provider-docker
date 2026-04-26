@@ -344,7 +344,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing docker registry config json: %v", err)
 			}
-			authFileConfig, err := c.GetAuthConfig(registryHostname)
+			authFileConfig, err := getAuthConfigFromConfigFile(c, registryHostname)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't find registry config for '%s' in file content", registryHostname)
 			}
@@ -357,7 +357,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			log.Println("[DEBUG] Parsing file for registry auths:", filePath)
 
 			// We manually expand the path and do not use the 'pathexpand' interpolation function
-			// because in the default of this varable we refer to '~/.docker/config.json'
+			// because in the default of this variable we refer to '~/.docker/config.json'
 			if strings.HasPrefix(filePath, "~/") {
 				usr, err := user.Current()
 				if err != nil {
@@ -373,7 +373,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 			if err != nil {
 				return nil, fmt.Errorf("could not read and load config file: %v", err)
 			}
-			authFileConfig, err := c.GetAuthConfig(registryHostname)
+			authFileConfig, err := getAuthConfigFromConfigFile(c, registryHostname)
 			if err != nil {
 				return nil, fmt.Errorf("could not get auth config (the credentialhelper did not work or was not found): %v", err)
 			}
@@ -393,6 +393,39 @@ func loadConfigFile(configData io.Reader) (*configfile.ConfigFile, error) {
 		return nil, err
 	}
 	return configFile, nil
+}
+
+func isDockerHubRegistryHostname(registryHostname string) bool {
+	return registryHostname == "index.docker.io" || registryHostname == "docker.io" || registryHostname == "registry-1.docker.io"
+}
+
+func getAuthConfigFromConfigFile(c *configfile.ConfigFile, registryHostname string) (registry.AuthConfig, error) {
+	if isDockerHubRegistryHostname(registryHostname) {
+		preferredDockerHubKeys := []string{
+			"https://index.docker.io/v1/",
+			"index.docker.io",
+			"docker.io",
+		}
+
+		for _, key := range preferredDockerHubKeys {
+			if dockerHubAuthConfig, ok := c.AuthConfigs[key]; ok {
+				return registry.AuthConfig{
+					Username: dockerHubAuthConfig.Username,
+					Password: dockerHubAuthConfig.Password,
+				}, nil
+			}
+		}
+	}
+
+	authFileConfig, err := c.GetAuthConfig(registryHostname)
+	if err != nil {
+		return registry.AuthConfig{}, err
+	}
+
+	return registry.AuthConfig{
+		Username: authFileConfig.Username,
+		Password: authFileConfig.Password,
+	}, nil
 }
 
 // ConvertToHostname converts a registry url which has http|https prepended

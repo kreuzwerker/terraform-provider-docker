@@ -6,6 +6,8 @@ Bump of minimum terraform version to `1.1.5` or newer. This is done as part of i
 
 ## `docker_image`
 
+**Default usage of buildx:** For all platforms (except for Windows) the provider now uses buildx to build images. If you do not have the `build.builder` attribute set, the provider will try to resolve the default buildx builder. In case it is set - no changes for you. It also mimics the behaviour of the docker cli and looks for the `BUILDX_BUILDER` env variable.
+
 **Reworked handling of context and Dockerfile:** This probably is not a breaking change, but more a big bugfix. The build logic now correctly resolves the Dockerfile path for both relative and absolute cases.
 
 
@@ -16,6 +18,10 @@ Bump of minimum terraform version to `1.1.5` or newer. This is done as part of i
 `ports` - **Ports on stopped container force replacement:** This is now fixed through https://github.com/kreuzwerker/terraform-provider-docker/pull/842, no migration needed.
 
 `devices` - **Fix the replacement of devices** Using `devices` blocks with not all 3 attributes now does not trigger resource replacements anymore. This fixes https://github.com/kreuzwerker/terraform-provider-docker/issues/603.
+
+`gpus` - **Fixes GPU devices support** You can now properly define GPUs. This attribute conflicts with `device_requests`
+
+`device_requests` **Full support for CDI devices** You can now properly define CDI devices. This attribute conflicts with `gpus`
 
 
 ## `docker_network`

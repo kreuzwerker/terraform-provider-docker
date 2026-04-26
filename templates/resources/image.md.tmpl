@@ -47,7 +47,11 @@ You can use the `triggers` argument to specify when the image should be rebuild.
 
 -> **Note**: The buildx feature is currently in preview and may have some quirks. Known issues: Setting `ulimits` will not work.
 
-If you want to use a buildx builder, you need to set the `builder` argument. For the default buildx builder, you can set the `builder` argument to `default`. For a custom buildx builder, you can set the `builder` argument to the name of the builder. You can find the name of the builder by running `docker buildx ls`.
+If buildx is available, the provider will use it by default.
+
+To force the legacy builder, set `use_legacy_builder = true` in the `build` block.
+
+To select a specific buildx builder, set the `builder` argument (for the default buildx builder, use `default`). For a custom buildx builder, set `builder` to the builder name (see `docker buildx ls`).
 
 The single platform build result is automatically loaded to `docker images`.
 

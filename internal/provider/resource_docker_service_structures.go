@@ -261,7 +261,7 @@ func flattenServiceMounts(in []mount.Mount) *schema.Set {
 			tmpfsOptionsItem := make(map[string]interface{})
 
 			tmpfsOptionsItem["size_bytes"] = int(v.TmpfsOptions.SizeBytes)
-			tmpfsOptionsItem["mode"] = v.TmpfsOptions.Mode.Perm
+			tmpfsOptionsItem["mode"] = int(v.TmpfsOptions.Mode.Perm())
 
 			tmpfsOptions = append(tmpfsOptions, tmpfsOptionsItem)
 			m["tmpfs_options"] = tmpfsOptions
@@ -508,7 +508,8 @@ func flattenPlacementPlatforms(in []swarm.Platform) *schema.Set {
 	}
 	taskSpecResource := resourceDockerService().Schema["task_spec"].Elem.(*schema.Resource)
 	placementResource := taskSpecResource.Schema["placement"].Elem.(*schema.Resource)
-	f := schema.HashResource(placementResource)
+	platformsResource := placementResource.Schema["platforms"].Elem.(*schema.Resource)
+	f := schema.HashResource(platformsResource)
 	return schema.NewSet(f, out)
 }
 
@@ -839,10 +840,20 @@ func createContainerSpec(v interface{}) (*swarm.ContainerSpec, error) {
 							for _, rawTmpfsOptions := range value.([]interface{}) {
 								rawTmpfsOptions := rawTmpfsOptions.(map[string]interface{})
 								if value, ok := rawTmpfsOptions["size_bytes"]; ok {
-									mountInstance.TmpfsOptions.SizeBytes = value.(int64)
+									switch sizeBytes := value.(type) {
+									case int:
+										mountInstance.TmpfsOptions.SizeBytes = int64(sizeBytes)
+									case int64:
+										mountInstance.TmpfsOptions.SizeBytes = sizeBytes
+									}
 								}
 								if value, ok := rawTmpfsOptions["mode"]; ok {
-									mountInstance.TmpfsOptions.Mode = os.FileMode(value.(int))
+									switch mode := value.(type) {
+									case int:
+										mountInstance.TmpfsOptions.Mode = os.FileMode(mode)
+									case int64:
+										mountInstance.TmpfsOptions.Mode = os.FileMode(mode)
+									}
 								}
 							}
 						}
@@ -1053,7 +1064,7 @@ func createGenericResources(value interface{}) ([]swarm.GenericResource, error) 
 	return genericResources, nil
 }
 
-// createRestartPolicy creates the restart poliyc of the service
+// createRestartPolicy creates the restart policy of the service
 func createRestartPolicy(v interface{}) (*swarm.RestartPolicy, error) {
 	restartPolicy := swarm.RestartPolicy{}
 	rawRestartPolicySingleItem := v.([]interface{})
@@ -1107,7 +1118,7 @@ func createPlacement(v interface{}) (*swarm.Placement, error) {
 	return &placement, nil
 }
 
-// createServiceAdvancedNetworks creates the networks the service will be attachted to
+// createServiceAdvancedNetworks creates the networks the service will be attached to
 func createServiceAdvancedNetworks(v interface{}) ([]swarm.NetworkAttachmentConfig, error) {
 	networks := []swarm.NetworkAttachmentConfig{}
 	if len(v.(*schema.Set).List()) > 0 {

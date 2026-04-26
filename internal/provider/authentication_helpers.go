@@ -107,6 +107,33 @@ func setupHTTPRequestForRegistry(method, registry, registryWithProtocol, image, 
 	return req, nil
 }
 
+func setupHTTPRequestForTagCollection(registry, registryWithProtocol, image, tag, username, password string, fallback bool) (*http.Request, error) {
+	req, err := http.NewRequest("GET", registryWithProtocol+"/v2/"+image+"/tags/list", nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating registry request: %s", err)
+	}
+
+	if username != "" {
+		if registry != "ghcr.io" && !isECRRepositoryURL(registry) && !isAzureCRRepositoryURL(registry) && registry != "gcr.io" {
+			req.SetBasicAuth(username, password)
+		} else {
+			if isECRPublicRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Bearer "+password)
+			} else if isECRRepositoryURL(registry) {
+				password = normalizeECRPasswordForHTTPUsage(password)
+				req.Header.Add("Authorization", "Basic "+password)
+			} else {
+				req.Header.Add("Authorization", "Bearer "+b64.StdEncoding.EncodeToString([]byte(password)))
+			}
+		}
+	}
+
+	setupHTTPHeadersForRegistryRequests(req, fallback)
+
+	return req, nil
+}
+
 // Parses key/value pairs from a WWW-Authenticate header
 func parseAuthHeader(header string) (map[string]string, error) {
 	if !strings.HasPrefix(header, "Bearer") {
@@ -114,11 +141,17 @@ func parseAuthHeader(header string) (map[string]string, error) {
 	}
 
 	parts := strings.SplitN(header, " ", 2)
+	if len(parts) < 2 {
+		return nil, errors.New("missing or invalid www-authenticate header parameters")
+	}
 	parts = regexp.MustCompile(`\w+\=\".*?\"|\w+[^\s\"]+?`).FindAllString(parts[1], -1) // expression to match auth headers.
 	opts := make(map[string]string)
 
 	for _, part := range parts {
 		vals := strings.SplitN(part, "=", 2)
+		if len(vals) != 2 {
+			return nil, fmt.Errorf("missing or invalid www-authenticate key/value pair: %s", part)
+		}
 		key := vals[0]
 		val := strings.Trim(vals[1], "\", ")
 		opts[key] = val
@@ -134,19 +167,40 @@ func getAuthToken(auth map[string]string, username string, password string, fall
 	if auth["scope"] == "" {
 		params.Set("scope", fallbackScope)
 	}
-	tokenRequest, err := http.NewRequest("GET", auth["realm"]+"?"+params.Encode(), nil)
-	if err != nil {
-		return "", fmt.Errorf("error creating registry request: %s", err)
+	tokenRequestURL := auth["realm"] + "?" + params.Encode()
+	log.Printf("[DEBUG] requesting registry token from %s", tokenRequestURL)
+
+	requestToken := func(useBasicAuth bool) (*http.Response, error) {
+		tokenRequest, err := http.NewRequest("GET", tokenRequestURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error creating registry request: %s", err)
+		}
+		tokenRequest.Header.Set("Accept", "application/json")
+		tokenRequest.Header.Set("User-Agent", "docker/28.1.1")
+
+		if useBasicAuth {
+			tokenRequest.SetBasicAuth(username, password)
+		}
+
+		return client.Do(tokenRequest)
 	}
 
-	if username != "" {
-		tokenRequest.SetBasicAuth(username, password)
-	}
-
-	tokenResponse, err := client.Do(tokenRequest)
+	useBasicAuth := username != ""
+	tokenResponse, err := requestToken(useBasicAuth)
 	if err != nil {
 		return "", fmt.Errorf("error during registry request: %s", err)
 	}
+
+	if useBasicAuth && (tokenResponse.StatusCode == http.StatusUnauthorized || tokenResponse.StatusCode == http.StatusForbidden) {
+		log.Printf("[DEBUG] token request with credentials returned %s, retrying without credentials", tokenResponse.Status)
+		tokenResponse.Body.Close() // nolint:errcheck
+
+		tokenResponse, err = requestToken(false)
+		if err != nil {
+			return "", fmt.Errorf("error during anonymous registry token request: %s", err)
+		}
+	}
+	defer tokenResponse.Body.Close() // nolint:errcheck
 
 	if tokenResponse.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("got bad response from registry: %s", tokenResponse.Status)
@@ -194,12 +248,12 @@ var AuthConfigSchema = &schema.Schema{
 			"username": {
 				Type:        schema.TypeString,
 				Description: "The username for the Docker registry.",
-				Required:    true,
+				Optional:    true,
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Description: "The password for the Docker registry.",
-				Required:    true,
+				Optional:    true,
 				Sensitive:   true,
 			},
 		},

@@ -3,8 +3,15 @@ package provider
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	dockerContainerCreateDefaultTimeout = 20 * time.Minute
+	dockerContainerUpdateDefaultTimeout = 20 * time.Minute
+	dockerContainerDeleteDefaultTimeout = 20 * time.Minute
 )
 
 func resourceDockerContainer() *schema.Resource {
@@ -20,12 +27,17 @@ func resourceDockerContainer() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(dockerContainerCreateDefaultTimeout),
+			Update: schema.DefaultTimeout(dockerContainerUpdateDefaultTimeout),
+			Delete: schema.DefaultTimeout(dockerContainerDeleteDefaultTimeout),
+		},
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Version: 1,
 				Type:    resourceDockerContainerV1().CoreConfigSchema().ImpliedType(),
 				Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-					// TODO do the ohter V0-to-V1 migration, unless we're okay
+					// TODO do the other V0-to-V1 migration, unless we're okay
 					// with breaking for users who straggled on their docker
 					// provider version
 
@@ -168,7 +180,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"user": {
 				Type:        schema.TypeString,
-				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.",
+				Description: "User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -249,7 +261,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"capabilities": {
 				Type:        schema.TypeSet,
-				Description: "Add or drop certrain linux capabilities.",
+				Description: "Add or drop certain linux capabilities.",
 				Optional:    true,
 				ForceNew:    true,
 				MaxItems:    1,
@@ -288,6 +300,13 @@ func resourceDockerContainer() *schema.Resource {
 			"runtime": {
 				Type:        schema.TypeString,
 				Description: "Runtime to use for the container.",
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+			},
+			"platform": {
+				Type:        schema.TypeString,
+				Description: "Platform in the format `os[/arch[/variant]]` used for image lookup and container runtime, for example `linux/amd64`.",
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -449,6 +468,13 @@ func resourceDockerContainer() *schema.Resource {
 							Description: "If `true`, this volume will be readonly. Defaults to `false`.",
 							Optional:    true,
 							ForceNew:    true,
+						},
+						"selinux_relabel": {
+							Type:             schema.TypeString,
+							Description:      "SELinux relabel mode for bind mounts. Supported values are `z` and `Z`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateStringMatchesPattern(`^(z|Z)$`),
 						},
 					},
 				},
@@ -636,7 +662,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"devices": {
 				Type:        schema.TypeSet,
-				Description: "Bind devices to the container.",
+				Description: "Bind traditional devices to the container (e.g., `/dev/nvidia0`). For CDI devices, use `device_requests` instead.",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -659,6 +685,140 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 							Default:     "rwm",
+						},
+					},
+				},
+			},
+
+			"device_read_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_read_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The read IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_bps": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write rate limit in bytes per second.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+			"device_write_iops": {
+				Type:        schema.TypeSet,
+				Description: "Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"path": {
+							Type:        schema.TypeString,
+							Description: "The device path on the host, e.g. `/dev/sda`.",
+							Required:    true,
+						},
+						"rate": {
+							Type:             schema.TypeInt,
+							Description:      "The write IOPS limit.",
+							Required:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
+						},
+					},
+				},
+			},
+
+			"device_requests": {
+				Type:          schema.TypeSet,
+				Description:   "Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`.",
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"gpus"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"driver": {
+							Type:        schema.TypeString,
+							Description: "The device driver to use. Common values: `cdi` for CDI devices, `nvidia` for NVIDIA GPU requests.",
+							Optional:    true,
+							Default:     "cdi",
+							ForceNew:    true,
+						},
+						"count": {
+							Type:        schema.TypeInt,
+							Description: "Number of devices to request. Use -1 for all devices. Only used with `nvidia` driver.",
+							Optional:    true,
+							Default:     0,
+							ForceNew:    true,
+						},
+						"device_ids": {
+							Type:        schema.TypeSet,
+							Description: "List of device IDs or CDI device identifiers (e.g., `nvidia.com/gpu=all`).",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"capabilities": {
+							Type:        schema.TypeSet,
+							Description: "List of device capabilities. Only used with `nvidia` driver (e.g., `gpu`, `compute`, `utility`).",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"options": {
+							Type:        schema.TypeMap,
+							Description: "Driver-specific options.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -748,7 +908,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"networks_advanced": {
 				Type:        schema.TypeSet,
-				Description: "The networks the container is attached to",
+				Description: "The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run`",
 				Optional:    true,
 				ForceNew:    true,
 				Elem: &schema.Resource{
@@ -779,11 +939,33 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 						},
+						"link_local_ips": {
+							Type:        schema.TypeSet,
+							Description: "The link-local IPs of the container in the specific network. This is the equivalent to repeating `--link-local-ip` for `docker run`.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+						},
 						"mac_address": {
 							Type:        schema.TypeString,
 							Description: "The MAC address of the container in the specific network.",
 							Optional:    true,
 							ForceNew:    true,
+						},
+						"driver_opts": {
+							Type:        schema.TypeSet,
+							Description: "An array of driver options for the network endpoint, e.g. `opts1=value`. This is the equivalent to repeating `--driver-opt` for `docker run`.",
+							Optional:    true,
+							ForceNew:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"gw_priority": {
+							Type:             schema.TypeInt,
+							Description:      "Gateway priority for this endpoint. The endpoint with the highest priority will provide the default gateway for the container. This is the equivalent to `--gw-priority` for `docker run`.",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateDiagFunc: validateIntegerGeqThan(0),
 						},
 					},
 				},
@@ -791,7 +973,7 @@ func resourceDockerContainer() *schema.Resource {
 
 			"pid_mode": {
 				Type:        schema.TypeString,
-				Description: "he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
+				Description: "The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.",
 				Optional:    true,
 				ForceNew:    true,
 			},
@@ -870,8 +1052,8 @@ func resourceDockerContainer() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"test": {
 							Type:        schema.TypeList,
-							Description: "Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `[\"CMD\", \"curl\", \"-f\", \"localhost/health\"]`.",
-							Required:    true,
+							Description: "Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `[\"CMD\", \"curl\", \"-f\", \"localhost/health\"]`. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile.",
+							Optional:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"interval": {
@@ -969,7 +1151,7 @@ func resourceDockerContainer() *schema.Resource {
 			},
 			"gpus": {
 				Type:        schema.TypeString,
-				Description: "GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.",
+				Description: "GPU devices to add to the container. Supported values are `all` or `device=<id[,id...]>`, for example `device=0,2` or `device=GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a`.",
 				Optional:    true,
 				ForceNew:    true,
 			},

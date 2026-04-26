@@ -2,29 +2,32 @@ package provider
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/containerd/platforms"
 	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 const (
@@ -52,6 +55,15 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("stop_timeout"); ok {
 		tmp := v.(int)
 		stopTimeout = &tmp
+	}
+
+	var platform *specs.Platform
+	if v, ok := d.GetOk("platform"); ok {
+		p, err := platforms.Parse(v.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		platform = &p
 	}
 
 	config := &container.Config{
@@ -283,6 +295,22 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("devices"); ok {
 		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("device_read_bps"); ok {
+		hostConfig.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_read_iops"); ok {
+		hostConfig.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_bps"); ok {
+		hostConfig.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+	if v, ok := d.GetOk("device_write_iops"); ok {
+		hostConfig.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+	}
+
+	if v, ok := d.GetOk("device_requests"); ok {
+		hostConfig.DeviceRequests = deviceRequestsSetToDockerRequests(v.(*schema.Set))
+	}
 
 	if v, ok := d.GetOk("dns"); ok {
 		hostConfig.DNS = stringSetToStringSlice(v.(*schema.Set))
@@ -389,7 +417,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("gpus"); ok {
 		if client.ClientVersion() >= "1.40" {
 			var gpu opts.GpuOpts
-			err := gpu.Set(v.(string))
+			err := gpu.Set(normalizeGPUOptionString(v.(string)))
 			if err != nil {
 				return diag.Errorf("Error setting gpus: %s", err)
 			}
@@ -425,8 +453,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	var retContainer container.CreateResponse
 
-	// TODO mavogel add platform later which comes from API v1.41. Currently we pass nil
-	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, d.Get("name").(string)); err != nil {
+	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, d.Get("name").(string)); err != nil {
 		return diag.Errorf("Unable to create container: %s", err)
 	}
 	log.Printf("[INFO] retContainer %#v", retContainer)
@@ -454,10 +481,19 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			if v, ok := rawNetwork.(map[string]interface{})["ipv6_address"]; ok {
 				endpointIPAMConfig.IPv6Address = v.(string)
 			}
+			if v, ok := rawNetwork.(map[string]interface{})["link_local_ips"]; ok {
+				endpointIPAMConfig.LinkLocalIPs = stringSetToStringSlice(v.(*schema.Set))
+			}
 			endpointConfig.IPAMConfig = endpointIPAMConfig
 
 			if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok {
 				endpointConfig.MacAddress = v.(string)
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["driver_opts"]; ok {
+				endpointConfig.DriverOpts = stringSetToMapStringString(v.(*schema.Set))
+			}
+			if v, ok := rawNetwork.(map[string]interface{})["gw_priority"]; ok {
+				endpointConfig.GwPriority = v.(int)
 			}
 
 			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
@@ -594,10 +630,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 	if d.Get("attach").(bool) {
 		var b bytes.Buffer
-		logsRead := make(chan bool)
+		logsDone := make(chan error, 1)
 		if d.Get("logs").(bool) {
 			go func() {
-				defer func() { logsRead <- true }()
 				reader, err := client.ContainerLogs(ctx, retContainer.ID, container.LogsOptions{
 					ShowStdout: true,
 					ShowStderr: true,
@@ -605,21 +640,17 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 					Timestamps: false,
 				})
 				if err != nil {
-					log.Panic(err)
+					logsDone <- fmt.Errorf("unable to read container logs: %w", err)
+					return
 				}
 				defer reader.Close() //nolint:errcheck
 
-				scanner := bufio.NewScanner(reader)
-				for scanner.Scan() {
-					line := scanner.Text()
-					b.WriteString(line)
-					b.WriteString("\n")
+				if err := copyContainerLogs(&b, reader, d.Get("tty").(bool)); err != nil {
+					logsDone <- fmt.Errorf("unable to copy container logs: %w", err)
+					return
+				}
 
-					log.Printf("[DEBUG] container logs: %s", line)
-				}
-				if err := scanner.Err(); err != nil {
-					log.Fatal(err)
-				}
+				logsDone <- nil
 			}()
 		}
 
@@ -631,16 +662,25 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 		case <-attachCh:
 			if d.Get("logs").(bool) {
-				// There is a race condition here.
-				// If the goroutine does not finish writing into the buffer by this line, we will have no logs.
-				// Thus, waiting for the goroutine to finish
-				<-logsRead
+				if err := <-logsDone; err != nil {
+					return diag.FromErr(err)
+				}
 				d.Set("container_logs", b.String())
 			}
 		}
 	}
 
 	return resourceDockerContainerRead(ctx, d, meta)
+}
+
+func copyContainerLogs(dst io.Writer, reader io.Reader, tty bool) error {
+	if tty {
+		_, err := io.Copy(dst, reader)
+		return err
+	}
+
+	_, err := stdcopy.StdCopy(dst, dst, reader)
+	return err
 }
 
 // parseSystemPaths checks if `systempaths=unconfined` security option is set,
@@ -660,6 +700,51 @@ func parseSystemPaths(securityOpts []string) (filtered, maskedPaths, readonlyPat
 	}
 
 	return filtered, maskedPaths, readonlyPaths
+}
+
+func normalizeGPUOptionString(value string) string {
+	normalized := strings.TrimSpace(value)
+	for len(normalized) >= 2 {
+		if (strings.HasPrefix(normalized, "\"") && strings.HasSuffix(normalized, "\"")) ||
+			(strings.HasPrefix(normalized, "'") && strings.HasSuffix(normalized, "'")) {
+			normalized = strings.TrimSpace(normalized[1 : len(normalized)-1])
+			continue
+		}
+
+		break
+	}
+
+	return normalized
+}
+
+func flattenGPUsFromDeviceRequests(deviceRequests []container.DeviceRequest) (string, bool) {
+	if len(deviceRequests) == 0 {
+		return "", true
+	}
+
+	if len(deviceRequests) != 1 {
+		return "", false
+	}
+
+	deviceRequest := deviceRequests[0]
+
+	if len(deviceRequest.DeviceIDs) != 0 {
+		return fmt.Sprintf("device=%s", strings.Join(deviceRequest.DeviceIDs, ",")), true
+	}
+
+	if deviceRequest.Count != -1 {
+		return "", false
+	}
+
+	for _, capabilities := range deviceRequest.Capabilities {
+		for _, capability := range capabilities {
+			if strings.EqualFold(capability, "gpu") {
+				return "all", true
+			}
+		}
+	}
+
+	return "", false
 }
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -698,6 +783,17 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// Read Network Settings
 	if container.NetworkSettings != nil {
 		d.Set("bridge", container.NetworkSettings.Bridge)
+		// Best-effort support for `terraform import`: only set `networks_advanced` when
+		// it is currently empty, to avoid introducing drift for normal managed resources.
+		if currentNetworksAdvanced, ok := d.GetOk("networks_advanced"); ok {
+			if set, ok := currentNetworksAdvanced.(*schema.Set); ok && set.Len() == 0 {
+				if container.NetworkSettings.Networks != nil {
+					if err := d.Set("networks_advanced", flattenContainerNetworksAdvanced(container.NetworkSettings.Networks)); err != nil {
+						log.Printf("[WARN] failed to set networks_advanced from API: %s", err)
+					}
+				}
+			}
+		}
 		// if the container exited, NetworkSettings.Ports is nil
 		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
 		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77
@@ -779,6 +875,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		})
 	}
 	d.Set("runtime", container.HostConfig.Runtime)
+	d.Set("platform", container.Platform)
 	d.Set("mounts", getDockerContainerMounts(container))
 	// volumes
 	d.Set("tmpfs", container.HostConfig.Tmpfs)
@@ -797,8 +894,35 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
 	d.Set("privileged", container.HostConfig.Privileged)
-	if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+	if _, hasDevices := d.GetOk("devices"); hasDevices {
+		if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+		}
+	}
+	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+	}
+	if err = d.Set("device_read_iops", flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+	}
+	if err = d.Set("device_write_bps", flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+	}
+	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+	}
+	// Handle device_requests and gpus reconstruction only when configured.
+	if _, hasGpus := d.GetOk("gpus"); hasGpus {
+		gpusValue, canRepresent := flattenGPUsFromDeviceRequests(container.HostConfig.DeviceRequests)
+		if canRepresent {
+			d.Set("gpus", gpusValue)
+		} else {
+			log.Printf("[WARN] container has device requests that cannot be represented by the gpus attribute; preserving configured value")
+		}
+	} else if _, hasDeviceRequests := d.GetOk("device_requests"); hasDeviceRequests {
+		if err = d.Set("device_requests", flattenDeviceRequests(container.HostConfig.DeviceRequests)); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+		}
 	}
 	// "destroy_grace_seconds" can't be imported
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
@@ -821,7 +945,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
-	d.Set("log_opts", container.HostConfig.LogConfig.Config)
+	d.Set("log_opts", containerLogOptsForState(d, container.HostConfig.LogConfig.Config))
 	d.Set("storage_opts", container.HostConfig.StorageOpt)
 	d.Set("network_mode", container.HostConfig.NetworkMode)
 	d.Set("pid_mode", container.HostConfig.PidMode)
@@ -847,11 +971,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("stop_signal", container.Config.StopSignal)
 	d.Set("stop_timeout", container.Config.StopTimeout)
 
-	if len(container.HostConfig.DeviceRequests) > 0 {
-		// TODO pass the original gpus property string back to the resource
-		// var gpuOpts opts.GpuOpts
-		// gpuOpts = opts.GpuOpts{container.HostConfig.DeviceRequests}
-		d.Set("gpus", "all")
+	return nil
+}
+
+func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[string]string) map[string]string {
+	if _, ok := d.GetOk("log_opts"); ok {
+		return containerLogOpts
 	}
 
 	return nil
@@ -884,6 +1009,7 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 	// Handle other attribute updates
 	attrs := []string{
 		"restart", "max_retry_count", "cpu_shares", "memory", "memory_reservation", "cpu_set", "memory_swap",
+		"device_read_bps", "device_read_iops", "device_write_bps", "device_write_iops",
 	}
 	for _, attr := range attrs {
 		if d.HasChange(attr) {
@@ -897,18 +1023,32 @@ func resourceDockerContainerUpdate(ctx context.Context, d *schema.ResourceData, 
 			// 	ulimits = ulimitsToDockerUlimits(v.(*schema.Set))
 			// }
 
+			resources := container.Resources{
+				CPUShares:         int64(d.Get("cpu_shares").(int)),
+				Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
+				MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
+				CpusetCpus:        d.Get("cpu_set").(string),
+				// Ulimits:    ulimits,
+			}
+			if v, ok := d.GetOk("device_read_bps"); ok {
+				resources.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_read_iops"); ok {
+				resources.BlkioDeviceReadIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_bps"); ok {
+				resources.BlkioDeviceWriteBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+			if v, ok := d.GetOk("device_write_iops"); ok {
+				resources.BlkioDeviceWriteIOps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
+			}
+
 			updateConfig := container.UpdateConfig{
 				RestartPolicy: container.RestartPolicy{
 					Name:              container.RestartPolicyMode(d.Get("restart").(string)),
 					MaximumRetryCount: d.Get("max_retry_count").(int),
 				},
-				Resources: container.Resources{
-					CPUShares:         int64(d.Get("cpu_shares").(int)),
-					Memory:            int64(d.Get("memory").(int)) * 1024 * 1024,
-					MemoryReservation: int64(d.Get("memory_reservation").(int)) * 1024 * 1024,
-					CpusetCpus:        d.Get("cpu_set").(string),
-					// Ulimits:    ulimits,
-				},
+				Resources: resources,
 			}
 
 			if ms, ok := d.GetOk("memory_swap"); ok {
@@ -945,13 +1085,14 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 
 		log.Printf("[INFO] Stopping Container '%s' with timeout %v", d.Id(), timeout)
 		if err := client.ContainerStop(ctx, d.Id(), *&container.StopOptions{Timeout: &timeout}); err != nil { //nolint
-			return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
+			if !containsIgnorableErrorMessage(err.Error(), "No such container") {
+				return diag.Errorf("Error stopping container %s: %s", d.Id(), err)
+			}
 		}
 	}
 
 	removeOpts := container.RemoveOptions{
 		RemoveVolumes: d.Get("remove_volumes").(bool),
-		RemoveLinks:   d.Get("rm").(bool),
 		Force:         true,
 	}
 
@@ -976,7 +1117,7 @@ func resourceDockerContainerDelete(ctx context.Context, d *schema.ResourceData, 
 		if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
 			return diag.Errorf("Error waiting for container removal '%s': %s", d.Id(), err)
 		}
-		log.Printf("[INFO] Waiting for Container '%s' errord: '%s'", d.Id(), err.Error())
+		log.Printf("[INFO] Waiting for Container '%s' error: '%s'", d.Id(), err.Error())
 	}
 
 	d.SetId("")

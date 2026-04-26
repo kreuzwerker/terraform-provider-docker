@@ -131,6 +131,10 @@ func getDigestFromResponse(response *http.Response) (string, error) {
 	header := response.Header.Get("Docker-Content-Digest")
 
 	if header == "" {
+		if response.Body == nil {
+			return "", fmt.Errorf("error reading registry response body: response body is nil")
+		}
+
 		body, err := io.ReadAll(response.Body)
 		if err != nil || len(body) == 0 {
 			return "", fmt.Errorf("error reading registry response body: %s", err)

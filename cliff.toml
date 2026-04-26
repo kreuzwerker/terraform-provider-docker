@@ -1,0 +1,47 @@
+[changelog]
+header = "# Changelog"
+body = """
+{% if version %}
+<a name="{{ version }}"></a>
+## {% if previous %}[{{ version }}](https://github.com/kreuzwerker/terraform-provider-docker/compare/{{ previous.version }}...{{ version }}){% else %}{{ version }}{% endif %} ({{ timestamp | date(format="%Y-%m-%d") }})
+
+{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}
+* {{ commit.message
+    | split(pat="\n")
+    | first }}{% if commit.links %} ({% for link in commit.links %}[{{ link.text }}]({{ link.href }}){% if not loop.last %} {% endif %}{% endfor %}){% endif %}
+{% endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+render_always = false
+output = "CHANGELOG.md"
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+tag_pattern = "^v?\\d+\\.\\d+\\.\\d+(-rc\\.\\d+)?$"
+link_parsers = [
+  { pattern = "#(\\d+)", href = "https://github.com/kreuzwerker/terraform-provider-docker/issues/$1" },
+]
+commit_parsers = [
+  { message = "^feat", group = "Feat" },
+  { message = "^Feat", group = "Feat" },
+  { message = "^Add", group = "Feat" },
+  { message = "^Allow", group = "Feat" },
+  { message = "^fix", group = "Fix" },
+  { message = "^Fix", group = "Fix" },
+  { message = "^Normalize", group = "Fix" },
+  { message = "^docs?", group = "Docs" },
+  { message = "^refactor", group = "Refactor" },
+  { message = "^perf", group = "Perf" },
+  { message = "^test", group = "Test" },
+  { message = "^chore", group = "Chore" },
+  { message = "^build", group = "Build" },
+  { message = "^ci", group = "Ci" },
+  { message = "^revert", skip = true },
+  { message = ".*", group = "Other", default_scope = "other" },
+]

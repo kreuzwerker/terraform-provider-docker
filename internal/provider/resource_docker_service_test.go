@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
@@ -130,6 +131,64 @@ func TestMigrateServiceV1ToV2_with_auth(t *testing.T) {
 		fmt.Println(diags)
 		t.Error("migrated service config is invalid")
 		return
+	}
+}
+
+func TestFlattenPlacementPlatformsCorrectHash(t *testing.T) {
+	platforms := []swarm.Platform{
+		{
+			Architecture: "amd64",
+			OS:           "linux",
+		},
+		{
+			Architecture: "arm64",
+			OS:           "linux",
+		},
+	}
+
+	flattenedPlatforms := flattenPlacementPlatforms(platforms)
+
+	if flattenedPlatforms.Len() != 2 {
+		t.Fatalf("expected 2 platforms but got %d (%#v)", flattenedPlatforms.Len(), flattenedPlatforms.List())
+	}
+}
+
+func TestDockerServiceMaxFailureRatioDiffSuppress(t *testing.T) {
+	resourceSchema := resourceDockerService().Schema
+	updateConfigResource := resourceSchema["update_config"].Elem.(*schema.Resource)
+	rollbackConfigResource := resourceSchema["rollback_config"].Elem.(*schema.Resource)
+
+	cases := []struct {
+		name     string
+		oldValue string
+		newValue string
+		expected bool
+	}{
+		{name: "equivalent integers and decimals", oldValue: "0.0", newValue: "0", expected: true},
+		{name: "equivalent decimals", oldValue: "0.10", newValue: "0.1", expected: true},
+		{name: "different values", oldValue: "0.0", newValue: "0.1", expected: false},
+	}
+
+	for _, tc := range cases {
+		t.Run("update_config/"+tc.name, func(t *testing.T) {
+			diffSuppress := updateConfigResource.Schema["max_failure_ratio"].DiffSuppressFunc
+			if diffSuppress == nil {
+				t.Fatal("expected update_config max_failure_ratio DiffSuppressFunc to be configured")
+			}
+			if got := diffSuppress("update_config.0.max_failure_ratio", tc.oldValue, tc.newValue, nil); got != tc.expected {
+				t.Fatalf("unexpected diff suppression result for update_config: got %t, want %t", got, tc.expected)
+			}
+		})
+
+		t.Run("rollback_config/"+tc.name, func(t *testing.T) {
+			diffSuppress := rollbackConfigResource.Schema["max_failure_ratio"].DiffSuppressFunc
+			if diffSuppress == nil {
+				t.Fatal("expected rollback_config max_failure_ratio DiffSuppressFunc to be configured")
+			}
+			if got := diffSuppress("rollback_config.0.max_failure_ratio", tc.oldValue, tc.newValue, nil); got != tc.expected {
+				t.Fatalf("unexpected diff suppression result for rollback_config: got %t, want %t", got, tc.expected)
+			}
+		})
 	}
 }
 
@@ -277,6 +336,94 @@ func TestDockerSecretFromRegistryAuth_multiple(t *testing.T) {
 	checkAttribute(t, "Username", foundAuthConfig.Username, "")
 	checkAttribute(t, "Password", foundAuthConfig.Password, "")
 	checkAttribute(t, "ServerAddress", foundAuthConfig.ServerAddress, "")
+}
+
+func TestCreateContainerSpec_withTmpfsOptionsIntegers(t *testing.T) {
+	taskSpecResource := resourceDockerService().Schema["task_spec"].Elem.(*schema.Resource)
+	containerSpecResource := taskSpecResource.Schema["container_spec"].Elem.(*schema.Resource)
+	mountsResource := containerSpecResource.Schema["mounts"].Elem.(*schema.Resource)
+
+	mountsSet := schema.NewSet(schema.HashResource(mountsResource), []interface{}{
+		map[string]interface{}{
+			"target": "/dev/shm",
+			"type":   "tmpfs",
+			"source": "",
+			"tmpfs_options": []interface{}{
+				map[string]interface{}{
+					"size_bytes": 256 * 1024 * 1024,
+					"mode":       644,
+				},
+			},
+		},
+	})
+
+	containerSpec, err := createContainerSpec([]interface{}{
+		map[string]interface{}{
+			"image":  "busybox",
+			"mounts": mountsSet,
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error creating container spec: %v", err)
+	}
+
+	if len(containerSpec.Mounts) != 1 {
+		t.Fatalf("expected exactly one mount, got %d", len(containerSpec.Mounts))
+	}
+
+	if containerSpec.Mounts[0].TmpfsOptions == nil {
+		t.Fatalf("expected tmpfs options to be set")
+	}
+
+	if containerSpec.Mounts[0].TmpfsOptions.SizeBytes != int64(256*1024*1024) {
+		t.Fatalf("expected size_bytes to be %d, got %d", int64(256*1024*1024), containerSpec.Mounts[0].TmpfsOptions.SizeBytes)
+	}
+
+	if containerSpec.Mounts[0].TmpfsOptions.Mode != os.FileMode(644) { // nolint:staticcheck
+		t.Fatalf("expected mode to be %d, got %d", os.FileMode(644), containerSpec.Mounts[0].TmpfsOptions.Mode) // nolint:staticcheck
+	}
+}
+
+func TestFlattenServiceMounts_withTmpfsOptionsMode(t *testing.T) {
+	set := flattenServiceMounts([]mount.Mount{
+		{
+			Type:   mount.TypeTmpfs,
+			Target: "/dev/shm",
+			TmpfsOptions: &mount.TmpfsOptions{
+				SizeBytes: 256 * 1024 * 1024,
+				Mode:      os.FileMode(0o644),
+			},
+		},
+	})
+
+	items := set.List()
+	if len(items) != 1 {
+		t.Fatalf("expected exactly one flattened mount, got %d", len(items))
+	}
+
+	rawMount, ok := items[0].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected flattened mount item to be a map")
+	}
+
+	rawTmpfsOptions, ok := rawMount["tmpfs_options"].([]interface{})
+	if !ok || len(rawTmpfsOptions) != 1 {
+		t.Fatalf("expected one tmpfs_options block")
+	}
+
+	tmpfsOptions, ok := rawTmpfsOptions[0].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected tmpfs_options entry to be a map")
+	}
+
+	mode, ok := tmpfsOptions["mode"].(int)
+	if !ok {
+		t.Fatalf("expected tmpfs mode to be encoded as int, got %T", tmpfsOptions["mode"])
+	}
+
+	if mode != int(0o644) {
+		t.Fatalf("expected tmpfs mode %d, got %d", int(0o644), mode)
+	}
 }
 
 func checkAttribute(t *testing.T, name, actual, expected string) {
@@ -1080,7 +1227,7 @@ func TestAccDockerService_updateMultiplePropertiesConverge(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 			// Note mavogel: we download all images upfront and use a data_source then
-			// becausee the test is only flaky in CI. See
+			// because the test is only flaky in CI. See
 			// https://github.com/kreuzwerker/terraform-provider-docker/runs/2732063570
 			pullImageForTest(t, image)
 			pullImageForTest(t, image2)

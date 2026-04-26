@@ -36,7 +36,7 @@ resource "docker_image" "ubuntu" {
 ### Optional
 
 - `attach` (Boolean) If `true` attach to the container after its creation and waits the end of its execution. Defaults to `false`.
-- `capabilities` (Block Set, Max: 1) Add or drop certrain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
+- `capabilities` (Block Set, Max: 1) Add or drop certain linux capabilities. (see [below for nested schema](#nestedblock--capabilities))
 - `cgroup_parent` (String) Optional parent cgroup for the container
 - `cgroupns_mode` (String) Cgroup namespace mode to use for the container. Possible values are: `private`, `host`.
 - `command` (List of String) The command to use to start the container. For example, to run `/usr/bin/myprogram -f baz.conf` set the command to be `["/usr/bin/myprogram","-f","baz.conf"]`.
@@ -47,14 +47,19 @@ resource "docker_image" "ubuntu" {
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
 - `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
-- `devices` (Block Set) Bind devices to the container. (see [below for nested schema](#nestedblock--devices))
+- `device_read_bps` (Block Set) Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_read_bps))
+- `device_read_iops` (Block Set) Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_read_iops))
+- `device_requests` (Block Set) Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`. (see [below for nested schema](#nestedblock--device_requests))
+- `device_write_bps` (Block Set) Limit write rate (bytes per second) to a device. This is the equivalent to repeating `--device-write-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_write_bps))
+- `device_write_iops` (Block Set) Limit write rate (IO per second) to a device. This is the equivalent to repeating `--device-write-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_write_iops))
+- `devices` (Block Set) Bind traditional devices to the container (e.g., `/dev/nvidia0`). For CDI devices, use `device_requests` instead. (see [below for nested schema](#nestedblock--devices))
 - `dns` (Set of String) DNS servers to use.
 - `dns_opts` (Set of String) DNS options used by the DNS provider(s), see `resolv.conf` documentation for valid list of options.
 - `dns_search` (Set of String) DNS search domains that are used when bare unqualified hostnames are used inside of the container.
 - `domainname` (String) Domain name of the container.
 - `entrypoint` (List of String) The command to use as the Entrypoint for the container. The Entrypoint allows you to configure a container to run as an executable. For example, to run `/usr/bin/myprogram` when starting a container, set the entrypoint to be `"/usr/bin/myprogram"]`.
 - `env` (Set of String) Environment variables to set in the form of `KEY=VALUE`, e.g. `DEBUG=0`
-- `gpus` (String) GPU devices to add to the container. Currently, only the value `all` is supported. Passing any other value will result in unexpected behavior.
+- `gpus` (String) GPU devices to add to the container. Supported values are `all` or `device=<id[,id...]>`, for example `device=0,2` or `device=GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a`.
 - `group_add` (Set of String) Additional groups for the container user
 - `healthcheck` (Block List, Max: 1) A test to perform to check that the container is healthy (see [below for nested schema](#nestedblock--healthcheck))
 - `host` (Block Set) Additional hosts to add to the container. (see [below for nested schema](#nestedblock--host))
@@ -72,8 +77,9 @@ resource "docker_image" "ubuntu" {
 - `mounts` (Block Set) Specification for mounts to be added to containers created as part of the service. (see [below for nested schema](#nestedblock--mounts))
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, Terraform leaves the container alone. This attribute is also used to trigger a restart of a stopped container. If your container is stopped, Terraform will set `must_run` to `false` and this will trigger a change. Defaults to `true`.
 - `network_mode` (String) Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.
-- `networks_advanced` (Block Set) The networks the container is attached to (see [below for nested schema](#nestedblock--networks_advanced))
-- `pid_mode` (String) he PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
+- `networks_advanced` (Block Set) The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run` (see [below for nested schema](#nestedblock--networks_advanced))
+- `pid_mode` (String) The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
+- `platform` (String) Platform in the format `os[/arch[/variant]]` used for image lookup and container runtime, for example `linux/amd64`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
 - `privileged` (Boolean) If `true`, the container runs in privileged mode.
 - `publish_all_ports` (Boolean) Publish all ports of the container.
@@ -90,11 +96,12 @@ resource "docker_image" "ubuntu" {
 - `stop_timeout` (Number) Timeout (in seconds) to stop a container.
 - `storage_opts` (Map of String) Key/value pairs for the storage driver options, e.g. `size`: `120G`
 - `sysctls` (Map of String) A map of kernel parameters (sysctls) to set in the container.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `tmpfs` (Map of String) A map of container directories which should be replaced by `tmpfs mounts`, and their corresponding mount options.
 - `tty` (Boolean) If `true`, allocate a pseudo-tty (`docker run -t`). Defaults to `false`.
 - `ulimit` (Block Set) Ulimit options to add. (see [below for nested schema](#nestedblock--ulimit))
 - `upload` (Block Set) Specifies files to upload to the container before starting it. Only one of `content` or `content_base64` can be set and at least one of them has to be set. (see [below for nested schema](#nestedblock--upload))
-- `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literraly or by name.
+- `user` (String) User used for run the first process. Format is `user` or `user:group` which user and group can be passed literally or by name.
 - `userns_mode` (String) Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
 - `volumes` (Block Set) Spec for mounting volumes in the container. (see [below for nested schema](#nestedblock--volumes))
 - `wait` (Boolean) If `true`, then the Docker container is waited for being healthy state after creation. This requires your container to have a healthcheck, otherwise this provider will error. If `false`, then the container health state is not checked. Defaults to `false`.
@@ -118,6 +125,54 @@ Optional:
 - `drop` (Set of String) List of linux capabilities to drop.
 
 
+<a id="nestedblock--device_read_bps"></a>
+### Nested Schema for `device_read_bps`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The read rate limit in bytes per second.
+
+
+<a id="nestedblock--device_read_iops"></a>
+### Nested Schema for `device_read_iops`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The read IOPS limit.
+
+
+<a id="nestedblock--device_requests"></a>
+### Nested Schema for `device_requests`
+
+Optional:
+
+- `capabilities` (Set of String) List of device capabilities. Only used with `nvidia` driver (e.g., `gpu`, `compute`, `utility`).
+- `count` (Number) Number of devices to request. Use -1 for all devices. Only used with `nvidia` driver.
+- `device_ids` (Set of String) List of device IDs or CDI device identifiers (e.g., `nvidia.com/gpu=all`).
+- `driver` (String) The device driver to use. Common values: `cdi` for CDI devices, `nvidia` for NVIDIA GPU requests.
+- `options` (Map of String) Driver-specific options.
+
+
+<a id="nestedblock--device_write_bps"></a>
+### Nested Schema for `device_write_bps`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The write rate limit in bytes per second.
+
+
+<a id="nestedblock--device_write_iops"></a>
+### Nested Schema for `device_write_iops`
+
+Required:
+
+- `path` (String) The device path on the host, e.g. `/dev/sda`.
+- `rate` (Number) The write IOPS limit.
+
+
 <a id="nestedblock--devices"></a>
 ### Nested Schema for `devices`
 
@@ -134,16 +189,13 @@ Optional:
 <a id="nestedblock--healthcheck"></a>
 ### Nested Schema for `healthcheck`
 
-Required:
-
-- `test` (List of String) Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `["CMD", "curl", "-f", "localhost/health"]`.
-
 Optional:
 
 - `interval` (String) Time between running the check (ms|s|m|h). Defaults to `0s`.
 - `retries` (Number) Consecutive failures needed to report unhealthy. Defaults to `0`.
 - `start_interval` (String) Interval before the healthcheck starts (ms|s|m|h). Defaults to `0s`.
 - `start_period` (String) Start period for the container to initialize before counting retries towards unstable (ms|s|m|h). Defaults to `0s`.
+- `test` (List of String) Command to run to check health. For example, to run `curl -f localhost/health` set the command to be `["CMD", "curl", "-f", "localhost/health"]`. It works in the same way, and has the same default values, as the HEALTHCHECK Dockerfile instruction set by the service's Docker image. Your Compose file can override the values set in the Dockerfile.
 - `timeout` (String) Maximum time to allow one check to run (ms|s|m|h). Defaults to `0s`.
 
 
@@ -230,8 +282,11 @@ Required:
 Optional:
 
 - `aliases` (Set of String) The network aliases of the container in the specific network.
+- `driver_opts` (Set of String) An array of driver options for the network endpoint, e.g. `opts1=value`. This is the equivalent to repeating `--driver-opt` for `docker run`.
+- `gw_priority` (Number) Gateway priority for this endpoint. The endpoint with the highest priority will provide the default gateway for the container. This is the equivalent to `--gw-priority` for `docker run`.
 - `ipv4_address` (String) The IPV4 address of the container in the specific network.
 - `ipv6_address` (String) The IPV6 address of the container in the specific network.
+- `link_local_ips` (Set of String) The link-local IPs of the container in the specific network. This is the equivalent to repeating `--link-local-ip` for `docker run`.
 - `mac_address` (String) The MAC address of the container in the specific network.
 
 
@@ -247,6 +302,16 @@ Optional:
 - `external` (Number) Port exposed out of the container. If not given a free random port `>= 32768` will be used.
 - `ip` (String) IP address/mask that can access this port. Defaults to `0.0.0.0`.
 - `protocol` (String) Protocol that can be used over this port. Defaults to `tcp`.
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 
 <a id="nestedblock--ulimit"></a>
@@ -285,6 +350,7 @@ Optional:
 - `from_container` (String) The container where the volume is coming from.
 - `host_path` (String) The path on the host where the volume is coming from.
 - `read_only` (Boolean) If `true`, this volume will be readonly. Defaults to `false`.
+- `selinux_relabel` (String) SELinux relabel mode for bind mounts. Supported values are `z` and `Z`.
 - `volume_name` (String) The name of the docker volume which should be mounted.
 
 
