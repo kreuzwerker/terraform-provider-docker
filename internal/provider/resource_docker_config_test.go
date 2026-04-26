@@ -202,7 +202,7 @@ func testAccServiceConfigCreated(resourceName string, config *swarm.Config) reso
 	}
 }
 
-func TestResourceDockerConfigSchema_dataAndDataRawAreMutuallyExclusive(t *testing.T) {
+func TestResourceDockerConfigSchemaDataAndDataRawAreMutuallyExclusive(t *testing.T) {
 	resourceSchema := resourceDockerConfig().Schema
 	expectedExactlyOneOf := []string{"data", "data_raw"}
 
@@ -220,6 +220,7 @@ func TestGetConfigDataBytes(t *testing.T) {
 		name         string
 		configValues map[string]interface{}
 		expected     []byte
+		hasError     bool
 	}{
 		{
 			name: "uses base64 data",
@@ -236,13 +237,30 @@ func TestGetConfigDataBytes(t *testing.T) {
 			},
 			expected: []byte("raw value"),
 		},
+		{
+			name: "returns error for invalid base64 data",
+			configValues: map[string]interface{}{
+				"data": "%%%invalid-base64%%%",
+			},
+			hasError: true,
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			resourceData := schema.TestResourceDataRaw(t, resourceDockerConfig().Schema, testCase.configValues)
 
-			got := getConfigDataBytes(resourceData)
+			got, err := getConfigDataBytes(resourceData)
+			if testCase.hasError {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if !reflect.DeepEqual(got, testCase.expected) {
 				t.Fatalf("expected %q, got %q", string(testCase.expected), string(got))
 			}

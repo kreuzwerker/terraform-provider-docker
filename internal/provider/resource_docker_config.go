@@ -62,7 +62,10 @@ func resourceDockerConfigCreate(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
 	}
-	data := getConfigDataBytes(d)
+	data, err := getConfigDataBytes(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to decode config data: %w", err))
+	}
 
 	configSpec := swarm.ConfigSpec{
 		Annotations: swarm.Annotations{
@@ -99,26 +102,37 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 	log.Printf("[DEBUG] Docker config inspect from readFunc: %s", jsonObj)
 
 	d.SetId(config.ID)
-	d.Set("name", config.Spec.Name)
-	_, hasDataRaw := d.GetOk("data_raw")
-	if hasDataRaw {
-		d.Set("data_raw", string(config.Spec.Data))
-		d.Set("data", nil)
-	} else {
-		d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data))
-		d.Set("data_raw", nil)
+	if err := d.Set("name", config.Spec.Name); err != nil {
+		return diag.FromErr(err)
 	}
-	d.Set("labels", mapToLabelSet(config.Spec.Labels))
+	if _, hasDataRaw := d.GetOk("data_raw"); hasDataRaw {
+		if err := d.Set("data_raw", string(config.Spec.Data)); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		if err := d.Set("data", base64.StdEncoding.EncodeToString(config.Spec.Data)); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if err := d.Set("labels", mapToLabelSet(config.Spec.Labels)); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }
 
-func getConfigDataBytes(d *schema.ResourceData) []byte {
+// getConfigDataBytes returns config payload bytes from data_raw when present, or
+// from base64-decoded data otherwise.
+func getConfigDataBytes(d *schema.ResourceData) ([]byte, error) {
 	if dataRaw, ok := d.GetOk("data_raw"); ok {
-		return []byte(dataRaw.(string))
+		return []byte(dataRaw.(string)), nil
 	}
 
-	data, _ := base64.StdEncoding.DecodeString(d.Get("data").(string))
-	return data
+	data, err := base64.StdEncoding.DecodeString(d.Get("data").(string))
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func resourceDockerConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
