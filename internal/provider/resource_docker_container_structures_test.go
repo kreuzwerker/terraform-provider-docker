@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -185,6 +186,114 @@ func TestFlattenDevices(t *testing.T) {
 		second := got[1].(map[string]interface{})
 		if second["container_path"] != "/dev/container1" {
 			t.Fatalf("expected second device container_path to be preserved, got %#v", second["container_path"])
+		}
+	})
+}
+
+func TestNormalizePortIP(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "empty defaults to 0.0.0.0", input: "", expected: "0.0.0.0"},
+		{name: "ipv4 unchanged", input: "0.0.0.0", expected: "0.0.0.0"},
+		{name: "ipv4 specific unchanged", input: "192.168.1.1", expected: "192.168.1.1"},
+		{name: "ipv6 bare unchanged", input: "::", expected: "::"},
+		{name: "ipv6 bracketed stripped", input: "[::]", expected: "::"},
+		{name: "ipv6 full bracketed stripped", input: "[::1]", expected: "::1"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := normalizePortIP(tc.input)
+			if got != tc.expected {
+				t.Fatalf("normalizePortIP(%q) = %q, want %q", tc.input, got, tc.expected)
+			}
+		})
+	}
+}
+
+func TestFlattenContainerPorts(t *testing.T) {
+	t.Run("normalizes IPv6 IPs from API", func(t *testing.T) {
+		portMap := nat.PortMap{
+			"80/tcp": []nat.PortBinding{
+				{HostIP: "0.0.0.0", HostPort: "80"},
+				{HostIP: "::", HostPort: "80"},
+			},
+		}
+
+		got := flattenContainerPorts(portMap)
+		if len(got) != 2 {
+			t.Fatalf("expected 2 ports, got %d", len(got))
+		}
+
+		first := got[0].(map[string]interface{})
+		if first["ip"] != "0.0.0.0" {
+			t.Fatalf("expected first port ip to be 0.0.0.0, got %q", first["ip"])
+		}
+		second := got[1].(map[string]interface{})
+		if second["ip"] != "::" {
+			t.Fatalf("expected second port ip to be ::, got %q", second["ip"])
+		}
+	})
+
+	t.Run("sorts bindings by IP within same port", func(t *testing.T) {
+		portMap := nat.PortMap{
+			"80/tcp": []nat.PortBinding{
+				{HostIP: "::", HostPort: "80"},
+				{HostIP: "0.0.0.0", HostPort: "80"},
+			},
+		}
+
+		got := flattenContainerPorts(portMap)
+		if len(got) != 2 {
+			t.Fatalf("expected 2 ports, got %d", len(got))
+		}
+
+		first := got[0].(map[string]interface{})
+		if first["ip"] != "0.0.0.0" {
+			t.Fatalf("expected first port ip to be 0.0.0.0 (sorted), got %q", first["ip"])
+		}
+		second := got[1].(map[string]interface{})
+		if second["ip"] != "::" {
+			t.Fatalf("expected second port ip to be :: (sorted), got %q", second["ip"])
+		}
+	})
+
+	t.Run("sorts by port then by IP", func(t *testing.T) {
+		portMap := nat.PortMap{
+			"443/tcp": []nat.PortBinding{
+				{HostIP: "::", HostPort: "443"},
+				{HostIP: "0.0.0.0", HostPort: "443"},
+			},
+			"80/tcp": []nat.PortBinding{
+				{HostIP: "::", HostPort: "80"},
+				{HostIP: "0.0.0.0", HostPort: "80"},
+			},
+		}
+
+		got := flattenContainerPorts(portMap)
+		if len(got) != 4 {
+			t.Fatalf("expected 4 ports, got %d", len(got))
+		}
+
+		expected := []struct {
+			internal int
+			ip       string
+		}{
+			{80, "0.0.0.0"},
+			{80, "::"},
+			{443, "0.0.0.0"},
+			{443, "::"},
+		}
+
+		for i, exp := range expected {
+			m := got[i].(map[string]interface{})
+			if m["internal"] != exp.internal || m["ip"] != exp.ip {
+				t.Fatalf("port[%d]: expected internal=%d ip=%q, got internal=%v ip=%v",
+					i, exp.internal, exp.ip, m["internal"], m["ip"])
+			}
 		}
 	})
 }
