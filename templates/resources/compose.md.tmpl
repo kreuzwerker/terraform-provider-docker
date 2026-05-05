@@ -24,4 +24,10 @@ The following configuration enables a Compose profile and loads environment vari
 
 {{tffile "examples/resources/docker_compose/resource-profiles.tf"}}
 
+## Behavior Notes
+
+- This resource uses the Docker Compose Go packages directly and does not shell out to the `docker compose` CLI.
+- The resource is intentionally file-based: Terraform manages one Compose project from one or more Compose files instead of modeling the Compose YAML structure as nested Terraform blocks.
+- Apply and update both reconcile the project from the supplied Compose files, while destroy removes the project with the equivalent of `docker compose down`.
+
 {{ .SchemaMarkdown | trimspace }}
