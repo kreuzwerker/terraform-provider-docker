@@ -119,6 +119,7 @@ jobs:
 
             full_matrix_prefixes = [
               'TestAccDockerBuildxBuilder',
+              'TestAccDockerCompose',
               'TestAccDockerConfig',
               'TestAccDockerContainer',
               'TestAccDockerImage',
@@ -151,7 +152,7 @@ jobs:
 
               # Drop prefixes that don't match any tests in this repo.
               # (e.g., data sources without acceptance tests yet)
-              test_files = list(Path('internal/provider').rglob('*_test.go'))
+              test_files = list(Path('internal/provider').rglob('*_test.go')) + list(Path('internal/actiontests').rglob('*_test.go'))
               test_text = ''
               for p in test_files:
                 try:

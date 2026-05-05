@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestDockerComposeResource_basicUpdate(t *testing.T) {
+func TestAccDockerCompose_basicUpdate(t *testing.T) {
 	preCheckDocker(t)
 
 	projectName := fmt.Sprintf("tfacc-docker-compose-%d", time.Now().UnixNano())
@@ -24,7 +24,10 @@ func TestDockerComposeResource_basicUpdate(t *testing.T) {
 	var web containertypes.InspectResponse
 	var worker containertypes.InspectResponse
 
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			preCheckDocker(t)
+		},
 		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		CheckDestroy:             testCheckComposeProjectRemoved(projectName),
 		Steps: []resource.TestStep{
@@ -49,7 +52,7 @@ func TestDockerComposeResource_basicUpdate(t *testing.T) {
 	})
 }
 
-func TestDockerComposeResource_profilesAndEnvFiles(t *testing.T) {
+func TestAccDockerCompose_profilesAndEnvFiles(t *testing.T) {
 	preCheckDocker(t)
 
 	projectName := fmt.Sprintf("tfacc-docker-compose-profiles-%d", time.Now().UnixNano())
@@ -57,7 +60,10 @@ func TestDockerComposeResource_profilesAndEnvFiles(t *testing.T) {
 	var app containertypes.InspectResponse
 	var optional containertypes.InspectResponse
 
-	resource.UnitTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			preCheckDocker(t)
+		},
 		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		CheckDestroy:             testCheckComposeProjectRemoved(projectName),
 		Steps: []resource.TestStep{
