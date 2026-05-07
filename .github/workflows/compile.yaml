@@ -20,7 +20,7 @@ env:
 
 jobs:
   compile-fast:
-    runs-on: macos-14
+    runs-on: macos-15
     if: github.event.pull_request.draft == true
     steps:
       - uses: actions/checkout@v6
@@ -34,7 +34,7 @@ jobs:
           args: release --config .goreleaser-fast.yml --clean --skip=publish,sign --snapshot
 
   compile:
-    runs-on: macos-14
+    runs-on: macos-15
     if: github.event.pull_request.draft != true
     steps:
       - uses: actions/checkout@v6
