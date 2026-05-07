@@ -10,6 +10,18 @@ builds:
       - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
     goos:
       - linux
+    goarch:
+      - amd64
+      - arm64
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
+  - env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
+    goos:
       - darwin
     goarch:
       - amd64
