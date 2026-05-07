@@ -10,10 +10,26 @@ builds:
       - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
     goos:
       - linux
+    goarch:
+      - amd64
+      - arm64
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
+
+  # Darwin build (CGO enabled, fsnotify tag)
+  - env:
+      - CGO_ENABLED=1
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
+    goos:
       - darwin
     goarch:
       - amd64
       - arm64
+    tags:
+      - fsnotify
     binary: "{{ .ProjectName }}_v{{ .Version }}"
 archives:
   - format: zip

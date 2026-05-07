@@ -16,7 +16,7 @@ on:
       - "v*"
 
 env:
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.25.8"
 
 jobs:
   goreleaser:
@@ -42,7 +42,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

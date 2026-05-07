@@ -16,11 +16,11 @@ on:
 
 env:
   GOPROXY: https://proxy.golang.org,direct
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.25.8"
 
 jobs:
   compile-fast:
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
     if: github.event.pull_request.draft == true
     steps:
       - uses: actions/checkout@v6
@@ -31,10 +31,10 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --config .goreleaser-fast.yml --rm-dist --skip-publish --snapshot --skip-sign
+          args: release --config .goreleaser-fast.yml --clean --skip-publish --snapshot --skip-sign
 
   compile:
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
     if: github.event.pull_request.draft != true
     steps:
       - uses: actions/checkout@v6
@@ -45,4 +45,4 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --rm-dist --skip-publish --snapshot --skip-sign
+          args: release --clean --skip-publish --snapshot --skip-sign
