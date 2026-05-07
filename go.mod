@@ -27,7 +27,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
 	github.com/katbyte/terrafmt v0.5.6
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/moby/buildkit v0.22.0
+	github.com/moby/buildkit v0.29.0
 	github.com/moby/go-archive v0.1.0
 	github.com/moby/sys/atomicwriter v0.1.0
 	github.com/morikuni/aec v1.1.0
