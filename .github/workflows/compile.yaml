@@ -24,25 +24,25 @@ jobs:
     if: github.event.pull_request.draft == true
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run GoReleaser (Fast)
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8
         with:
-          version: latest
-          args: release --config .goreleaser-fast.yml --clean --skip-publish --snapshot --skip-sign
+          version: 2.15.4
+          args: release --config .goreleaser-fast.yml --clean --skip=publish,sign --snapshot
 
   compile:
     runs-on: macos-14
     if: github.event.pull_request.draft != true
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8
         with:
-          version: latest
-          args: release --clean --skip-publish --snapshot --skip-sign
+          version: 2.15.4
+          args: release --clean --skip=publish,sign --snapshot
