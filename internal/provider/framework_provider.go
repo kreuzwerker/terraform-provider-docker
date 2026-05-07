@@ -223,13 +223,14 @@ func (p *frameworkProvider) Configure(ctx context.Context, req provider.Configur
 
 	resp.ActionData = providerConfig
 	resp.DataSourceData = providerConfig
+	resp.ResourceData = providerConfig
 }
 
 // Resources returns the provider's resource implementations.
 // Initially empty - resources will be migrated from SDK v2 gradually.
 func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		// Resources will be added here as they are migrated from SDK v2
+		NewDockerComposeResource,
 	}
 }
 
