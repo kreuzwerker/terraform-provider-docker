@@ -14,6 +14,12 @@
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["digest"],
       "enabled": false,
+    },
+    {
+      "matchDepTypes": [
+        "action"
+      ],
+      "pinDigests": true
     }
   ],
   "ignorePaths": ["**/testdata/**", "**/examples/**", "**/scripts/**"]
