@@ -17,6 +17,20 @@
 
 Sponsored by [Coder](https://coder.com/)
 
+## What You Can Manage With This Provider
+
+This provider covers more than basic Docker images and containers. With Terraform, you can manage:
+
+* Compose applications with [`docker_compose`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/compose)
+* Image builds and registry workflows with [`docker_image`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image), [`docker_registry_image`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/registry_image), and [`docker_tag`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/tag)
+* Buildx builders for advanced multi-platform builds with [`docker_buildx_builder`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/buildx_builder)
+* Swarm services with [`docker_service`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/service)
+* Runtime resources such as [`docker_container`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container), [`docker_network`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/network), and [`docker_volume`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/volume)
+* Supporting platform objects like [`docker_config`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/config), [`docker_secret`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/secret), and [`docker_plugin`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/plugin)
+* Operational actions such as [`docker_exec`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/exec) and [`docker_image_import`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/image_import) for running commands in containers and importing images from tar archives or URLs
+
+Available data sources include images, image tags and manifests, containers, networks, plugins, and container logs. See the full [provider documentation](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs) for the complete resource and data source list.
+
 ## Documentation
 
 The documentation for the provider is available on the [Terraform Registry](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs).
