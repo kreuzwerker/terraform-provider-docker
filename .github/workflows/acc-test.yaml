@@ -31,7 +31,7 @@ jobs:
       should_run: ${{ steps.compute.outputs.should_run }}
       matrix: ${{ steps.compute.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
@@ -203,8 +203,8 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup cookies
@@ -213,13 +213,13 @@ jobs:
           bash scripts/gogetcookie.sh
       - name: Set up Docker v28
         id: setup-docker
-        uses: docker/setup-docker-action@v5
+        uses: docker/setup-docker-action@b2189fbf2a6592b51fee7cdd93ee2bfaeba733db # v5
         with:
           version: "28.0.4"
       - name: Used docker version
         run: |
           docker version
-      - uses: hashicorp/setup-terraform@v4
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4
         with:
           terraform_version: ${{ matrix.terraform_version }}
           terraform_wrapper: false
