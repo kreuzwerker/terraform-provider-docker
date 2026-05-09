@@ -20,7 +20,7 @@ env:
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
     permissions:
       contents: write
     steps:
