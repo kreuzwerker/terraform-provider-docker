@@ -11,8 +11,8 @@
 [![Installs](https://img.shields.io/badge/dynamic/json?logo=terraform&label=installs&query=$.data.attributes.downloads&url=https%3A%2F%2Fregistry.terraform.io%2Fv2%2Fproviders%2F713)](https://registry.terraform.io/providers/kreuzwerker/docker)
 [![Registry](https://img.shields.io/badge/registry-doc%40latest-lightgrey?logo=terraform)](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kreuzwerker/terraform-provider-docker/blob/main/LICENSE)  
-[![Go Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/Acc%20Tests/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
-[![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
+[![Acc Tests](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/acc-test.yaml/badge.svg?branch=master)](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/acc-test.yaml)
+[![golangci-lint](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/golangci-lint.yaml/badge.svg?branch=master)](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/golangci-lint.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)
 
 Sponsored by [Coder](https://coder.com/)
@@ -42,7 +42,7 @@ Migration guides:
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.2.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.3.0/docs) of the registry
 or use the following example:
 
 
@@ -56,7 +56,7 @@ terraform {
       source  = "kreuzwerker/docker"
       # or if you want to pull from opentfu
       source = "registry.opentofu.org/kreuzwerker/docker"
-      version = "4.2.0"
+      version = "4.3.0"
     }
   }
 }
