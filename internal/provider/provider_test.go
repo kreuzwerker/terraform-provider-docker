@@ -46,6 +46,46 @@ func TestProvider(t *testing.T) {
 	}
 }
 
+func TestProviderSetToRegistryAuth_StripsRepositoryPathFromServerAddress(t *testing.T) {
+	authList := schema.NewSet(schema.HashResource(&schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"address":             {Type: schema.TypeString},
+			"username":            {Type: schema.TypeString},
+			"password":            {Type: schema.TypeString},
+			"config_file":         {Type: schema.TypeString},
+			"config_file_content": {Type: schema.TypeString},
+			"auth_disabled":       {Type: schema.TypeBool},
+		},
+	}), []interface{}{
+		map[string]interface{}{
+			"address":             "https://123456789012.dkr.ecr.eu-west-1.amazonaws.com/my-repo",
+			"username":            "AWS",
+			"password":            "AWS:test-password",
+			"config_file":         "",
+			"config_file_content": "",
+			"auth_disabled":       false,
+		},
+	})
+
+	authConfigs, err := providerSetToRegistryAuth(authList)
+	if err != nil {
+		t.Fatalf("unexpected providerSetToRegistryAuth error: %s", err)
+	}
+
+	authConfig, ok := authConfigs.Configs["123456789012.dkr.ecr.eu-west-1.amazonaws.com"]
+	if !ok {
+		t.Fatalf("expected auth config to be keyed by registry hostname, got %#v", authConfigs.Configs)
+	}
+
+	if authConfig.ServerAddress != "https://123456789012.dkr.ecr.eu-west-1.amazonaws.com" {
+		t.Fatalf("want canonicalized server address, got %s", authConfig.ServerAddress)
+	}
+
+	if authConfig.Username != "AWS" {
+		t.Fatalf("want username AWS, got %s", authConfig.Username)
+	}
+}
+
 func TestAccDockerProvider_WithIncompleteRegistryAuth(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
