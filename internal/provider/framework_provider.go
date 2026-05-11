@@ -249,6 +249,15 @@ func (p *frameworkProvider) Actions(ctx context.Context) []func() action.Action 
 			return &DockerImageImportAction{}
 		},
 		func() action.Action {
+			return &DockerImageSaveAction{}
+		},
+		func() action.Action {
+			return &DockerImageLoadAction{}
+		},
+		func() action.Action {
+			return &DockerContainerExportAction{}
+		},
+		func() action.Action {
 			return &DockerExecAction{}
 		},
 		func() action.Action {
