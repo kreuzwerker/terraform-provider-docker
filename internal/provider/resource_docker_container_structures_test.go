@@ -68,7 +68,7 @@ func TestVolumeSetToDockerVolumes_withSELinuxRelabelModes(t *testing.T) {
 	}
 }
 
-func TestVolumeSetToDockerVolumes_hostPathTakesPrecedenceOverVolumeName(t *testing.T) {
+func TestVolumeSetToDockerVolumes_HostPathPrecedence(t *testing.T) {
 	volumeResource := resourceDockerContainer().Schema["volumes"].Elem.(*schema.Resource)
 	hash := schema.HashResource(volumeResource)
 
