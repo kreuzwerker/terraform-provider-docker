@@ -1,6 +1,10 @@
 package provider
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/docker/docker/api/types/registry"
+)
 
 func TestBuildAuthConfigFromResource_OptionalCredentials(t *testing.T) {
 	authConfig := buildAuthConfigFromResource([]interface{}{
@@ -41,5 +45,32 @@ func TestBuildAuthConfigFromResource_WithCredentials(t *testing.T) {
 
 	if authConfig.Password != "test-password" {
 		t.Fatalf("want password test-password, got %s", authConfig.Password)
+	}
+}
+
+func TestGetAuthConfigForRegistry_DockerHubAliasLookup(t *testing.T) {
+	providerConfig := &ProviderConfig{
+		AuthConfigs: &AuthConfigs{
+			Configs: map[string]registry.AuthConfig{
+				"index.docker.io": {
+					Username:      "docker-user",
+					Password:      "docker-pass",
+					ServerAddress: "https://index.docker.io/v1/",
+				},
+			},
+		},
+	}
+
+	authConfig, err := getAuthConfigForRegistry("registry-1.docker.io", providerConfig)
+	if err != nil {
+		t.Fatalf("unexpected getAuthConfigForRegistry error: %s", err)
+	}
+
+	if authConfig.Username != "docker-user" {
+		t.Fatalf("want username docker-user, got %s", authConfig.Username)
+	}
+
+	if authConfig.Password != "docker-pass" {
+		t.Fatalf("want password docker-pass, got %s", authConfig.Password)
 	}
 }
