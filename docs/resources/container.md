@@ -348,10 +348,10 @@ Optional:
 
 - `container_path` (String) The path in the container where the volume will be mounted.
 - `from_container` (String) The container where the volume is coming from.
-- `host_path` (String) The path on the host where the volume is coming from.
+- `host_path` (String) The path on the host where the volume is coming from. If `host_path` is set, it takes precedence over `volume_name`.
 - `read_only` (Boolean) If `true`, this volume will be readonly. Defaults to `false`.
 - `selinux_relabel` (String) SELinux relabel mode for bind mounts. Supported values are `z` and `Z`.
-- `volume_name` (String) The name of the docker volume which should be mounted.
+- `volume_name` (String) The name of the docker volume which should be mounted. Ignored when `host_path` is set.
 
 
 <a id="nestedatt--network_data"></a>

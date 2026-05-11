@@ -452,14 +452,14 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"host_path": {
 							Type:             schema.TypeString,
-							Description:      "The path on the host where the volume is coming from.",
+							Description:      "The path on the host where the volume is coming from. If `host_path` is set, it takes precedence over `volume_name`.",
 							Optional:         true,
 							ForceNew:         true,
 							ValidateDiagFunc: validateDockerContainerPath(),
 						},
 						"volume_name": {
 							Type:        schema.TypeString,
-							Description: "The name of the docker volume which should be mounted.",
+							Description: "The name of the docker volume which should be mounted. Ignored when `host_path` is set.",
 							Optional:    true,
 							ForceNew:    true,
 						},
