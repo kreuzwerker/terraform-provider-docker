@@ -27,7 +27,7 @@ func TestParseOptionalPlatform(t *testing.T) {
 	})
 
 	t.Run("invalid value", func(t *testing.T) {
-		_, err := parseOptionalPlatform("definitely/not-a-platform/value")
+		_, err := parseOptionalPlatform("not a platform")
 		if err == nil {
 			t.Fatalf("expected parseOptionalPlatform to return an error")
 		}
