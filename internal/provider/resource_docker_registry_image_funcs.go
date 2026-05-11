@@ -300,6 +300,13 @@ func getAuthConfigForRegistry(
 	if authConfig, ok := providerConfig.AuthConfigs.Configs[registryWithoutProtocol]; ok {
 		return authConfig, nil
 	}
+
+	if isDockerHubRegistryHostname(registryWithoutProtocol) {
+		if authConfig, ok := getDockerHubAuthConfigFromMap(providerConfig.AuthConfigs.Configs); ok {
+			return authConfig, nil
+		}
+	}
+
 	return registry.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
 }
 

@@ -396,15 +396,42 @@ func loadConfigFile(configData io.Reader) (*configfile.ConfigFile, error) {
 }
 
 func isDockerHubRegistryHostname(registryHostname string) bool {
-	return registryHostname == "index.docker.io" || registryHostname == "docker.io" || registryHostname == "registry-1.docker.io"
+	for _, dockerHubHostname := range dockerHubRegistryHostnames() {
+		if registryHostname == dockerHubHostname {
+			return true
+		}
+	}
+
+	return false
+}
+
+func dockerHubRegistryHostnames() []string {
+	return []string{
+		"registry-1.docker.io",
+		"index.docker.io",
+		"docker.io",
+		"registry.hub.docker.com",
+	}
+}
+
+func getDockerHubAuthConfigFromMap(authConfigs map[string]registry.AuthConfig) (registry.AuthConfig, bool) {
+	for _, dockerHubHostname := range dockerHubRegistryHostnames() {
+		if authConfig, ok := authConfigs[dockerHubHostname]; ok {
+			return authConfig, true
+		}
+	}
+
+	return registry.AuthConfig{}, false
 }
 
 func getAuthConfigFromConfigFile(c *configfile.ConfigFile, registryHostname string) (registry.AuthConfig, error) {
 	if isDockerHubRegistryHostname(registryHostname) {
 		preferredDockerHubKeys := []string{
 			"https://index.docker.io/v1/",
+			"registry-1.docker.io",
 			"index.docker.io",
 			"docker.io",
+			"registry.hub.docker.com",
 		}
 
 		for _, key := range preferredDockerHubKeys {

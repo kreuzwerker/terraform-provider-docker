@@ -59,7 +59,12 @@ jobs:
               continue
             if f.startswith('./'):
               f = f[2:]
+            # GitHub log rendering and some action outputs can present continued
+            # lines with a trailing backslash. Normalize that before matching.
+            f = f.rstrip('\\').rstrip()
             files.append(f)
+
+          print(f"Normalized changed files: {files}")
 
           def snake_to_camel(s: str) -> str:
             return ''.join(part[:1].upper() + part[1:] for part in s.split('_') if part)
