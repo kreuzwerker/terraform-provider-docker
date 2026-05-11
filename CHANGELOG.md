@@ -1,5 +1,82 @@
 # Changelog
 
+<a name="v4.3.0"></a>
+## [v4.3.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.2.0...v4.3.0) (2026-05-10)
+
+
+
+### Chore
+
+* update dependency golangci/golangci-lint to v2.12.2 (#919) ([#919](https://github.com/kreuzwerker/terraform-provider-docker/issues/919))
+
+* Update README and improve renovate (#923) ([#923](https://github.com/kreuzwerker/terraform-provider-docker/issues/923))
+
+* pin dependencies (#924) ([#924](https://github.com/kreuzwerker/terraform-provider-docker/issues/924))
+
+* migrate config renovate.json5 (#925) ([#925](https://github.com/kreuzwerker/terraform-provider-docker/issues/925))
+
+
+### Feat
+
+* expose provenance and sbom schema fields for buildx builds (#840) ([#840](https://github.com/kreuzwerker/terraform-provider-docker/issues/840) [#826](https://github.com/kreuzwerker/terraform-provider-docker/issues/826))
+
+* Add docker_compose resource (#918) ([#918](https://github.com/kreuzwerker/terraform-provider-docker/issues/918))
+
+* Add plaintext `data_raw` input for human-readable `docker_config` diffs (#913) ([#913](https://github.com/kreuzwerker/terraform-provider-docker/issues/913))
+
+
+### Fix
+
+* update module github.com/docker/go-connections to v0.7.0 (#908) ([#908](https://github.com/kreuzwerker/terraform-provider-docker/issues/908))
+
+* update module github.com/hashicorp/terraform-plugin-docs to v0.25.0 (#911) ([#911](https://github.com/kreuzwerker/terraform-provider-docker/issues/911))
+
+* update module github.com/hashicorp/terraform-plugin-testing to v1.16.0 (#912) ([#912](https://github.com/kreuzwerker/terraform-provider-docker/issues/912))
+
+* update module github.com/hashicorp/terraform-plugin-sdk/v2 to v2.40.1 (#914) ([#914](https://github.com/kreuzwerker/terraform-provider-docker/issues/914))
+
+* update module github.com/masterminds/semver/v3 to v3.5.0 (#916) ([#916](https://github.com/kreuzwerker/terraform-provider-docker/issues/916))
+
+
+<a name="v4.2.0"></a>
+## [v4.2.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.1.0...v4.2.0) (2026-04-14)
+
+
+
+### Chore
+
+* Replace git-chglog with git-cliff (#904) ([#904](https://github.com/kreuzwerker/terraform-provider-docker/issues/904))
+
+* Prepare release 4.2.0 (#907) ([#907](https://github.com/kreuzwerker/terraform-provider-docker/issues/907))
+
+
+### Docs
+
+* add missing docker_exec/buildx examples and align action name to docker_exec (#898) ([#898](https://github.com/kreuzwerker/terraform-provider-docker/issues/898))
+
+
+### Feat
+
+* Expose attached container network addresses in `docker_network` data source (#897) ([#897](https://github.com/kreuzwerker/terraform-provider-docker/issues/897))
+
+* Add docker import action (#900) ([#900](https://github.com/kreuzwerker/terraform-provider-docker/issues/900))
+
+* Implement docker registry image tags data source (#903) ([#903](https://github.com/kreuzwerker/terraform-provider-docker/issues/903))
+
+
+### Fix
+
+* Fix `docker_container.container_logs` to return demultiplexed log content (#899) ([#899](https://github.com/kreuzwerker/terraform-provider-docker/issues/899))
+
+* Normalize `docker_service` `max_failure_ratio` diffs to prevent `0` vs `0.0` drift (#901) ([#901](https://github.com/kreuzwerker/terraform-provider-docker/issues/901))
+
+* Fix flaky `docker_container` destroy by disabling link removal during delete (#902) ([#902](https://github.com/kreuzwerker/terraform-provider-docker/issues/902))
+
+* update module github.com/hashicorp/terraform-plugin-mux to v0.23.1 (#905) ([#905](https://github.com/kreuzwerker/terraform-provider-docker/issues/905))
+
+* update module github.com/masterminds/semver/v3 to v3.4.0 (#906) ([#906](https://github.com/kreuzwerker/terraform-provider-docker/issues/906))
+
+
 <a name="v4.1.0"></a>
 ## [v4.1.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.0.0...v4.1.0) (2026-04-09)
 

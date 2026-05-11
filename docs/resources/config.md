@@ -92,11 +92,12 @@ resource "docker_service" "service" {
 
 ### Required
 
-- `data` (String) Base64-url-safe-encoded config data
 - `name` (String) User-defined name of the config
 
 ### Optional
 
+- `data` (String) Base64-url-safe-encoded config data
+- `data_raw` (String) Raw (plain text) config data
 - `labels` (Block Set) User-defined key/value metadata (see [below for nested schema](#nestedblock--labels))
 
 ### Read-Only

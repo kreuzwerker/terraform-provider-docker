@@ -16,7 +16,12 @@ func createAndInitDockerCli(client *client.Client) (*command.DockerCli, error) {
 	}
 
 	log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
-	err := dockerCli.Initialize(&flags.ClientOptions{Hosts: []string{client.DaemonHost()}})
+	options := flags.NewClientOptions()
+	if client.DaemonHost() != "" {
+		options.Hosts = []string{client.DaemonHost()}
+	}
+
+	err := dockerCli.Initialize(options, command.WithAPIClient(client))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Docker CLI: %w", err)
 	}

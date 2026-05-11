@@ -11,11 +11,25 @@
 [![Installs](https://img.shields.io/badge/dynamic/json?logo=terraform&label=installs&query=$.data.attributes.downloads&url=https%3A%2F%2Fregistry.terraform.io%2Fv2%2Fproviders%2F713)](https://registry.terraform.io/providers/kreuzwerker/docker)
 [![Registry](https://img.shields.io/badge/registry-doc%40latest-lightgrey?logo=terraform)](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kreuzwerker/terraform-provider-docker/blob/main/LICENSE)  
-[![Go Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/Acc%20Tests/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
-[![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
+[![Acc Tests](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/acc-test.yaml/badge.svg?branch=master)](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/acc-test.yaml)
+[![golangci-lint](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/golangci-lint.yaml/badge.svg?branch=master)](https://github.com/kreuzwerker/terraform-provider-docker/actions/workflows/golangci-lint.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)
 
 Sponsored by [Coder](https://coder.com/)
+
+## What You Can Manage With This Provider
+
+This provider covers more than basic Docker images and containers. With Terraform, you can manage:
+
+* Compose applications with [`docker_compose`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/compose)
+* Image builds and registry workflows with [`docker_image`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image), [`docker_registry_image`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/registry_image), and [`docker_tag`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/tag)
+* Buildx builders for advanced multi-platform builds with [`docker_buildx_builder`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/buildx_builder)
+* Swarm services with [`docker_service`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/service)
+* Runtime resources such as [`docker_container`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container), [`docker_network`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/network), and [`docker_volume`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/volume)
+* Supporting platform objects like [`docker_config`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/config), [`docker_secret`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/secret), and [`docker_plugin`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/plugin)
+* Operational actions such as [`docker_exec`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/exec) and [`docker_image_import`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/image_import) for running commands in containers and importing images from tar archives or URLs
+
+Available data sources include images, image tags and manifests, containers, networks, plugins, and container logs. See the full [provider documentation](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs) for the complete resource and data source list.
 
 ## Documentation
 
@@ -28,7 +42,7 @@ Migration guides:
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.1.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.3.0/docs) of the registry
 or use the following example:
 
 
@@ -42,7 +56,7 @@ terraform {
       source  = "kreuzwerker/docker"
       # or if you want to pull from opentfu
       source = "registry.opentofu.org/kreuzwerker/docker"
-      version = "4.1.0"
+      version = "4.3.0"
     }
   }
 }

@@ -20,7 +20,7 @@ on:
 env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.25.8"
   TESTSUITE_TIMEOUT: "720s"
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
       should_run: ${{ steps.compute.outputs.should_run }}
       matrix: ${{ steps.compute.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
@@ -59,7 +59,12 @@ jobs:
               continue
             if f.startswith('./'):
               f = f[2:]
+            # GitHub log rendering and some action outputs can present continued
+            # lines with a trailing backslash. Normalize that before matching.
+            f = f.rstrip('\\').rstrip()
             files.append(f)
+
+          print(f"Normalized changed files: {files}")
 
           def snake_to_camel(s: str) -> str:
             return ''.join(part[:1].upper() + part[1:] for part in s.split('_') if part)
@@ -119,6 +124,7 @@ jobs:
 
             full_matrix_prefixes = [
               'TestAccDockerBuildxBuilder',
+              'TestAccDockerCompose',
               'TestAccDockerConfig',
               'TestAccDockerContainer',
               'TestAccDockerImage',
@@ -151,7 +157,7 @@ jobs:
 
               # Drop prefixes that don't match any tests in this repo.
               # (e.g., data sources without acceptance tests yet)
-              test_files = list(Path('internal/provider').rglob('*_test.go'))
+              test_files = list(Path('internal/provider').rglob('*_test.go')) + list(Path('internal/actiontests').rglob('*_test.go'))
               test_text = ''
               for p in test_files:
                 try:
@@ -202,8 +208,8 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup cookies
@@ -212,13 +218,13 @@ jobs:
           bash scripts/gogetcookie.sh
       - name: Set up Docker v28
         id: setup-docker
-        uses: docker/setup-docker-action@v5
+        uses: docker/setup-docker-action@b2189fbf2a6592b51fee7cdd93ee2bfaeba733db # v5
         with:
           version: "28.0.4"
       - name: Used docker version
         run: |
           docker version
-      - uses: hashicorp/setup-terraform@v4
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4
         with:
           terraform_version: ${{ matrix.terraform_version }}
           terraform_wrapper: false

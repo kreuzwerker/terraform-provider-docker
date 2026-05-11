@@ -151,9 +151,11 @@ Optional:
 - `network_mode` (String) Set the networking mode for the RUN instructions during build
 - `no_cache` (Boolean) Do not use the cache when building the image
 - `platform` (String) Set the target platform for the build. Defaults to `GOOS/GOARCH`. For more information see the [docker documentation](https://github.com/docker/buildx/blob/master/docs/reference/buildx.md#-set-the-target-platforms-for-the-build---platform)
+- `provenance` (String) Set provenance attestation for the build. BuildKit v0.11+ adds provenance attestations by default, which creates OCI image manifests that some registries (like AWS Lambda) don't support. Set to `false` to disable. Valid values: `false`, `true`, `min`, `max`, `mode=min`, `mode=max`, or a full provenance specification. Only available when using a buildx builder.
 - `pull_parent` (Boolean) Attempt to pull the image even if an older image exists locally
 - `remote_context` (String) A Git repository URI or HTTP/HTTPS context URI. Will be ignored if `builder` is set.
 - `remove` (Boolean) Remove intermediate containers after a successful build. Defaults to `true`.
+- `sbom` (String) Set SBOM (Software Bill of Materials) attestation for the build. Set to `false` to disable. Valid values: `false`, `true`, or a full SBOM specification. Only available when using a buildx builder.
 - `secrets` (Block List) Set build-time secrets. Only available when you use a buildx builder. (see [below for nested schema](#nestedblock--build--secrets))
 - `security_opt` (List of String) The security options
 - `session_id` (String) Set an ID for the build session

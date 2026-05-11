@@ -1,7 +1,7 @@
-# Visit https://goreleaser.com for documentation on how to customize this
-# behavior.
+version: 2
 builds:
-  - env:
+  - id: "normal-build"
+    env:
       # goreleaser does not work with CGO, it could also complicate
       # usage by users in CI/CD systems like Terraform Cloud where
       # they are unable to install libraries.
@@ -15,20 +15,35 @@ builds:
       - openbsd
       - windows
       - linux
-      - darwin
     goarch:
       - amd64
       - "386"
       - arm
       - arm64
     ignore:
-      - goos: darwin
-        goarch: "386"
       - goos: openbsd
         goarch: arm
     binary: "{{ .ProjectName }}_v{{ .Version }}"
+
+  # Darwin build (CGO enabled, fsnotify tag)
+  - id: "darwin-build"
+    env:
+      - CGO_ENABLED=1
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    tags:
+      - fsnotify
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
 archives:
-  - format: zip
+  - formats: ["zip"]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
@@ -49,4 +64,4 @@ release:
   # If you want to manually examine the release before its live, uncomment this line:
   # draft: true
 changelog:
-  skip: true
+  disable: true

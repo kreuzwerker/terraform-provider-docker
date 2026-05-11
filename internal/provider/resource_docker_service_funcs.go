@@ -631,6 +631,12 @@ func fromRegistryAuth(image string, authConfigs map[string]registry.AuthConfig) 
 		if fromRegistryAuth, ok := authConfigs[serverAddress]; ok {
 			return fromRegistryAuth
 		}
+
+		if isDockerHubRegistryHostname(serverAddress) {
+			if fromRegistryAuth, ok := getDockerHubAuthConfigFromMap(authConfigs); ok {
+				return fromRegistryAuth
+			}
+		}
 	}
 
 	return registry.AuthConfig{}
