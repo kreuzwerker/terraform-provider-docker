@@ -68,6 +68,36 @@ func TestVolumeSetToDockerVolumes_withSELinuxRelabelModes(t *testing.T) {
 	}
 }
 
+func TestVolumeSetToDockerVolumes_HostPathPrecedence(t *testing.T) {
+	volumeResource := resourceDockerContainer().Schema["volumes"].Elem.(*schema.Resource)
+	hash := schema.HashResource(volumeResource)
+
+	volumes := schema.NewSet(hash, []interface{}{
+		map[string]interface{}{
+			"from_container":  "",
+			"container_path":  "/container/path",
+			"host_path":       "/host/path",
+			"volume_name":     "named-volume",
+			"read_only":       false,
+			"selinux_relabel": "",
+		},
+	})
+
+	_, binds, volumesFrom, err := volumeSetToDockerVolumes(volumes)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if len(volumesFrom) != 0 {
+		t.Fatalf("expected no volumes_from entries, got %d", len(volumesFrom))
+	}
+	if len(binds) != 1 {
+		t.Fatalf("expected one bind entry, got %d", len(binds))
+	}
+	if binds[0] != "/host/path:/container/path:rw" {
+		t.Fatalf("expected host_path bind to be used, got %q", binds[0])
+	}
+}
+
 func TestContainerLogOptsForState(t *testing.T) {
 	containerLogOpts := map[string]string{
 		"max-size": "100m",
