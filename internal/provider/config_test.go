@@ -30,3 +30,41 @@ func TestNormalizeRegistryAddress(t *testing.T) {
 		}
 	})
 }
+
+func TestCanonicalizeRegistryAddress(t *testing.T) {
+	t.Run("Should keep host-only https address unchanged", func(t *testing.T) {
+		address := "https://registry.com"
+		expected := "https://registry.com"
+		actual := canonicalizeRegistryAddress(address)
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
+	t.Run("Should strip repository path from https address", func(t *testing.T) {
+		address := "https://registry.com/team/project"
+		expected := "https://registry.com"
+		actual := canonicalizeRegistryAddress(address)
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
+	t.Run("Should strip repository path from http address", func(t *testing.T) {
+		address := "http://registry.com/team/project"
+		expected := "http://registry.com"
+		actual := canonicalizeRegistryAddress(address)
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+
+	t.Run("Should normalize host without protocol", func(t *testing.T) {
+		address := "registry.com/team/project"
+		expected := "https://registry.com"
+		actual := canonicalizeRegistryAddress(address)
+		if actual != expected {
+			t.Fatalf("Expected %s, got %s", expected, actual)
+		}
+	})
+}

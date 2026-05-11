@@ -48,6 +48,20 @@ func TestBuildAuthConfigFromResource_WithCredentials(t *testing.T) {
 	}
 }
 
+func TestBuildAuthConfigFromResource_StripsRepositoryPath(t *testing.T) {
+	authConfig := buildAuthConfigFromResource([]interface{}{
+		map[string]interface{}{
+			"address":  "https://europe-west4-docker.pkg.dev/test-project/docker-repo",
+			"username": "test-user",
+			"password": "test-password",
+		},
+	})
+
+	if authConfig.ServerAddress != "https://europe-west4-docker.pkg.dev" {
+		t.Fatalf("want canonicalized address https://europe-west4-docker.pkg.dev, got %s", authConfig.ServerAddress)
+	}
+}
+
 func TestGetAuthConfigForRegistry_DockerHubAliasLookup(t *testing.T) {
 	providerConfig := &ProviderConfig{
 		AuthConfigs: &AuthConfigs{

@@ -234,3 +234,12 @@ func normalizeRegistryAddress(address string) string {
 	}
 	return address
 }
+
+func canonicalizeRegistryAddress(address string) string {
+	normalizedAddress := normalizeRegistryAddress(address)
+	if strings.HasPrefix(normalizedAddress, "http://") {
+		return "http://" + convertToHostname(normalizedAddress)
+	}
+
+	return "https://" + convertToHostname(normalizedAddress)
+}

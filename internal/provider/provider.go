@@ -308,7 +308,7 @@ func providerSetToRegistryAuth(authList *schema.Set) (*AuthConfigs, error) {
 	for _, auth := range authList.List() {
 		authConfig := registry.AuthConfig{}
 		address := auth.(map[string]interface{})["address"].(string)
-		authConfig.ServerAddress = normalizeRegistryAddress(address)
+		authConfig.ServerAddress = canonicalizeRegistryAddress(address)
 		registryHostname := convertToHostname(authConfig.ServerAddress)
 
 		username, ok := auth.(map[string]interface{})["username"].(string)
