@@ -251,5 +251,8 @@ func (p *frameworkProvider) Actions(ctx context.Context) []func() action.Action 
 		func() action.Action {
 			return &DockerExecAction{}
 		},
+		func() action.Action {
+			return &DockerSystemPruneAction{}
+		},
 	}
 }
