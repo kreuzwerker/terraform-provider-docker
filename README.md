@@ -27,7 +27,7 @@ This provider covers more than basic Docker images and containers. With Terrafor
 * Swarm services with [`docker_service`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/service)
 * Runtime resources such as [`docker_container`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container), [`docker_network`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/network), and [`docker_volume`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/volume)
 * Supporting platform objects like [`docker_config`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/config), [`docker_secret`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/secret), and [`docker_plugin`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/plugin)
-* Operational actions such as [`docker_exec`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/exec) and [`docker_image_import`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/image_import) for running commands in containers and importing images from tar archives or URLs
+* Operational actions such as [`docker_exec`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/exec), [`docker_image_import`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/image_import), [`docker_image_load`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/image_load), [`docker_image_save`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/image_save), [`docker_container_export`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/container_export) and [`docker_system_prune`](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/actions/system_prune), 
 
 Available data sources include images, image tags and manifests, containers, networks, plugins, and container logs. See the full [provider documentation](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs) for the complete resource and data source list.
 
@@ -42,7 +42,7 @@ Migration guides:
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.3.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.4.0/docs) of the registry
 or use the following example:
 
 
@@ -56,7 +56,7 @@ terraform {
       source  = "kreuzwerker/docker"
       # or if you want to pull from opentfu
       source = "registry.opentofu.org/kreuzwerker/docker"
-      version = "4.3.0"
+      version = "4.4.0"
     }
   }
 }

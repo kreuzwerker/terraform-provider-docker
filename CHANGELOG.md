@@ -1,5 +1,28 @@
 # Changelog
 
+<a name="v4.4.0"></a>
+## [v4.4.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.3.0...v4.4.0) (2026-05-15)
+
+
+
+### Feat
+
+* add `docker_system_prune` Plugin Framework action (#928) ([#928](https://github.com/kreuzwerker/terraform-provider-docker/issues/928))
+
+* Add actions for Docker image save/load and container export (#931) ([#931](https://github.com/kreuzwerker/terraform-provider-docker/issues/931))
+
+
+### Fix
+
+* Align different docker urls to fix authentication issues (#927) ([#927](https://github.com/kreuzwerker/terraform-provider-docker/issues/927))
+
+* canonicalize registry addresses to prevent auth errors (#929) ([#929](https://github.com/kreuzwerker/terraform-provider-docker/issues/929))
+
+* Honor `host_path` in `docker_container.volumes` when both source fields are set (#930) ([#930](https://github.com/kreuzwerker/terraform-provider-docker/issues/930))
+
+* Use configured host instead of daemon host for dockercli client (#939) ([#939](https://github.com/kreuzwerker/terraform-provider-docker/issues/939))
+
+
 <a name="v4.3.0"></a>
 ## [v4.3.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.2.0...v4.3.0) (2026-05-10)
 
@@ -14,6 +37,8 @@
 * pin dependencies (#924) ([#924](https://github.com/kreuzwerker/terraform-provider-docker/issues/924))
 
 * migrate config renovate.json5 (#925) ([#925](https://github.com/kreuzwerker/terraform-provider-docker/issues/925))
+
+* Prepare release v4.3.0 (#926) ([#926](https://github.com/kreuzwerker/terraform-provider-docker/issues/926))
 
 
 ### Feat
