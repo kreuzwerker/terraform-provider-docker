@@ -272,7 +272,7 @@ func (r *dockerComposeResource) newComposeService(ctx context.Context, diags *di
 		return nil
 	}
 
-	dockerCli, err := createAndInitDockerCli(client, r.providerConfig.DefaultConfig.Host)
+	dockerCli, err := createAndInitDockerCli(client)
 	if err != nil {
 		diags.AddError("Docker CLI error", err.Error())
 		return nil
