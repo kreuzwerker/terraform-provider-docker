@@ -9,19 +9,14 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func createAndInitDockerCli(client *client.Client, configuredHost string) (*command.DockerCli, error) {
-	dockerCli, error := command.NewDockerCli()
+func createAndInitDockerCli(client *client.Client) (*command.DockerCli, error) {
+	dockerCli, error := command.NewDockerCli(command.WithAPIClient(client))
 	if error != nil {
 		return nil, fmt.Errorf("failed to create Docker CLI: %w", error)
 	}
 
-	log.Printf("[DEBUG] Docker CLI initialized %#v, %#v", client, client.DaemonHost())
+	log.Printf("[DEBUG] Docker CLI initialized %#v", client)
 	options := flags.NewClientOptions()
-	if configuredHost != "" {
-		options.Hosts = []string{configuredHost}
-	} else if client.DaemonHost() != "" {
-		options.Hosts = []string{client.DaemonHost()}
-	}
 
 	err := dockerCli.Initialize(options, command.WithAPIClient(client))
 	if err != nil {
