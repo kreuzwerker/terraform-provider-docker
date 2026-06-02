@@ -8,8 +8,8 @@ import (
 
 	composecli "github.com/compose-spec/compose-go/v2/cli"
 	composetypes "github.com/compose-spec/compose-go/v2/types"
-	composeapi "github.com/docker/compose/v2/pkg/api"
-	compose "github.com/docker/compose/v2/pkg/compose"
+	composeapi "github.com/docker/compose/v5/pkg/api"
+	compose "github.com/docker/compose/v5/pkg/compose"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -245,7 +245,7 @@ func (r *dockerComposeResource) Delete(ctx context.Context, req resource.DeleteR
 	}
 }
 
-func (r *dockerComposeResource) prepareComposeProject(ctx context.Context, model dockerComposeResourceModel, diags *diag.Diagnostics) (*composetypes.Project, composeapi.Service) {
+func (r *dockerComposeResource) prepareComposeProject(ctx context.Context, model dockerComposeResourceModel, diags *diag.Diagnostics) (*composetypes.Project, composeapi.Compose) {
 	project, loadDiags := loadComposeProject(ctx, model)
 	diags.Append(loadDiags...)
 	if diags.HasError() {
@@ -260,7 +260,7 @@ func (r *dockerComposeResource) prepareComposeProject(ctx context.Context, model
 	return project, service
 }
 
-func (r *dockerComposeResource) newComposeService(ctx context.Context, diags *diag.Diagnostics) composeapi.Service {
+func (r *dockerComposeResource) newComposeService(ctx context.Context, diags *diag.Diagnostics) composeapi.Compose {
 	if r.providerConfig == nil {
 		diags.AddError("Provider not configured", "The provider configuration is unavailable for docker_compose resource operations.")
 		return nil
@@ -278,7 +278,13 @@ func (r *dockerComposeResource) newComposeService(ctx context.Context, diags *di
 		return nil
 	}
 
-	return compose.NewComposeService(dockerCli)
+	service, err := compose.NewComposeService(dockerCli)
+	if err != nil {
+		diags.AddError("Docker Compose service error", err.Error())
+		return nil
+	}
+
+	return service
 }
 
 func buildComposeUpOptions(model dockerComposeResourceModel, project *composetypes.Project, diags *diag.Diagnostics) (composeapi.UpOptions, bool) {

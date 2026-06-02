@@ -421,7 +421,17 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			if err != nil {
 				return diag.Errorf("Error setting gpus: %s", err)
 			}
-			hostConfig.DeviceRequests = gpu.Value()
+			gpuRequests := gpu.Value()
+			hostConfig.DeviceRequests = make([]container.DeviceRequest, 0, len(gpuRequests))
+			for _, request := range gpuRequests {
+				hostConfig.DeviceRequests = append(hostConfig.DeviceRequests, container.DeviceRequest{
+					Driver:       request.Driver,
+					Count:        request.Count,
+					DeviceIDs:    request.DeviceIDs,
+					Capabilities: request.Capabilities,
+					Options:      request.Options,
+				})
+			}
 		} else {
 			log.Printf("[WARN] GPU support requires docker version 1.40 or higher")
 		}

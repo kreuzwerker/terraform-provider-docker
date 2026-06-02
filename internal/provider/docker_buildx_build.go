@@ -20,19 +20,13 @@ import (
 	"github.com/containerd/console"
 	"github.com/docker/buildx/build"
 	"github.com/docker/buildx/builder"
-	"github.com/docker/buildx/controller"
-	cbuild "github.com/docker/buildx/controller/build"
-	"github.com/docker/buildx/controller/control"
-	controllererrors "github.com/docker/buildx/controller/errdefs"
-	controllerapi "github.com/docker/buildx/controller/pb"
-	"github.com/docker/buildx/monitor"
+	"github.com/docker/buildx/commands"
 	"github.com/docker/buildx/store"
 	"github.com/docker/buildx/store/storeutil"
 	"github.com/docker/buildx/util/buildflags"
 	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/desktop"
 	"github.com/docker/buildx/util/dockerutil"
-	"github.com/docker/buildx/util/ioset"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
 	dockeropts "github.com/docker/cli/opts"
@@ -100,10 +94,6 @@ type buildOptions struct {
 	pull         bool
 	exportPush   bool
 	exportLoad   bool
-
-	control.ControlOptions
-
-	invokeConfig *invokeConfig
 }
 
 const (
@@ -121,7 +111,7 @@ type ResolvedBuilder struct {
 	NG     *store.NodeGroup // may be a synthetic “context builder” nodegroup
 }
 
-func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error) {
+func (o *buildOptions) toBuildxOptions() (*commands.BuildOptions, error) {
 	var err error
 
 	buildArgs, err := listToMap(o.buildArgs, true)
@@ -134,7 +124,7 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 		return nil, err
 	}
 
-	opts := controllerapi.BuildOptions{
+	opts := commands.BuildOptions{
 		Allow:          o.allow,
 		Annotations:    o.annotations,
 		BuildArgs:      buildArgs,
@@ -149,7 +139,7 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 		ShmSize:        int64(o.shmSize),
 		Tags:           o.tags,
 		Target:         o.target,
-		Ulimits:        dockerUlimitToControllerUlimit(o.ulimits),
+		Ulimits:        o.ulimits,
 		Builder:        o.builder,
 		NoCache:        o.noCache,
 		Pull:           o.pull,
@@ -200,13 +190,13 @@ func (o *buildOptions) toControllerOptions() (*controllerapi.BuildOptions, error
 	if err != nil {
 		return nil, err
 	}
-	opts.CacheFrom = cacheFrom.ToPB()
+	opts.CacheFrom = cacheFrom
 
 	cacheTo, err := buildflags.ParseCacheEntry(o.cacheTo)
 	if err != nil {
 		return nil, err
 	}
-	opts.CacheTo = cacheTo.ToPB()
+	opts.CacheTo = cacheTo
 
 	opts.Secrets, err = buildflags.ParseSecretSpecs(o.secrets)
 	if err != nil {
@@ -507,20 +497,31 @@ func resolveByName(dockerCli command.Cli, name string, src BuilderSource) (Resol
 }
 
 func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, buildLogFile string) (err error) {
+	var progressWriter io.Writer = dockerCli.Err()
+	var buildDetailsWriter io.Writer = dockerCli.Err()
+	logWriter := io.Writer(io.Discard)
 
-	if buildLogFile == "" {
-		buildLogFile = os.DevNull
+	var logFile *os.File
+	if buildLogFile != "" {
+		logFile, err = os.OpenFile(buildLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to open build log file: %w", err)
+		}
+		defer logFile.Close() // nolint:errcheck
+
+		logWriter = logFile
+		buildDetailsWriter = logFile
+		if !options.quiet {
+			progressWriter = io.MultiWriter(progressWriter, logFile)
+		}
+	} else if options.quiet {
+		progressWriter = io.Discard
+		buildDetailsWriter = io.Discard
 	}
 
-	logFile, err := os.OpenFile(buildLogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to open build log file: %w", err)
-	}
-	defer logFile.Close() // nolint:errcheck
+	logger := log.New(logWriter, "", log.LstdFlags)
 
-	logger := log.New(logFile, "", log.LstdFlags)
-
-	opts, err := options.toControllerOptions()
+	opts, err := options.toBuildxOptions()
 	if err != nil {
 		return err
 	}
@@ -549,8 +550,10 @@ func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, 
 	}
 
 	var term bool
-	if _, err := console.ConsoleFromFile(logFile); err == nil {
-		term = true
+	if logFile != nil {
+		if _, err := console.ConsoleFromFile(logFile); err == nil {
+			term = true
+		}
 	}
 
 	ctx2, cancel := context.WithCancelCause(context.TODO())
@@ -560,13 +563,13 @@ func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, 
 		return err
 	}
 	var printer *progress.Printer
-	printer, err = progress.NewPrinter(ctx2, logFile, progressMode,
+	printer, err = progress.NewPrinter(ctx2, progressWriter, progressMode,
 		progress.WithDesc(
 			fmt.Sprintf("building with %q instance using %s driver", b.Name, b.Driver),
 			fmt.Sprintf("%s:%s", b.Driver, b.Name),
 		),
 		progress.WithOnClose(func() {
-			printWarnings(logFile, printer.Warnings(), progressMode)
+			printWarnings(progressWriter, printer.Warnings(), progressMode)
 		}),
 	)
 	if err != nil {
@@ -574,26 +577,21 @@ func runBuild(ctx context.Context, dockerCli command.Cli, options buildOptions, 
 		return err
 	}
 
-	var resp *client.SolveResponse
-	var inputs *build.Inputs
-	var retErr error
-	if confutil.IsExperimental() {
-		log.Printf("[DEBUG] using controller build")
-		resp, inputs, retErr = runControllerBuild(ctx, dockerCli, opts, options, printer)
-	} else {
-		log.Printf("[DEBUG] using basic build")
-		resp, inputs, retErr = runBasicBuild(ctx, dockerCli, opts, printer)
-	}
+	log.Printf("[DEBUG] using commands build")
+	resp, inputs, retErr := runBasicBuild(ctx, dockerCli, opts, printer)
 
 	if err := printer.Wait(); retErr == nil {
 		retErr = err
 	}
 
 	if retErr != nil {
+		if printErr := printError(retErr, printer); printErr != nil {
+			logger.Printf("error printing build error: %v", printErr)
+		}
 		return retErr
 	}
 
-	desktop.PrintBuildDetails(logFile, printer.BuildRefs(), term)
+	desktop.PrintBuildDetails(buildDetailsWriter, printer.BuildRefs(), term)
 
 	if options.imageIDFile != "" {
 		if err := os.WriteFile(options.imageIDFile, []byte(getImageID(resp.ExporterResponse)), 0644); err != nil {
@@ -642,108 +640,8 @@ func getImageID(resp map[string]string) string {
 	return dgst
 }
 
-func runBasicBuild(ctx context.Context, dockerCli command.Cli, opts *controllerapi.BuildOptions, printer *progress.Printer) (*client.SolveResponse, *build.Inputs, error) {
-	resp, res, dfmap, err := cbuild.RunBuild(ctx, dockerCli, opts, dockerCli.In(), printer, false)
-	if res != nil {
-		res.Done()
-	}
-	return resp, dfmap, err
-}
-
-func runControllerBuild(ctx context.Context, dockerCli command.Cli, opts *controllerapi.BuildOptions, options buildOptions, printer *progress.Printer) (*client.SolveResponse, *build.Inputs, error) {
-	if options.invokeConfig != nil && (options.dockerfileName == "-" || options.contextPath == "-") {
-		// stdin must be usable for monitor
-		return nil, nil, errors.Errorf("Dockerfile or context from stdin is not supported with invoke")
-	}
-	c, err := controller.NewController(ctx, options.ControlOptions, dockerCli, printer)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer func() {
-		if err := c.Close(); err != nil {
-			logrus.Warnf("failed to close server connection %v", err)
-		}
-	}()
-
-	// NOTE: buildx server has the current working directory different from the client
-	// so we need to resolve paths to abosolute ones in the client.
-	opts, err = controllerapi.ResolveOptionPaths(opts)
-	log.Printf("[DEBUG] runControllerbuild options %#v", opts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ref string
-	var retErr error
-	var resp *client.SolveResponse
-	var inputs *build.Inputs
-
-	var f *ioset.SingleForwarder
-	var pr io.ReadCloser
-	var pw io.WriteCloser
-	if options.invokeConfig == nil {
-		pr = dockerCli.In()
-	} else {
-		f = ioset.NewSingleForwarder()
-		f.SetReader(dockerCli.In())
-		pr, pw = io.Pipe()
-		f.SetWriter(pw, func() io.WriteCloser {
-			pw.Close() // nolint:errcheck
-			logrus.Debug("propagating stdin close")
-			return nil
-		})
-	}
-
-	ref, resp, inputs, err = c.Build(ctx, opts, pr, printer)
-	if err != nil {
-		var be *controllererrors.BuildError
-		if errors.As(err, &be) {
-			ref = be.SessionID
-			retErr = err
-			// We can proceed to monitor
-		} else {
-			return nil, nil, errors.Wrapf(err, "failed to build")
-		}
-	}
-
-	if options.invokeConfig != nil {
-		if err := pw.Close(); err != nil {
-			logrus.Debug("failed to close stdin pipe writer")
-		}
-		if err := pr.Close(); err != nil {
-			logrus.Debug("failed to close stdin pipe reader")
-		}
-	}
-
-	if options.invokeConfig != nil && options.invokeConfig.needsDebug(retErr) {
-		// Print errors before launching monitor
-		if err := printError(retErr, printer); err != nil {
-			logrus.Warnf("failed to print error information: %v", err)
-		}
-
-		pr2, pw2 := io.Pipe()
-		f.SetWriter(pw2, func() io.WriteCloser {
-			pw2.Close() // nolint:errcheck
-			return nil
-		})
-		monitorBuildResult, err := options.invokeConfig.runDebug(ctx, ref, opts, c, pr2, os.Stdout, os.Stderr, printer)
-		if err := pw2.Close(); err != nil {
-			logrus.Debug("failed to close monitor stdin pipe reader")
-		}
-		if err != nil {
-			logrus.Warnf("failed to run monitor: %v", err)
-		}
-		if monitorBuildResult != nil {
-			// Update return values with the last build result from monitor
-			resp, retErr = monitorBuildResult.Resp, monitorBuildResult.Err
-		}
-	} else {
-		if err := c.Disconnect(ctx, ref); err != nil {
-			logrus.Warnf("disconnect error: %v", err)
-		}
-	}
-
-	return resp, inputs, retErr
+func runBasicBuild(ctx context.Context, dockerCli command.Cli, opts *commands.BuildOptions, printer *progress.Printer) (*client.SolveResponse, *build.Inputs, error) {
+	return commands.RunBuild(ctx, dockerCli, opts, dockerCli.In(), printer, nil)
 }
 
 func printError(err error, printer *progress.Printer) error {
@@ -753,7 +651,7 @@ func printError(err error, printer *progress.Printer) error {
 	if err := printer.Pause(); err != nil {
 		return err
 	}
-	defer printer.Unpause()
+	defer printer.Resume()
 	for _, s := range errdefs.Sources(err) {
 		s.Print(os.Stderr) // nolint:errcheck
 	}
@@ -779,60 +677,6 @@ func listToMap(values []string, defaultEnv bool) (map[string]string, error) {
 		}
 	}
 	return result, nil
-}
-
-type invokeConfig struct {
-	controllerapi.InvokeConfig
-	onFlag     string
-	invokeFlag string
-}
-
-func (cfg *invokeConfig) needsDebug(retErr error) bool {
-	switch cfg.onFlag {
-	case "always":
-		return true
-	case "error":
-		return retErr != nil
-	default:
-		return cfg.invokeFlag != ""
-	}
-}
-
-func (cfg *invokeConfig) runDebug(ctx context.Context, ref string, options *controllerapi.BuildOptions, c control.BuildxController, stdin io.ReadCloser, stdout io.WriteCloser, stderr console.File, progress *progress.Printer) (*monitor.MonitorBuildResult, error) {
-	con := console.Current()
-	if err := con.SetRaw(); err != nil {
-		// TODO: run disconnect in build command (on error case)
-		if err := c.Disconnect(ctx, ref); err != nil {
-			logrus.Warnf("disconnect error: %v", err)
-		}
-		return nil, errors.Errorf("failed to configure terminal: %v", err)
-	}
-	defer con.Reset() // nolint:errcheck
-	return monitor.RunMonitor(ctx, ref, options, &cfg.InvokeConfig, c, stdin, stdout, stderr, progress)
-}
-
-func dockerUlimitToControllerUlimit(u *dockeropts.UlimitOpt) *controllerapi.UlimitOpt {
-	log.Printf("[DEBUG] ulimits: %#v", u)
-	if u == nil {
-		return &controllerapi.UlimitOpt{Values: map[string]*controllerapi.Ulimit{}}
-	}
-	values := make(map[string]*controllerapi.Ulimit)
-	// TODO: commenting out the lines below is a workaround for the fact that the dockeropts.UlimitOpt returns a segmentation violation
-	// when calling GetList() on a nil value. No idea how to fix this, yet
-
-	// list := u.GetList()
-	// if list == nil {
-	// 	log.Printf("[WARN] GetList() returned nil")
-	// 	return &controllerapi.UlimitOpt{Values: values}
-	// }
-	// for _, u := range u.GetList() {
-	// 	values[u.Name] = &controllerapi.Ulimit{
-	// 		Name: u.Name,
-	// 		Hard: u.Hard,
-	// 		Soft: u.Soft,
-	// 	}
-	// }
-	return &controllerapi.UlimitOpt{Values: values}
 }
 
 func decodeExporterResponse(exporterResponse map[string]string) map[string]any {
@@ -903,7 +747,7 @@ func printWarnings(w io.Writer, warnings []client.VertexWarning, mode progressui
 	}
 }
 
-func printResult(w io.Writer, f *controllerapi.CallFunc, res map[string]string, target string, inp *build.Inputs) (int, error) {
+func printResult(w io.Writer, f *buildflags.CallFunc, res map[string]string, target string, inp *build.Inputs) (int, error) {
 	switch f.Name {
 	case "outline":
 		return 0, printValue(w, outline.PrintOutline, outline.SubrequestsOutlineDefinition.Version, f.Format, res)
