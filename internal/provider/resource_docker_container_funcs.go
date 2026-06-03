@@ -798,8 +798,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
 		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77
 		if container.State.Running || d.Get("must_run").(bool) {
-			if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
-				log.Printf("[WARN] failed to set ports from API: %s", err)
+			if _, ok := d.GetOk("ports"); ok {
+				if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+					log.Printf("[WARN] failed to set ports from API: %s", err)
+				}
 			}
 		}
 		if err := d.Set("network_data", flattenContainerNetworks(container.NetworkSettings)); err != nil {
@@ -882,8 +884,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
 	}
-	if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+	if _, ok := d.GetOk("ulimit"); ok {
+		if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+		}
 	}
 
 	// We decided not to set the environment variables and labels
@@ -948,7 +952,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("log_opts", containerLogOptsForState(d, container.HostConfig.LogConfig.Config))
 	d.Set("storage_opts", container.HostConfig.StorageOpt)
 	d.Set("network_mode", container.HostConfig.NetworkMode)
-	d.Set("pid_mode", container.HostConfig.PidMode)
+	if _, ok := d.GetOk("pid_mode"); ok {
+		d.Set("pid_mode", container.HostConfig.PidMode)
+	}
 	d.Set("userns_mode", container.HostConfig.UsernsMode)
 	// "upload" can't be imported
 	if container.Config.Healthcheck != nil {
