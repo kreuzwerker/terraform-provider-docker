@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -362,7 +363,7 @@ func TestCreateContainerSpec_withTmpfsOptionsIntegers(t *testing.T) {
 			"image":  "busybox",
 			"mounts": mountsSet,
 		},
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("unexpected error creating container spec: %v", err)
 	}
@@ -381,6 +382,34 @@ func TestCreateContainerSpec_withTmpfsOptionsIntegers(t *testing.T) {
 
 	if containerSpec.Mounts[0].TmpfsOptions.Mode != os.FileMode(644) { // nolint:staticcheck
 		t.Fatalf("expected mode to be %d, got %d", os.FileMode(644), containerSpec.Mounts[0].TmpfsOptions.Mode) // nolint:staticcheck
+	}
+}
+
+func TestCreateContainerSpec_withInit(t *testing.T) {
+	dockerClient, err := client.NewClientWithOpts(
+		client.WithHost("unix:///var/run/docker.sock"),
+		client.WithVersion("1.37"),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error creating Docker client: %v", err)
+	}
+
+	containerSpec, err := createContainerSpec([]interface{}{
+		map[string]interface{}{
+			"image": "busybox",
+			"init":  true,
+		},
+	}, dockerClient)
+	if err != nil {
+		t.Fatalf("unexpected error creating container spec: %v", err)
+	}
+
+	if containerSpec.Init == nil {
+		t.Fatal("expected init to be set")
+	}
+
+	if !*containerSpec.Init {
+		t.Fatal("expected init to be true")
 	}
 }
 
