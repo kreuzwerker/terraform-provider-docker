@@ -517,6 +517,12 @@ func resourceDockerService() *schema.Resource {
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "List of Linux capabilities to drop from the container",
 									},
+									"init": {
+										Type:        schema.TypeBool,
+										Description: "Configured whether an init process should be injected for this container. If unset this will default to the `dockerd` defaults.",
+										Optional:    true,
+										Computed:    true,
+									},
 								},
 							},
 						},
