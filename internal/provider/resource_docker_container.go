@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -513,12 +512,7 @@ func resourceDockerContainer() *schema.Resource {
 							Optional:    true,
 							ForceNew:    true,
 							StateFunc: func(val interface{}) string {
-								// Empty IP assignments default to 0.0.0.0
-								if val.(string) == "" {
-									return "0.0.0.0"
-								}
-
-								return val.(string)
+								return normalizePortIP(val.(string))
 							},
 						},
 
@@ -1192,69 +1186,39 @@ func resourceDockerContainer() *schema.Resource {
 func suppressIfPortsDidNotChangeForMigrationV0ToV1() schema.SchemaDiffSuppressFunc {
 	return func(k, old, new string, d *schema.ResourceData) bool {
 		if k == "ports.#" && old != new {
-			log.Printf("[DEBUG] suppress diff ports: old and new don't have the same length")
 			return false
 		}
 		portsOldRaw, portsNewRaw := d.GetChange("ports")
 		portsOld := portsOldRaw.([]interface{})
 		portsNew := portsNewRaw.([]interface{})
 		if len(portsOld) != len(portsNew) {
-			log.Printf("[DEBUG] suppress diff ports: old and new don't have the same length")
 			return false
 		}
-		log.Printf("[DEBUG] suppress diff ports: old and new have same length")
 
+		// Match each old port to a new port by all fields, tracking which
+		// new ports have already been consumed to handle duplicates correctly.
+		matched := make([]bool, len(portsNew))
 		for _, portOld := range portsOld {
 			portOldMapped := portOld.(map[string]interface{})
-			oldInternalPort := portOldMapped["internal"]
 			portFound := false
-			for _, portNew := range portsNew {
+			for j, portNew := range portsNew {
+				if matched[j] {
+					continue
+				}
 				portNewMapped := portNew.(map[string]interface{})
-				newInternalPort := portNewMapped["internal"]
-				// port is still there in new
-				if newInternalPort == oldInternalPort {
-					log.Printf("[DEBUG] suppress diff ports: comparing port '%v'", oldInternalPort)
-					if portNewMapped["protocol"] != portOldMapped["protocol"] {
-						if containsPortWithProtocol(portsNew, portOldMapped["internal"], portOldMapped["protocol"]) {
-							log.Printf("[DEBUG] suppress diff ports: found another port in new list with the same protocol for '%v", oldInternalPort)
-							continue
-						}
-
-						log.Printf("[DEBUG] suppress diff ports: 'protocol' changed for '%v'", oldInternalPort)
-						return false
-					}
-					if portNewMapped["external"] != portOldMapped["external"] {
-						log.Printf("[DEBUG] suppress diff ports: 'external' changed for '%v'", oldInternalPort)
-						return false
-					}
-					if portNewMapped["ip"] != portOldMapped["ip"] {
-						log.Printf("[DEBUG] suppress diff ports: 'ip' changed for '%v'", oldInternalPort)
-						return false
-					}
-
+				if portNewMapped["internal"] == portOldMapped["internal"] &&
+					portNewMapped["external"] == portOldMapped["external"] &&
+					portNewMapped["protocol"] == portOldMapped["protocol"] &&
+					normalizePortIP(portNewMapped["ip"].(string)) == normalizePortIP(portOldMapped["ip"].(string)) {
+					matched[j] = true
 					portFound = true
 					break
 				}
 			}
-			// port was deleted or exchanges in new
 			if !portFound {
-				log.Printf("[DEBUG] suppress diff ports: port was deleted '%v'", oldInternalPort)
 				return false
 			}
 		}
 		return true
 	}
-}
-
-func containsPortWithProtocol(ports []interface{}, searchInternalPort, searchProtocol interface{}) bool {
-	for _, port := range ports {
-		portMapped := port.(map[string]interface{})
-		internalPort := portMapped["internal"]
-		protocol := portMapped["protocol"]
-		if internalPort == searchInternalPort && protocol == searchProtocol {
-			return true
-		}
-	}
-
-	return false
 }
