@@ -42,7 +42,7 @@ Migration guides:
 
 ## Example usage
 
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.4.0/docs) of the registry
+Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/4.5.0/docs) of the registry
 or use the following example:
 
 
@@ -56,7 +56,7 @@ terraform {
       source  = "kreuzwerker/docker"
       # or if you want to pull from opentfu
       source = "registry.opentofu.org/kreuzwerker/docker"
-      version = "4.4.0"
+      version = "4.5.0"
     }
   }
 }

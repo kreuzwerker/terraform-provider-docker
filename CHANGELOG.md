@@ -1,8 +1,37 @@
 # Changelog
 
+<a name="v4.5.0"></a>
+## [v4.5.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.4.0...v4.5.0) (2026-06-18)
+
+
+
+### Feat
+
+* Add no_compose build tag to allow cross-compile without CGO (#937) ([#937](https://github.com/kreuzwerker/terraform-provider-docker/issues/937))
+
+* Implement init for docker_service (#949) ([#949](https://github.com/kreuzwerker/terraform-provider-docker/issues/949))
+
+
+### Fix
+
+* Do not set attributes which are not present in docker_container config (#947) ([#947](https://github.com/kreuzwerker/terraform-provider-docker/issues/947))
+
+* update module golang.org/x/sync to v0.21.0 (#950) ([#950](https://github.com/kreuzwerker/terraform-provider-docker/issues/950))
+
+
+### Refactor
+
+* pass API client at DockerCli instantiation (#941) ([#941](https://github.com/kreuzwerker/terraform-provider-docker/issues/941) [#939](https://github.com/kreuzwerker/terraform-provider-docker/issues/939))
+
+
 <a name="v4.4.0"></a>
 ## [v4.4.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.3.0...v4.4.0) (2026-05-15)
 
+
+
+### Chore
+
+* Prepare release 4.4.0 (#940) ([#940](https://github.com/kreuzwerker/terraform-provider-docker/issues/940))
 
 
 ### Feat
