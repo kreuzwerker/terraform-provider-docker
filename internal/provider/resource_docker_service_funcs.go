@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -66,11 +67,12 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		_, err := stateConf.WaitForStateContext(ctx)
 		if err != nil {
 			// the service will be deleted in case it cannot be converged
-			if deleteErr := deleteService(ctx, service.ID, d, client); deleteErr != nil {
+			logs, deleteErr := deleteService(ctx, service.ID, d, client)
+			if deleteErr != nil {
 				return diag.FromErr(deleteErr)
 			}
 			if containsIgnorableErrorMessage(err.Error(), "timeout while waiting for state") {
-				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout})
+				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout, Logs: logs})
 			}
 			return diag.FromErr(err)
 		}
@@ -230,7 +232,7 @@ func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("failed to create Docker client: %v", err)
 	}
 
-	if err := deleteService(ctx, d.Id(), d, client); err != nil {
+	if _, err := deleteService(ctx, d.Id(), d, client); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -258,17 +260,55 @@ func fetchDockerService(ctx context.Context, ID string, name string, client *cli
 }
 
 // deleteService deletes the service with the given id
-func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData, client *client.Client) error {
+func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData, client *client.Client) (string, error) {
+	// fetch logs from failed tasks before deleting the service (unconditional)
+	failedTaskLogs := ""
+	failedFilters := filters.NewArgs()
+	failedFilters.Add("service", d.Get("name").(string))
+	failedFilters.Add("desired-state", "shutdown")
+	failedTasks, err := client.TaskList(ctx, swarm.TaskListOptions{
+		Filters: failedFilters,
+	})
+	if err == nil {
+		for _, t := range failedTasks {
+			task, _, _ := client.TaskInspectWithRaw(ctx, t.ID)
+			if task.Status.State == swarm.TaskStateFailed && task.Status.ContainerStatus != nil {
+				containerID := task.Status.ContainerStatus.ContainerID
+				if strings.TrimSpace(containerID) == "" {
+					continue
+				}
+				logsReader, logsErr := client.ContainerLogs(ctx, containerID, container.LogsOptions{
+					ShowStdout: true,
+					ShowStderr: true,
+					Tail:       "10",
+				})
+				if logsErr != nil {
+					continue
+				}
+				defer logsReader.Close() //nolint:errcheck
+				scanner := bufio.NewScanner(logsReader)
+				for scanner.Scan() {
+					line := scanner.Text()
+					// strip 8-byte docker log header if present
+					if len(line) > 8 {
+						line = line[8:]
+					}
+					failedTaskLogs += line + "\n"
+				}
+			}
+		}
+	}
+
 	// get containerIDs of the running service because they do not exist after the service is deleted
 	serviceContainerIds := make([]string, 0)
 	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
-		filters := filters.NewArgs()
-		filters.Add("service", d.Get("name").(string))
+		gracePeriodFilters := filters.NewArgs()
+		gracePeriodFilters.Add("service", d.Get("name").(string))
 		tasks, err := client.TaskList(ctx, swarm.TaskListOptions{
-			Filters: filters,
+			Filters: gracePeriodFilters,
 		})
 		if err != nil {
-			return err
+			return "", err
 		}
 		for _, t := range tasks {
 			task, _, _ := client.TaskInspectWithRaw(ctx, t.ID)
@@ -286,7 +326,7 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 	// delete the service
 	log.Printf("[INFO] Deleting service with ID: '%s'", serviceID)
 	if err := client.ServiceRemove(ctx, serviceID); err != nil {
-		return fmt.Errorf("Error deleting service with ID '%s': %s", serviceID, err)
+		return failedTaskLogs, fmt.Errorf("Error deleting service with ID '%s': %s", serviceID, err)
 	}
 
 	// destroy each container after a grace period if specified
@@ -297,43 +337,34 @@ func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData
 			ctx, cancel := context.WithTimeout(ctx, destroyGraceTime)
 			// We defer explicitly to avoid context leaks
 			defer cancel()
-
 			containerWaitChan, containerWaitErrChan := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
 			select {
 			case containerWaitResult := <-containerWaitChan:
 				if containerWaitResult.Error != nil {
-					// We ignore those types of errors because the container might be already removed before
-					// the containerWait returns
 					if !(containsIgnorableErrorMessage(containerWaitResult.Error.Message, "No such container")) {
-						return fmt.Errorf("failed to wait for container with ID '%s': '%v'", containerID, containerWaitResult.Error.Message)
+						return "", fmt.Errorf("failed to wait for container with ID '%s': '%v'", containerID, containerWaitResult.Error.Message)
 					}
 				}
 				log.Printf("[INFO] Container with ID '%s' exited with code '%v'", containerID, containerWaitResult.StatusCode)
 			case containerWaitErrResult := <-containerWaitErrChan:
-				// We ignore those types of errors because the container might be already removed before
-				// the containerWait returns
 				if !(containsIgnorableErrorMessage(containerWaitErrResult.Error(), "No such container")) {
-					return fmt.Errorf("error on wait for container with ID '%s': %v", containerID, containerWaitErrResult)
+					return "", fmt.Errorf("error on wait for container with ID '%s': %v", containerID, containerWaitErrResult)
 				}
 			}
-
 			removeOpts := container.RemoveOptions{
 				RemoveVolumes: true,
 				Force:         true,
 			}
-
 			log.Printf("[INFO] Removing container with ID: '%s'", containerID)
 			if err := client.ContainerRemove(ctx, containerID, removeOpts); err != nil {
-				// We ignore those types of errors because the container might be already removed of the removal is in progress
-				// before the containerRemove call happens
 				if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
-					return fmt.Errorf("Error deleting container with ID '%s': %s", containerID, err)
+					return "", fmt.Errorf("Error deleting container with ID '%s': %s", containerID, err)
 				}
 			}
 		}
 	}
 
-	return nil
+	return failedTaskLogs, nil
 }
 
 //////// Convergers
@@ -344,6 +375,7 @@ type DidNotConvergeError struct {
 	ServiceID string
 	Timeout   time.Duration
 	Err       error
+	Logs      string
 }
 
 // Error the custom error if a service does not converge
@@ -351,7 +383,11 @@ func (err *DidNotConvergeError) Error() string {
 	if err.Err != nil {
 		return err.Err.Error()
 	}
-	return "Service with ID (" + err.ServiceID + ") did not converge after " + err.Timeout.String()
+	msg := "Service with ID (" + err.ServiceID + ") did not converge after " + err.Timeout.String()
+	if err.Logs != "" {
+		msg += "\n\nLast task logs:\n" + err.Logs
+	}
+	return msg
 }
 
 // resourceDockerServiceCreateRefreshFunc refreshes the state of a service when it is created and needs to converge
