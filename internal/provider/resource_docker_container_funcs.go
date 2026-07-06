@@ -846,13 +846,25 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 
 	d.Set("hostname", container.Config.Hostname)
 	d.Set("domainname", container.Config.Domainname)
-	d.Set("command", container.Config.Cmd)
-	d.Set("entrypoint", container.Config.Entrypoint)
+	if hasCollectionValue(container.Config.Cmd) {
+		d.Set("command", container.Config.Cmd)
+	}
+	if hasCollectionValue(container.Config.Entrypoint) {
+		d.Set("entrypoint", container.Config.Entrypoint)
+	}
 	d.Set("user", container.Config.User)
-	d.Set("dns", container.HostConfig.DNS)
-	d.Set("dns_opts", container.HostConfig.DNSOptions)
-	d.Set("security_opts", container.HostConfig.SecurityOpt)
-	d.Set("dns_search", container.HostConfig.DNSSearch)
+	if hasCollectionValue(container.HostConfig.DNS) {
+		d.Set("dns", container.HostConfig.DNS)
+	}
+	if hasCollectionValue(container.HostConfig.DNSOptions) {
+		d.Set("dns_opts", container.HostConfig.DNSOptions)
+	}
+	if hasCollectionValue(container.HostConfig.SecurityOpt) {
+		d.Set("security_opts", container.HostConfig.SecurityOpt)
+	}
+	if hasCollectionValue(container.HostConfig.DNSSearch) {
+		d.Set("dns_search", container.HostConfig.DNSSearch)
+	}
 	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
 	d.Set("restart", container.HostConfig.RestartPolicy.Name)
 	d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
@@ -878,15 +890,23 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	}
 	d.Set("runtime", container.HostConfig.Runtime)
 	d.Set("platform", container.Platform)
-	d.Set("mounts", getDockerContainerMounts(container))
+	if mounts := getDockerContainerMounts(container); len(mounts) != 0 {
+		d.Set("mounts", mounts)
+	}
 	// volumes
-	d.Set("tmpfs", container.HostConfig.Tmpfs)
-	if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
+	if hasCollectionValue(container.HostConfig.Tmpfs) {
+		d.Set("tmpfs", container.HostConfig.Tmpfs)
+	}
+	if extraHosts := flattenExtraHosts(container.HostConfig.ExtraHosts); len(extraHosts) != 0 {
+		if err := d.Set("host", extraHosts); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
+		}
 	}
 	if _, ok := d.GetOk("ulimit"); ok {
-		if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
-			log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+		if ulimits := flattenUlimits(container.HostConfig.Ulimits); len(ulimits) != 0 {
+			if err = d.Set("ulimit", ulimits); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+			}
 		}
 	}
 
@@ -903,17 +923,25 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 		}
 	}
-	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+	if readBps := flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps); readBps.Len() != 0 {
+		if err = d.Set("device_read_bps", readBps); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+		}
 	}
-	if err = d.Set("device_read_iops", flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+	if readIOps := flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps); readIOps.Len() != 0 {
+		if err = d.Set("device_read_iops", readIOps); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+		}
 	}
-	if err = d.Set("device_write_bps", flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+	if writeBps := flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps); writeBps.Len() != 0 {
+		if err = d.Set("device_write_bps", writeBps); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+		}
 	}
-	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+	if writeIOps := flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps); writeIOps.Len() != 0 {
+		if err = d.Set("device_write_iops", writeIOps); err != nil {
+			log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+		}
 	}
 	// Handle device_requests and gpus reconstruction only when configured.
 	if _, hasGpus := d.GetOk("gpus"); hasGpus {
@@ -924,8 +952,10 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			log.Printf("[WARN] container has device requests that cannot be represented by the gpus attribute; preserving configured value")
 		}
 	} else if _, hasDeviceRequests := d.GetOk("device_requests"); hasDeviceRequests {
-		if err = d.Set("device_requests", flattenDeviceRequests(container.HostConfig.DeviceRequests)); err != nil {
-			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+		if deviceRequests := flattenDeviceRequests(container.HostConfig.DeviceRequests); len(deviceRequests) != 0 {
+			if err = d.Set("device_requests", deviceRequests); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+			}
 		}
 	}
 	// "destroy_grace_seconds" can't be imported
@@ -949,8 +979,12 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("cpu_shares", container.HostConfig.CPUShares)
 	d.Set("cpu_set", container.HostConfig.CpusetCpus)
 	d.Set("log_driver", container.HostConfig.LogConfig.Type)
-	d.Set("log_opts", containerLogOptsForState(d, container.HostConfig.LogConfig.Config))
-	d.Set("storage_opts", container.HostConfig.StorageOpt)
+	if logOpts := containerLogOptsForState(d, container.HostConfig.LogConfig.Config); logOpts != nil {
+		d.Set("log_opts", logOpts)
+	}
+	if hasCollectionValue(container.HostConfig.StorageOpt) {
+		d.Set("storage_opts", container.HostConfig.StorageOpt)
+	}
 	d.Set("network_mode", container.HostConfig.NetworkMode)
 	if _, ok := d.GetOk("pid_mode"); ok {
 		d.Set("pid_mode", container.HostConfig.PidMode)
@@ -969,9 +1003,13 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
-	d.Set("sysctls", container.HostConfig.Sysctls)
+	if hasCollectionValue(container.HostConfig.Sysctls) {
+		d.Set("sysctls", container.HostConfig.Sysctls)
+	}
 	d.Set("ipc_mode", container.HostConfig.IpcMode)
-	d.Set("group_add", container.HostConfig.GroupAdd)
+	if hasCollectionValue(container.HostConfig.GroupAdd) {
+		d.Set("group_add", container.HostConfig.GroupAdd)
+	}
 	d.Set("tty", container.Config.Tty)
 	d.Set("stdin_open", container.Config.OpenStdin)
 	d.Set("stop_signal", container.Config.StopSignal)
@@ -981,7 +1019,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[string]string) map[string]string {
-	if _, ok := d.GetOk("log_opts"); ok {
+	if _, ok := d.GetOk("log_opts"); ok && len(containerLogOpts) > 0 {
 		return containerLogOpts
 	}
 

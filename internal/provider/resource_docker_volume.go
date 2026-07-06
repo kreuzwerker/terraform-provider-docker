@@ -308,7 +308,9 @@ func resourceDockerVolumeRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("name", volume.Name)
 	d.Set("labels", mapToLabelSet(volume.Labels))
 	d.Set("driver", volume.Driver)
-	d.Set("driver_opts", volume.Options)
+	if len(volume.Options) > 0 {
+		d.Set("driver_opts", volume.Options)
+	}
 	d.Set("mountpoint", volume.Mountpoint)
 
 	// check if volume.ClusterVolume is set
