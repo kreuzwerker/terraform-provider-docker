@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -135,6 +136,72 @@ func TestContainerLogOptsForState(t *testing.T) {
 				t.Fatalf("expected log opts %#v, got %#v", tc.wantLogOpts, got)
 			}
 		})
+	}
+}
+
+func TestContainerLogOptsForStateEmptyMap(t *testing.T) {
+	resourceData := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, map[string]interface{}{
+		"log_opts": map[string]interface{}{},
+	})
+
+	if got := containerLogOptsForState(resourceData, map[string]string{}); got != nil {
+		t.Fatalf("expected nil log opts for empty map, got %#v", got)
+	}
+}
+
+func TestHasCollectionValue(t *testing.T) {
+	testCases := []struct {
+		name string
+		in   interface{}
+		want bool
+	}{
+		{name: "empty slice", in: []string{}, want: false},
+		{name: "empty map", in: map[string]string{}, want: false},
+		{name: "non-empty slice", in: []string{"value"}, want: true},
+		{name: "non-empty map", in: map[string]string{"key": "value"}, want: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := hasCollectionValue(tc.in); got != tc.want {
+				t.Fatalf("expected %v, got %v", tc.want, got)
+			}
+		})
+	}
+}
+
+func TestGetDockerContainerMountsOmitsEmptyFields(t *testing.T) {
+	resp := container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{
+			HostConfig: &container.HostConfig{
+				Mounts: []mount.Mount{
+					{
+						Target: "/data",
+						Source: "volume-name",
+						Type:   mount.TypeVolume,
+					},
+				},
+			},
+		},
+	}
+
+	mounts := getDockerContainerMounts(resp)
+	if len(mounts) != 1 {
+		t.Fatalf("expected 1 mount, got %d", len(mounts))
+	}
+
+	mountMap := mounts[0]
+	if _, ok := mountMap["read_only"]; ok {
+		t.Fatalf("expected read_only to be omitted when false")
+	}
+	if _, ok := mountMap["volume_options"]; ok {
+		t.Fatalf("expected volume_options to be omitted when empty")
+	}
+	if _, ok := mountMap["bind_options"]; ok {
+		t.Fatalf("expected bind_options to be omitted when empty")
+	}
+	if _, ok := mountMap["tmpfs_options"]; ok {
+		t.Fatalf("expected tmpfs_options to be omitted when empty")
 	}
 }
 

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -389,53 +390,82 @@ func getDockerContainerMounts(container container.InspectResponse) []map[string]
 	mounts := []map[string]interface{}{}
 	for _, mount := range container.HostConfig.Mounts {
 		m := map[string]interface{}{
-			"target":    mount.Target,
-			"source":    mount.Source,
-			"type":      mount.Type,
-			"read_only": mount.ReadOnly,
+			"target": mount.Target,
+			"source": mount.Source,
+			"type":   mount.Type,
+		}
+		if mount.ReadOnly {
+			m["read_only"] = true
 		}
 		if mount.BindOptions != nil {
-			m["bind_options"] = []map[string]interface{}{
-				{
-					"propagation": mount.BindOptions.Propagation,
-				},
+			bindOptions := map[string]interface{}{}
+			if mount.BindOptions.Propagation != "" {
+				bindOptions["propagation"] = mount.BindOptions.Propagation
+			}
+			if len(bindOptions) != 0 {
+				m["bind_options"] = []map[string]interface{}{bindOptions}
 			}
 		}
 		if mount.VolumeOptions != nil {
-			labels := []map[string]string{}
-			for k, v := range mount.VolumeOptions.Labels {
-				labels = append(labels, map[string]string{
-					"label":  k,
-					"volume": v,
-				})
+			opt := map[string]interface{}{}
+			if mount.VolumeOptions.NoCopy {
+				opt["no_copy"] = true
 			}
-			opt := map[string]interface{}{
-				"no_copy": mount.VolumeOptions.NoCopy,
-				"labels":  labels,
+			if len(mount.VolumeOptions.Labels) > 0 {
+				labels := []map[string]string{}
+				for k, v := range mount.VolumeOptions.Labels {
+					labels = append(labels, map[string]string{
+						"label":  k,
+						"volume": v,
+					})
+				}
+				opt["labels"] = labels
 			}
 			if mount.VolumeOptions.DriverConfig != nil {
-				opt["driver_name"] = mount.VolumeOptions.DriverConfig.Name
-				opt["driver_options"] = mount.VolumeOptions.DriverConfig.Options
+				if mount.VolumeOptions.DriverConfig.Name != "" {
+					opt["driver_name"] = mount.VolumeOptions.DriverConfig.Name
+				}
+				if len(mount.VolumeOptions.DriverConfig.Options) > 0 {
+					opt["driver_options"] = mount.VolumeOptions.DriverConfig.Options
+				}
 			}
 			if mount.VolumeOptions.Subpath != "" {
 				opt["subpath"] = mount.VolumeOptions.Subpath
 			}
-			m["volume_options"] = []map[string]interface{}{
-				opt,
+			if len(opt) != 0 {
+				m["volume_options"] = []map[string]interface{}{opt}
 			}
 		}
 		if mount.TmpfsOptions != nil {
-			m["tmpfs_options"] = []map[string]interface{}{
-				{
-					"size_bytes": mount.TmpfsOptions.SizeBytes,
-					"mode":       mount.TmpfsOptions.Mode,
-				},
+			opt := map[string]interface{}{}
+			if mount.TmpfsOptions.SizeBytes != 0 {
+				opt["size_bytes"] = mount.TmpfsOptions.SizeBytes
+			}
+			if mount.TmpfsOptions.Mode != 0 {
+				opt["mode"] = mount.TmpfsOptions.Mode
+			}
+			if len(opt) != 0 {
+				m["tmpfs_options"] = []map[string]interface{}{opt}
 			}
 		}
 		mounts = append(mounts, m)
 	}
 
 	return mounts
+}
+
+func hasCollectionValue(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+
+	rv := reflect.ValueOf(value)
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return rv.Len() != 0
+	default:
+		return true
+	}
 }
 
 func flattenExtraHosts(in []string) []interface{} {
