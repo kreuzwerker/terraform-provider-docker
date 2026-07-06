@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestComposeVersionLabelFallsBackToBuildInfo(t *testing.T) {
+func TestComposeVersionLabel_FallbackToBuildInfo(t *testing.T) {
 	got := composeVersionLabelFor("", debug.ReadBuildInfo)
 	if got == "" {
 		t.Fatal("compose version label must not be empty")

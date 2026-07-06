@@ -378,7 +378,7 @@ func composeVersionLabel() string {
 }
 
 func composeVersionLabelFor(composeVersion string, readBuildInfo func() (*debug.BuildInfo, bool)) string {
-	if version := strings.TrimSpace(composeVersion); version != "" {
+	if version := normalizeComposeVersion(composeVersion); version != "" {
 		return version
 	}
 
@@ -389,15 +389,19 @@ func composeVersionLabelFor(composeVersion string, readBuildInfo func() (*debug.
 
 	for _, dep := range buildInfo.Deps {
 		if dep.Path == "github.com/docker/compose/v2" {
-			version := strings.TrimSpace(dep.Version)
-			if strings.HasPrefix(version, "v") {
-				return strings.TrimPrefix(version, "v")
-			}
-			return version
+			return normalizeComposeVersion(dep.Version)
 		}
 	}
 
 	return "unknown"
+}
+
+func normalizeComposeVersion(version string) string {
+	version = strings.TrimSpace(version)
+	if strings.HasPrefix(version, "v") {
+		return strings.TrimPrefix(version, "v")
+	}
+	return version
 }
 
 func listToStrings(ctx context.Context, value types.List) ([]string, diag.Diagnostics) {
