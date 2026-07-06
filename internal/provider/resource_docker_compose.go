@@ -5,6 +5,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -356,7 +357,7 @@ func loadComposeProject(ctx context.Context, model dockerComposeResourceModel) (
 		service.CustomLabels = map[string]string{
 			composeapi.ProjectLabel:     project.Name,
 			composeapi.ServiceLabel:     serviceName,
-			composeapi.VersionLabel:     composeapi.ComposeVersion,
+			composeapi.VersionLabel:     composeVersionLabel(),
 			composeapi.WorkingDirLabel:  project.WorkingDir,
 			composeapi.ConfigFilesLabel: strings.Join(project.ComposeFiles, ","),
 			composeapi.OneoffLabel:      "False",
@@ -368,6 +369,25 @@ func loadComposeProject(ctx context.Context, model dockerComposeResourceModel) (
 	}
 
 	return project, diags
+}
+
+func composeVersionLabel() string {
+	if version := strings.TrimSpace(composeapi.ComposeVersion); version != "" {
+		return version
+	}
+
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown"
+	}
+
+	for _, dep := range buildInfo.Deps {
+		if dep.Path == "github.com/docker/compose/v2" {
+			return strings.TrimPrefix(dep.Version, "v")
+		}
+	}
+
+	return "unknown"
 }
 
 func listToStrings(ctx context.Context, value types.List) ([]string, diag.Diagnostics) {
