@@ -5,6 +5,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -22,6 +23,8 @@ var (
 	_ resource.Resource              = &dockerComposeResource{}
 	_ resource.ResourceWithConfigure = &dockerComposeResource{}
 )
+
+var readComposeBuildInfo = debug.ReadBuildInfo
 
 type dockerComposeResource struct {
 	providerConfig *ProviderConfig
@@ -356,7 +359,7 @@ func loadComposeProject(ctx context.Context, model dockerComposeResourceModel) (
 		service.CustomLabels = map[string]string{
 			composeapi.ProjectLabel:     project.Name,
 			composeapi.ServiceLabel:     serviceName,
-			composeapi.VersionLabel:     composeapi.ComposeVersion,
+			composeapi.VersionLabel:     composeVersionLabel(),
 			composeapi.WorkingDirLabel:  project.WorkingDir,
 			composeapi.ConfigFilesLabel: strings.Join(project.ComposeFiles, ","),
 			composeapi.OneoffLabel:      "False",
@@ -368,6 +371,37 @@ func loadComposeProject(ctx context.Context, model dockerComposeResourceModel) (
 	}
 
 	return project, diags
+}
+
+func composeVersionLabel() string {
+	return composeVersionLabelFor(composeapi.ComposeVersion, readComposeBuildInfo)
+}
+
+func composeVersionLabelFor(composeVersion string, readBuildInfo func() (*debug.BuildInfo, bool)) string {
+	if version := normalizeComposeVersion(composeVersion); version != "" {
+		return version
+	}
+
+	buildInfo, ok := readBuildInfo()
+	if !ok {
+		return "unknown"
+	}
+
+	for _, dep := range buildInfo.Deps {
+		if dep.Path == "github.com/docker/compose/v2" {
+			return normalizeComposeVersion(dep.Version)
+		}
+	}
+
+	return "unknown"
+}
+
+func normalizeComposeVersion(version string) string {
+	version = strings.TrimSpace(version)
+	if strings.HasPrefix(version, "v") {
+		return strings.TrimPrefix(version, "v")
+	}
+	return version
 }
 
 func listToStrings(ctx context.Context, value types.List) ([]string, diag.Diagnostics) {
