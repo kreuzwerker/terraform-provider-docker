@@ -4,18 +4,10 @@ import (
 	"runtime/debug"
 	"strings"
 	"testing"
-
-	composeapi "github.com/docker/compose/v2/pkg/api"
 )
 
 func TestComposeVersionLabelFallsBackToBuildInfo(t *testing.T) {
-	original := composeapi.ComposeVersion
-	composeapi.ComposeVersion = ""
-	t.Cleanup(func() {
-		composeapi.ComposeVersion = original
-	})
-
-	got := composeVersionLabel()
+	got := composeVersionLabelFor("", debug.ReadBuildInfo)
 	if got == "" {
 		t.Fatal("compose version label must not be empty")
 	}

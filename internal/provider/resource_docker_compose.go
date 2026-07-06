@@ -24,6 +24,8 @@ var (
 	_ resource.ResourceWithConfigure = &dockerComposeResource{}
 )
 
+var readComposeBuildInfo = debug.ReadBuildInfo
+
 type dockerComposeResource struct {
 	providerConfig *ProviderConfig
 }
@@ -372,18 +374,26 @@ func loadComposeProject(ctx context.Context, model dockerComposeResourceModel) (
 }
 
 func composeVersionLabel() string {
-	if version := strings.TrimSpace(composeapi.ComposeVersion); version != "" {
+	return composeVersionLabelFor(composeapi.ComposeVersion, readComposeBuildInfo)
+}
+
+func composeVersionLabelFor(composeVersion string, readBuildInfo func() (*debug.BuildInfo, bool)) string {
+	if version := strings.TrimSpace(composeVersion); version != "" {
 		return version
 	}
 
-	buildInfo, ok := debug.ReadBuildInfo()
+	buildInfo, ok := readBuildInfo()
 	if !ok {
 		return "unknown"
 	}
 
 	for _, dep := range buildInfo.Deps {
 		if dep.Path == "github.com/docker/compose/v2" {
-			return strings.TrimPrefix(dep.Version, "v")
+			version := strings.TrimSpace(dep.Version)
+			if strings.HasPrefix(version, "v") {
+				return strings.TrimPrefix(version, "v")
+			}
+			return version
 		}
 	}
 
