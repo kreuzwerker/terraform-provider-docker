@@ -32,6 +32,18 @@ func (s byPortAndProtocol) Less(i, j int) bool {
 	return iPort < jPort
 }
 
+// normalizePortIP normalizes port IP addresses for consistent comparison.
+// It strips brackets from IPv6 addresses (e.g., "[::]" -> "::") and
+// defaults empty strings to "0.0.0.0".
+func normalizePortIP(ip string) string {
+	if ip == "" {
+		return "0.0.0.0"
+	}
+	ip = strings.TrimPrefix(ip, "[")
+	ip = strings.TrimSuffix(ip, "]")
+	return ip
+}
+
 func flattenContainerPorts(in nat.PortMap) []interface{} {
 	out := make([]interface{}, 0)
 
@@ -43,6 +55,9 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 
 	for _, portKey := range internalPortKeys {
 		portBindings := in[nat.Port(portKey)]
+		sort.Slice(portBindings, func(i, j int) bool {
+			return normalizePortIP(portBindings[i].HostIP) < normalizePortIP(portBindings[j].HostIP)
+		})
 		for _, portBinding := range portBindings {
 			m := make(map[string]interface{})
 			portProtocolSplit := strings.Split(string(portKey), "/")
@@ -50,7 +65,7 @@ func flattenContainerPorts(in nat.PortMap) []interface{} {
 			convertedExternal, _ := strconv.Atoi(portBinding.HostPort)
 			m["internal"] = convertedInternal
 			m["external"] = convertedExternal
-			m["ip"] = portBinding.HostIP
+			m["ip"] = normalizePortIP(portBinding.HostIP)
 			m["protocol"] = portProtocolSplit[1]
 			out = append(out, m)
 		}
