@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+var digestImageRegexp = regexp.MustCompile(`\A127\.0\.0\.1:1500[0-1]tftest-dockerregistryimage@sha256:[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)
+
 func TestAccDockerRegistryImageResource_build_insecure_registry(t *testing.T) {
 	pushOptions := createPushImageOptions("127.0.0.1:15001/tftest-dockerregistryimage:1.0")
 	wd, _ := os.Getwd()
@@ -24,6 +26,7 @@ func TestAccDockerRegistryImageResource_build_insecure_registry(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageNoKeepConfig"), "http://127.0.0.1:15001", pushOptions.Name, context),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+					resource.TestMatchResourceAttr("docker_registry_image.foo", "pull_by_digest", digestImageRegexp),
 				),
 			},
 		},
@@ -44,6 +47,7 @@ func TestAccDockerRegistryImageResource_buildAndKeep(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+					resource.TestMatchResourceAttr("docker_registry_image.foo", "pull_by_digest", digestImageRegexp),
 				),
 			},
 		},
@@ -65,6 +69,7 @@ func TestAccDockerRegistryImageResource_directBuildAndKeep(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testDirectBuildDockerRegistryImageKeepConfig"), pushOptions.Registry, pushOptions.Name, context),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+					resource.TestMatchResourceAttr("docker_registry_image.foo", "pull_by_digest", digestImageRegexp),
 				),
 			},
 		},
@@ -100,6 +105,7 @@ func TestAccDockerRegistryImageResource_withAuthConfig(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_registry_image", "testBuildDockerRegistryImageWithAuthConfig"), pushOptions.Name, context, pushOptions.Registry, "testuser", "testpwd"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("docker_registry_image.foo", "sha256_digest"),
+					resource.TestMatchResourceAttr("docker_registry_image.foo", "pull_by_digest", digestImageRegexp),
 				),
 			},
 		},
