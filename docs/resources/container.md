@@ -47,6 +47,7 @@ resource "docker_image" "ubuntu" {
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
 - `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
+- `device_cgroup_rules` (Set of String) Cgroup rules to allow access to classes of devices without binding specific device nodes.
 - `device_read_bps` (Block Set) Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_read_bps))
 - `device_read_iops` (Block Set) Limit read rate (IO per second) from a device. This is the equivalent to repeating `--device-read-iops` for `docker run`. (see [below for nested schema](#nestedblock--device_read_iops))
 - `device_requests` (Block Set) Device requests for the container, such as CDI devices (e.g., `nvidia.com/gpu=all`) or GPU requests. This is the equivalent to using the `--device` flag for CDI devices in `docker run`. (see [below for nested schema](#nestedblock--device_requests))

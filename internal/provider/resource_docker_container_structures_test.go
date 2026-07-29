@@ -285,3 +285,30 @@ func TestFlattenDevices(t *testing.T) {
 		}
 	})
 }
+
+func TestDeviceCgroupRulesSchemaAndConversion(t *testing.T) {
+	schemaField, ok := resourceDockerContainer().Schema["device_cgroup_rules"]
+	if !ok {
+		t.Fatalf("expected device_cgroup_rules to be present in schema")
+	}
+	if schemaField.Type != schema.TypeSet {
+		t.Fatalf("expected device_cgroup_rules to be a set, got %v", schemaField.Type)
+	}
+	if elem, ok := schemaField.Elem.(*schema.Schema); !ok || elem.Type != schema.TypeString {
+		t.Fatalf("expected device_cgroup_rules elements to be strings")
+	}
+
+	resourceData := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, map[string]interface{}{
+		"device_cgroup_rules": []interface{}{"c 189:* rmw"},
+	})
+	value := resourceData.Get("device_cgroup_rules").(*schema.Set)
+
+	got := stringSetToStringSlice(value)
+	if !reflect.DeepEqual(got, []string{"c 189:* rmw"}) {
+		t.Fatalf("unexpected device_cgroup_rules conversion: %#v", got)
+	}
+
+	if flattened := flattenDeviceCgroupRules([]string{"c 189:* rmw"}); !reflect.DeepEqual(flattened, []interface{}{"c 189:* rmw"}) {
+		t.Fatalf("unexpected device_cgroup_rules flattening: %#v", flattened)
+	}
+}
