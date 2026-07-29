@@ -906,10 +906,8 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 		}
 	}
-	if _, hasDeviceCgroupRules := d.GetOk("device_cgroup_rules"); hasDeviceCgroupRules {
-		if err = d.Set("device_cgroup_rules", flattenDeviceCgroupRules(container.HostConfig.DeviceCgroupRules)); err != nil {
-			log.Printf("[WARN] failed to set container hostconfig device_cgroup_rules from API: %s", err)
-		}
+	if err = d.Set("device_cgroup_rules", flattenDeviceCgroupRules(container.HostConfig.DeviceCgroupRules)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig device_cgroup_rules from API: %s", err)
 	}
 	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
