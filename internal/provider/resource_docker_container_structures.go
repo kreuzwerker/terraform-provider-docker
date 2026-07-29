@@ -168,6 +168,14 @@ func flattenThrottleDevices(fieldName string, in []*blkiodev.ThrottleDevice) *sc
 	return schema.NewSet(f, out)
 }
 
+func flattenDeviceCgroupRules(in []string) []interface{} {
+	out := make([]interface{}, len(in))
+	for i, rule := range in {
+		out[i] = rule
+	}
+	return out
+}
+
 func stringListToStringSlice(stringList []interface{}) []string {
 	ret := []string{}
 	for _, v := range stringList {

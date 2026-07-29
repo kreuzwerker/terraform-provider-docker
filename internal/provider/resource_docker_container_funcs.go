@@ -295,6 +295,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if v, ok := d.GetOk("devices"); ok {
 		hostConfig.Devices = deviceSetToDockerDevices(v.(*schema.Set))
 	}
+	if v, ok := d.GetOk("device_cgroup_rules"); ok {
+		hostConfig.DeviceCgroupRules = stringSetToStringSlice(v.(*schema.Set))
+	}
 	if v, ok := d.GetOk("device_read_bps"); ok {
 		hostConfig.BlkioDeviceReadBps = throttleDeviceSetToDockerThrottleDevices(v.(*schema.Set))
 	}
@@ -902,6 +905,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
 		}
+	}
+	if err = d.Set("device_cgroup_rules", flattenDeviceCgroupRules(container.HostConfig.DeviceCgroupRules)); err != nil {
+		log.Printf("[WARN] failed to set container hostconfig device_cgroup_rules from API: %s", err)
 	}
 	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)

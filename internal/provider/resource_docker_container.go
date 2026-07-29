@@ -690,6 +690,16 @@ func resourceDockerContainer() *schema.Resource {
 				},
 			},
 
+			"device_cgroup_rules": {
+				Type:        schema.TypeSet,
+				Description: "Cgroup rules to allow access to classes of devices without binding specific device nodes.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
 			"device_read_bps": {
 				Type:        schema.TypeSet,
 				Description: "Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`.",
