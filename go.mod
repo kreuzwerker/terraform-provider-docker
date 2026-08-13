@@ -33,7 +33,7 @@ require (
 	github.com/morikuni/aec v1.1.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	golang.org/x/sync v0.22.0
 	google.golang.org/protobuf v1.36.12
 )
