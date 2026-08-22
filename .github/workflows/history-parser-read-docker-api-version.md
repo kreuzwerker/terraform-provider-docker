@@ -89,9 +89,10 @@ guess. Include endpoint, provider kind/name, and the evidence file/symbol.
 ### Stage 3 — Inspect implementation coverage
 
 For every relevant mapped API change, inspect the actual implementation under
-`internal/provider/`. This is a Go provider using Docker SDK v28.5.2 and both
-Terraform Plugin SDK/framework APIs. For each resource, data source, or action,
-check:
+`internal/provider/`. This is a Go provider using the Docker SDK dependency
+declared in `go.mod` and both Terraform Plugin SDK/framework APIs. Read the
+current dependency versions from `go.mod` rather than assuming a fixed SDK
+version. For each resource, data source, or action, check:
 
 - schema declaration and the exact Terraform attribute type/name;
 - expand or request-building functions, including nested `HostConfig` data;
