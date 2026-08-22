@@ -38,30 +38,94 @@ Run as a scheduled maintenance analysis for
 
 ## Task
 
-1. Read the Docker Engine API version history at
-   <https://docs.docker.com/reference/api/engine/version-history/>. Use
-   `web-fetch` first and Playwright CLI if browser rendering or navigation is
-   required. Extract every addition, removal, and deprecation relevant to the
-   provider into structured JSON. Preserve the API version, endpoint or
-   field name, change type, and source URL; do not infer a change that is not
-   documented.
-2. Inspect this checked-out repository. It is a Go Terraform provider using
-   Go 1.25.8, the Docker SDK, and the Terraform Plugin SDK/framework. Focus on
-   `internal/provider/`, especially `provider.go`, `resource_*.go`,
-   `data_source_*.go`, `action_*.go`, and their `*_funcs.go` companions.
-   Map each API element to matching resources, data sources, actions, schema
-   attributes, Docker SDK calls, CRUD handlers, tests, and generated docs.
-   Include relevant file paths and symbol names, and distinguish confirmed
-   mappings from unmapped items.
-3. Compare the JSON history with the provider map. Consider the current
-   provider's supported surface (containers, images, networks, volumes,
-   configs, secrets, services, plugins, tags, Buildx builders, data sources,
-   and actions), and identify actionable compatibility gaps, obsolete code, or
-   documentation/test updates.
-4. Check existing open issues before reporting duplicate work. Use the
-   repository's existing `enhancement` label and follow its issue conventions:
-   describe affected resources/data sources, concrete references, and
-   reproducible validation or follow-up steps.
+Work through these four stages in order. Do not collapse them into an
+immediate code-change suggestion.
+
+### Stage 1 — Read version history (no code analysis)
+
+Read the Docker Engine API version history at
+<https://docs.docker.com/reference/api/engine/version-history/>. Use
+`web-fetch` first and Playwright CLI only if browser rendering or navigation
+is required. Before looking at repository code, extract documented changes into
+structured JSON such as:
+
+```yaml
+api_version: "1.51"
+changes:
+  - type: request_field
+    endpoint: "POST /containers/create"
+    field: "HostConfig.CgroupnsMode"
+    source_url: "https://docs.docker.com/reference/api/engine/version-history/"
+```
+
+Include additions, removals, and deprecations, with API version, change type,
+endpoint, field or operation, and source URL. Do not infer a change that is
+not documented, and explicitly record changes that are outside the provider's
+scope. This stage must contain no Terraform resource or source-code mapping.
+
+### Stage 2 — Find relevant Terraform resources
+
+Now inspect the repository's provider registration and establish an
+API-to-provider map. Start with `internal/provider/provider.go`, then inspect
+the registered resources, data sources, and actions. Use confirmed mappings
+such as:
+
+```text
+POST /containers/create  -> docker_container
+GET /containers/json     -> docker_container data source (if registered)
+POST /networks/create    -> docker_network
+```
+
+Search the Docker SDK usage and provider code to verify each relationship.
+If a mapping is not readily derivable, maintain it as structured YAML or JSON
+in the report (do not add a repository file) and mark it `needs-review`; never
+guess. Include endpoint, provider kind/name, and the evidence file/symbol.
+
+### Stage 3 — Inspect implementation coverage
+
+For every relevant mapped API change, inspect the actual implementation under
+`internal/provider/`. This is a Go provider using Docker SDK v28.5.2 and both
+Terraform Plugin SDK/framework APIs. For each resource, data source, or action,
+check:
+
+- schema declaration and the exact Terraform attribute type/name;
+- expand or request-building functions, including nested `HostConfig` data;
+- flatten or response-reading functions;
+- CRUD or action handlers and Docker SDK calls;
+- unit/acceptance tests and test helper coverage;
+- generated documentation under `docs/` and its source templates.
+
+For each missing piece, report a separate item such as `schema`, `expand`,
+`flatten`, `handler`, `test`, or `docs`. For example, determine whether
+`docker_container` exposes `HostConfig.CgroupnsMode`, rather than assuming
+that it does.
+
+### Stage 4 — Produce an implementation plan
+
+Compare the history JSON, verified provider map, and implementation coverage.
+Check existing open issues before reporting duplicate work. Use the
+repository's existing `enhancement` label and issue conventions. Produce a
+maintainer-ready report (not code) for each actionable change, for example:
+
+```text
+Docker API 1.51
+New attribute: HostConfig.CgroupnsMode
+Terraform resource: docker_container
+Changes required:
+- [ ] schema: internal/provider/resource_docker_container.go
+- [ ] expand: relevant HostConfig request builder
+- [ ] flatten: relevant response reader, if applicable
+- [ ] acceptance test: matching internal/provider/*_test.go
+- [ ] documentation: generated docs and source template
+Estimated complexity: Low
+```
+
+Estimate complexity as Low, Medium, or High and explain the estimate. Include
+additions, removals, deprecations, unmapped items, risks, exact file paths and
+symbols, recommended tests/docs, source links, and uncertainty notes.
+Consider the provider's current surface: containers, images, networks,
+volumes, configs, secrets, services, plugins, tags, Buildx builders, data
+sources, and actions.
 
 Maintain a compact JSON snapshot of the source URL, retrieval date, API
 changes, provider mappings, and comparison watermark in
@@ -72,6 +136,8 @@ Timestamped filenames must use `YYYY-MM-DD-HH-MM-SS` with no colons, `T`, or
 
 ## Boundaries
 
+- DO NOT analyze provider code during Stage 1; keep history extraction
+  independent and auditable.
 - DO NOT modify repository files, commit, push, open a pull request, or run
   arbitrary release or deployment commands.
 - DO NOT create an issue for an unchanged comparison, an unverifiable claim,
