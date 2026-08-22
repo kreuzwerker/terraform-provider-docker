@@ -49,13 +49,18 @@ Read the Docker Engine API version history at
 is required. Before looking at repository code, extract documented changes into
 structured JSON such as:
 
-```yaml
-api_version: "1.51"
-changes:
-  - type: request_field
-    endpoint: "POST /containers/create"
-    field: "HostConfig.CgroupnsMode"
-    source_url: "https://docs.docker.com/reference/api/engine/version-history/"
+```json
+{
+  "api_version": "1.51",
+  "changes": [
+    {
+      "type": "request_field",
+      "endpoint": "POST /containers/create",
+      "field": "HostConfig.CgroupnsMode",
+      "source_url": "https://docs.docker.com/reference/api/engine/version-history/"
+    }
+  ]
+}
 ```
 
 Include additions, removals, and deprecations, with API version, change type,
