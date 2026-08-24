@@ -10,13 +10,14 @@ on:
 permissions:
   contents: read
   issues: read
+  copilot-requests: write 
 engine: copilot
 tools:
   github:
     mode: gh-proxy
     toolsets: [repos, issues]
   cache-memory: true
-  web-fetch: true
+  web-fetch:
   playwright:
     mode: cli
 safe-outputs:
