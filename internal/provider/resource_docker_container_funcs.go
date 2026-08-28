@@ -25,6 +25,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
@@ -39,6 +40,8 @@ const (
 var (
 	errContainerFailedToBeInHealthyState = errors.New("container failed to be in healthy state")
 )
+
+type containerInitialReadContextKey struct{}
 
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
@@ -673,7 +676,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	return resourceDockerContainerRead(ctx, d, meta)
+	return resourceDockerContainerRead(context.WithValue(ctx, containerInitialReadContextKey{}, true), d, meta)
 }
 
 func copyContainerLogs(dst io.Writer, reader io.Reader, tty bool) error {
@@ -752,6 +755,17 @@ func flattenGPUsFromDeviceRequests(deviceRequests []container.DeviceRequest) (st
 
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	containerReadRefreshTimeoutMilliseconds := d.Get("container_read_refresh_timeout_milliseconds").(int)
+	initialRead := ctx.Value(containerInitialReadContextKey{}) == true
+	attrConfigured := func(key string) bool {
+		value, diags := d.GetRawConfigAt(cty.Path{cty.GetAttrStep{Name: key}})
+		if len(diags) != 0 {
+			return false
+		}
+		return value.IsKnown() && !value.IsNull()
+	}
+	shouldPopulate := func(key string) bool {
+		return initialRead || attrConfigured(key)
+	}
 	// Ensure the timeout can never be 0, the default integer value.
 	// This also ensures imported resources will get the default of 15 seconds
 	if containerReadRefreshTimeoutMilliseconds == 0 {
@@ -847,18 +861,40 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		d.Set("image", container.Config.Image)
 	}
 
-	d.Set("hostname", container.Config.Hostname)
-	d.Set("domainname", container.Config.Domainname)
-	d.Set("command", container.Config.Cmd)
-	d.Set("entrypoint", container.Config.Entrypoint)
-	d.Set("user", container.Config.User)
-	d.Set("dns", container.HostConfig.DNS)
-	d.Set("dns_opts", container.HostConfig.DNSOptions)
-	d.Set("security_opts", container.HostConfig.SecurityOpt)
-	d.Set("dns_search", container.HostConfig.DNSSearch)
-	d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
+	if shouldPopulate("hostname") {
+		d.Set("hostname", container.Config.Hostname)
+	}
+	if shouldPopulate("domainname") {
+		d.Set("domainname", container.Config.Domainname)
+	}
+	if shouldPopulate("command") {
+		d.Set("command", container.Config.Cmd)
+	}
+	if shouldPopulate("entrypoint") {
+		d.Set("entrypoint", container.Config.Entrypoint)
+	}
+	if shouldPopulate("user") {
+		d.Set("user", container.Config.User)
+	}
+	if shouldPopulate("dns") {
+		d.Set("dns", container.HostConfig.DNS)
+	}
+	if shouldPopulate("dns_opts") {
+		d.Set("dns_opts", container.HostConfig.DNSOptions)
+	}
+	if shouldPopulate("security_opts") {
+		d.Set("security_opts", container.HostConfig.SecurityOpt)
+	}
+	if shouldPopulate("dns_search") {
+		d.Set("dns_search", container.HostConfig.DNSSearch)
+	}
+	if shouldPopulate("publish_all_ports") {
+		d.Set("publish_all_ports", container.HostConfig.PublishAllPorts)
+	}
 	d.Set("restart", container.HostConfig.RestartPolicy.Name)
-	d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
+	if shouldPopulate("max_retry_count") {
+		d.Set("max_retry_count", container.HostConfig.RestartPolicy.MaximumRetryCount)
+	}
 
 	// From what I can tell Init being nullable is only for container creation to allow
 	// dockerd to default it to the daemons own default settings. So this != nil
@@ -869,7 +905,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	} else {
 		d.Set("init", false)
 	}
-	d.Set("working_dir", container.Config.WorkingDir)
+	if shouldPopulate("working_dir") {
+		d.Set("working_dir", container.Config.WorkingDir)
+	}
 	if len(container.HostConfig.CapAdd) > 0 || len(container.HostConfig.CapDrop) > 0 {
 		// TODO implement DiffSuppressFunc
 		d.Set("capabilities", []interface{}{
@@ -879,17 +917,39 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
-	d.Set("runtime", container.HostConfig.Runtime)
-	d.Set("platform", container.Platform)
-	d.Set("mounts", getDockerContainerMounts(container))
-	// volumes
-	d.Set("tmpfs", container.HostConfig.Tmpfs)
-	if err := d.Set("host", flattenExtraHosts(container.HostConfig.ExtraHosts)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
+	if shouldPopulate("runtime") {
+		d.Set("runtime", container.HostConfig.Runtime)
 	}
-	if _, ok := d.GetOk("ulimit"); ok {
-		if err = d.Set("ulimit", flattenUlimits(container.HostConfig.Ulimits)); err != nil {
-			log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+	if shouldPopulate("platform") {
+		d.Set("platform", container.Platform)
+	}
+	if shouldPopulate("mounts") {
+		if mounts := getDockerContainerMounts(container); len(mounts) != 0 {
+			d.Set("mounts", mounts)
+		} else {
+			d.Set("mounts", []map[string]interface{}{})
+		}
+	}
+	// volumes
+	if shouldPopulate("tmpfs") {
+		d.Set("tmpfs", container.HostConfig.Tmpfs)
+	}
+	if shouldPopulate("host") {
+		if extraHosts := flattenExtraHosts(container.HostConfig.ExtraHosts); len(extraHosts) != 0 {
+			if err := d.Set("host", extraHosts); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig extrahosts from API: %s", err)
+			}
+		} else {
+			d.Set("host", []map[string]interface{}{})
+		}
+	}
+	if shouldPopulate("ulimit") {
+		if ulimits := flattenUlimits(container.HostConfig.Ulimits); len(ulimits) != 0 {
+			if err = d.Set("ulimit", ulimits); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig  ulimits from API: %s", err)
+			}
+		} else {
+			d.Set("ulimit", []map[string]interface{}{})
 		}
 	}
 
@@ -900,26 +960,53 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// https://github.com/terraform-providers/terraform-provider-docker/issues/242
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
 
-	d.Set("privileged", container.HostConfig.Privileged)
-	if _, hasDevices := d.GetOk("devices"); hasDevices {
+	if shouldPopulate("privileged") {
+		d.Set("privileged", container.HostConfig.Privileged)
+	}
+	if shouldPopulate("devices") {
 		if err = d.Set("devices", flattenDevices(container.HostConfig.Devices, d.Get("devices").(*schema.Set))); err != nil {
 			log.Printf("[WARN] failed to set container hostconfig devices from API: %s", err)
+		}
+	}
+	if shouldPopulate("device_read_bps") {
+		if readBps := flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps); readBps.Len() != 0 {
+			if err = d.Set("device_read_bps", readBps); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+			}
+		} else {
+			d.Set("device_read_bps", []map[string]interface{}{})
 		}
 	}
 	if err = d.Set("device_cgroup_rules", flattenDeviceCgroupRules(container.HostConfig.DeviceCgroupRules)); err != nil {
 		log.Printf("[WARN] failed to set container hostconfig device_cgroup_rules from API: %s", err)
 	}
-	if err = d.Set("device_read_bps", flattenThrottleDevices("device_read_bps", container.HostConfig.BlkioDeviceReadBps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_read_bps from API: %s", err)
+
+	if shouldPopulate("device_read_iops") {
+		if readIOps := flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps); readIOps.Len() != 0 {
+			if err = d.Set("device_read_iops", readIOps); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+			}
+		} else {
+			d.Set("device_read_iops", []map[string]interface{}{})
+		}
 	}
-	if err = d.Set("device_read_iops", flattenThrottleDevices("device_read_iops", container.HostConfig.BlkioDeviceReadIOps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_read_iops from API: %s", err)
+	if shouldPopulate("device_write_bps") {
+		if writeBps := flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps); writeBps.Len() != 0 {
+			if err = d.Set("device_write_bps", writeBps); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
+			}
+		} else {
+			d.Set("device_write_bps", []map[string]interface{}{})
+		}
 	}
-	if err = d.Set("device_write_bps", flattenThrottleDevices("device_write_bps", container.HostConfig.BlkioDeviceWriteBps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_write_bps from API: %s", err)
-	}
-	if err = d.Set("device_write_iops", flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps)); err != nil {
-		log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+	if shouldPopulate("device_write_iops") {
+		if writeIOps := flattenThrottleDevices("device_write_iops", container.HostConfig.BlkioDeviceWriteIOps); writeIOps.Len() != 0 {
+			if err = d.Set("device_write_iops", writeIOps); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig blkio device_write_iops from API: %s", err)
+			}
+		} else {
+			d.Set("device_write_iops", []map[string]interface{}{})
+		}
 	}
 	// Handle device_requests and gpus reconstruction only when configured.
 	if _, hasGpus := d.GetOk("gpus"); hasGpus {
@@ -929,39 +1016,65 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 		} else {
 			log.Printf("[WARN] container has device requests that cannot be represented by the gpus attribute; preserving configured value")
 		}
-	} else if _, hasDeviceRequests := d.GetOk("device_requests"); hasDeviceRequests {
-		if err = d.Set("device_requests", flattenDeviceRequests(container.HostConfig.DeviceRequests)); err != nil {
-			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+	} else if shouldPopulate("device_requests") {
+		if deviceRequests := flattenDeviceRequests(container.HostConfig.DeviceRequests); len(deviceRequests) != 0 {
+			if err = d.Set("device_requests", deviceRequests); err != nil {
+				log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
+			}
+		} else {
+			d.Set("device_requests", []map[string]interface{}{})
 		}
 	}
 	// "destroy_grace_seconds" can't be imported
-	d.Set("memory", container.HostConfig.Memory/1024/1024)
+	if shouldPopulate("memory") {
+		d.Set("memory", container.HostConfig.Memory/1024/1024)
+	}
 
-	if container.HostConfig.MemoryReservation > 0 {
+	if shouldPopulate("memory_reservation") {
 		d.Set("memory_reservation", container.HostConfig.MemoryReservation/1024/1024)
-	} else {
-		d.Set("memory_reservation", container.HostConfig.MemoryReservation)
 	}
 
-	if container.HostConfig.MemorySwap > 0 {
+	if shouldPopulate("memory_swap") {
 		d.Set("memory_swap", container.HostConfig.MemorySwap/1024/1024)
-	} else {
-		d.Set("memory_swap", container.HostConfig.MemorySwap)
 	}
-	d.Set("shm_size", container.HostConfig.ShmSize/1024/1024)
-	if container.HostConfig.NanoCPUs > 0 {
-		d.Set("cpus", nanoInt64ToDecimalString(container.HostConfig.NanoCPUs))
+	if shouldPopulate("shm_size") {
+		if shmSize := container.HostConfig.ShmSize / 1024 / 1024; shmSize != 64 {
+			d.Set("shm_size", shmSize)
+		}
 	}
-	d.Set("cpu_shares", container.HostConfig.CPUShares)
-	d.Set("cpu_set", container.HostConfig.CpusetCpus)
-	d.Set("log_driver", container.HostConfig.LogConfig.Type)
-	d.Set("log_opts", containerLogOptsForState(d, container.HostConfig.LogConfig.Config))
-	d.Set("storage_opts", container.HostConfig.StorageOpt)
-	d.Set("network_mode", container.HostConfig.NetworkMode)
-	if _, ok := d.GetOk("pid_mode"); ok {
+	if shouldPopulate("cpus") {
+		if container.HostConfig.NanoCPUs > 0 {
+			d.Set("cpus", nanoInt64ToDecimalString(container.HostConfig.NanoCPUs))
+		}
+	}
+	if shouldPopulate("cpu_shares") {
+		d.Set("cpu_shares", container.HostConfig.CPUShares)
+	}
+	if shouldPopulate("cpu_set") {
+		d.Set("cpu_set", container.HostConfig.CpusetCpus)
+	}
+	if shouldPopulate("log_driver") {
+		d.Set("log_driver", container.HostConfig.LogConfig.Type)
+	}
+	if shouldPopulate("log_opts") {
+		if logOpts := containerLogOptsForState(d, container.HostConfig.LogConfig.Config); logOpts != nil {
+			d.Set("log_opts", logOpts)
+		} else {
+			d.Set("log_opts", map[string]string{})
+		}
+	}
+	if shouldPopulate("storage_opts") {
+		d.Set("storage_opts", container.HostConfig.StorageOpt)
+	}
+	if shouldPopulate("network_mode") {
+		d.Set("network_mode", container.HostConfig.NetworkMode)
+	}
+	if shouldPopulate("pid_mode") {
 		d.Set("pid_mode", container.HostConfig.PidMode)
 	}
-	d.Set("userns_mode", container.HostConfig.UsernsMode)
+	if shouldPopulate("userns_mode") {
+		d.Set("userns_mode", container.HostConfig.UsernsMode)
+	}
 	// "upload" can't be imported
 	if container.Config.Healthcheck != nil {
 		d.Set("healthcheck", []interface{}{
@@ -975,19 +1088,35 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			},
 		})
 	}
-	d.Set("sysctls", container.HostConfig.Sysctls)
-	d.Set("ipc_mode", container.HostConfig.IpcMode)
-	d.Set("group_add", container.HostConfig.GroupAdd)
-	d.Set("tty", container.Config.Tty)
-	d.Set("stdin_open", container.Config.OpenStdin)
-	d.Set("stop_signal", container.Config.StopSignal)
-	d.Set("stop_timeout", container.Config.StopTimeout)
+	if shouldPopulate("sysctls") {
+		d.Set("sysctls", container.HostConfig.Sysctls)
+	}
+	if shouldPopulate("ipc_mode") {
+		d.Set("ipc_mode", container.HostConfig.IpcMode)
+	}
+	if shouldPopulate("group_add") {
+		d.Set("group_add", container.HostConfig.GroupAdd)
+	}
+	if shouldPopulate("tty") {
+		d.Set("tty", container.Config.Tty)
+	}
+	if shouldPopulate("stdin_open") {
+		d.Set("stdin_open", container.Config.OpenStdin)
+	}
+	if shouldPopulate("stop_signal") {
+		d.Set("stop_signal", container.Config.StopSignal)
+	}
+	if shouldPopulate("stop_timeout") {
+		if container.Config.StopTimeout != nil {
+			d.Set("stop_timeout", *container.Config.StopTimeout)
+		}
+	}
 
 	return nil
 }
 
 func containerLogOptsForState(d *schema.ResourceData, containerLogOpts map[string]string) map[string]string {
-	if _, ok := d.GetOk("log_opts"); ok {
+	if _, ok := d.GetOk("log_opts"); ok && len(containerLogOpts) > 0 {
 		return containerLogOpts
 	}
 
