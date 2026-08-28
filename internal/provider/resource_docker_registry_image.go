@@ -62,6 +62,19 @@ func resourceDockerRegistryImage() *schema.Resource {
 				Computed:    true,
 			},
 
+			"pull_by_digest": {
+				Type: schema.TypeString,
+				Description: `The computed image name and sha256 digest put together.
+
+This will be something like ` + "`your-registry.tld/your-image@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30`" + `.
+
+This value is reliable to prevent common issues, such as:
+
+* downstream resources not being re-computed due to a tag name not changing
+* downstream resources being recomputed, even if the docker image didn't change at all`,
+				Computed: true,
+			},
+
 			"auth_config": AuthConfigSchema,
 			"build": {
 				Type:        schema.TypeSet,
