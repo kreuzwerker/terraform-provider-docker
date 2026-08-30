@@ -689,7 +689,7 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 	var c container.InspectResponse
 	ctx := context.Background()
 
-	testCheck := func(expectedMode string, checkOwnership bool) func(*terraform.State) error {
+	testCheck := func(expectedMode string, checkRootOwnership bool) func(*terraform.State) error {
 		return func(*terraform.State) error {
 			client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
 			if err != nil {
@@ -710,7 +710,7 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 				if !strings.HasSuffix(mode, expectedMode) {
 					return fmt.Errorf("File permissions are incorrect: %s", mode)
 				}
-				if checkOwnership && (header.Uid != 0 || header.Gid != 0) {
+				if checkRootOwnership && (header.Uid != 0 || header.Gid != 0) {
 					return fmt.Errorf("File ownership is incorrect: %d:%d", header.Uid, header.Gid)
 				}
 			}
