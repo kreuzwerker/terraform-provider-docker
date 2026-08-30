@@ -1039,12 +1039,14 @@ func resourceDockerContainer() *schema.Resource {
 						"owner": {
 							Type:        schema.TypeString,
 							Description: "The owner of the file in the container.",
+							Default:     "",
 							Optional:    true,
 							ForceNew:    true,
 						},
 						"group": {
 							Type:        schema.TypeString,
 							Description: "The group of the file in the container.",
+							Default:     "",
 							Optional:    true,
 							ForceNew:    true,
 						},
