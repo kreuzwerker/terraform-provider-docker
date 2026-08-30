@@ -69,3 +69,29 @@ func TestCopyContainerLogs_TTY(t *testing.T) {
 		t.Fatalf("unexpected logs output: got %q, want %q", got, want)
 	}
 }
+
+func TestResolveUploadID(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		field string
+		want  int
+	}{
+		{name: "empty", field: "owner"},
+		{name: "numeric", value: "1234", field: "owner", want: 1234},
+		{name: "owner name", value: "root", field: "owner", want: 0},
+		{name: "group name", value: "root", field: "group", want: 0},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := resolveUploadID(test.value, test.field)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != test.want {
+				t.Fatalf("expected ID %d, got %d", test.want, got)
+			}
+		})
+	}
+}

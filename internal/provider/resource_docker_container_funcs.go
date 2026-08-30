@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,34 @@ const (
 var (
 	errContainerFailedToBeInHealthyState = errors.New("container failed to be in healthy state")
 )
+
+func resolveUploadID(value, field string) (int, error) {
+	if value == "" {
+		return 0, nil
+	}
+	if id, err := strconv.Atoi(value); err == nil {
+		return id, nil
+	}
+	var idString string
+	if field == "group" {
+		entry, err := user.LookupGroup(value)
+		if err != nil {
+			return 0, fmt.Errorf("could not resolve upload %s %q: %w", field, value, err)
+		}
+		idString = entry.Gid
+	} else {
+		entry, err := user.Lookup(value)
+		if err != nil {
+			return 0, fmt.Errorf("could not resolve upload %s %q: %w", field, value, err)
+		}
+		idString = entry.Uid
+	}
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		return 0, fmt.Errorf("could not resolve upload %s %q: %w", field, value, err)
+	}
+	return id, nil
+}
 
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
@@ -548,6 +577,14 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			permission := upload.(map[string]interface{})["permissions"].(string)
 			owner := upload.(map[string]interface{})["owner"].(string)
 			group := upload.(map[string]interface{})["group"].(string)
+			ownerID, err := resolveUploadID(owner, "owner")
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			groupID, err := resolveUploadID(group, "group")
+			if err != nil {
+				return diag.FromErr(err)
+			}
 
 			buf := new(bytes.Buffer)
 			tw := tar.NewWriter(buf)
@@ -568,6 +605,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				ModTime: time.Now(),
 				Uname:   owner,
 				Gname:   group,
+				Uid:     ownerID,
+				Gid:     groupID,
 			}
 			if err := tw.WriteHeader(hdr); err != nil {
 				return diag.Errorf("Error creating tar archive: %s", err)
@@ -581,7 +620,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 
 			dstPath := "/"
 			uploadContent := bytes.NewReader(buf.Bytes())
-			options := container.CopyToContainerOptions{}
+			options := container.CopyToContainerOptions{
+				CopyUIDGID: owner != "" || group != "",
+			}
 			if err := client.CopyToContainer(ctx, retContainer.ID, dstPath, uploadContent, options); err != nil {
 				return diag.Errorf("Unable to upload volume content: %s", err)
 			}
