@@ -43,7 +43,7 @@ var (
 
 func resolveUploadID(value, field string) (int, error) {
 	if value == "" {
-		return 0, nil
+		return -1, nil
 	}
 	if id, err := strconv.Atoi(value); err == nil {
 		return id, nil
