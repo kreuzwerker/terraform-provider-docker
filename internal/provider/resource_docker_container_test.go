@@ -689,7 +689,7 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 	var c container.InspectResponse
 	ctx := context.Background()
 
-	testCheck := func(expected_mode string) func(*terraform.State) error {
+	testCheck := func(expectedMode, expectedOwner, expectedGroup string) func(*terraform.State) error {
 		return func(*terraform.State) error {
 			client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
 			if err != nil {
@@ -707,10 +707,10 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 				return fmt.Errorf("Unable to read content of tar archive: %s", err)
 			} else {
 				mode := strconv.FormatInt(header.Mode, 8)
-				if !strings.HasSuffix(mode, expected_mode) {
+				if !strings.HasSuffix(mode, expectedMode) {
 					return fmt.Errorf("File permissions are incorrect: %s", mode)
 				}
-				if header.Uname != "root" || header.Gname != "root" {
+				if header.Uname != expectedOwner || header.Gname != expectedGroup {
 					return fmt.Errorf("File ownership is incorrect: %s:%s", header.Uname, header.Gname)
 				}
 			}
@@ -737,7 +737,7 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
-					testCheck("744"),
+					testCheck("744", "", ""),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
@@ -750,7 +750,7 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerUploadConfigPermissions"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
-					testCheck("600"),
+					testCheck("600", "root", "root"),
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.#", "1"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
