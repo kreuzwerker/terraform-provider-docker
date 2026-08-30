@@ -48,6 +48,7 @@ func resolveUploadID(value, field string) (int, error) {
 	if id, err := strconv.Atoi(value); err == nil {
 		return id, nil
 	}
+
 	var idString string
 	if field == "group" {
 		entry, err := user.LookupGroup(value)
@@ -67,6 +68,13 @@ func resolveUploadID(value, field string) (int, error) {
 		return 0, fmt.Errorf("could not resolve upload %s %q: %w", field, value, err)
 	}
 	return id, nil
+}
+
+func uploadTarName(value string) string {
+	if _, err := strconv.Atoi(value); err == nil {
+		return ""
+	}
+	return value
 }
 
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -603,8 +611,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				Mode:    mode,
 				Size:    int64(len(contentToUpload)),
 				ModTime: time.Now(),
-				Uname:   owner,
-				Gname:   group,
+				Uname:   uploadTarName(owner),
+				Gname:   uploadTarName(group),
 				Uid:     ownerID,
 				Gid:     groupID,
 			}
