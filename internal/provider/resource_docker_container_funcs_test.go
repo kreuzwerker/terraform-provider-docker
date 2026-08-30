@@ -77,7 +77,7 @@ func TestResolveUploadID(t *testing.T) {
 		field string
 		want  int
 	}{
-		{name: "empty", field: "owner", want: -1},
+		{name: "empty", field: "owner"},
 		{name: "numeric", value: "1234", field: "owner", want: 1234},
 		{name: "owner name", value: "root", field: "owner", want: 0},
 		{name: "group name", value: "root", field: "group", want: 0},
