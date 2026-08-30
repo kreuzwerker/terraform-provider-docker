@@ -710,6 +710,9 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 				if !strings.HasSuffix(mode, expected_mode) {
 					return fmt.Errorf("File permissions are incorrect: %s", mode)
 				}
+				if header.Uname != "root" || header.Gname != "root" {
+					return fmt.Errorf("File ownership is incorrect: %s:%s", header.Uname, header.Gname)
+				}
 			}
 
 			fbuf := new(bytes.Buffer)
@@ -753,6 +756,8 @@ func TestAccDockerContainer_uploadPermission(t *testing.T) {
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content", "foo"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.content_base64", ""),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.permissions", "0600"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.owner", "root"),
+					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.group", "root"),
 					resource.TestCheckResourceAttr("docker_container.foo", "upload.0.file", "/terraform/test.txt"),
 				),
 			},

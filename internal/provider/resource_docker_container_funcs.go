@@ -546,6 +546,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 			file := upload.(map[string]interface{})["file"].(string)
 			executable := upload.(map[string]interface{})["executable"].(bool)
 			permission := upload.(map[string]interface{})["permissions"].(string)
+			owner := upload.(map[string]interface{})["owner"].(string)
+			group := upload.(map[string]interface{})["group"].(string)
 
 			buf := new(bytes.Buffer)
 			tw := tar.NewWriter(buf)
@@ -564,6 +566,8 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 				Mode:    mode,
 				Size:    int64(len(contentToUpload)),
 				ModTime: time.Now(),
+				Uname:   owner,
+				Gname:   group,
 			}
 			if err := tw.WriteHeader(hdr); err != nil {
 				return diag.Errorf("Error creating tar archive: %s", err)

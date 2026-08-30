@@ -11,5 +11,7 @@ resource "docker_container" "foo" {
     content    = "foo"
     file       = "/terraform/test.txt"
     permissions = "0600"
+    owner = "root"
+    group = "root"
   }
 }
