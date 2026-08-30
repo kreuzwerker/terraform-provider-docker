@@ -70,6 +70,7 @@ func resolveUploadID(value, field string) (int, error) {
 	return id, nil
 }
 
+// uploadTarName omits numeric IDs from tar name fields so Docker uses Uid/Gid.
 func uploadTarName(value string) string {
 	if _, err := strconv.Atoi(value); err == nil {
 		return ""

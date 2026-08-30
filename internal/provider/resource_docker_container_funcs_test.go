@@ -98,4 +98,7 @@ func TestResolveUploadID(t *testing.T) {
 	if _, err := resolveUploadID("nonexistent_user_xyz", "owner"); err == nil {
 		t.Fatal("expected an error for an unknown owner")
 	}
+	if _, err := resolveUploadID("nonexistent_group_xyz", "group"); err == nil {
+		t.Fatal("expected an error for an unknown group")
+	}
 }
