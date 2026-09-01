@@ -1,13 +1,64 @@
 # Changelog
 
+<a name="v4.6.0"></a>
+## [v4.6.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.5.0...v4.6.0) (2026-09-01)
+
+
+
+### Chore
+
+* update golangci/golangci-lint-action digest to ba0d7d2 (#960) ([#960](https://github.com/kreuzwerker/terraform-provider-docker/issues/960))
+
+
+### Feat
+
+* Add support for device_cgroup_rules in docker_container (#976) ([#976](https://github.com/kreuzwerker/terraform-provider-docker/issues/976))
+
+* Support owner and group on container uploads (#997) ([#997](https://github.com/kreuzwerker/terraform-provider-docker/issues/997))
+
+
+### Fix
+
+* surface failed task logs on service converge timeout (#959) ([#959](https://github.com/kreuzwerker/terraform-provider-docker/issues/959))
+
+* keep docker_compose version labels non-empty (#964) ([#964](https://github.com/kreuzwerker/terraform-provider-docker/issues/964))
+
+* update module golang.org/x/sync to v0.22.0 (#965) ([#965](https://github.com/kreuzwerker/terraform-provider-docker/issues/965))
+
+* update module github.com/katbyte/terrafmt to v0.5.7 (#971) ([#971](https://github.com/kreuzwerker/terraform-provider-docker/issues/971))
+
+* update module github.com/docker/go-connections to v0.8.1 (#977) ([#977](https://github.com/kreuzwerker/terraform-provider-docker/issues/977))
+
+* update module github.com/hashicorp/terraform-plugin-log to v0.11.0 (#981) ([#981](https://github.com/kreuzwerker/terraform-provider-docker/issues/981))
+
+* update module github.com/katbyte/terrafmt to v1 (#982) ([#982](https://github.com/kreuzwerker/terraform-provider-docker/issues/982))
+
+* update module google.golang.org/protobuf to v1.36.12 (#983) ([#983](https://github.com/kreuzwerker/terraform-provider-docker/issues/983))
+
+* update module github.com/sirupsen/logrus to v1.10.0 (#984) ([#984](https://github.com/kreuzwerker/terraform-provider-docker/issues/984))
+
+* update module github.com/containerd/platforms to v1.0.0-rc.5 (#985) ([#985](https://github.com/kreuzwerker/terraform-provider-docker/issues/985))
+
+* update module github.com/sirupsen/logrus to v1.10.1 (#986) ([#986](https://github.com/kreuzwerker/terraform-provider-docker/issues/986))
+
+* changing healthcheck should recreate container (#989) ([#989](https://github.com/kreuzwerker/terraform-provider-docker/issues/989))
+
+* update module github.com/sirupsen/logrus to v1.10.2 (#995) ([#995](https://github.com/kreuzwerker/terraform-provider-docker/issues/995))
+
+
 <a name="v4.5.0"></a>
 ## [v4.5.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.4.0...v4.5.0) (2026-06-18)
 
 
 
+### Chore
+
+* Prepare release v4.5.0 (#954) ([#954](https://github.com/kreuzwerker/terraform-provider-docker/issues/954))
+
+
 ### Feat
 
-* Add no_compose build tag to allow cross-compile without CGO (#937) ([#937](https://github.com/kreuzwerker/terraform-provider-docker/issues/937))
+* Add no_compose build tag to allow cross-compile without CGO (#937) ([#937](https://github.com/kreuzwerker/terraform-provider-docker/issues/937) [#1698](https://github.com/kreuzwerker/terraform-provider-docker/issues/1698) [#13448](https://github.com/kreuzwerker/terraform-provider-docker/issues/13448))
 
 * Implement init for docker_service (#949) ([#949](https://github.com/kreuzwerker/terraform-provider-docker/issues/949))
 
