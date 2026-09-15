@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -82,6 +83,108 @@ func TestAccDockerCompose_profilesAndEnvFiles(t *testing.T) {
 	})
 }
 
+func TestAccDockerCompose_inPlaceComposeYAMLUpdate(t *testing.T) {
+	// Requires provider-computed content_hash (plan-time) so in-place compose file
+	// edits produce an Update. Enabled when that attribute lands.
+	t.Skip("pending docker_compose content_hash")
+
+	preCheckDocker(t)
+
+	projectName := fmt.Sprintf("tfacc-docker-compose-yaml-drift-%d", time.Now().UnixNano())
+	fixturesDir := copyComposeResourceFixtures(t)
+	config := fmt.Sprintf(loadComposeResourceTestConfiguration(t, "testAccDockerComposeConfig"), projectName, fixturesDir)
+	var web containertypes.InspectResponse
+	var worker containertypes.InspectResponse
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			preCheckDocker(t)
+		},
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		CheckDestroy:             testCheckComposeProjectRemoved(projectName),
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_compose.test", "project_name", projectName),
+					testCheckComposeContainerRunning(projectName, "web", &web),
+					testCheckComposeContainerRunning(projectName, "worker", &worker),
+				),
+			},
+			{
+				PreConfig: func() {
+					updatedYAML, err := os.ReadFile(filepath.Join(composeResourceFixturesDir(t), "testAccDockerComposeUpdatedConfig.compose.yaml"))
+					if err != nil {
+						t.Fatalf("failed to read updated compose fixture: %v", err)
+					}
+					writeComposeFixtureFile(t, fixturesDir, "testAccDockerComposeConfig.compose.yaml", string(updatedYAML))
+				},
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("docker_compose.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_compose.test", "project_name", projectName),
+					testCheckComposeContainerRunning(projectName, "web", &web),
+					testCheckComposeContainerAbsent(projectName, "worker"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerCompose_inPlaceEnvFileUpdate(t *testing.T) {
+	// Requires provider-computed content_hash (plan-time) so in-place env file
+	// edits produce an Update. Enabled when that attribute lands.
+	t.Skip("pending docker_compose content_hash")
+
+	preCheckDocker(t)
+
+	projectName := fmt.Sprintf("tfacc-docker-compose-env-drift-%d", time.Now().UnixNano())
+	fixturesDir := copyComposeResourceFixtures(t)
+	config := fmt.Sprintf(loadComposeResourceTestConfiguration(t, "testAccDockerComposeProfilesConfig"), projectName, fixturesDir, fixturesDir)
+	var app containertypes.InspectResponse
+	var optional containertypes.InspectResponse
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			preCheckDocker(t)
+		},
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		CheckDestroy:             testCheckComposeProjectRemoved(projectName),
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_compose.test", "project_name", projectName),
+					testCheckComposeContainerRunning(projectName, "app", &app),
+					testCheckComposeContainerRunning(projectName, "optional", &optional),
+					testCheckComposeContainerHasEnv(projectName, "app", "COMPOSE_MESSAGE=from-env-file"),
+				),
+			},
+			{
+				PreConfig: func() {
+					writeComposeFixtureFile(t, fixturesDir, "testAccDockerCompose.env", "COMPOSE_MESSAGE=from-env-file-updated\n")
+				},
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("docker_compose.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("docker_compose.test", "project_name", projectName),
+					testCheckComposeContainerRunning(projectName, "app", &app),
+					testCheckComposeContainerRunning(projectName, "optional", &optional),
+					testCheckComposeContainerHasEnv(projectName, "app", "COMPOSE_MESSAGE=from-env-file-updated"),
+				),
+			},
+		},
+	})
+}
+
 func loadComposeResourceTestConfiguration(t *testing.T, testName string) string {
 	t.Helper()
 
@@ -108,6 +211,46 @@ func composeResourceFixturesDir(t *testing.T) string {
 	}
 
 	return filepath.Join(workingDir, "..", "..", "testdata", "resources", "docker_compose")
+}
+
+func copyComposeResourceFixtures(t *testing.T) string {
+	t.Helper()
+
+	sourceDir := composeResourceFixturesDir(t)
+	destDir := t.TempDir()
+
+	entries, err := os.ReadDir(sourceDir)
+	if err != nil {
+		t.Fatalf("failed to read compose fixtures at %q: %v", sourceDir, err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		sourcePath := filepath.Join(sourceDir, entry.Name())
+		content, err := os.ReadFile(sourcePath)
+		if err != nil {
+			t.Fatalf("failed to read compose fixture %q: %v", sourcePath, err)
+		}
+
+		destPath := filepath.Join(destDir, entry.Name())
+		if err := os.WriteFile(destPath, content, 0o644); err != nil {
+			t.Fatalf("failed to write temp compose fixture %q: %v", destPath, err)
+		}
+	}
+
+	return destDir
+}
+
+func writeComposeFixtureFile(t *testing.T, fixturesDir string, fileName string, content string) {
+	t.Helper()
+
+	path := filepath.Join(fixturesDir, fileName)
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("failed to write compose fixture %q: %v", path, err)
+	}
 }
 
 func testCheckComposeContainerRunning(projectName string, serviceName string, runningContainer *containertypes.InspectResponse) resource.TestCheckFunc {
