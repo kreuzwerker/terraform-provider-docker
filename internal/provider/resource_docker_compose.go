@@ -4,7 +4,11 @@ package provider
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -20,8 +24,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &dockerComposeResource{}
-	_ resource.ResourceWithConfigure = &dockerComposeResource{}
+	_ resource.Resource               = &dockerComposeResource{}
+	_ resource.ResourceWithConfigure  = &dockerComposeResource{}
+	_ resource.ResourceWithModifyPlan = &dockerComposeResource{}
 )
 
 var readComposeBuildInfo = debug.ReadBuildInfo
@@ -40,6 +45,7 @@ type dockerComposeResourceModel struct {
 	RemoveOrphans    types.Bool   `tfsdk:"remove_orphans"`
 	Wait             types.Bool   `tfsdk:"wait"`
 	WaitTimeout      types.String `tfsdk:"wait_timeout"`
+	ContentHash      types.String `tfsdk:"content_hash"`
 }
 
 func NewDockerComposeResource() resource.Resource {
@@ -94,6 +100,10 @@ func (r *dockerComposeResource) Schema(_ context.Context, _ resource.SchemaReque
 				MarkdownDescription: "Optional duration for `wait`, for example `30s` or `2m`.",
 				Optional:            true,
 			},
+			"content_hash": schema.StringAttribute{
+				MarkdownDescription: "SHA-256 hex digest of the contents of listed `config_paths` then `env_files`, in attribute order. Computed at plan time so in-place edits to those files trigger an update.",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -142,8 +152,15 @@ func (r *dockerComposeResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	contentHash, hashDiags := computeComposeContentHash(ctx, plan)
+	resp.Diagnostics.Append(hashDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	plan.ProjectName = types.StringValue(project.Name)
 	plan.ID = types.StringValue(project.Name)
+	plan.ContentHash = types.StringValue(contentHash)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -182,6 +199,17 @@ func (r *dockerComposeResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
+	// Seed content_hash after provider upgrade when the attribute was not present.
+	// Do not refresh from disk when already set, so drift remains visible at plan time.
+	if state.ContentHash.IsNull() {
+		contentHash, hashDiags := computeComposeContentHash(ctx, state)
+		resp.Diagnostics.Append(hashDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		state.ContentHash = types.StringValue(contentHash)
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -212,8 +240,15 @@ func (r *dockerComposeResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
+	contentHash, hashDiags := computeComposeContentHash(ctx, plan)
+	resp.Diagnostics.Append(hashDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	plan.ProjectName = types.StringValue(project.Name)
 	plan.ID = types.StringValue(project.Name)
+	plan.ContentHash = types.StringValue(contentHash)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -248,6 +283,33 @@ func (r *dockerComposeResource) Delete(ctx context.Context, req resource.DeleteR
 	}); err != nil && !composeapi.IsNotFoundError(err) {
 		resp.Diagnostics.AddError("Docker Compose destroy failed", err.Error())
 	}
+}
+
+func (r *dockerComposeResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan dockerComposeResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.ConfigPaths.IsUnknown() || plan.EnvFiles.IsUnknown() {
+		plan.ContentHash = types.StringUnknown()
+		resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+		return
+	}
+
+	contentHash, hashDiags := computeComposeContentHash(ctx, plan)
+	resp.Diagnostics.Append(hashDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	plan.ContentHash = types.StringValue(contentHash)
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
 func (r *dockerComposeResource) prepareComposeProject(ctx context.Context, model dockerComposeResourceModel, diags *diag.Diagnostics) (*composetypes.Project, composeapi.Service) {
@@ -412,6 +474,57 @@ func listToStrings(ctx context.Context, value types.List) ([]string, diag.Diagno
 	var values []string
 	diags := value.ElementsAs(ctx, &values, false)
 	return values, diags
+}
+
+func computeComposeContentHash(ctx context.Context, model dockerComposeResourceModel) (string, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	configPaths, attrDiags := listToStrings(ctx, model.ConfigPaths)
+	diags.Append(attrDiags...)
+	if diags.HasError() {
+		return "", diags
+	}
+
+	envFiles, attrDiags := listToStrings(ctx, model.EnvFiles)
+	diags.Append(attrDiags...)
+	if diags.HasError() {
+		return "", diags
+	}
+
+	paths := make([]string, 0, len(configPaths)+len(envFiles))
+	paths = append(paths, configPaths...)
+	paths = append(paths, envFiles...)
+
+	hash, err := hashComposeContentFiles(paths)
+	if err != nil {
+		diags.AddError("Compose content hash failed", err.Error())
+		return "", diags
+	}
+
+	return hash, diags
+}
+
+// hashComposeContentFiles returns the SHA-256 hex digest of the listed files
+// in order. Each file is length-prefixed (uint64 big-endian) before its bytes
+// so adjacent file boundaries cannot collide. Missing or unreadable paths
+// return an error.
+func hashComposeContentFiles(paths []string) (string, error) {
+	hasher := sha256.New()
+	var lengthBuf [8]byte
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", fmt.Errorf("unable to read listed compose content file %q: %w", path, err)
+		}
+		binary.BigEndian.PutUint64(lengthBuf[:], uint64(len(data)))
+		if _, err := hasher.Write(lengthBuf[:]); err != nil {
+			return "", err
+		}
+		if _, err := hasher.Write(data); err != nil {
+			return "", err
+		}
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func parseDurationAttribute(name string, value types.String, diags *diag.Diagnostics) (time.Duration, bool) {

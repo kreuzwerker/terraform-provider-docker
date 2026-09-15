@@ -84,10 +84,6 @@ func TestAccDockerCompose_profilesAndEnvFiles(t *testing.T) {
 }
 
 func TestAccDockerCompose_inPlaceComposeYAMLUpdate(t *testing.T) {
-	// Requires provider-computed content_hash (plan-time) so in-place compose file
-	// edits produce an Update. Enabled when that attribute lands.
-	t.Skip("pending docker_compose content_hash")
-
 	preCheckDocker(t)
 
 	projectName := fmt.Sprintf("tfacc-docker-compose-yaml-drift-%d", time.Now().UnixNano())
@@ -136,10 +132,6 @@ func TestAccDockerCompose_inPlaceComposeYAMLUpdate(t *testing.T) {
 }
 
 func TestAccDockerCompose_inPlaceEnvFileUpdate(t *testing.T) {
-	// Requires provider-computed content_hash (plan-time) so in-place env file
-	// edits produce an Update. Enabled when that attribute lands.
-	t.Skip("pending docker_compose content_hash")
-
 	preCheckDocker(t)
 
 	projectName := fmt.Sprintf("tfacc-docker-compose-env-drift-%d", time.Now().UnixNano())
