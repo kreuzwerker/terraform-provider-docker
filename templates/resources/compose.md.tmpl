@@ -29,5 +29,7 @@ The following configuration enables a Compose profile and loads environment vari
 - This resource uses the Docker Compose Go packages directly and does not shell out to the `docker compose` CLI.
 - The resource is intentionally file-based: Terraform manages one Compose project from one or more Compose files instead of modeling the Compose YAML structure as nested Terraform blocks.
 - Apply and update both reconcile the project from the supplied Compose files, while destroy removes the project with the equivalent of `docker compose down`.
+- Terraform detects changes to the contents of listed `config_paths` and `env_files` via the computed `content_hash` attribute, so in-place edits to those files produce a non-empty plan and trigger an update.
+- `content_hash` only covers files listed in `config_paths` and `env_files`. It does not fingerprint the default `.env` file when `env_files` is omitted, Compose `include`/`extends` files that are not listed in `config_paths`, or host operating system environment variables.
 
 {{ .SchemaMarkdown | trimspace }}
