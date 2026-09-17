@@ -30,7 +30,7 @@ jobs:
       - name: Run GoReleaser (Fast)
         uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8
         with:
-          version: 2.15.4
+          version: v2.18.2
           args: release --config .goreleaser-fast.yml --clean --skip=publish,sign --snapshot
 
   compile:
@@ -44,5 +44,5 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8
         with:
-          version: 2.15.4
+          version: v2.18.2
           args: release --clean --skip=publish,sign --snapshot
