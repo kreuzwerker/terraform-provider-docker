@@ -20,6 +20,9 @@ func resourceDockerImage() *schema.Resource {
 		ReadContext:   resourceDockerImageRead,
 		UpdateContext: resourceDockerImageUpdate,
 		DeleteContext: resourceDockerImageDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceDockerImageImport,
+		},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(dockerImageCreateDefaultTimeout),

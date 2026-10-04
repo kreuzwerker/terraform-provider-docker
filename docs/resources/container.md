@@ -380,6 +380,14 @@ Import is supported using the following syntax by providing the `id`:
 terraform import docker_container.foo id
 ```
 
+Import reads the existing container's ports, network attachments, labels, logging options and environment overrides. Labels and environment values inherited unchanged from the image are omitted. The daemon cannot distinguish an explicitly configured value equal to an image default from an inherited value, so omit those redundant settings from the matching configuration.
+
+Network attachments are imported using network IDs and observed aliases and endpoint settings. Use matching network IDs in `networks_advanced`; preserve the container's `network_mode` and any published loopback port.
+
+Import initializes provider controls from their schema defaults: `attach = false`, `container_read_refresh_timeout_milliseconds = 15000`, `logs = false`, `must_run = true`, `remove_volumes = true`, `start = true`, `wait = false` and `wait_timeout = 60`. These are import policies, not observed daemon settings. Readback sets `must_run = false` for a stopped container. Matching controls give a no-change plan; explicitly configured alternatives, including `remove_volumes = false`, require a reviewed control update.
+
+Import sets the deletion policy `destroy_grace_seconds` to the existing `StopTimeout`, or Docker's default of 10 seconds for Linux and 30 seconds for Windows when it is unset. Include the matching value in your configuration for a no-change plan. Indefinite stop timeouts are rejected because the provider's deletion policy cannot represent them. These import policies do not change normal refresh behavior. Uploads cannot be recovered from the daemon. Review the plan before applying to an imported container.
+
 ### Example
 
 Assuming you created a `container` as follows
