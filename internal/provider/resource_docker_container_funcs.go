@@ -805,6 +805,18 @@ func flattenGPUsFromDeviceRequests(deviceRequests []container.DeviceRequest) (st
 }
 
 func resourceDockerContainerImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	// These controls express provider policy, not daemon configuration. Adopt
+	// their canonical defaults before Read handles the observed running state.
+	containerSchema := resourceDockerContainer().Schema
+	for _, name := range []string{"attach", "container_read_refresh_timeout_milliseconds", "logs", "must_run", "remove_volumes", "start", "wait", "wait_timeout"} {
+		value, err := containerSchema[name].DefaultValue()
+		if err != nil {
+			return nil, fmt.Errorf("read imported container control default %s: %w", name, err)
+		}
+		if err := d.Set(name, value); err != nil {
+			return nil, fmt.Errorf("set imported container control default %s: %w", name, err)
+		}
+	}
 	if diagnostics := resourceDockerContainerReadState(ctx, d, meta, true); diagnostics.HasError() {
 		return nil, fmt.Errorf("read imported Docker container: %v", diagnostics)
 	}

@@ -384,7 +384,9 @@ Import reads the existing container's ports, network attachments, labels, loggin
 
 Network attachments are imported using network IDs and observed aliases and endpoint settings. Use matching network IDs in `networks_advanced`; preserve the container's `network_mode` and any published loopback port.
 
-Import sets the deletion policy `destroy_grace_seconds` to the existing `StopTimeout`, or Docker's default of 10 seconds for Linux and 30 seconds for Windows when it is unset. Include the matching value in your configuration for a no-change plan. Indefinite stop timeouts are rejected because the provider's deletion policy cannot represent them. This import policy does not change normal refresh behavior. Other configuration-only options such as `wait` and uploads cannot be recovered from the daemon. Review the plan before applying to an imported container.
+Import initializes provider controls from their schema defaults: `attach = false`, `container_read_refresh_timeout_milliseconds = 15000`, `logs = false`, `must_run = true`, `remove_volumes = true`, `start = true`, `wait = false` and `wait_timeout = 60`. These are import policies, not observed daemon settings. Readback sets `must_run = false` for a stopped container. Matching controls give a no-change plan; explicitly configured alternatives, including `remove_volumes = false`, require a reviewed control update.
+
+Import sets the deletion policy `destroy_grace_seconds` to the existing `StopTimeout`, or Docker's default of 10 seconds for Linux and 30 seconds for Windows when it is unset. Include the matching value in your configuration for a no-change plan. Indefinite stop timeouts are rejected because the provider's deletion policy cannot represent them. These import policies do not change normal refresh behavior. Uploads cannot be recovered from the daemon. Review the plan before applying to an imported container.
 
 ### Example
 

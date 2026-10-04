@@ -24,8 +24,11 @@ func TestAccDockerContainer_importExisting(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("TF_ACC is required for Docker acceptance tests")
 	}
-	testAccPreCheck(t)
 	ctx := context.Background()
+	// This container/image/network journey needs no Swarm resources.
+	if err := testAccProvider.Configure(ctx, terraform.NewResourceConfigRaw(nil)); err != nil {
+		t.Fatal(err)
+	}
 	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
 	if err != nil {
 		t.Fatal(err)
