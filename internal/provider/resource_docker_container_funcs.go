@@ -296,6 +296,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		Mounts:         mounts,
 		AutoRemove:     d.Get("rm").(bool),
 		ReadonlyRootfs: d.Get("read_only").(bool),
+		OomScoreAdj:    d.Get("oom_score_adj").(int),
 		LogConfig: container.LogConfig{
 			Type: d.Get("log_driver").(string),
 		},
@@ -885,6 +886,9 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	d.Set("name", strings.TrimLeft(container.Name, "/")) // api prefixes with '/' ...
 	d.Set("rm", container.HostConfig.AutoRemove)
 	d.Set("read_only", container.HostConfig.ReadonlyRootfs)
+	if err := d.Set("oom_score_adj", container.HostConfig.OomScoreAdj); err != nil {
+		return diag.FromErr(err)
+	}
 	// "start" can't be imported
 	// attach
 	// logs
