@@ -804,7 +804,21 @@ func flattenGPUsFromDeviceRequests(deviceRequests []container.DeviceRequest) (st
 	return "", false
 }
 
+func resourceDockerContainerImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	if diagnostics := resourceDockerContainerReadState(ctx, d, meta, true); diagnostics.HasError() {
+		return nil, fmt.Errorf("read imported Docker container: %v", diagnostics)
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("Docker container to import does not exist")
+	}
+	return []*schema.ResourceData{d}, nil
+}
+
 func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceDockerContainerReadState(ctx, d, meta, false)
+}
+
+func resourceDockerContainerReadState(ctx context.Context, d *schema.ResourceData, meta interface{}, importing bool) diag.Diagnostics {
 	containerReadRefreshTimeoutMilliseconds := d.Get("container_read_refresh_timeout_milliseconds").(int)
 	// Ensure the timeout can never be 0, the default integer value.
 	// This also ensures imported resources will get the default of 15 seconds
@@ -840,23 +854,22 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// Read Network Settings
 	if container.NetworkSettings != nil {
 		d.Set("bridge", container.NetworkSettings.Bridge)
-		// Best-effort support for `terraform import`: only set `networks_advanced` when
-		// it is currently empty, to avoid introducing drift for normal managed resources.
-		if currentNetworksAdvanced, ok := d.GetOk("networks_advanced"); ok {
-			if set, ok := currentNetworksAdvanced.(*schema.Set); ok && set.Len() == 0 {
-				if container.NetworkSettings.Networks != nil {
-					if err := d.Set("networks_advanced", flattenContainerNetworksAdvanced(container.NetworkSettings.Networks)); err != nil {
-						log.Printf("[WARN] failed to set networks_advanced from API: %s", err)
-					}
-				}
+		// Imported attachments use daemon identities; configured refresh retains
+		// the user's network names and leaves dynamically assigned endpoint fields alone.
+		if importing {
+			if err := d.Set("networks_advanced", flattenContainerNetworksAdvanced(container.NetworkSettings.Networks)); err != nil {
+				return diag.FromErr(err)
 			}
 		}
 		// if the container exited, NetworkSettings.Ports is nil
 		// if we do not need to start the container (must_run is false), we simply do not set the ports with the empty value
 		// That way we can mitigate the bug from https://github.com/kreuzwerker/terraform-provider-docker/issues/77
 		if container.State.Running || d.Get("must_run").(bool) {
-			if _, ok := d.GetOk("ports"); ok {
+			if _, ok := d.GetOk("ports"); importing || ok {
 				if err := d.Set("ports", flattenContainerPorts(container.NetworkSettings.Ports)); err != nil {
+					if importing {
+						return diag.FromErr(err)
+					}
 					log.Printf("[WARN] failed to set ports from API: %s", err)
 				}
 			}
@@ -953,6 +966,62 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 	// For detail, please see the following URLs.
 	// https://github.com/terraform-providers/terraform-provider-docker/issues/242
 	// https://github.com/terraform-providers/terraform-provider-docker/pull/269
+	if importing {
+		image, err := client.ImageInspect(ctx, container.Image)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("inspect imported container image defaults: %w", err))
+		}
+		// Preserve the daemon's stop grace as an explicit deletion policy. It is
+		// not refreshed later, just like a configured destroy_grace_seconds.
+		grace := 10
+		if image.Os == "windows" {
+			grace = 30
+		} else if image.Os != "linux" {
+			return diag.Errorf("cannot derive imported stop grace for image OS %q", image.Os)
+		}
+		if container.Config.StopTimeout != nil {
+			grace = *container.Config.StopTimeout
+		}
+		if grace < 0 {
+			return diag.Errorf("indefinite container stop timeout cannot be represented by destroy_grace_seconds")
+		}
+		if err := d.Set("destroy_grace_seconds", grace); err != nil {
+			return diag.FromErr(err)
+		}
+		labels := make(map[string]string)
+		for key, value := range container.Config.Labels {
+			defaultValue, inherited := "", false
+			if image.Config != nil {
+				defaultValue, inherited = image.Config.Labels[key]
+			}
+			if !inherited || defaultValue != value {
+				labels[key] = value
+			}
+		}
+		if err := d.Set("labels", mapToLabelSet(labels)); err != nil {
+			return diag.FromErr(err)
+		}
+		defaults := make(map[string]string)
+		if image.Config != nil {
+			for _, entry := range image.Config.Env {
+				key, value, _ := strings.Cut(entry, "=")
+				defaults[key] = value
+			}
+		}
+		var overrides []string
+		for _, entry := range container.Config.Env {
+			key, value, _ := strings.Cut(entry, "=")
+			if defaultValue, exists := defaults[key]; !exists || defaultValue != value {
+				overrides = append(overrides, entry)
+			}
+		}
+		if err := d.Set("env", overrides); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("log_opts", container.HostConfig.LogConfig.Config); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	d.Set("privileged", container.HostConfig.Privileged)
 	if _, hasDevices := d.GetOk("devices"); hasDevices {
@@ -988,7 +1057,7 @@ func resourceDockerContainerRead(ctx context.Context, d *schema.ResourceData, me
 			log.Printf("[WARN] failed to set container hostconfig device_requests from API: %s", err)
 		}
 	}
-	// "destroy_grace_seconds" can't be imported
+	// A configured or imported deletion policy is not refreshed from the daemon.
 	d.Set("memory", container.HostConfig.Memory/1024/1024)
 
 	if container.HostConfig.MemoryReservation > 0 {
