@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/errdefs"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -103,6 +104,104 @@ func TestAccDockerContainer_basic(t *testing.T) {
 				},
 			},
 		},
+	})
+}
+
+func TestAccDockerContainer_oomScoreAdj(t *testing.T) {
+	name := fmt.Sprintf("tf-test-oom-%d", time.Now().UnixNano())
+	config := func(score int) string {
+		return fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerOOMScoreAdj"), score, name)
+	}
+	application := "docker_container.oom_application"
+	var initialID string
+	containerIDs := make(map[string]string)
+	checkScores := func(applicationScore int, replacement bool) resource.TestCheckFunc {
+		return func(state *terraform.State) error {
+			scores := map[string]int{
+				application:                     applicationScore,
+				"docker_container.oom_database": -500,
+				"docker_container.oom_cache":    -250,
+				"docker_container.oom_ml":       500,
+				"docker_container.oom_zero":     0,
+				"docker_container.oom_unset":    0,
+			}
+			for address, score := range scores {
+				var inspected container.InspectResponse
+				if err := testAccContainerRunning(address, &inspected)(state); err != nil {
+					return err
+				}
+				if inspected.HostConfig.OomScoreAdj != score {
+					return fmt.Errorf("%s: daemon OOM score is %d, expected %d", address, inspected.HostConfig.OomScoreAdj, score)
+				}
+				if err := resource.TestCheckResourceAttr(address, "oom_score_adj", strconv.Itoa(score))(state); err != nil {
+					return err
+				}
+				containerIDs[address] = inspected.ID
+				if address == application {
+					if replacement && inspected.ID == initialID {
+						return fmt.Errorf("changing oom_score_adj did not replace the container")
+					}
+					if !replacement {
+						initialID = inspected.ID
+					}
+				}
+			}
+			if replacement {
+				client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(context.Background(), nil)
+				if err != nil {
+					return err
+				}
+				if _, err := client.ContainerInspect(context.Background(), initialID); !errdefs.IsNotFound(err) {
+					return fmt.Errorf("replaced container %s was not removed: %v", initialID, err)
+				}
+			}
+			return nil
+		}
+	}
+	steps := []resource.TestStep{
+		{Config: config(-100), Check: checkScores(-100, false)},
+		{Config: config(-100), PlanOnly: true},
+		{Config: config(-200), Check: checkScores(-200, true)},
+		{Config: config(-200), PlanOnly: true},
+	}
+	for _, imported := range []struct {
+		address string
+		score   int
+	}{
+		{application, -200},
+		{"docker_container.oom_database", -500},
+		{"docker_container.oom_cache", -250},
+		{"docker_container.oom_ml", 500},
+		{"docker_container.oom_zero", 0},
+		{"docker_container.oom_unset", 0},
+	} {
+		steps = append(steps, resource.TestStep{
+			Config:       config(-200),
+			ResourceName: imported.address,
+			ImportState:  true,
+			ImportStateCheck: func(states []*terraform.InstanceState) error {
+				for _, state := range states {
+					if state.ID == containerIDs[imported.address] && state.Attributes["oom_score_adj"] == strconv.Itoa(imported.score) {
+						return nil
+					}
+				}
+				return fmt.Errorf("%s: import did not preserve daemon identity and OOM score %d", imported.address, imported.score)
+			},
+		})
+	}
+	for _, invalid := range []int{-1001, 1001} {
+		steps = append(steps, resource.TestStep{
+			Config:      config(invalid),
+			PlanOnly:    true,
+			ExpectError: regexp.MustCompile(`(?s)oom_score_adj.*range.*-1000.*1000`),
+		})
+	}
+	// Restore valid configuration for the SDK's deferred destroy.
+	steps = append(steps, resource.TestStep{Config: config(-200), PlanOnly: true})
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps:             steps,
 	})
 }
 
