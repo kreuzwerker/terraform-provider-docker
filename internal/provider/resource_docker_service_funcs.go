@@ -130,7 +130,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 		jsonObj, _ := json.MarshalIndent(service, "", "\t")
 		log.Printf("[DEBUG] Docker service inspect: %s", jsonObj)
 
-		if string(service.Endpoint.Spec.Mode) == "" && string(service.Spec.EndpointSpec.Mode) == "" {
+		if string(service.Endpoint.Spec.Mode) == "" && service.Spec.EndpointSpec != nil && string(service.Spec.EndpointSpec.Mode) == "" {
 			log.Printf("[DEBUG] Service %s does not expose endpoint spec yet", apiService.ID)
 			return serviceID, "pending", nil
 		}
@@ -156,7 +156,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 			if err = d.Set("endpoint_spec", flattenServiceEndpoint(service.Endpoint)); err != nil {
 				log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
 			}
-		} else if service.Spec.EndpointSpec.Mode != "" {
+		} else if service.Spec.EndpointSpec != nil && service.Spec.EndpointSpec.Mode != "" {
 			if err = d.Set("endpoint_spec", flattenServiceEndpointSpec(service.Spec.EndpointSpec)); err != nil {
 				log.Printf("[WARN] failed to set endpoint spec from API: %s", err)
 			}
