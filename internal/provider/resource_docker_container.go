@@ -25,7 +25,7 @@ func resourceDockerContainer() *schema.Resource {
 		MigrateState:  resourceDockerContainerMigrateState,
 		SchemaVersion: 2,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDockerContainerImport,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(dockerContainerCreateDefaultTimeout),
