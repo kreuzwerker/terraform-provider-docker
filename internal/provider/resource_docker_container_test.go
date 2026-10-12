@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/errdefs"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -151,7 +151,7 @@ func TestAccDockerContainer_oomScoreAdj(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if _, err := client.ContainerInspect(context.Background(), initialID); !errdefs.IsNotFound(err) {
+				if _, err := client.ContainerInspect(context.Background(), initialID); !cerrdefs.IsNotFound(err) {
 					return fmt.Errorf("replaced container %s was not removed: %v", initialID, err)
 				}
 			}
