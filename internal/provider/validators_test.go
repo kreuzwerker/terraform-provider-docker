@@ -67,6 +67,29 @@ func TestValidateDurationGeq0(t *testing.T) {
 	}
 }
 
+func TestSuppressEquivalentDuration(t *testing.T) {
+	cases := []struct {
+		oldV, newV string
+		suppress   bool
+	}{
+		{"1m0s", "60s", true},
+		{"60s", "1m0s", true},
+		{"1h0m0s", "3600s", true},
+		{"1h0m0s", "1h", true},
+		{"0s", "0s", true},
+		{"500ms", "0.5s", true},
+		{"1m0s", "61s", false},
+		{"", "60s", false},
+		{"60s", "", false},
+		{"bogus", "60s", false},
+	}
+	for _, c := range cases {
+		if got := suppressEquivalentDuration()("k", c.oldV, c.newV, nil); got != c.suppress {
+			t.Errorf("suppressEquivalentDuration(%q, %q) = %v, want %v", c.oldV, c.newV, got, c.suppress)
+		}
+	}
+}
+
 func TestValidateStringMatchesPattern(t *testing.T) {
 	pattern := `^(pause|continue-mate|break)$`
 	v := "pause"
