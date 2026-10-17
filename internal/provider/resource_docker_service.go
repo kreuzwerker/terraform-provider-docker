@@ -308,6 +308,7 @@ func resourceDockerService() *schema.Resource {
 										Optional:         true,
 										Computed:         true,
 										ValidateDiagFunc: validateDurationGeq0(),
+										DiffSuppressFunc: suppressEquivalentDuration(),
 									},
 									"healthcheck": {
 										Type:        schema.TypeList,
@@ -329,6 +330,7 @@ func resourceDockerService() *schema.Resource {
 													Default:          "0s",
 													Optional:         true,
 													ValidateDiagFunc: validateDurationGeq0(),
+													DiffSuppressFunc: suppressEquivalentDuration(),
 												},
 												"timeout": {
 													Type:             schema.TypeString,
@@ -336,6 +338,7 @@ func resourceDockerService() *schema.Resource {
 													Default:          "0s",
 													Optional:         true,
 													ValidateDiagFunc: validateDurationGeq0(),
+													DiffSuppressFunc: suppressEquivalentDuration(),
 												},
 												"start_period": {
 													Type:             schema.TypeString,
@@ -343,6 +346,7 @@ func resourceDockerService() *schema.Resource {
 													Default:          "0s",
 													Optional:         true,
 													ValidateDiagFunc: validateDurationGeq0(),
+													DiffSuppressFunc: suppressEquivalentDuration(),
 												},
 												"retries": {
 													Type:             schema.TypeInt,
@@ -618,6 +622,7 @@ func resourceDockerService() *schema.Resource {
 										Description:      "Delay between restart attempts (ms|s|m|h)",
 										Optional:         true,
 										ValidateDiagFunc: validateDurationGeq0(),
+										DiffSuppressFunc: suppressEquivalentDuration(),
 									},
 									"max_attempts": {
 										Type:             schema.TypeInt,
@@ -630,6 +635,7 @@ func resourceDockerService() *schema.Resource {
 										Description:      "The time window used to evaluate the restart policy (default value is `0`, which is unbounded) (ms|s|m|h)",
 										Optional:         true,
 										ValidateDiagFunc: validateDurationGeq0(),
+										DiffSuppressFunc: suppressEquivalentDuration(),
 									},
 								},
 							},
@@ -817,6 +823,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"failure_action": {
 							Type:             schema.TypeString,
@@ -831,6 +838,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "5s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"max_failure_ratio": {
 							Type:             schema.TypeString,
@@ -870,6 +878,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"failure_action": {
 							Type:             schema.TypeString,
@@ -884,6 +893,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "5s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"max_failure_ratio": {
 							Type:             schema.TypeString,
@@ -974,6 +984,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "7s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"timeout": {
 							Type:             schema.TypeString,
@@ -981,6 +992,7 @@ func resourceDockerService() *schema.Resource {
 							Default:          "3m",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 					},
 				},

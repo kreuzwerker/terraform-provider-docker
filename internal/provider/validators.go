@@ -89,6 +89,22 @@ func suppressEquivalentFloatRatio() schema.SchemaDiffSuppressFunc {
 	}
 }
 
+func suppressEquivalentDuration() schema.SchemaDiffSuppressFunc {
+	return func(k, oldV, newV string, d *schema.ResourceData) bool {
+		oldDur, oldErr := time.ParseDuration(oldV)
+		if oldErr != nil {
+			return false
+		}
+
+		newDur, newErr := time.ParseDuration(newV)
+		if newErr != nil {
+			return false
+		}
+
+		return oldDur == newDur
+	}
+}
+
 func validateDurationGeq0() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, p cty.Path) diag.Diagnostics {
 		value := v.(string)
