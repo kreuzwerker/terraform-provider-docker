@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -9,10 +10,86 @@ import (
 	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-units"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+// minDockerAPIVersionCreateEndpoints is the first Docker API version that honors
+// multiple endpoints and per-endpoint settings (e.g. MacAddress) on container create.
+const minDockerAPIVersionCreateEndpoints = "1.44"
+
+// supportsCreateTimeNetworkEndpoints reports whether the `networks_advanced` endpoints
+// can be passed to ContainerCreate. The Docker daemon ignores the MAC address of
+// endpoints connected to a created but not yet started container, so the endpoints
+// need to be set at creation time for `mac_address` to be applied.
+func supportsCreateTimeNetworkEndpoints(apiVersion string, networkMode container.NetworkMode) bool {
+	if !versions.GreaterThanOrEqualTo(apiVersion, minDockerAPIVersionCreateEndpoints) {
+		return false
+	}
+	return networkMode.IsDefault() || networkMode.IsBridge() || networkMode.IsUserDefined()
+}
+
+func expandContainerNetworkAdvancedEndpoint(rawNetwork map[string]interface{}) *network.EndpointSettings {
+	endpointConfig := &network.EndpointSettings{}
+	endpointIPAMConfig := &network.EndpointIPAMConfig{}
+	if v, ok := rawNetwork["aliases"]; ok {
+		endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
+	}
+	if v, ok := rawNetwork["ipv4_address"]; ok {
+		endpointIPAMConfig.IPv4Address = v.(string)
+	}
+	if v, ok := rawNetwork["ipv6_address"]; ok {
+		endpointIPAMConfig.IPv6Address = v.(string)
+	}
+	if v, ok := rawNetwork["link_local_ips"]; ok {
+		endpointIPAMConfig.LinkLocalIPs = stringSetToStringSlice(v.(*schema.Set))
+	}
+	endpointConfig.IPAMConfig = endpointIPAMConfig
+
+	if v, ok := rawNetwork["mac_address"]; ok {
+		endpointConfig.MacAddress = v.(string)
+	}
+	if v, ok := rawNetwork["driver_opts"]; ok {
+		endpointConfig.DriverOpts = stringSetToMapStringString(v.(*schema.Set))
+	}
+	if v, ok := rawNetwork["gw_priority"]; ok {
+		endpointConfig.GwPriority = v.(int)
+	}
+	return endpointConfig
+}
+
+// expandContainerCreateEndpointsConfig builds the endpoints passed to ContainerCreate from
+// `networks_advanced`. When endpoints are given, the daemon no longer attaches the container
+// to its user-defined `network_mode` network implicitly, so it is added explicitly.
+func expandContainerCreateEndpointsConfig(networkMode container.NetworkMode, networksAdvanced []interface{}) (map[string]*network.EndpointSettings, error) {
+	endpointsConfig := make(map[string]*network.EndpointSettings, len(networksAdvanced)+1)
+	for _, rawNetwork := range networksAdvanced {
+		rawNetworkMap := rawNetwork.(map[string]interface{})
+		networkID := rawNetworkMap["name"].(string)
+		if _, exists := endpointsConfig[networkID]; exists {
+			return nil, fmt.Errorf("network '%s' is declared more than once in networks_advanced", networkID)
+		}
+		endpointsConfig[networkID] = expandContainerNetworkAdvancedEndpoint(rawNetworkMap)
+	}
+
+	if networkMode.IsUserDefined() {
+		if _, exists := endpointsConfig[networkMode.NetworkName()]; !exists {
+			endpointsConfig[networkMode.NetworkName()] = &network.EndpointSettings{}
+		}
+	}
+	return endpointsConfig, nil
+}
+
+func containerNetworksAdvancedHasMacAddress(networksAdvanced []interface{}) bool {
+	for _, rawNetwork := range networksAdvanced {
+		if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok && v.(string) != "" {
+			return true
+		}
+	}
+	return false
+}
 
 type byPortAndProtocol []string
 
