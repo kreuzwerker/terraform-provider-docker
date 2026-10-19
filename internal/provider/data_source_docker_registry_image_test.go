@@ -24,6 +24,7 @@ func TestAccDockerRegistryImage_basic(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"), "alpine:latest"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foo", "sha256_digest", registryDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_registry_image.foo", "pull_by_digest", regexp.MustCompile(`\Aalpine@sha256:[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)),
 				),
 			},
 		},
@@ -39,6 +40,7 @@ func TestAccDockerRegistryImage_basicWithDigest(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceConfig"), "nginx:1.28.0@sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.docker_registry_image.foo", "sha256_digest", "sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
+					resource.TestCheckResourceAttr("data.docker_registry_image.foo", "pull_by_digest", "nginx:1.28.0@sha256:eaa7e36decc3421fc04478c586dfea0d931cebe47d5bc0b15d758a32ba51126f"),
 				),
 			},
 		},
@@ -54,6 +56,7 @@ func TestAccDockerRegistryImage_private(t *testing.T) {
 				Config: loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourcePrivateConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.bar", "sha256_digest", registryDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_registry_image.bar", "pull_by_digest", regexp.MustCompile(`\A.*@sha256:[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)),
 				),
 			},
 		},
@@ -72,6 +75,7 @@ func TestAccDockerRegistryImage_WithoutDaemon(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSource_WithoutDaemon"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "pull_by_digest", regexp.MustCompile(`\A127\.0\.0\.1:15000/tftest-service@sha256:[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)),
 				),
 			},
 		},
@@ -92,6 +96,7 @@ func TestAccDockerRegistryImage_auth(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceAuthConfig"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "pull_by_digest", regexp.MustCompile(`\A127\.0\.0\.1:15000/tftest-service@sha256:[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)),
 				),
 			},
 		},
@@ -113,6 +118,7 @@ func TestAccDockerRegistryImage_httpAuth(t *testing.T) {
 				Config: fmt.Sprintf(loadTestConfiguration(t, DATA_SOURCE, "docker_registry_image", "testAccDockerImageDataSourceAuthConfig"), registry, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "sha256_digest", registryDigestRegexp),
+					resource.TestMatchResourceAttr("data.docker_registry_image.foobar", "pull_by_digest", regexp.MustCompile(`\A127\.0\.0\.1:150001/tftest-service@sha256:[A-Za-z0-9_\+\.-]+:[A-Fa-f0-9]+\z`)),
 				),
 			},
 		},

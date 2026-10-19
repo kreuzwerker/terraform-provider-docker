@@ -48,6 +48,7 @@ resource "docker_image" "image" {
 
 - `id` (String) The ID of this resource.
 - `sha256_digest` (String) The sha256 digest of the image.
+- `pull_by_digest` (String) The sha256 name of the image, for example: `registry.tld/image-name@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30`
 
 <a id="nestedblock--auth_config"></a>
 ### Nested Schema for `auth_config`
