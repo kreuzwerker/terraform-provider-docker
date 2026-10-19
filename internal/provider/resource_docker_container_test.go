@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/versions"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -682,6 +683,21 @@ func testAccCheckSwapLimit(t *testing.T) {
 
 	if !info.SwapLimit {
 		t.Skip("Swap limit capability not available, skipping test")
+	}
+}
+
+func testAccCheckCreateTimeNetworkEndpoints(t *testing.T) {
+	ctx := context.Background()
+	client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(ctx, nil)
+	if err != nil {
+		t.Fatalf("failed to create Docker client: %v", err)
+	}
+	serverVersion, err := client.ServerVersion(ctx)
+	if err != nil {
+		t.Fatalf("failed to get Docker server version: %s", err)
+	}
+	if !versions.GreaterThanOrEqualTo(serverVersion.APIVersion, minDockerAPIVersionCreateEndpoints) {
+		t.Skipf("Docker API version %s does not support per-network MAC addresses, skipping test", serverVersion.APIVersion)
 	}
 }
 
@@ -1643,6 +1659,59 @@ func TestAccDockerContainer_ipv4address(t *testing.T) {
 					testCheck,
 					resource.TestCheckResourceAttr("docker_container.foo", "name", "tf-test"),
 					resource.TestCheckResourceAttrSet("docker_container.foo", "network_data.0.mac_address"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDockerContainer_macAddress(t *testing.T) {
+	var c container.InspectResponse
+
+	expectedMacAddresses := map[string]string{
+		"tf-test-mac-1": "02:42:ac:11:00:aa",
+		"tf-test-mac-2": "02:42:ac:11:00:bb",
+	}
+
+	testCheck := func(*terraform.State) error {
+		networks := c.NetworkSettings.Networks
+		if len(networks) != len(expectedMacAddresses) {
+			return fmt.Errorf("Container is attached to %d networks, expected %d", len(networks), len(expectedMacAddresses))
+		}
+		for networkName, expectedMacAddress := range expectedMacAddresses {
+			endpoint, ok := networks[networkName]
+			if !ok {
+				return fmt.Errorf("Container is not attached to network %s", networkName)
+			}
+			if endpoint.MacAddress != expectedMacAddress {
+				return fmt.Errorf("Container has MAC address %q in network %s, expected %q", endpoint.MacAddress, networkName, expectedMacAddress)
+			}
+		}
+		return nil
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccCheckCreateTimeNetworkEndpoints(t)
+		},
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerNetworksMacAddressConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheck,
+					resource.TestCheckResourceAttr("docker_container.foo", "network_mode", "bridge"),
+					resource.TestCheckResourceAttr("docker_container.foo", "network_data.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs("docker_container.foo", "network_data.*", map[string]string{
+						"network_name": "tf-test-mac-1",
+						"mac_address":  "02:42:ac:11:00:aa",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("docker_container.foo", "network_data.*", map[string]string{
+						"network_name": "tf-test-mac-2",
+						"mac_address":  "02:42:ac:11:00:bb",
+					}),
 				),
 			},
 		},
