@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/client9/misspell v0.3.4
-	github.com/compose-spec/compose-go/v2 v2.6.3
+	github.com/compose-spec/compose-go/v2 v2.16.1
 	github.com/containerd/console v1.0.5
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/platforms v1.0.0-rc.5
