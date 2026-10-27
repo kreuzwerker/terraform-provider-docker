@@ -1087,6 +1087,7 @@ func resourceDockerContainer() *schema.Resource {
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"timeout": {
 							Type:             schema.TypeString,
@@ -1094,6 +1095,7 @@ func resourceDockerContainer() *schema.Resource {
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"start_period": {
 							Type:             schema.TypeString,
@@ -1101,6 +1103,7 @@ func resourceDockerContainer() *schema.Resource {
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"start_interval": {
 							Type:             schema.TypeString,
@@ -1108,6 +1111,7 @@ func resourceDockerContainer() *schema.Resource {
 							Default:          "0s",
 							Optional:         true,
 							ValidateDiagFunc: validateDurationGeq0(),
+							DiffSuppressFunc: suppressEquivalentDuration(),
 						},
 						"retries": {
 							Type:             schema.TypeInt,
