@@ -959,7 +959,7 @@ func resourceDockerContainer() *schema.Resource {
 						},
 						"mac_address": {
 							Type:        schema.TypeString,
-							Description: "The MAC address of the container in the specific network.",
+							Description: "The MAC address of the container in the specific network. Requires Docker API version 1.44 or higher (Docker Engine 25.0+).",
 							Optional:    true,
 							ForceNew:    true,
 						},

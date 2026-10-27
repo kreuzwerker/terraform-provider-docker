@@ -245,3 +245,122 @@ func TestDeviceCgroupRulesSchemaAndConversion(t *testing.T) {
 		t.Fatalf("unexpected device_cgroup_rules flattening: %#v", flattened)
 	}
 }
+
+func TestSupportsCreateTimeNetworkEndpoints(t *testing.T) {
+	testCases := []struct {
+		apiVersion  string
+		networkMode container.NetworkMode
+		expected    bool
+	}{
+		{apiVersion: "1.43", networkMode: "bridge", expected: false},
+		{apiVersion: "1.44", networkMode: "bridge", expected: true},
+		{apiVersion: "1.51", networkMode: "default", expected: true},
+		{apiVersion: "1.51", networkMode: "my-network", expected: true},
+		{apiVersion: "1.51", networkMode: "host", expected: false},
+		{apiVersion: "1.51", networkMode: "none", expected: false},
+		{apiVersion: "1.51", networkMode: "container:foo", expected: false},
+	}
+
+	for _, tc := range testCases {
+		if got := supportsCreateTimeNetworkEndpoints(tc.apiVersion, tc.networkMode); got != tc.expected {
+			t.Errorf("supportsCreateTimeNetworkEndpoints(%q, %q) = %t, expected %t", tc.apiVersion, tc.networkMode, got, tc.expected)
+		}
+	}
+}
+
+func TestExpandContainerCreateEndpointsConfig(t *testing.T) {
+	networksAdvanced := resourceDockerContainer().Schema["networks_advanced"].Elem.(*schema.Resource)
+	rawNetwork := func(name, macAddress string) map[string]interface{} {
+		return map[string]interface{}{
+			"name":           name,
+			"aliases":        schema.NewSet(schema.HashString, []interface{}{"alias-" + name}),
+			"ipv4_address":   "10.0.0.2",
+			"ipv6_address":   "",
+			"link_local_ips": schema.NewSet(schema.HashString, []interface{}{}),
+			"mac_address":    macAddress,
+			"driver_opts":    schema.NewSet(schema.HashString, []interface{}{"opt=value"}),
+			"gw_priority":    10,
+		}
+	}
+	networks := schema.NewSet(schema.HashResource(networksAdvanced), []interface{}{
+		rawNetwork("net-1", "02:42:ac:11:00:aa"),
+		rawNetwork("net-2", ""),
+	}).List()
+
+	t.Run("bridge_mode", func(t *testing.T) {
+		endpoints, err := expandContainerCreateEndpointsConfig("bridge", networks)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+		if len(endpoints) != 2 {
+			t.Fatalf("expected 2 endpoints, got %d: %#v", len(endpoints), endpoints)
+		}
+		endpoint := endpoints["net-1"]
+		if endpoint == nil {
+			t.Fatalf("expected endpoint for net-1, got %#v", endpoints)
+		}
+		if endpoint.MacAddress != "02:42:ac:11:00:aa" {
+			t.Errorf("unexpected MAC address: %q", endpoint.MacAddress)
+		}
+		if !reflect.DeepEqual(endpoint.Aliases, []string{"alias-net-1"}) {
+			t.Errorf("unexpected aliases: %#v", endpoint.Aliases)
+		}
+		if endpoint.IPAMConfig == nil || endpoint.IPAMConfig.IPv4Address != "10.0.0.2" {
+			t.Errorf("unexpected IPAM config: %#v", endpoint.IPAMConfig)
+		}
+		if !reflect.DeepEqual(endpoint.DriverOpts, map[string]string{"opt": "value"}) {
+			t.Errorf("unexpected driver opts: %#v", endpoint.DriverOpts)
+		}
+		if endpoint.GwPriority != 10 {
+			t.Errorf("unexpected gateway priority: %d", endpoint.GwPriority)
+		}
+		if endpoints["net-2"].MacAddress != "" {
+			t.Errorf("unexpected MAC address for net-2: %q", endpoints["net-2"].MacAddress)
+		}
+	})
+
+	t.Run("user_defined_mode_is_kept", func(t *testing.T) {
+		endpoints, err := expandContainerCreateEndpointsConfig("mode-net", networks)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+		if len(endpoints) != 3 {
+			t.Fatalf("expected 3 endpoints, got %d: %#v", len(endpoints), endpoints)
+		}
+		if endpoints["mode-net"] == nil {
+			t.Fatalf("expected endpoint for the network_mode network, got %#v", endpoints)
+		}
+	})
+
+	t.Run("user_defined_mode_already_declared", func(t *testing.T) {
+		endpoints, err := expandContainerCreateEndpointsConfig("net-1", networks)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+		if len(endpoints) != 2 {
+			t.Fatalf("expected 2 endpoints, got %d: %#v", len(endpoints), endpoints)
+		}
+		if endpoints["net-1"].MacAddress != "02:42:ac:11:00:aa" {
+			t.Errorf("networks_advanced settings must not be overridden, got MAC %q", endpoints["net-1"].MacAddress)
+		}
+	})
+
+	t.Run("duplicate_network", func(t *testing.T) {
+		duplicate := rawNetwork("net-1", "02:42:ac:11:00:bb")
+		if _, err := expandContainerCreateEndpointsConfig("bridge", append(networks, duplicate)); err == nil {
+			t.Fatal("expected an error for a network declared twice")
+		}
+	})
+}
+
+func TestContainerNetworksAdvancedHasMacAddress(t *testing.T) {
+	if containerNetworksAdvancedHasMacAddress([]interface{}{map[string]interface{}{"name": "a", "mac_address": ""}}) {
+		t.Error("expected false when no MAC address is set")
+	}
+	if !containerNetworksAdvancedHasMacAddress([]interface{}{
+		map[string]interface{}{"name": "a", "mac_address": ""},
+		map[string]interface{}{"name": "b", "mac_address": "02:42:ac:11:00:aa"},
+	}) {
+		t.Error("expected true when a MAC address is set")
+	}
+}

@@ -492,6 +492,21 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.StorageOpt = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
+	createTimeNetworkEndpoints := false
+	if v, ok := d.GetOk("networks_advanced"); ok {
+		networksAdvanced := v.(*schema.Set).List()
+		if supportsCreateTimeNetworkEndpoints(client.ClientVersion(), hostConfig.NetworkMode) {
+			endpointsConfig, err := expandContainerCreateEndpointsConfig(hostConfig.NetworkMode, networksAdvanced)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			networkingConfig.EndpointsConfig = endpointsConfig
+			createTimeNetworkEndpoints = true
+		} else if containerNetworksAdvancedHasMacAddress(networksAdvanced) {
+			log.Printf("[WARN] networks_advanced.mac_address requires Docker API version %s or higher and network_mode to be a bridge or user-defined network; the MAC address may be ignored by the Docker daemon", minDockerAPIVersionCreateEndpoints)
+		}
+	}
+
 	var retContainer container.CreateResponse
 
 	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, d.Get("name").(string)); err != nil {
@@ -501,7 +516,7 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(retContainer.ID)
 
 	// But overwrite them with the future ones, if set
-	if v, ok := d.GetOk("networks_advanced"); ok {
+	if v, ok := d.GetOk("networks_advanced"); ok && !createTimeNetworkEndpoints {
 		if err := client.NetworkDisconnect(ctx, "bridge", retContainer.ID, false); err != nil {
 			if !containsIgnorableErrorMessage(err.Error(), "is not connected to the network bridge") {
 				return diag.Errorf("Unable to disconnect the default network: %s", err)
@@ -509,33 +524,9 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 
 		for _, rawNetwork := range v.(*schema.Set).List() {
-			networkID := rawNetwork.(map[string]interface{})["name"].(string)
-
-			endpointConfig := &network.EndpointSettings{}
-			endpointIPAMConfig := &network.EndpointIPAMConfig{}
-			if v, ok := rawNetwork.(map[string]interface{})["aliases"]; ok {
-				endpointConfig.Aliases = stringSetToStringSlice(v.(*schema.Set))
-			}
-			if v, ok := rawNetwork.(map[string]interface{})["ipv4_address"]; ok {
-				endpointIPAMConfig.IPv4Address = v.(string)
-			}
-			if v, ok := rawNetwork.(map[string]interface{})["ipv6_address"]; ok {
-				endpointIPAMConfig.IPv6Address = v.(string)
-			}
-			if v, ok := rawNetwork.(map[string]interface{})["link_local_ips"]; ok {
-				endpointIPAMConfig.LinkLocalIPs = stringSetToStringSlice(v.(*schema.Set))
-			}
-			endpointConfig.IPAMConfig = endpointIPAMConfig
-
-			if v, ok := rawNetwork.(map[string]interface{})["mac_address"]; ok {
-				endpointConfig.MacAddress = v.(string)
-			}
-			if v, ok := rawNetwork.(map[string]interface{})["driver_opts"]; ok {
-				endpointConfig.DriverOpts = stringSetToMapStringString(v.(*schema.Set))
-			}
-			if v, ok := rawNetwork.(map[string]interface{})["gw_priority"]; ok {
-				endpointConfig.GwPriority = v.(int)
-			}
+			rawNetworkMap := rawNetwork.(map[string]interface{})
+			networkID := rawNetworkMap["name"].(string)
+			endpointConfig := expandContainerNetworkAdvancedEndpoint(rawNetworkMap)
 
 			if err := client.NetworkConnect(ctx, networkID, retContainer.ID, endpointConfig); err != nil {
 				return diag.Errorf("Unable to connect to network '%s': %s", networkID, err)
