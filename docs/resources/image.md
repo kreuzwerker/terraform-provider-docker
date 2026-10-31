@@ -218,3 +218,15 @@ Optional:
 - `create` (String)
 - `delete` (String)
 - `update` (String)
+
+## Import
+
+Import an image already present on the Docker host using its explicit tagged or digest reference, exactly as configured in `name`:
+
+```shell
+terraform import docker_image.example 'nginx:latest'
+```
+
+The importer only reads the local image; it never pulls or builds one. References without a tag or digest, bare image IDs and missing local images are rejected. The Terraform resource ID is the Docker image ID concatenated with the configured reference; use `image_id` for the Docker image ID itself.
+
+Import conservatively sets `keep_locally = true` to preserve the existing image on destroy. This is an import policy, not an observed daemon setting. Include `keep_locally = true` in the matching configuration for a no-change plan, or explicitly configure `false` to opt into removal. Build options and triggers cannot be recovered from the daemon.
