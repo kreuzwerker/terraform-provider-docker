@@ -40,7 +40,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	if value, ok := d.GetOk("build"); ok {
 		for _, rawBuild := range value.(*schema.Set).List() {
-			shouldReturn, d1 := buildImage(ctx, rawBuild, client, imageName)
+			shouldReturn, d1 := buildImage(ctx, rawBuild, client, imageName, meta.(*ProviderConfig).DefaultConfig.Host)
 			if shouldReturn {
 				return d1
 			}
@@ -55,7 +55,7 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 	return resourceDockerImageRead(ctx, d, meta)
 }
 
-func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client, imageName string) (bool, diag.Diagnostics) {
+func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client, imageName string, configuredHost string) (bool, diag.Diagnostics) {
 	rawBuildValue := rawBuild.(map[string]interface{})
 	useLegacyBuilder, _ := rawBuildValue["use_legacy_builder"].(bool)
 	// now we need to determine whether we can use buildx or need to use the legacy builder
@@ -72,7 +72,7 @@ func buildImage(ctx context.Context, rawBuild interface{}, client *client.Client
 	// buildx is enabled
 	if canUseBuildx {
 		log.Printf("[DEBUG] Using buildx")
-		dockerCli, err := createAndInitDockerCli(client)
+		dockerCli, err := createAndInitDockerCli(client, configuredHost)
 		if err != nil {
 			return true, diag.FromErr(fmt.Errorf("failed to create and init Docker CLI: %w", err))
 		}
