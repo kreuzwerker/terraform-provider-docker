@@ -41,6 +41,89 @@ with a `volume`, `config`, `secret` and `network`
 
 {{tffile "examples/resources/docker_service/resource-advanced.tf"}}
 
+## Service deletion
+
+Delete is observed independently of the detached Create/Update behavior and
+`converge_config`. The provider identifies the original service by its ServiceID
+(`S`) and takes a complete task capture before requesting deletion. This fixed
+set of TaskIDs (`T`) includes tasks without a ContainerID; tasks are not omitted
+because of their desired state, slot or node.
+
+Deletion succeeds only when removal of `S` is established and the provider has
+admissible exit or discard evidence for every task in `T`. Evidence observed
+before or after the deletion request is retained during that attempt. A later
+empty task list or a missing task does not reduce `T`. Tasks created after the
+capture, including later executions of the same slot, are outside this check.
+
+### Engine grace and provider observation window
+
+`stop_grace_period` controls the engine's policy before forced termination. It
+does not make the provider remove containers. Task observation also applies when
+this value is omitted or zero.
+
+The provider uses a separate observation window, fixed at the first DELETE
+request:
+
+- When every task still awaiting evidence has a known effective grace, the window
+  is the largest of those graces plus 30 seconds, capped by the remaining SDK
+  operation context. The provider derives known graces from each task's spec in
+  whole seconds, rather than using only the current service spec or HCL value.
+  If no tasks await evidence, only the 30-second margin remains for service
+  removal and reconciliation, subject to the same cap.
+- If any pending task's grace is nil or cannot be reconstructed, only the
+  remaining SDK context limits observation. The provider does not invent an
+  effective engine default or add another timeout. This also applies to cleanup
+  after failed Create convergence, which uses the remaining Create context.
+
+The window includes DELETE, reconciliation of an uncertain response and task
+observation. It does not restart on retries, partial progress or recovered
+connectivity. The provider returns early once all required evidence is available;
+it does not sleep for the grace period. Cancellation stops observation, although
+Docker may continue processing the deletion. Expiry without sufficient evidence
+returns an error with an unknown verification result, not success.
+
+This is the provider's observation policy, not a Docker completion guarantee.
+The 30-second margin is not validated for every engine, workload or cluster size;
+the nil-grace fallback does not establish an effective engine default.
+`converge_config` does not configure this window, and there is no separate HCL
+setting for it.
+
+### Task access and unknown results
+
+The endpoint must support service inspection/removal, a complete task capture by
+ServiceID, and direct `TaskInspect` by TaskID **after the parent service has been
+removed**. Permissions or ownership checks that depend on the parent still
+existing can prevent verification. The provider does not connect to workers or
+fall back to detached deletion or a different service mode when access fails.
+
+Consistent `COMPLETE` or `SHUTDOWN` observations can establish exit or discard;
+`REJECTED` can establish discard before execution when it does not contradict
+observed execution. Desired state alone, an empty ContainerID or an exit code
+alone is insufficient. `FAILED` and `ORPHANED` do not establish exit. A task
+404 or garbage collection without evidence already retained is also insufficient.
+Incompatible endpoints, insufficient permissions or lost metadata can therefore
+leave verification unknown even when a process has stopped. Unknown asserts
+neither that unresolved tasks are still running nor that deletion succeeded.
+
+### Cleanup and recovery limits
+
+The provider no longer waits for local container removal or forcibly removes
+those containers and their volumes as part of service deletion. Successful task
+observation does not guarantee container cleanup, storage release, data safety,
+a clean application shutdown or global exclusion of future writers.
+
+Task identities and evidence are held only for the current invocation. Queries
+can recover facts that remain observable, but this is not durable continuity:
+refresh, restart or retry can lose the captured inventory and its evidence. An
+initially absent service without that inventory does not establish the outcome
+of historical tasks. A later retry can capture a new visible set; it cannot
+certify tasks lost from an earlier attempt.
+
+Read may clear the resource ID when the original service is absent, without
+certifying task exit. It does not adopt another service with the same name.
+Neither removing Terraform state nor retrying deletion is proof that unresolved
+tasks have stopped.
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
