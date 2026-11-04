@@ -3,9 +3,15 @@ package provider
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -32,6 +38,159 @@ func TestDockerContainer_DeleteMissingContainer(t *testing.T) {
 	diags := resourceDockerContainerDelete(context.Background(), d, meta)
 	if diags.HasError() {
 		t.Fatalf("expected no error deleting missing container, got: %v", diags)
+	}
+}
+
+// fakeContainerEngine is a minimal Docker API server for container create
+// tests. Its create endpoint records the container under the requested name
+// and then either answers, fails, or holds the response until the client
+// goes away.
+type fakeContainerEngine struct {
+	mu         sync.Mutex
+	containers map[string]string // name -> ID
+	holdCreate bool
+	failCreate bool
+	created    chan struct{}
+}
+
+// serve starts the fake engine and returns a provider config pointing at it.
+func (e *fakeContainerEngine) serve(t *testing.T) *ProviderConfig {
+	t.Helper()
+	const imageID = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	if e.containers == nil {
+		e.containers = map[string]string{}
+	}
+	e.created = make(chan struct{})
+
+	writeJSON := func(w http.ResponseWriter, status int, v any) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(v)
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/_ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("API-Version", "1.47")
+		w.Header().Set("OSType", "linux")
+		_, _ = w.Write([]byte("OK"))
+	})
+	mux.HandleFunc("GET /{version}/images/json", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, []map[string]any{{"Id": imageID}})
+	})
+	mux.HandleFunc("GET /{version}/images/{name}/json", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"Id": imageID})
+	})
+	mux.HandleFunc("GET /{version}/containers/{name}/json", func(w http.ResponseWriter, r *http.Request) {
+		name := r.PathValue("name")
+		e.mu.Lock()
+		id, ok := e.containers[name]
+		e.mu.Unlock()
+		if !ok {
+			writeJSON(w, http.StatusNotFound, map[string]any{"message": "No such container: " + name})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"Id": id, "Name": "/" + name})
+	})
+	mux.HandleFunc("POST /{version}/containers/create", func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		// Consume the body so the server notices when the client disconnects.
+		_, _ = io.Copy(io.Discard, r.Body)
+		e.mu.Lock()
+		if _, taken := e.containers[name]; !taken {
+			e.containers[name] = "created-" + name
+		}
+		id := e.containers[name]
+		e.mu.Unlock()
+		switch {
+		case e.holdCreate:
+			close(e.created)
+			<-r.Context().Done()
+		case e.failCreate:
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"message": "create failed after recording the container"})
+		default:
+			writeJSON(w, http.StatusCreated, map[string]any{"Id": id})
+		}
+	})
+
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	return &ProviderConfig{
+		DefaultConfig: &Config{
+			Host:                     "tcp://" + srv.Listener.Addr().String(),
+			DisableDockerDaemonCheck: true,
+		},
+	}
+}
+
+// create runs resourceDockerContainerCreate against the fake engine. When the
+// engine holds the create response, ctx is cancelled once the engine has
+// recorded the container, like an interrupted apply.
+func (e *fakeContainerEngine) create(t *testing.T, name string) (*schema.ResourceData, diag.Diagnostics) {
+	t.Helper()
+	meta := e.serve(t)
+	d := schema.TestResourceDataRaw(t, resourceDockerContainer().Schema, map[string]any{
+		"name":  name,
+		"image": "busybox:latest",
+	})
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	if e.holdCreate {
+		go func() {
+			select {
+			case <-e.created:
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
+	}
+
+	return d, resourceDockerContainerCreate(ctx, d, meta)
+}
+
+// TestDockerContainer_CreateInterrupted verifies that a container the daemon
+// created while the create request was interrupted is recorded in state.
+func TestDockerContainer_CreateInterrupted(t *testing.T) {
+	e := &fakeContainerEngine{holdCreate: true}
+
+	d, diags := e.create(t, "interrupted")
+	if !diags.HasError() {
+		t.Fatal("expected an error from the interrupted create")
+	}
+	if got, want := d.Id(), "created-interrupted"; got != want {
+		t.Fatalf("expected the created container to be recorded: got ID %q, want %q", got, want)
+	}
+}
+
+// TestDockerContainer_CreateInterruptedNameTaken verifies that an interrupted
+// create does not adopt a container that already had the name.
+func TestDockerContainer_CreateInterruptedNameTaken(t *testing.T) {
+	e := &fakeContainerEngine{
+		holdCreate: true,
+		containers: map[string]string{"taken": "someone-elses-container"},
+	}
+
+	d, diags := e.create(t, "taken")
+	if !diags.HasError() {
+		t.Fatal("expected an error from the interrupted create")
+	}
+	if got := d.Id(); got != "" {
+		t.Fatalf("expected no container to be recorded, got ID %q", got)
+	}
+}
+
+// TestDockerContainer_CreateFailed verifies that a create error without an
+// interruption leaves the container unrecorded, as before.
+func TestDockerContainer_CreateFailed(t *testing.T) {
+	e := &fakeContainerEngine{failCreate: true}
+
+	d, diags := e.create(t, "failed")
+	if !diags.HasError() {
+		t.Fatal("expected an error from the failed create")
+	}
+	if got := d.Id(); got != "" {
+		t.Fatalf("expected no container to be recorded, got ID %q", got)
 	}
 }
 
