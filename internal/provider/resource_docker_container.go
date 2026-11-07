@@ -1185,10 +1185,11 @@ func resourceDockerContainer() *schema.Resource {
 				ForceNew:    true,
 			},
 			"cpus": {
-				Type:        schema.TypeString,
-				Description: "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.",
-				Optional:    true,
-				ForceNew:    true,
+				Type:             schema.TypeString,
+				Description:      "Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.",
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressEquivalentFloatRatio(),
 			},
 			"cpu_period": {
 				Type:             schema.TypeInt,
