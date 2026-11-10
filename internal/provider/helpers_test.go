@@ -38,6 +38,12 @@ func TestNanoInt64ToDecimalString(t *testing.T) {
 		{1500000000, "1.5"},
 		{2000000000, "2.0"},
 		{2250000000, "2.25"},
+		{10000000000, "10.0"},
+		{100000000000, "100.0"},
+		{10000000, "0.01"},
+		{50000000, "0.05"},
+		{500000000, "0.5"},
+		{1, "0.000000001"},
 	}
 
 	for _, test := range tests {
@@ -170,5 +176,29 @@ func TestNormalizeGPUOptionString(t *testing.T) {
 				t.Fatalf("expected %q, got %q", test.expected, result)
 			}
 		})
+	}
+}
+
+func TestContainerCpusSuppressesEquivalentValues(t *testing.T) {
+	suppress := resourceDockerContainer().Schema["cpus"].DiffSuppressFunc
+	if suppress == nil {
+		t.Fatal("expected cpus to have a DiffSuppressFunc")
+	}
+
+	tests := []struct {
+		old, new string
+		expected bool
+	}{
+		{"2.0", "2", true},
+		{"0.5", ".5", true},
+		{"1.5", "1.50", true},
+		{"1.5", "2", false},
+		{"", "2", false},
+	}
+
+	for _, test := range tests {
+		if got := suppress("cpus", test.old, test.new, nil); got != test.expected {
+			t.Errorf("suppress(%q, %q) = %v, want %v", test.old, test.new, got, test.expected)
+		}
 	}
 }
