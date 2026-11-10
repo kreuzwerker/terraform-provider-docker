@@ -50,6 +50,8 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	// Retain the created identity even when convergence and its cleanup fail.
+	d.SetId(service.ID)
 	if v, ok := d.GetOk("converge_config"); ok {
 		convergeConfig := createConvergeConfig(v.([]interface{}))
 		log.Printf("[INFO] Waiting for Service '%s' to be created with timeout: %v", service.ID, convergeConfig.timeoutRaw)
@@ -66,19 +68,10 @@ func resourceDockerServiceCreate(ctx context.Context, d *schema.ResourceData, me
 		// Wait, catching any errors
 		_, err := stateConf.WaitForStateContext(ctx)
 		if err != nil {
-			// the service will be deleted in case it cannot be converged
-			logs, deleteErr := deleteService(ctx, service.ID, d, client)
-			if deleteErr != nil {
-				return diag.FromErr(deleteErr)
-			}
-			if containsIgnorableErrorMessage(err.Error(), "timeout while waiting for state") {
-				return diag.FromErr(&DidNotConvergeError{ServiceID: service.ID, Timeout: convergeConfig.timeout, Logs: logs})
-			}
-			return diag.FromErr(err)
+			return cleanupFailedDockerServiceCreate(ctx, d, client, convergeConfig, err)
 		}
 	}
 
-	d.SetId(service.ID)
 	return resourceDockerServiceRead(ctx, d, meta)
 }
 
@@ -113,7 +106,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 	return func() (interface{}, string, error) {
 		serviceID := d.Id()
 
-		apiService, err := fetchDockerService(ctx, serviceID, d.Get("name").(string), client)
+		apiService, err := fetchDockerService(ctx, serviceID, client)
 		if err != nil {
 			return nil, "", err
 		}
@@ -122,10 +115,7 @@ func resourceDockerServiceReadRefreshFunc(ctx context.Context,
 			d.SetId("")
 			return serviceID, "removed", nil
 		}
-		service, _, err := client.ServiceInspectWithRaw(ctx, apiService.ID, swarm.ServiceInspectOptions{})
-		if err != nil {
-			return serviceID, "", fmt.Errorf("Error inspecting service %s: %s", apiService.ID, err)
-		}
+		service := *apiService
 
 		jsonObj, _ := json.MarshalIndent(service, "", "\t")
 		log.Printf("[DEBUG] Docker service inspect: %s", jsonObj)
@@ -232,7 +222,7 @@ func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("failed to create Docker client: %v", err)
 	}
 
-	if _, err := deleteService(ctx, d.Id(), d, client); err != nil {
+	if err := deleteService(ctx, d.Id(), client); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -243,128 +233,110 @@ func resourceDockerServiceDelete(ctx context.Context, d *schema.ResourceData, me
 // ///////////////
 // Helpers
 // ///////////////
-// fetchDockerService fetches a service by its name or id
-func fetchDockerService(ctx context.Context, ID string, name string, client *client.Client) (*swarm.Service, error) {
-	apiServices, err := client.ServiceList(ctx, swarm.ServiceListOptions{})
+// fetchDockerService resolves an ID (including an unambiguous imported prefix),
+// never a service name. Inspect can resolve names too, so validate the returned ID.
+func fetchDockerService(ctx context.Context, id string, client *client.Client) (*swarm.Service, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, fmt.Errorf("a nonempty service ID is required")
+	}
+	service, _, err := client.ServiceInspectWithRaw(ctx, id, swarm.ServiceInspectOptions{})
+	if serviceDeletionNotFound(err, "service", id) {
+		return nil, nil
+	}
 	if err != nil {
-		return nil, fmt.Errorf("Error fetching service information from Docker: %s", err)
+		return nil, fmt.Errorf("error inspecting service %s: %w", id, err)
 	}
-
-	for _, apiService := range apiServices {
-		if apiService.ID == ID || apiService.Spec.Name == name {
-			return &apiService, nil
-		}
+	if service.ID == "" || !strings.HasPrefix(service.ID, id) {
+		return nil, fmt.Errorf("service identity mismatch: requested ID %q, received %q", id, service.ID)
 	}
-
-	return nil, nil
+	return &service, nil
 }
 
-// deleteService deletes the service with the given id
-func deleteService(ctx context.Context, serviceID string, d *schema.ResourceData, client *client.Client) (string, error) {
-	// fetch logs from failed tasks before deleting the service (unconditional)
+// Logs are auxiliary best-effort diagnostics for failed Create convergence only.
+func failedDockerServiceLogs(ctx context.Context, serviceID string, client *client.Client) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	failedTaskLogs := ""
-	failedFilters := filters.NewArgs()
-	failedFilters.Add("service", d.Get("name").(string))
-	failedFilters.Add("desired-state", "shutdown")
-	failedTasks, err := client.TaskList(ctx, swarm.TaskListOptions{
-		Filters: failedFilters,
-	})
-	if err == nil {
-		for _, t := range failedTasks {
-			task, _, _ := client.TaskInspectWithRaw(ctx, t.ID)
-			if task.Status.State == swarm.TaskStateFailed && task.Status.ContainerStatus != nil {
-				containerID := task.Status.ContainerStatus.ContainerID
-				if strings.TrimSpace(containerID) == "" {
-					continue
-				}
-				logsReader, logsErr := client.ContainerLogs(ctx, containerID, container.LogsOptions{
-					ShowStdout: true,
-					ShowStderr: true,
-					Tail:       "10",
-				})
-				if logsErr != nil {
-					continue
-				}
-				defer logsReader.Close() //nolint:errcheck
-				scanner := bufio.NewScanner(logsReader)
-				for scanner.Scan() {
-					line := scanner.Text()
-					// strip 8-byte docker log header if present
-					if len(line) > 8 {
-						line = line[8:]
-					}
-					failedTaskLogs += line + "\n"
-				}
-			}
-		}
+	var unavailable []string
+	failedFilters := filters.NewArgs(filters.Arg("service", serviceID), filters.Arg("desired-state", "shutdown"))
+	failedTasks, err := client.TaskList(ctx, swarm.TaskListOptions{Filters: failedFilters})
+	if err != nil {
+		return "", err
 	}
-
-	// get containerIDs of the running service because they do not exist after the service is deleted
-	serviceContainerIds := make([]string, 0)
-	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
-		gracePeriodFilters := filters.NewArgs()
-		gracePeriodFilters.Add("service", d.Get("name").(string))
-		tasks, err := client.TaskList(ctx, swarm.TaskListOptions{
-			Filters: gracePeriodFilters,
-		})
-		if err != nil {
-			return "", err
+	for _, t := range failedTasks {
+		if err := ctx.Err(); err != nil {
+			return failedTaskLogs, err
 		}
-		for _, t := range tasks {
-			task, _, _ := client.TaskInspectWithRaw(ctx, t.ID)
-			containerID := ""
-			if task.Status.ContainerStatus != nil {
-				containerID = task.Status.ContainerStatus.ContainerID
-			}
-			log.Printf("[INFO] Found container with ID ['%s'] in state '%s' for destroying", containerID, task.Status.State)
-			if strings.TrimSpace(containerID) != "" && task.Status.State != swarm.TaskStateShutdown {
-				serviceContainerIds = append(serviceContainerIds, containerID)
-			}
+		task, _, inspectErr := client.TaskInspectWithRaw(ctx, t.ID)
+		if inspectErr != nil {
+			unavailable = append(unavailable, fmt.Sprintf("task %s: %v", t.ID, inspectErr))
+			continue
 		}
-	}
-
-	// delete the service
-	log.Printf("[INFO] Deleting service with ID: '%s'", serviceID)
-	if err := client.ServiceRemove(ctx, serviceID); err != nil {
-		return failedTaskLogs, fmt.Errorf("Error deleting service with ID '%s': %s", serviceID, err)
-	}
-
-	// destroy each container after a grace period if specified
-	if v, ok := d.GetOk("task_spec.0.container_spec.0.stop_grace_period"); ok && v.(string) != "0s" {
-		for _, containerID := range serviceContainerIds {
-			destroyGraceTime, _ := time.ParseDuration(v.(string))
-			log.Printf("[INFO] Waiting for container with ID: '%s' to exit: max %v", containerID, destroyGraceTime)
-			ctx, cancel := context.WithTimeout(ctx, destroyGraceTime)
-			// We defer explicitly to avoid context leaks
-			defer cancel()
-			containerWaitChan, containerWaitErrChan := client.ContainerWait(ctx, containerID, container.WaitConditionRemoved)
-			select {
-			case containerWaitResult := <-containerWaitChan:
-				if containerWaitResult.Error != nil {
-					if !(containsIgnorableErrorMessage(containerWaitResult.Error.Message, "No such container")) {
-						return "", fmt.Errorf("failed to wait for container with ID '%s': '%v'", containerID, containerWaitResult.Error.Message)
-					}
-				}
-				log.Printf("[INFO] Container with ID '%s' exited with code '%v'", containerID, containerWaitResult.StatusCode)
-			case containerWaitErrResult := <-containerWaitErrChan:
-				if !(containsIgnorableErrorMessage(containerWaitErrResult.Error(), "No such container")) {
-					return "", fmt.Errorf("error on wait for container with ID '%s': %v", containerID, containerWaitErrResult)
-				}
-			}
-			removeOpts := container.RemoveOptions{
-				RemoveVolumes: true,
-				Force:         true,
-			}
-			log.Printf("[INFO] Removing container with ID: '%s'", containerID)
-			if err := client.ContainerRemove(ctx, containerID, removeOpts); err != nil {
-				if !containsIgnorableErrorMessage(err.Error(), "No such container", "is already in progress") {
-					return "", fmt.Errorf("Error deleting container with ID '%s': %s", containerID, err)
-				}
-			}
+		if task.ID != t.ID || task.ServiceID != serviceID {
+			unavailable = append(unavailable, fmt.Sprintf("task %s: identity mismatch", t.ID))
+			continue
 		}
+		if task.Status.State != swarm.TaskStateFailed {
+			continue
+		}
+		containerID := deletionContainerID(task)
+		if strings.TrimSpace(containerID) == "" {
+			unavailable = append(unavailable, fmt.Sprintf("task %s: no ContainerID for logs", t.ID))
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			return failedTaskLogs, err
+		}
+		logsReader, logsErr := client.ContainerLogs(ctx, containerID, container.LogsOptions{ShowStdout: true, ShowStderr: true, Tail: "10"})
+		if logsErr != nil {
+			unavailable = append(unavailable, fmt.Sprintf("task %s logs: %v", t.ID, logsErr))
+			continue
+		}
+		scanner := bufio.NewScanner(logsReader)
+		for scanner.Scan() {
+			if err := ctx.Err(); err != nil {
+				_ = logsReader.Close()
+				return failedTaskLogs, err
+			}
+			line := scanner.Text()
+			// Preserve existing best-effort Docker log header handling.
+			if len(line) > 8 {
+				line = line[8:]
+			}
+			failedTaskLogs += line + "\n"
+		}
+		if err := scanner.Err(); err != nil {
+			unavailable = append(unavailable, fmt.Sprintf("task %s log stream: %v", t.ID, err))
+		}
+		_ = logsReader.Close()
 	}
-
+	if len(unavailable) > 0 {
+		return failedTaskLogs, fmt.Errorf("%s", strings.Join(unavailable, "; "))
+	}
 	return failedTaskLogs, nil
+}
+
+func cleanupFailedDockerServiceCreate(ctx context.Context, d *schema.ResourceData, client *client.Client, config *convergeConfig, convergenceErr error) diag.Diagnostics {
+	serviceID := d.Id()
+	logs, logsErr := failedDockerServiceLogs(ctx, serviceID, client)
+	cause := convergenceErr
+	if containsIgnorableErrorMessage(convergenceErr.Error(), "timeout while waiting for state") {
+		cause = fmt.Errorf("%w: %w", &DidNotConvergeError{ServiceID: serviceID, Timeout: config.timeout}, convergenceErr)
+	}
+	cleanupErr := deleteService(ctx, serviceID, client)
+	if cleanupErr == nil {
+		d.SetId("")
+	} else {
+		cause = fmt.Errorf("convergence: %w; cleanup: %w", cause, cleanupErr)
+	}
+	if logs != "" {
+		cause = fmt.Errorf("%w\n\nLast task logs:\n%s", cause, logs)
+	}
+	if logsErr != nil {
+		cause = fmt.Errorf("%w\nSome task logs unavailable (best-effort): %v", cause, logsErr)
+	}
+	return diag.FromErr(cause)
 }
 
 //////// Convergers

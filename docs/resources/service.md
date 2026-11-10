@@ -3,14 +3,12 @@
 page_title: "Resource docker_service - terraform-provider-docker"
 subcategory: ""
 description: |-
-  This resource manages the lifecycle of a Docker service. By default, the creation, update and delete of services are detached.
-  With the Converge Config the behavior of the docker cli is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform terraform that a service could no be updated and was successfully rolled back.
+  Manages a Docker service. Create and Update are detached by default; converge_config enables waiting for convergence. Delete succeeds only after removal of the original service and exit or discard evidence for every task in the fixed set captured before deletion. See Service deletion for requirements and limits.
 ---
 <!-- Bug: Type and Name are switched -->
 # Resource (docker_service)
 
-This resource manages the lifecycle of a Docker service. By default, the creation, update and delete of services are detached.
- With the [Converge Config](#convergeconfig) the behavior of the `docker cli` is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform `terraform` that a service could no be updated and was successfully rolled back.
+Manages a Docker service. Create and Update are detached by default; `converge_config` enables waiting for convergence. Delete succeeds only after removal of the original service and exit or discard evidence for every task in the fixed set captured before deletion. See [Service deletion](#service-deletion) for requirements and limits.
 
 ## Example Usage
 
@@ -312,6 +310,87 @@ resource "docker_service" "foo" {
 }
 ```
 
+## Service deletion
+
+Before requesting deletion, the provider records the original ServiceID (`S`)
+and a complete, fixed set of TaskIDs (`T`). The capture includes tasks without a
+ContainerID and does not filter tasks by desired state, slot or node. Delete
+checks this set independently of the detached Create/Update behavior and
+`converge_config`.
+
+Delete succeeds only after the provider establishes removal of `S` and exit or
+discard for every task in `T`. It retains evidence observed before or after the
+request during that invocation. A missing task or an empty task list does not
+shrink `T`. Tasks created after the capture, even for the same slot, are outside
+this check.
+
+### Engine grace and provider observation window
+
+`stop_grace_period` gives the Docker engine time before forced termination; it
+does not request container removal. Omitting it or setting it to zero does not
+skip task observation.
+
+The provider fixes a separate observation window at the first DELETE request:
+
+| Graces of tasks still awaiting evidence | Observation limit |
+| --- | --- |
+| All effective graces are known | Largest grace plus 30 seconds, capped by the remaining SDK operation context |
+| At least one grace is nil or cannot be reconstructed | Remaining SDK operation context only, without an assumed engine default or another timeout |
+
+Known graces come from each task's spec in whole seconds, not just the current
+service spec or HCL value. When no tasks await evidence, only the 30-second
+margin remains for service removal and reconciliation, with the same SDK cap.
+Cleanup after failed Create convergence uses the remaining Create context,
+including the fallback when a grace is nil or cannot be reconstructed.
+
+DELETE, reconciliation of an uncertain response and task observation share this
+window. Retries, partial progress and recovered connectivity do not restart it.
+The provider returns as soon as it has all required evidence rather than sleeping
+for the grace period. Cancellation stops observation, but Docker may continue
+processing the deletion. If the window expires without enough evidence, Delete
+returns an unknown-verification error, not success.
+
+The 30-second margin is a provider policy, not a Docker completion guarantee or a
+margin validated for every engine, workload and cluster size. The nil-grace
+fallback does not reveal an effective engine default. `converge_config` does not
+configure this window, and there is no separate HCL setting for it.
+
+### Task access and unknown results
+
+The endpoint must allow service inspection/removal, a complete task capture by
+ServiceID, and direct `TaskInspect` by TaskID **after the parent service has been
+removed**. Permission or ownership checks tied to the parent's existence can
+prevent verification. If access fails, the provider does not connect to workers,
+switch to detached deletion or change the service mode.
+
+Consistent `COMPLETE` or `SHUTDOWN` observations can establish exit or discard.
+`REJECTED` can establish discard before execution if it does not contradict
+observed execution. Desired state alone, an empty ContainerID or an exit code
+alone is not enough. Neither `FAILED` nor `ORPHANED` establishes exit. A task 404
+or garbage collection cannot replace evidence that was not already retained.
+
+Lost metadata, incompatible endpoints or insufficient permissions can leave
+verification unknown even after a process has stopped. Unknown means neither
+that unresolved tasks are still running nor that deletion succeeded.
+
+### Cleanup and recovery limits
+
+Service deletion no longer waits for local container removal or forcibly removes
+task containers and their volumes. Successful observation does not guarantee
+container cleanup, storage release, data safety, clean application shutdown or
+global exclusion of future writers.
+
+Task identities and evidence last only for the current invocation. Queries can
+recover facts that remain observable, but refresh, restart or retry can lose the
+captured inventory and its evidence. An initially absent service without that
+inventory says nothing about the outcome of its
+historical tasks. A retry can capture a new visible set, not certify tasks lost
+from an earlier attempt.
+
+Read may clear the resource ID when the original service is absent, but does not
+certify task exit or adopt another service with the same name. Removing Terraform
+state or retrying deletion is not proof that unresolved tasks have stopped.
+
 <!-- schema generated by tfplugindocs -->
 ## Schema
 
@@ -379,7 +458,7 @@ Optional:
 - `privileges` (Block List, Max: 1) Security options for the container (see [below for nested schema](#nestedblock--task_spec--container_spec--privileges))
 - `read_only` (Boolean) Mount the container's root filesystem as read only
 - `secrets` (Block Set) References to zero or more secrets that will be exposed to the service (see [below for nested schema](#nestedblock--task_spec--container_spec--secrets))
-- `stop_grace_period` (String) Amount of time to wait for the container to terminate before forcefully removing it (ms|s|m|h). If not specified or '0s' the destroy will not check if all tasks/containers of the service terminate.
+- `stop_grace_period` (String) Time allowed by the Docker engine for a container to stop before forced termination (ms|s|m|h). The provider uses a separate deletion observation window; this setting does not request container removal. Tasks are still observed when the value is omitted or zero. See [Service deletion](#service-deletion).
 - `stop_signal` (String) Signal to stop the container
 - `sysctl` (Map of String) Sysctls config (Linux only)
 - `user` (String) The user inside the container
