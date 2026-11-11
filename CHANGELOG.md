@@ -1,5 +1,38 @@
 # Changelog
 
+<a name="v4.7.0"></a>
+## [v4.7.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.6.0...v4.7.0) (2026-11-11)
+
+
+
+### Chore
+
+* Use newer macos image (#1018) ([#1018](https://github.com/kreuzwerker/terraform-provider-docker/issues/1018))
+
+
+### Docs
+
+* fix README license badge (#1014) ([#1014](https://github.com/kreuzwerker/terraform-provider-docker/issues/1014))
+
+
+### Feat
+
+* Detect changes in Docker Compose (#1003) ([#1003](https://github.com/kreuzwerker/terraform-provider-docker/issues/1003))
+
+
+### Fix
+
+* update module github.com/docker/go-connections to v0.8.2 (#1007) ([#1007](https://github.com/kreuzwerker/terraform-provider-docker/issues/1007))
+
+* don't crash when a service has no endpoint spec yet (#1008) ([#1008](https://github.com/kreuzwerker/terraform-provider-docker/issues/1008))
+
+* suppress equivalent time duration (#1011) ([#1011](https://github.com/kreuzwerker/terraform-provider-docker/issues/1011))
+
+* read cpus back without replacing the container (#1017) ([#1017](https://github.com/kreuzwerker/terraform-provider-docker/issues/1017))
+
+* keep all device IDs in gpus (#1020) ([#1020](https://github.com/kreuzwerker/terraform-provider-docker/issues/1020) [#1019](https://github.com/kreuzwerker/terraform-provider-docker/issues/1019))
+
+
 <a name="v4.6.0"></a>
 ## [v4.6.0](https://github.com/kreuzwerker/terraform-provider-docker/compare/v4.5.0...v4.6.0) (2026-09-01)
 
@@ -8,6 +41,8 @@
 ### Chore
 
 * update golangci/golangci-lint-action digest to ba0d7d2 (#960) ([#960](https://github.com/kreuzwerker/terraform-provider-docker/issues/960))
+
+* 4.6.0 release (#998) ([#998](https://github.com/kreuzwerker/terraform-provider-docker/issues/998))
 
 
 ### Feat
