@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
@@ -174,6 +175,110 @@ func TestNormalizeGPUOptionString(t *testing.T) {
 			result := normalizeGPUOptionString(test.input)
 			if result != test.expected {
 				t.Fatalf("expected %q, got %q", test.expected, result)
+			}
+		})
+	}
+}
+
+func TestExpandGPUDeviceRequests(t *testing.T) {
+	const (
+		gpuUUID1 = "GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a"
+		gpuUUID2 = "GPU-8b7d2e41-5c0a-4f3e-9d61-2a4b6c8e0f13"
+	)
+
+	deviceIDsRequest := func(ids ...string) []container.DeviceRequest {
+		return []container.DeviceRequest{{
+			DeviceIDs:    ids,
+			Capabilities: [][]string{{"gpu"}},
+			Options:      map[string]string{},
+		}}
+	}
+
+	tests := []struct {
+		name     string
+		input    string
+		expected []container.DeviceRequest
+	}{
+		{
+			name:  "all",
+			input: "all",
+			expected: []container.DeviceRequest{{
+				Count:        -1,
+				Capabilities: [][]string{{"gpu"}},
+				Options:      map[string]string{},
+			}},
+		},
+		{
+			name:     "single device index",
+			input:    "device=0",
+			expected: deviceIDsRequest("0"),
+		},
+		{
+			name:     "single device uuid",
+			input:    "device=" + gpuUUID1,
+			expected: deviceIDsRequest(gpuUUID1),
+		},
+		{
+			name:     "multiple device indexes",
+			input:    "device=0,2",
+			expected: deviceIDsRequest("0", "2"),
+		},
+		{
+			name:     "multiple device uuids",
+			input:    "device=" + gpuUUID1 + "," + gpuUUID2,
+			expected: deviceIDsRequest(gpuUUID1, gpuUUID2),
+		},
+		{
+			name:     "double quoted multiple device indexes",
+			input:    "\"device=0,2\"",
+			expected: deviceIDsRequest("0", "2"),
+		},
+		{
+			name:     "double wrapped multiple device indexes",
+			input:    "'\"device=0,2\"'",
+			expected: deviceIDsRequest("0", "2"),
+		},
+		{
+			name:  "device with other options",
+			input: "device=0,driver=nvidia",
+			expected: []container.DeviceRequest{{
+				Driver:       "nvidia",
+				DeviceIDs:    []string{"0"},
+				Capabilities: [][]string{{"gpu"}},
+				Options:      map[string]string{},
+			}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := expandGPUDeviceRequests(test.input)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if !reflect.DeepEqual(result, test.expected) {
+				t.Fatalf("expected %+v, got %+v", test.expected, result)
+			}
+		})
+	}
+}
+
+func TestExpandGPUDeviceRequestsRoundTrip(t *testing.T) {
+	for _, value := range []string{
+		"all",
+		"device=0",
+		"device=GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a",
+		"device=0,2",
+		"device=GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a,GPU-8b7d2e41-5c0a-4f3e-9d61-2a4b6c8e0f13",
+	} {
+		t.Run(value, func(t *testing.T) {
+			deviceRequests, err := expandGPUDeviceRequests(value)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			result, ok := flattenGPUsFromDeviceRequests(deviceRequests)
+			if result != value || !ok {
+				t.Fatalf("expected (%q, true), got (%q, %t)", value, result, ok)
 			}
 		})
 	}
