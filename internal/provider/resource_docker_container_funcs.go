@@ -476,12 +476,11 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	if v, ok := d.GetOk("gpus"); ok {
 		if client.ClientVersion() >= "1.40" {
-			var gpu opts.GpuOpts
-			err := gpu.Set(normalizeGPUOptionString(v.(string)))
+			deviceRequests, err := expandGPUDeviceRequests(v.(string))
 			if err != nil {
 				return diag.Errorf("Error setting gpus: %s", err)
 			}
-			hostConfig.DeviceRequests = gpu.Value()
+			hostConfig.DeviceRequests = deviceRequests
 		} else {
 			log.Printf("[WARN] GPU support requires docker version 1.40 or higher")
 		}
@@ -799,6 +798,25 @@ func normalizeGPUOptionString(value string) string {
 	}
 
 	return normalized
+}
+
+// expandGPUDeviceRequests turns the gpus attribute into device requests,
+// like docker run --gpus.
+func expandGPUDeviceRequests(value string) ([]container.DeviceRequest, error) {
+	value = normalizeGPUOptionString(value)
+	// GpuOpts.Set reads its argument as CSV, so device=0,2 would become the
+	// fields device=0 and 2, and the 2 would be read as a count. Quote a list
+	// of device IDs to keep it in one field, like docker run --gpus '"device=0,2"'.
+	if ids, ok := strings.CutPrefix(value, "device="); ok && strings.Contains(ids, ",") && !strings.ContainsAny(ids, "=\"") {
+		value = "\"" + value + "\""
+	}
+
+	var gpu opts.GpuOpts
+	if err := gpu.Set(value); err != nil {
+		return nil, err
+	}
+
+	return gpu.Value(), nil
 }
 
 func flattenGPUsFromDeviceRequests(deviceRequests []container.DeviceRequest) (string, bool) {

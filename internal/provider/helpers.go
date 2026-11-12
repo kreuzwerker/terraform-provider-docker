@@ -136,14 +136,11 @@ func nanoInt64ToDecimalString(nanoInt64 int64) string {
 	}
 
 	rat := new(big.Rat).SetFrac64(nanoInt64, 1e9)
-	str := rat.FloatString(9)
 
-	// If we have a "round" value like 100000000, we want to return "1.0" instead of further processing
-	if strings.Count(str, "0") == 9 {
-		return rat.FloatString(1)
+	// Remove trailing zeros, but keep one decimal place for whole numbers, e.g. "1.0"
+	str := strings.TrimRight(rat.FloatString(9), "0")
+	if strings.HasSuffix(str, ".") {
+		str += "0"
 	}
-
-	// Remove trailing zeros to ensure a clean representation without unnecessary decimal places
-	str = strings.TrimRight(str, "0")
 	return str
 }
