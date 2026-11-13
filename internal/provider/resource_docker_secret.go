@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -124,9 +125,12 @@ func resourceDockerSecretRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	secret, _, err := client.SecretInspectWithRaw(ctx, d.Id())
 	if err != nil {
-		log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
-		d.SetId("")
-		return nil
+		if errdefs.IsNotFound(err) {
+			log.Printf("[WARN] Secret (%s) not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
+		return diag.Errorf("Unable to inspect secret %s: %s", d.Id(), err)
 	}
 
 	jsonObj, _ := json.MarshalIndent(secret, "", "\t")

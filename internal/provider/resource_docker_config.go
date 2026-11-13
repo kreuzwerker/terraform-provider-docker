@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -93,9 +94,12 @@ func resourceDockerConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	config, _, err := client.ConfigInspectWithRaw(ctx, d.Id())
 	if err != nil {
-		log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
-		d.SetId("")
-		return nil
+		if errdefs.IsNotFound(err) {
+			log.Printf("[WARN] Config (%s) not found, removing from state", d.Id())
+			d.SetId("")
+			return nil
+		}
+		return diag.Errorf("Unable to inspect config %s: %s", d.Id(), err)
 	}
 
 	jsonObj, _ := json.MarshalIndent(config, "", "\t")
