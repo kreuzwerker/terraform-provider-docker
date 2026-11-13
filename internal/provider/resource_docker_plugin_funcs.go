@@ -8,6 +8,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/containerd/errdefs"
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -60,9 +61,12 @@ func resourceDockerPluginRead(ctx context.Context, d *schema.ResourceData, meta 
 	pluginID := d.Id()
 	plugin, _, err := client.PluginInspectWithRaw(ctx, pluginID)
 	if err != nil {
-		log.Printf("[DEBUG] Inspect a Docker plugin "+pluginID+": %w", err)
-		d.SetId("")
-		return nil
+		if errdefs.IsNotFound(err) {
+			log.Printf("[WARN] Plugin (%s) not found, removing from state", pluginID)
+			d.SetId("")
+			return nil
+		}
+		return diag.Errorf("Unable to inspect plugin %s: %s", pluginID, err)
 	}
 
 	jsonObj, _ := json.MarshalIndent(plugin, "", "\t")
