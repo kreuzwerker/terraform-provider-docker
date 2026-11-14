@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
 	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
@@ -76,6 +77,24 @@ func uploadTarName(value string) string {
 		return ""
 	}
 	return value
+}
+
+// recordInterruptedContainer records the container with the given name after
+// its create request was interrupted, because the daemon may have created it
+// anyway. Callers must only use it when the name was free before the create,
+// so it never records someone else's container. The SDK then saves the
+// resource as tainted, and the next apply replaces it instead of failing on
+// the name conflict.
+func recordInterruptedContainer(ctx context.Context, d *schema.ResourceData, client *client.Client, name string) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+	defer cancel()
+
+	c, err := client.ContainerInspect(ctx, name)
+	if err != nil || strings.TrimPrefix(c.Name, "/") != strings.TrimPrefix(name, "/") {
+		return
+	}
+	log.Printf("[WARN] Recorded container %s (%s) after its create request was interrupted", name, c.ID)
+	d.SetId(c.ID)
 }
 
 func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -491,9 +510,17 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 		hostConfig.StorageOpt = mapTypeMapValsToString(v.(map[string]interface{}))
 	}
 
+	name := d.Get("name").(string)
+	// Only a container whose name was free before this create can be ours.
+	_, err = client.ContainerInspect(ctx, name)
+	nameWasFree := errdefs.IsNotFound(err)
+
 	var retContainer container.CreateResponse
 
-	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, d.Get("name").(string)); err != nil {
+	if retContainer, err = client.ContainerCreate(ctx, config, hostConfig, networkingConfig, platform, name); err != nil {
+		if ctx.Err() != nil && nameWasFree {
+			recordInterruptedContainer(ctx, d, client, name)
+		}
 		return diag.Errorf("Unable to create container: %s", err)
 	}
 	log.Printf("[INFO] retContainer %#v", retContainer)
