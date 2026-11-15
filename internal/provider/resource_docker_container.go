@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -67,6 +68,15 @@ func resourceDockerContainer() *schema.Resource {
 				Default:     false,
 				Optional:    true,
 				ForceNew:    true,
+			},
+
+			"oom_score_adj": {
+				Type:             schema.TypeInt,
+				Description:      "Adjusts the container's OOM killer score. Must be between `-1000` and `1000`. Negative values protect the container, while positive values make it more likely to be killed. Defaults to `0`. Changing this value recreates the container.",
+				Optional:         true,
+				Default:          0,
+				ForceNew:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(-1000, 1000)),
 			},
 
 			"start": {

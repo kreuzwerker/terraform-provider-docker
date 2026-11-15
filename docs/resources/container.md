@@ -79,6 +79,7 @@ resource "docker_image" "ubuntu" {
 - `must_run` (Boolean) If `true`, then the Docker container will be kept running. If `false`, Terraform leaves the container alone. This attribute is also used to trigger a restart of a stopped container. If your container is stopped, Terraform will set `must_run` to `false` and this will trigger a change. Defaults to `true`.
 - `network_mode` (String) Network mode of the container. Defaults to `bridge`. If your host OS is any other OS, you need to set this value explicitly, e.g. `nat` when your container will be running on an Windows host. See https://docs.docker.com/engine/network/ for more information.
 - `networks_advanced` (Block Set) The networks the container is attached to. This is the equivalent to the ``--network`` option of `docker run` (see [below for nested schema](#nestedblock--networks_advanced))
+- `oom_score_adj` (Number) Adjusts the container's OOM killer score. Must be between `-1000` and `1000`. Negative values protect the container, while positive values make it more likely to be killed. Defaults to `0`. Changing this value recreates the container.
 - `pid_mode` (String) The PID (Process) Namespace mode for the container. Either `container:<name|id>` or `host`.
 - `platform` (String) Platform in the format `os[/arch[/variant]]` used for image lookup and container runtime, for example `linux/amd64`.
 - `ports` (Block List) Publish a container's port(s) to the host. (see [below for nested schema](#nestedblock--ports))
