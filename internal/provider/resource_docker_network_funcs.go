@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -164,9 +165,12 @@ func resourceDockerNetworkReadRefreshFunc(ctx context.Context,
 
 		retNetwork, _, err := client.NetworkInspectWithRaw(ctx, networkID, network.InspectOptions{})
 		if err != nil {
-			log.Printf("[WARN] Network (%s) not found, removing from state", networkID)
-			d.SetId("")
-			return networkID, "removed", nil
+			if errdefs.IsNotFound(err) {
+				log.Printf("[WARN] Network (%s) not found, removing from state", networkID)
+				d.SetId("")
+				return networkID, "removed", nil
+			}
+			return nil, "", fmt.Errorf("unable to inspect network %s: %w", networkID, err)
 		}
 
 		jsonObj, _ := json.MarshalIndent(retNetwork, "", "\t")
