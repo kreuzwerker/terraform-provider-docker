@@ -54,7 +54,7 @@ func New(version string) func() *schema.Provider {
 						}
 						return "unix:///var/run/docker.sock", nil
 					},
-					Description: "The Docker daemon address",
+					Description: "The Docker daemon address. Can also be set via `DOCKER_HOST` environment variable. Defaults to `unix:///var/run/docker.sock`, or `npipe:////./pipe/docker_engine` on Windows.",
 				},
 				"context": {
 					Type:        schema.TypeString,
