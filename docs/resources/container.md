@@ -288,7 +288,7 @@ Optional:
 - `ipv4_address` (String) The IPV4 address of the container in the specific network.
 - `ipv6_address` (String) The IPV6 address of the container in the specific network.
 - `link_local_ips` (Set of String) The link-local IPs of the container in the specific network. This is the equivalent to repeating `--link-local-ip` for `docker run`.
-- `mac_address` (String) The MAC address of the container in the specific network.
+- `mac_address` (String) The MAC address of the container in the specific network. Requires Docker API version 1.44 or higher (Docker Engine 25.0+).
 
 
 <a id="nestedblock--ports"></a>
