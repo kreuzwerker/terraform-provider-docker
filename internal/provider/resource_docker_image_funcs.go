@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/containerd/errdefs"
+	"github.com/distribution/reference"
 	"github.com/docker/cli/cli/command/image/build"
 	dockerBuildTypes "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
@@ -30,6 +31,29 @@ import (
 	"github.com/moby/go-archive"
 	"github.com/pkg/errors"
 )
+
+func resourceDockerImageImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	name := d.Id()
+	ref, err := reference.ParseNormalizedNamed(name)
+	if err != nil || reference.IsNameOnly(ref) || (strings.HasPrefix(name, "sha256:") && len(name) == 71) {
+		return nil, fmt.Errorf("import requires an explicit tagged or digest image reference matching the configured name, not an image ID")
+	}
+	if err := d.Set("name", name); err != nil {
+		return nil, err
+	}
+	// Import cannot infer deletion intent. Preserve the existing image unless
+	// the operator explicitly opts into removal in the matching configuration.
+	if err := d.Set("keep_locally", true); err != nil {
+		return nil, err
+	}
+	if diagnostics := resourceDockerImageRead(ctx, d, meta); diagnostics.HasError() {
+		return nil, fmt.Errorf("read imported Docker image: %v", diagnostics)
+	}
+	if d.Id() == "" {
+		return nil, fmt.Errorf("no local Docker image matches import reference %q", name)
+	}
+	return []*schema.ResourceData{d}, nil
+}
 
 func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := meta.(*ProviderConfig).MakeClient(ctx, d)
