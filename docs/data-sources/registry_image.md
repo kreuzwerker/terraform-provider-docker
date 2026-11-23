@@ -38,3 +38,4 @@ resource "docker_image" "ubuntu" {
 
 - `id` (String) The ID of this resource.
 - `sha256_digest` (String) The content digest of the image, as stored in the registry.
+- `pull_by_digest` (String) The sha256 name of the image, for example: `registry.tld/image-name@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30`
