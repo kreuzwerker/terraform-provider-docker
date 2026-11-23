@@ -16,7 +16,7 @@ on:
 
 env:
   GOPROXY: https://proxy.golang.org,direct
-  GO_VERSION: "1.25.8"
+  GO_VERSION: "1.26.11"
 
 jobs:
   compile-fast:
