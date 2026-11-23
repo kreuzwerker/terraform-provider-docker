@@ -65,7 +65,7 @@ func (p *frameworkProvider) Schema(ctx context.Context, req provider.SchemaReque
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				MarkdownDescription: "The Docker daemon address",
+				MarkdownDescription: "The Docker daemon address. Can also be set via `DOCKER_HOST` environment variable. Defaults to `unix:///var/run/docker.sock`, or `npipe:////./pipe/docker_engine` on Windows.",
 				Optional:            true,
 			},
 			"context": schema.StringAttribute{
