@@ -8,7 +8,7 @@ import (
 // https://docs.docker.com/engine/api/v1.32/#operation/ServiceCreate
 func resourceDockerService() *schema.Resource {
 	return &schema.Resource{
-		Description: "This resource manages the lifecycle of a Docker service. By default, the creation, update and delete of services are detached.\n With the [Converge Config](#convergeconfig) the behavior of the `docker cli` is imitated to guarantee tha for example, all tasks of a service are running or successfully updated or to inform `terraform` that a service could no be updated and was successfully rolled back.",
+		Description: "Manages a Docker service. Create and Update are detached by default; `converge_config` enables waiting for convergence. Delete succeeds only after removal of the original service and exit or discard evidence for every task in the fixed set captured before deletion. See [Service deletion](#service-deletion) for requirements and limits.",
 
 		CreateContext: resourceDockerServiceCreate,
 		ReadContext:   resourceDockerServiceRead,
@@ -304,7 +304,7 @@ func resourceDockerService() *schema.Resource {
 									},
 									"stop_grace_period": {
 										Type:             schema.TypeString,
-										Description:      "Amount of time to wait for the container to terminate before forcefully removing it (ms|s|m|h). If not specified or '0s' the destroy will not check if all tasks/containers of the service terminate.",
+										Description:      "Time allowed by the Docker engine for a container to stop before forced termination (ms|s|m|h). The provider uses a separate deletion observation window; this setting does not request container removal. Tasks are still observed when the value is omitted or zero. See [Service deletion](#service-deletion).",
 										Optional:         true,
 										Computed:         true,
 										ValidateDiagFunc: validateDurationGeq0(),
