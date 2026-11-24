@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -68,6 +69,17 @@ func dataSourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
+// errRegistryImageNotFound is returned when the registry answers 404 for the
+// manifest, i.e. the tag does not exist (anymore).
+var errRegistryImageNotFound = errors.New("image not found in registry")
+
+func registryStatusError(status int, statusText string) error {
+	if status == http.StatusNotFound {
+		return fmt.Errorf("got bad response from registry: %s: %w", statusText, errRegistryImageNotFound)
+	}
+	return fmt.Errorf("got bad response from registry: %s", statusText)
+}
+
 func getImageDigest(registry string, registryWithProtocol string, image, tag, username, password string, insecureSkipVerify, fallback bool) (string, error) {
 	client := buildHttpClientForRegistry(registryWithProtocol, insecureSkipVerify)
 
@@ -123,7 +135,7 @@ func getImageDigest(registry string, registryWithProtocol string, image, tag, us
 
 	// Some unexpected status was given, return an error
 	default:
-		return "", fmt.Errorf("got bad response from registry: %s", resp.Status)
+		return "", registryStatusError(resp.StatusCode, resp.Status)
 	}
 }
 
@@ -153,7 +165,7 @@ func doDigestRequest(req *http.Request, client *http.Client) (*http.Response, er
 	}
 
 	if digestResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got bad response from registry: %s", digestResponse.Status)
+		return nil, registryStatusError(digestResponse.StatusCode, digestResponse.Status)
 	}
 
 	return digestResponse, nil

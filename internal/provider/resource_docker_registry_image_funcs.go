@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -106,9 +107,12 @@ func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData
 	insecureSkipVerify := d.Get("insecure_skip_verify").(bool)
 	digest, err := getImageDigestWithFallback(pushOpts, authConfig.ServerAddress, authConfig.Username, authConfig.Password, insecureSkipVerify)
 	if err != nil {
-		log.Printf("Got error getting registry image digest: %s", err)
-		d.SetId("")
-		return nil
+		if errors.Is(err, errRegistryImageNotFound) {
+			log.Printf("[WARN] Image %s not found in registry, removing it from state: %s", name, err)
+			d.SetId("")
+			return nil
+		}
+		return diag.Errorf("resourceDockerRegistryImageRead: unable to get the digest of %s: %s", name, err)
 	}
 	d.Set("sha256_digest", digest)
 	return nil
@@ -374,7 +378,7 @@ func getImageDigestWithFallback(opts internalPushImageOptions, serverAddress str
 	if err != nil {
 		digest, err = getImageDigest(opts.Registry, serverAddress, opts.Repository, opts.Tag, username, password, insecureSkipVerify, true)
 		if err != nil {
-			return "", fmt.Errorf("unable to get digest: %s", err)
+			return "", fmt.Errorf("unable to get digest: %w", err)
 		}
 	}
 	return digest, nil
