@@ -41,7 +41,41 @@ data "docker_image" "tag_and_digest" {
 
 - `name` (String) The name of the Docker image, including any tags or SHA256 repo digests.
 
+### Optional
+
+- `daemon` (Block List, Max: 1) Docker daemon connection for this resource. When set, it is used instead of the provider configuration; nothing is inherited from the provider. (see [below for nested schema](#nestedblock--daemon))
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `repo_digest` (String) The image sha256 digest in the form of `repo[:tag]@sha256:<hash>`. It may be empty in the edge case where the local image was pulled from a repo, tagged locally, and then referred to in the data source by that local name/tag.
+
+<a id="nestedblock--daemon"></a>
+### Nested Schema for `daemon`
+
+Optional:
+
+- `ca_material` (String) PEM-encoded content of Docker host CA certificate.
+- `cert_material` (String) PEM-encoded content of Docker client certificate.
+- `cert_path` (String) Path to directory with Docker TLS config.
+- `context` (String) The name of the Docker context to use.
+- `disable_docker_daemon_check` (Boolean) If set to `true`, the provider will not check if the Docker daemon is running.
+- `host` (String) The Docker daemon address, e.g. `ssh://user@remote-host:22` or `tcp://remote-host:2376`.
+- `key_material` (String, Sensitive) PEM-encoded content of Docker client private key. Stored in state; prefer `cert_path`.
+- `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--daemon--registry_auth))
+- `ssh_opts` (List of String) Additional SSH option flags to be appended when using `ssh://` protocol.
+
+<a id="nestedblock--daemon--registry_auth"></a>
+### Nested Schema for `daemon.registry_auth`
+
+Required:
+
+- `address` (String) Address of the registry
+
+Optional:
+
+- `auth_disabled` (Boolean) Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.
+- `config_file` (String) Path to docker json file for registry auth. `config_file` has precedence over all other options.
+- `config_file_content` (String) Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.
+- `password` (String, Sensitive) Password for the registry. Stored in state.
+- `username` (String) Username for the registry.
