@@ -204,26 +204,139 @@ func TestDaemonCustomizeDiff(t *testing.T) {
 	}
 }
 
-// The provider points at an unreachable host, so every API call in this test
-// (create, refresh, the data source read, and destroy) has to go through the
-// daemon block. Destroy succeeding shows Delete reads the host from state.
-func TestAccDockerContainer_daemon(t *testing.T) {
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		host = "unix:///var/run/docker.sock"
+func testAccDaemonHost() string {
+	if host := os.Getenv("DOCKER_HOST"); host != "" {
+		return host
 	}
+	return "unix:///var/run/docker.sock"
+}
 
+func testAccDaemonConfig(t *testing.T, name string) string {
+	return fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", name), testAccDaemonHost())
+}
+
+func testCheckContainerID(c *container.InspectResponse, id *string, same bool) resource.TestCheckFunc {
+	return func(*terraform.State) error {
+		if same && c.ID != *id {
+			return fmt.Errorf("expected container %s to be kept, got %s", *id, c.ID)
+		}
+		if !same && c.ID == *id {
+			return fmt.Errorf("expected container %s to be replaced", *id)
+		}
+		*id = c.ID
+		return nil
+	}
+}
+
+func testCheckContainerGone(name string) resource.TestCheckFunc {
+	return func(*terraform.State) error {
+		client, err := testAccProvider.Meta().(*ProviderConfig).MakeClient(context.Background(), nil)
+		if err != nil {
+			return err
+		}
+		if _, err := client.ContainerInspect(context.Background(), name); err == nil {
+			return fmt.Errorf("container %s still exists", name)
+		}
+		return nil
+	}
+}
+
+// The provider points at an unreachable host, so every API call (create,
+// refresh, the data source read, destroy) has to go through the daemon block.
+func TestAccDockerContainer_daemon(t *testing.T) {
 	var c container.InspectResponse
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDaemonConfig"), host),
+				Config: testAccDaemonConfig(t, "testAccDockerContainerDaemonConfig"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccContainerRunning("docker_container.foo", &c),
-					resource.TestCheckResourceAttr("docker_container.foo", "daemon.0.host", host),
+					resource.TestCheckResourceAttr("docker_container.foo", "daemon.0.host", testAccDaemonHost()),
 					resource.TestCheckResourceAttr("data.docker_network.bridge", "driver", "bridge"),
+				),
+			},
+		},
+	})
+}
+
+// Removing a host and its resources in one apply: the provider has no way to
+// reach the daemon, so Delete has to use the host stored in state.
+func TestAccDockerContainer_daemonRemoveHost(t *testing.T) {
+	var c container.InspectResponse
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDaemonConfig(t, "testAccDockerContainerDaemonConfig"),
+				Check:  testAccContainerRunning("docker_container.foo", &c),
+			},
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDaemonRemovedConfig"),
+				Check:  testCheckContainerGone("tf-test-daemon"),
+			},
+		},
+	})
+}
+
+// Replacing the host in one apply: the host is unknown during plan, refresh
+// uses the host in state, and the resources are replaced on the new host.
+func TestAccDockerContainer_daemonReplaceHost(t *testing.T) {
+	var c container.InspectResponse
+	var id string
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDaemonConfig(t, "testAccDockerContainerDaemonReplaceHostConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheckContainerID(&c, &id, false),
+				),
+			},
+			{
+				Config: testAccDaemonConfig(t, "testAccDockerContainerDaemonReplaceHostConfig"),
+				Taint:  []string{"terraform_data.vm"},
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheckContainerID(&c, &id, false),
+				),
+			},
+		},
+	})
+}
+
+// Adding a daemon block to existing resources adopts them, changing ssh_opts
+// updates in place, and removing the block again (same host) keeps them.
+func TestAccDockerContainer_daemonAdopt(t *testing.T) {
+	var c container.InspectResponse
+	var id string
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: providerFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDaemonAdoptConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheckContainerID(&c, &id, false),
+				),
+			},
+			{
+				Config: testAccDaemonConfig(t, "testAccDockerContainerDaemonAdoptedConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheckContainerID(&c, &id, true),
+				),
+			},
+			{
+				Config: loadTestConfiguration(t, RESOURCE, "docker_container", "testAccDockerContainerDaemonAdoptConfig"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccContainerRunning("docker_container.foo", &c),
+					testCheckContainerID(&c, &id, true),
 				),
 			},
 		},
