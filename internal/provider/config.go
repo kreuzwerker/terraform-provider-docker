@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -36,11 +35,6 @@ type Config struct {
 }
 
 func (c *Config) Hash() uint64 {
-	var SSHOpts []string
-
-	copy(SSHOpts, c.SSHOpts)
-	sort.Strings(SSHOpts)
-
 	hash := fnv.New64()
 	_, err := hash.Write([]byte(strings.Join([]string{
 		c.Host,
@@ -48,7 +42,7 @@ func (c *Config) Hash() uint64 {
 		c.Cert,
 		c.Key,
 		c.CertPath,
-		strings.Join(SSHOpts, "|")},
+		strings.Join(c.SSHOpts, "|")},
 		"|",
 	)))
 
