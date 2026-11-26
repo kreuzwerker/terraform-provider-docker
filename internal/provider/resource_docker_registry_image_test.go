@@ -110,7 +110,7 @@ func TestAccDockerRegistryImageResource_withAuthConfig(t *testing.T) {
 func testDockerRegistryImageNotInRegistry(pushOpts internalPushImageOptions) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		providerConfig := testAccProvider.Meta().(*ProviderConfig)
-		authConfig, _ := getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		authConfig, _ := getAuthConfigForRegistry(pushOpts.Registry, providerConfig.AuthConfigs)
 		digest, _ := getImageDigestWithFallback(pushOpts, normalizeRegistryAddress(pushOpts.Registry), authConfig.Username, authConfig.Password, true)
 		if digest != "" {
 			return fmt.Errorf("image found")

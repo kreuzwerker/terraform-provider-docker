@@ -46,6 +46,7 @@ resource "docker_image" "ubuntu" {
 - `cpu_set` (String) A comma-separated list or hyphen-separated range of CPUs a container can use, e.g. `0-1`.
 - `cpu_shares` (Number) CPU shares (relative weight) for the container.
 - `cpus` (String) Specify how much of the available CPU resources a container can use. e.g a value of 1.5 means the container is guaranteed at most one and a half of the CPUs. Has precedence over `cpu_period` and `cpu_quota`.
+- `daemon` (Block List, Max: 1) Docker daemon connection for this resource. When set, it is used instead of the provider configuration; nothing is inherited from the provider. (see [below for nested schema](#nestedblock--daemon))
 - `destroy_grace_seconds` (Number) If defined will attempt to stop the container before destroying. Container will be destroyed after `n` seconds or on successful stop.
 - `device_cgroup_rules` (Set of String) Cgroup rules to allow access to classes of devices without binding specific device nodes.
 - `device_read_bps` (Block Set) Limit read rate (bytes per second) from a device. This is the equivalent to repeating `--device-read-bps` for `docker run`. (see [below for nested schema](#nestedblock--device_read_bps))
@@ -124,6 +125,38 @@ Optional:
 
 - `add` (Set of String) List of linux capabilities to add.
 - `drop` (Set of String) List of linux capabilities to drop.
+
+
+<a id="nestedblock--daemon"></a>
+### Nested Schema for `daemon`
+
+Optional:
+
+- `ca_material` (String) PEM-encoded content of Docker host CA certificate.
+- `cert_material` (String) PEM-encoded content of Docker client certificate.
+- `cert_path` (String) Path to directory with Docker TLS config.
+- `context` (String) The name of the Docker context to use.
+- `disable_docker_daemon_check` (Boolean) If set to `true`, the provider will not check if the Docker daemon is running.
+- `host` (String) The Docker daemon address, e.g. `ssh://user@remote-host:22` or `tcp://remote-host:2376`.
+- `key_material` (String, Sensitive) PEM-encoded content of Docker client private key. Stored in state; prefer `cert_path`.
+- `registry_auth` (Block Set) (see [below for nested schema](#nestedblock--daemon--registry_auth))
+- `ssh_opts` (List of String) Additional SSH option flags to be appended when using `ssh://` protocol.
+
+<a id="nestedblock--daemon--registry_auth"></a>
+### Nested Schema for `daemon.registry_auth`
+
+Required:
+
+- `address` (String) Address of the registry
+
+Optional:
+
+- `auth_disabled` (Boolean) Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.
+- `config_file` (String) Path to docker json file for registry auth. `config_file` has precedence over all other options.
+- `config_file_content` (String) Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.
+- `password` (String, Sensitive) Password for the registry. Stored in state.
+- `username` (String) Username for the registry.
+
 
 
 <a id="nestedblock--device_read_bps"></a>

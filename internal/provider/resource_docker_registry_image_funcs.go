@@ -46,7 +46,10 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("failed to create Docker client: %v", err)
 	}
 
-	providerConfig := meta.(*ProviderConfig)
+	_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageCreate: unable to resolve daemon: %s", err)
+	}
 	name := d.Get("name").(string)
 	log.Printf("[DEBUG] Creating docker image %s", name)
 	if value, ok := d.GetOk("build"); ok {
@@ -66,7 +69,7 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 		authConfig = buildAuthConfigFromResource(v)
 	} else {
 		var err error
-		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, authConfigs)
 		log.Printf("[INFO] Using auth config from provider: %#v", authConfig)
 		if err != nil {
 			return diag.Errorf("resourceDockerRegistryImageCreate: Unable to get authConfig for registry: %s", err)
@@ -88,7 +91,10 @@ func resourceDockerRegistryImageCreate(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	providerConfig := meta.(*ProviderConfig)
+	_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageRead: unable to resolve daemon: %s", err)
+	}
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
 
@@ -97,7 +103,7 @@ func resourceDockerRegistryImageRead(ctx context.Context, d *schema.ResourceData
 		authConfig = buildAuthConfigFromResource(v)
 	} else {
 		var err error
-		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, authConfigs)
 		if err != nil {
 			return diag.Errorf("resourceDockerRegistryImageRead: Unable to get authConfig for registry: %s", err)
 		}
@@ -118,7 +124,10 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 	if d.Get("keep_remotely").(bool) {
 		return nil
 	}
-	providerConfig := meta.(*ProviderConfig)
+	_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+	if err != nil {
+		return diag.Errorf("resourceDockerRegistryImageDelete: unable to resolve daemon: %s", err)
+	}
 	name := d.Get("name").(string)
 	pushOpts := createPushImageOptions(name)
 
@@ -127,14 +136,14 @@ func resourceDockerRegistryImageDelete(ctx context.Context, d *schema.ResourceDa
 		authConfig = buildAuthConfigFromResource(v)
 	} else {
 		var err error
-		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, providerConfig)
+		authConfig, err = getAuthConfigForRegistry(pushOpts.Registry, authConfigs)
 		if err != nil {
 			return diag.Errorf("resourceDockerRegistryImageDelete: Unable to get authConfig for registry: %s", err)
 		}
 	}
 
 	digest := d.Get("sha256_digest").(string)
-	err := deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
+	err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, digest, authConfig.Username, authConfig.Password, true, false)
 	if err != nil {
 		err = deleteDockerRegistryImage(pushOpts, authConfig.ServerAddress, pushOpts.Tag, authConfig.Username, authConfig.Password, true, true)
 		if err != nil {
@@ -296,18 +305,18 @@ func createAdditionalErrorMessage(imageFqName string) string {
 
 func getAuthConfigForRegistry(
 	registryWithoutProtocol string,
-	providerConfig *ProviderConfig) (registry.AuthConfig, error) {
-	if authConfig, ok := providerConfig.AuthConfigs.Configs[registryWithoutProtocol]; ok {
+	authConfigs *AuthConfigs) (registry.AuthConfig, error) {
+	if authConfig, ok := authConfigs.Configs[registryWithoutProtocol]; ok {
 		return authConfig, nil
 	}
 
 	if isDockerHubRegistryHostname(registryWithoutProtocol) {
-		if authConfig, ok := getDockerHubAuthConfigFromMap(providerConfig.AuthConfigs.Configs); ok {
+		if authConfig, ok := getDockerHubAuthConfigFromMap(authConfigs.Configs); ok {
 			return authConfig, nil
 		}
 	}
 
-	return registry.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, providerConfig.AuthConfigs.Configs)
+	return registry.AuthConfig{}, fmt.Errorf("no auth config found for registry %s in auth configs: %#v", registryWithoutProtocol, authConfigs.Configs)
 }
 
 func buildHttpClientForRegistry(registryAddressWithProtocol string, insecureSkipVerify bool) *http.Client {

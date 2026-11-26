@@ -687,9 +687,13 @@ func retrieveAndMarshalAuth(d *schema.ResourceData, meta interface{}, stageType 
 		log.Printf("[DEBUG] Getting configs from service auth '%v'", rawAuth)
 		auth = authToServiceAuth(rawAuth.([]interface{}))
 	} else {
-		authConfigs := meta.(*ProviderConfig).AuthConfigs.Configs
-		log.Printf("[DEBUG] Getting configs from provider auth '%v'", authConfigs)
-		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), authConfigs)
+		_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+		if err != nil {
+			log.Printf("[WARN] Unable to resolve Docker daemon, using provider auth: %s", err)
+			authConfigs = meta.(*ProviderConfig).AuthConfigs
+		}
+		log.Printf("[DEBUG] Getting configs from registry auth '%v'", authConfigs.Configs)
+		auth = fromRegistryAuth(d.Get("task_spec.0.container_spec.0.image").(string), authConfigs.Configs)
 	}
 
 	marshalledAuth, _ := json.Marshal(auth) // https://docs.docker.com/engine/api/v1.37/#section/Versioning

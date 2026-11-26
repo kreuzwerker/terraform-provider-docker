@@ -83,7 +83,10 @@ func resourceDockerContainerCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
 	}
-	authConfigs := meta.(*ProviderConfig).AuthConfigs
+	_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to resolve Docker daemon: %w", err))
+	}
 	image := d.Get("image").(string)
 	_, err = findImage(ctx, image, client, authConfigs, "")
 	if err != nil {
