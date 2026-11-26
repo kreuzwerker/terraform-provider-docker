@@ -75,7 +75,7 @@ func TestGetAuthConfigForRegistry_DockerHubAliasLookup(t *testing.T) {
 		},
 	}
 
-	authConfig, err := getAuthConfigForRegistry("registry-1.docker.io", providerConfig)
+	authConfig, err := getAuthConfigForRegistry("registry-1.docker.io", providerConfig.AuthConfigs)
 	if err != nil {
 		t.Fatalf("unexpected getAuthConfigForRegistry error: %s", err)
 	}

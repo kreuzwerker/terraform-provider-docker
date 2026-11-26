@@ -109,9 +109,11 @@ func defaultPooledTransport() *http.Transport {
 // NewClient returns a new Docker client.
 func (c *ProviderConfig) MakeClient(ctx context.Context, d *schema.ResourceData) (*client.Client, error) {
 	var dockerClient *client.Client
-	var err error
 
-	config := *c.DefaultConfig
+	config, _, err := c.resolve(d)
+	if err != nil {
+		return nil, err
+	}
 	configHash := config.Hash()
 	cached, found := c.clientCache.Load(configHash)
 

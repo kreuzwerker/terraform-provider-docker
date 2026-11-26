@@ -46,7 +46,11 @@ func resourceDockerImageCreate(ctx context.Context, d *schema.ResourceData, meta
 			}
 		}
 	}
-	apiImage, err := findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
+	_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to resolve Docker daemon: %w", err))
+	}
+	apiImage, err := findImage(ctx, imageName, client, authConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}
@@ -138,8 +142,12 @@ func resourceDockerImageUpdate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Docker client: %w", err))
 	}
+	_, authConfigs, err := meta.(*ProviderConfig).resolve(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to resolve Docker daemon: %w", err))
+	}
 	imageName := d.Get("name").(string)
-	_, err = findImage(ctx, imageName, client, meta.(*ProviderConfig).AuthConfigs, d.Get("platform").(string))
+	_, err = findImage(ctx, imageName, client, authConfigs, d.Get("platform").(string))
 	if err != nil {
 		return diag.Errorf("Unable to read Docker image into resource: %s", err)
 	}

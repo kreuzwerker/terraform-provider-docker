@@ -78,7 +78,7 @@ func dataSourceDockerRegistryImageManifestsRead(ctx context.Context, d *schema.R
 	} else {
 		log.Printf("[INFO] Using auth config from provider: %s", v)
 		var err error
-		authConfig, err = getAuthConfigForRegistry(pullOpts.Registry, meta.(*ProviderConfig))
+		authConfig, err = getAuthConfigForRegistry(pullOpts.Registry, meta.(*ProviderConfig).AuthConfigs)
 		if err != nil {
 			// The user did not provide a credential for this registry.
 			// But there are many registries where you can pull without a credential.

@@ -101,65 +101,7 @@ func New(version string) func() *schema.Provider {
 					Description: "Path to directory with Docker TLS config",
 				},
 
-				"registry_auth": {
-					Type:     schema.TypeSet,
-					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"address": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.StringIsNotEmpty,
-								Description:  "Address of the registry",
-							},
-
-							"username": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", ""),
-								Description: "Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.",
-							},
-
-							"password": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								Sensitive:   true,
-								DefaultFunc: schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", ""),
-								Description: "Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.",
-							},
-
-							"config_file": {
-								Type:     schema.TypeString,
-								Optional: true,
-								DefaultFunc: func() (interface{}, error) {
-									if v := os.Getenv("DOCKER_CONFIG"); v != "" {
-										// Docker CLI expects DOCKER_CONFIG to be a directory containing config.json
-										// Check if it's a directory and append config.json if needed
-										info, err := os.Stat(v)
-										if err == nil && info.IsDir() {
-											return filepath.Join(v, "config.json"), nil
-										}
-										// If it's a file or doesn't exist, use it as-is for backwards compatibility
-										return v, nil
-									}
-									return "~/.docker/config.json", nil
-								},
-								Description: "Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` env variable is set, the value of `DOCKER_CONFIG` is used as the path. `DOCKER_CONFIG` can be set to a directory (as per Docker CLI) or a file path directly. `config_file` has precedence over all other options.",
-							},
-							"config_file_content": {
-								Type:        schema.TypeString,
-								Optional:    true,
-								Description: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
-							},
-							"auth_disabled": {
-								Type:        schema.TypeBool,
-								Optional:    true,
-								Default:     false,
-								Description: "Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.",
-							},
-						},
-					},
-				},
+				"registry_auth": registryAuthSchema(true),
 				"disable_docker_daemon_check": {
 					Type:        schema.TypeBool,
 					Optional:    true,
@@ -169,25 +111,25 @@ func New(version string) func() *schema.Provider {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
-				"docker_container":      resourceDockerContainer(),
-				"docker_image":          resourceDockerImage(),
-				"docker_registry_image": resourceDockerRegistryImage(),
-				"docker_network":        resourceDockerNetwork(),
-				"docker_volume":         resourceDockerVolume(),
-				"docker_config":         resourceDockerConfig(),
-				"docker_secret":         resourceDockerSecret(),
-				"docker_service":        resourceDockerService(),
-				"docker_plugin":         resourceDockerPlugin(),
-				"docker_tag":            resourceDockerTag(),
-				"docker_buildx_builder": resourceDockerBuildxBuilder(),
+				"docker_container":      withDaemon(resourceDockerContainer()),
+				"docker_image":          withDaemon(resourceDockerImage()),
+				"docker_registry_image": withDaemon(resourceDockerRegistryImage()),
+				"docker_network":        withDaemon(resourceDockerNetwork()),
+				"docker_volume":         withDaemon(resourceDockerVolume()),
+				"docker_config":         withDaemon(resourceDockerConfig()),
+				"docker_secret":         withDaemon(resourceDockerSecret()),
+				"docker_service":        withDaemon(resourceDockerService()),
+				"docker_plugin":         withDaemon(resourceDockerPlugin()),
+				"docker_tag":            withDaemon(resourceDockerTag()),
+				"docker_buildx_builder": withDaemon(resourceDockerBuildxBuilder()),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
 				"docker_registry_image":           dataSourceDockerRegistryImage(),
-				"docker_network":                  dataSourceDockerNetwork(),
-				"docker_plugin":                   dataSourceDockerPlugin(),
-				"docker_image":                    dataSourceDockerImage(),
-				"docker_logs":                     dataSourceDockerLogs(),
+				"docker_network":                  withDaemonDataSource(dataSourceDockerNetwork()),
+				"docker_plugin":                   withDaemonDataSource(dataSourceDockerPlugin()),
+				"docker_image":                    withDaemonDataSource(dataSourceDockerImage()),
+				"docker_logs":                     withDaemonDataSource(dataSourceDockerLogs()),
 				"docker_registry_image_manifests": dataSourceDockerRegistryImageManifests(),
 			},
 		}
@@ -471,4 +413,82 @@ func convertToHostname(url string) string {
 	nameParts := strings.SplitN(stripped, "/", 2)
 
 	return nameParts[0]
+}
+
+// registryAuthSchema is the registry_auth block shared by the provider and the
+// daemon block. The daemon block takes no environment defaults: when it is
+// set, nothing comes from the provider or its environment.
+func registryAuthSchema(envDefaults bool) *schema.Schema {
+	envDefault := func(f schema.SchemaDefaultFunc) schema.SchemaDefaultFunc {
+		if envDefaults {
+			return f
+		}
+		return nil
+	}
+	describe := func(provider, daemon string) string {
+		if envDefaults {
+			return provider
+		}
+		return daemon
+	}
+
+	return &schema.Schema{
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"address": {
+					Type:         schema.TypeString,
+					Required:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
+					Description:  "Address of the registry",
+				},
+
+				"username": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: envDefault(schema.EnvDefaultFunc("DOCKER_REGISTRY_USER", "")),
+					Description: describe("Username for the registry. Defaults to `DOCKER_REGISTRY_USER` env variable if set.", "Username for the registry."),
+				},
+
+				"password": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: envDefault(schema.EnvDefaultFunc("DOCKER_REGISTRY_PASS", "")),
+					Description: describe("Password for the registry. Defaults to `DOCKER_REGISTRY_PASS` env variable if set.", "Password for the registry. Stored in state."),
+				},
+
+				"config_file": {
+					Type:     schema.TypeString,
+					Optional: true,
+					DefaultFunc: envDefault(func() (interface{}, error) {
+						if v := os.Getenv("DOCKER_CONFIG"); v != "" {
+							// Docker CLI expects DOCKER_CONFIG to be a directory containing config.json
+							// Check if it's a directory and append config.json if needed
+							info, err := os.Stat(v)
+							if err == nil && info.IsDir() {
+								return filepath.Join(v, "config.json"), nil
+							}
+							// If it's a file or doesn't exist, use it as-is for backwards compatibility
+							return v, nil
+						}
+						return "~/.docker/config.json", nil
+					}),
+					Description: describe("Path to docker json file for registry auth. Defaults to `~/.docker/config.json`. If `DOCKER_CONFIG` env variable is set, the value of `DOCKER_CONFIG` is used as the path. `DOCKER_CONFIG` can be set to a directory (as per Docker CLI) or a file path directly. `config_file` has precedence over all other options.", "Path to docker json file for registry auth. `config_file` has precedence over all other options."),
+				},
+				"config_file_content": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Plain content of the docker json file for registry auth. `config_file_content` has precedence over username/password.",
+				},
+				"auth_disabled": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "Setting this to `true` will tell the provider that this registry does not need authentication. Due to the docker internals, the provider will use dummy credentials (see https://github.com/kreuzwerker/terraform-provider-docker/issues/470 for more information). Defaults to `false`.",
+				},
+			},
+		},
+	}
 }

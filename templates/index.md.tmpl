@@ -30,6 +30,19 @@ The configuration would look as follows:
 
 When using a remote host, the daemon configuration on the remote host can apply default configuration to your resources when running `terraform apply`, for example by applying log options to containers. When running `terraform plan` the next time, it will show up as a diff. In such cases it is recommended to use the `ignore_changes` lifecycle meta-argument to ignore the changing attribute (See [this issue](https://github.com/kreuzwerker/terraform-provider-docker/issues/473) for more information).
 
+## Per-resource daemon
+
+Resources and data sources that talk to a Docker daemon accept an optional `daemon` block with the same settings as the provider. When the block is set, the resource uses it instead of the provider configuration; nothing is inherited from the provider. Without the block, the provider configuration is used.
+
+This lets one provider manage several hosts, including hosts created in the same configuration:
+
+{{tffile "examples/provider/provider-daemon.tf"}}
+
+The connection is stored in the resource's state, so a resource can still be destroyed after its host is removed from the configuration. Changing the `host` or `context` of an existing `daemon` block replaces the resource; adding the block to an existing resource does not.
+
+-> **Note**
+`key_material` and `registry_auth` passwords set in a `daemon` block are stored in state. Prefer `cert_path`.
+
 ## Disabling Docker Daemon Checking
 
 The `docker_registry_image` `data_source` and `resource` do not require a connection to the Docker daemon. If you want to use those in an environment without a Docker daemon, you can disable the

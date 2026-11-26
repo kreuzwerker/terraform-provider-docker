@@ -104,7 +104,7 @@ func (d *dockerRegistryImageTagsDataSource) Read(ctx context.Context, req dataso
 
 	pullOpts := parseImageOptions(config.Name.ValueString())
 
-	authConfig, err := getAuthConfigForRegistry(pullOpts.Registry, d.providerConfig)
+	authConfig, err := getAuthConfigForRegistry(pullOpts.Registry, d.providerConfig.AuthConfigs)
 	if err != nil {
 		// The user did not provide a credential for this registry.
 		// But there are many registries where you can pull without a credential.
